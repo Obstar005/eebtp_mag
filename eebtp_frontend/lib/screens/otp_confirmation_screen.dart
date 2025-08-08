@@ -13,7 +13,7 @@ class _OTPConfirmationScreenState extends State<OTPConfirmationScreen> {
   @override
   void initState() {
     super.initState();
-    // Après 3 secondes, naviguer vers la page de création de mot de passe
+    
     Future.delayed(const Duration(seconds: 3), () {
       Navigator.pushReplacementNamed(context, '/new_password');
     });
@@ -26,7 +26,7 @@ class _OTPConfirmationScreenState extends State<OTPConfirmationScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(height: 5.h),
+            SizedBox(height: 10.h),
             Center(
               child: Container(
                 decoration: BoxDecoration(

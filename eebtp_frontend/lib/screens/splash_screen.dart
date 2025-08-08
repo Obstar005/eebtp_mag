@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sizer/sizer.dart';
 import 'dart:async';
 
 class SplashScreen extends StatefulWidget {
@@ -19,7 +20,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 4),
     );
 
     _fadeAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
@@ -54,8 +55,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             scale: _scaleAnimation,
             child: Image.asset(
               'assets/eebtp.png',
-              width: 150,
-              height: 150,
+              width: 20.h,
+              height: 20.h,
               filterQuality: FilterQuality.high,
             ),
           ),
@@ -64,3 +65,4 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
   }
 }
+

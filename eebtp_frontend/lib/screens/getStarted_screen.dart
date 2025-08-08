@@ -28,11 +28,12 @@ class GetStartedScreen extends StatelessWidget {
             right: 0,
             child: Container(
               height: 14.h,
-              width: 14.h,
-              decoration: const BoxDecoration(
+              width: 28.h, // Adjust width to form a half circle
+              decoration:  BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.only(bottomLeft: Radius.circular(100)),
+                borderRadius: BorderRadius.only(bottomLeft: Radius.circular(14.h)), // Use dynamic radius for a perfect half circle
               ),
+              alignment: Alignment.center, // Center the logo within the container
               child: Padding(
                 padding: EdgeInsets.all(2.h),
                 child: Image.asset('assets/logo_eebtp.png', fit: BoxFit.contain),
@@ -121,9 +122,9 @@ class GetStartedScreen extends StatelessWidget {
                                       color: Color(0xFF007AFF),
                                     ),
                                   ),
-                                  const SizedBox(width: 10),
-                                  const Icon(Icons.arrow_forward_ios,
-                                      size: 18, color: Color(0xFF007AFF)),
+                                   SizedBox(width: 2.w),
+                                   Icon(Icons.arrow_forward_ios,
+                                      size: 18.sp, color: Color(0xFF007AFF)),
                                 ],
                               ),
                             ),

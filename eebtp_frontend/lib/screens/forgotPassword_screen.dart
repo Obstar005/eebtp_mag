@@ -90,15 +90,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           alignment: Alignment.centerLeft,
           child: IconButton(
             icon: Container(
-              decoration: const BoxDecoration(
+              decoration:  BoxDecoration(
                 color: Color(0xFF2196F3),
                 shape: BoxShape.circle,
               ),
-              padding: const EdgeInsets.all(6),
-              child: const Icon(
+              padding: EdgeInsets.all(6.sp),
+              child:  Icon(
                 Icons.arrow_back_ios_new,
                 color: Colors.white,
-                size: 14,
+                size: 14.sp,
               ),
             ),
             onPressed: () => _pc.previousPage(
@@ -192,8 +192,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   GestureDetector(
                     onTap: () => setState(() => _remember = !_remember),
                     child: Container(
-                      width: 20,
-                      height: 20,
+                      width: 5.w,
+                      height: 5.w,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
@@ -268,8 +268,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               pinTheme: PinTheme(
                 shape: PinCodeFieldShape.box,
                 borderRadius: BorderRadius.circular(10),
-                fieldHeight: 70,
-                fieldWidth: 60,
+                fieldHeight: 6.h,
+                fieldWidth: 6.w,
                 activeFillColor: Colors.white,
                 activeColor: const Color(0xFF2196F3),
                 selectedColor: const Color(0xFF2196F3),

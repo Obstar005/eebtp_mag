@@ -59,10 +59,10 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                 shape: BoxShape.circle,
               ),
               padding: const EdgeInsets.all(6),
-              child: const Icon(
+              child:  Icon(
                 Icons.arrow_back_ios_new,
                 color: Colors.white,
-                size: 14,
+                size: 14.sp,
               ),
             ),
             onPressed: () => _pc.previousPage(
@@ -152,20 +152,20 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                   GestureDetector(
                     onTap: () => setState(() => _remember = !_remember),
                     child: Container(
-                      width: 20,
-                      height: 20,
+                      width: 4.w,
+                      height: 4.w,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: _remember ? Colors.blue : Colors.grey,
-                          width: 2,
+                          width: 0.2.w,
                         ),
                         color: _remember ? Colors.blue : Colors.transparent,
                       ),
                       child: _remember
-                          ? const Icon( 
+                          ?  Icon( 
                               Icons.check,
-                              size: 14,
+                              size: 2.w,
                               color: Colors.white,
                             )
                           : null,
@@ -192,7 +192,7 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
               ),
             ],
           ),
-         SizedBox(height: MediaQuery.of(ctx).size.height * 0.35), // Espace flexible
+         SizedBox(height: 35.h), // Espace flexible
          // Spacer(),
           Column(
             children: [
@@ -249,20 +249,20 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                   GestureDetector(
                     onTap: () => setState(() => _remember = !_remember),
                     child: Container(
-                      width: 20,
-                      height: 20,
+                      width: 4.w,
+                      height: 4.w,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: _remember ? Colors.blue : Colors.grey,
-                          width: 2,
+                          width: 0.5.w,
                         ),
                         color: _remember ? Colors.blue : Colors.transparent,
                       ),
                       child: _remember
-                          ? const Icon(
+                          ?  Icon(
                               Icons.check,
-                              size: 14,
+                              size: 3.w,
                               color: Colors.white,
                             )
                           : null,

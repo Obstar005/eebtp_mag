@@ -33,10 +33,10 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                     shape: BoxShape.circle,
                   ),
                   padding: const EdgeInsets.all(6),
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_back_ios_new,
                     color: Colors.white,
-                    size: 14,
+                    size: 14.sp,
                   ),
                 ),
                 onPressed: () => Navigator.pop(context),
