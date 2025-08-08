@@ -60,7 +60,7 @@ class GetStartedScreen extends StatelessWidget {
                         gradient: const LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [Color(0xFF044CB2), Color(0xFF87ACE7)],
+                          colors: [ Color.fromRGBO(49, 119, 255, 1),Color.fromRGBO(150, 124, 253, 1),],
                         ),
                       ),
                     ),
@@ -88,7 +88,7 @@ class GetStartedScreen extends StatelessWidget {
                             style: GoogleFonts.inter(
                               fontSize: 22.sp,
                               fontWeight: FontWeight.w900,
-                              color: Colors.white,
+                              color: const Color.fromRGBO(255, 255, 255, 1),
                               fontStyle: FontStyle.italic,
                             ),
                           ),

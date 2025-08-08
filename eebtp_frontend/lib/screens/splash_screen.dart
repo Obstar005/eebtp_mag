@@ -47,7 +47,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue,
+      backgroundColor: const Color.fromRGBO(0, 122, 255, 1),
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: Center(

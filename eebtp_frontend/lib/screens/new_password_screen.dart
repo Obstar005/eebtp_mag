@@ -29,7 +29,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
               child: IconButton(
                 icon: Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2196F3),
+                    color: const Color(0xFF007AFF),
                     shape: BoxShape.circle,
                   ),
                   padding: const EdgeInsets.all(6),
@@ -132,7 +132,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2196F3),
+                  backgroundColor: const Color(0xFF007AFF),
                   padding: EdgeInsets.symmetric(vertical: 2.h),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

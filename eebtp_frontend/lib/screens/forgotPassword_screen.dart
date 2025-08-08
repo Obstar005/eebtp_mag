@@ -91,7 +91,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           child: IconButton(
             icon: Container(
               decoration:  BoxDecoration(
-                color: Color(0xFF2196F3),
+                color: Color(0xFF007AFF),
                 shape: BoxShape.circle,
               ),
               padding: EdgeInsets.all(6.sp),
@@ -197,10 +197,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: _remember ? Colors.blue : Colors.grey,
+                          color: _remember ? Color(0xFF007AFF): Colors.grey,
                           width: 2,
                         ),
-                        color: _remember ? Colors.blue : Colors.transparent,
+                        color: _remember ? Color(0xFF007AFF) : Colors.transparent,
                       ),
                       child: _remember
                           ? const Icon(
@@ -224,7 +224,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   'Mot de passe ? oublié',
                   style: GoogleFonts.poppins(
                     fontSize: 12.sp,
-                    color: Colors.blue,
+                    color: Color(0xFF007AFF),
                   ),
                 ),
               ),
@@ -271,8 +271,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 fieldHeight: 6.h,
                 fieldWidth: 6.w,
                 activeFillColor: Colors.white,
-                activeColor: const Color(0xFF2196F3),
-                selectedColor: const Color(0xFF2196F3),
+                activeColor: const Color(0xFF007AFF),
+                selectedColor: const Color(0xFF007AFF),
                 inactiveColor: Colors.grey[300],
                 inactiveFillColor: Colors.grey[200],
               ),
@@ -299,7 +299,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   'Renvoyer le code',
                   style: GoogleFonts.poppins(
                     fontSize: 12.sp,
-                    color: _countdown == 0 ? Colors.blue : Colors.grey,
+                    color: _countdown == 0 ? Color(0xFF007AFF) : Colors.grey,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -328,7 +328,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   Navigator.pushReplacementNamed(context, '/otp_confirmation');
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2196F3),
+                  backgroundColor: const Color(0xFF007AFF),
                   padding: EdgeInsets.symmetric(vertical: 2.h),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -367,7 +367,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           width: i == activeIndex ? 10.w : 4.w,
           height: 1.h,
           decoration: BoxDecoration(
-            color: i == activeIndex ? Colors.blue : Colors.grey[300],
+            color: i == activeIndex ? Color(0xFF007AFF) : Colors.grey[300],
             borderRadius: BorderRadius.circular(10),
           ),
         );
@@ -381,7 +381,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       child: ElevatedButton(
         onPressed: _next,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF2196F3),
+          backgroundColor: const Color(0xFF007AFF),
           padding: EdgeInsets.symmetric(vertical: 2.h),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -395,12 +395,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               text,
               style: GoogleFonts.poppins(
                 fontSize: 14.sp,
-                color: Colors.white,
+                color: const Color.fromRGBO(255, 255, 255, 1),
                 fontWeight: FontWeight.w600,
               ),
             ),
             SizedBox(width: 2.w),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white),
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Color.fromRGBO(255, 255, 255, 1)),
           ],
         ),
       ),
