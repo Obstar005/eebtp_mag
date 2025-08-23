@@ -1,3 +1,4 @@
+import 'package:eebtp_frontend/widgets/button.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
@@ -22,31 +23,51 @@ class GetStartedScreen extends StatelessWidget {
             child: Image.asset('assets/background.jpg', fit: BoxFit.cover),
           ),
 
-          // Logo en haut à droite
-          Positioned(
-            top: 0,
-            right: 0,
-            child: Container(
-              height: 14.h,
-              width: 28.h, // Adjust width to form a half circle
-              decoration:  BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(bottomLeft: Radius.circular(14.h)), // Use dynamic radius for a perfect half circle
-              ),
-              alignment: Alignment.center, // Center the logo within the container
-              child: Padding(
-                padding: EdgeInsets.all(2.h),
-                child: Image.asset('assets/logo_eebtp.png', fit: BoxFit.contain),
-              ),
-            ),
-          ),
+          // Bannière blanche avec logo en haut à droite
+         Positioned(
+  top: -6.h,  // Converti à partir de -50 pixels (environ 6% de la hauteur d'écran)
+  right: -6.h, // Converti à partir de -50 pixels
+  child: Container(
+    height: 20.h,
+    width: 60.w,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.only(
+        bottomLeft: Radius.circular(30.h), // Responsive courbure
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black12,
+          blurRadius: 6.0,
+          offset: Offset(0, 3),
+        ),
+      ],
+    ),
+    padding: EdgeInsets.only(
+      left: 8.w,
+      right: 17.w,
+      bottom: 1.5.h,
+      top: 5.h,
+    ),
+    child: Align(
+      alignment: Alignment.centerRight,
+      child: Image.asset(
+        'assets/logo_eebtp.png',
+        fit: BoxFit.contain,
+        height: 11.h,
+        width: 11.h,
+      ),
+    ),
+  ),
+),
 
           // Container bas avec la parabole
           Positioned(
             bottom: 0,
             left: 0,
             child: SizedBox(
-              height: containerHeight + bumpHeight, // Ajoute la hauteur de la bosse
+              height:
+                  containerHeight + bumpHeight, // Ajoute la hauteur de la bosse
               width: 100.w,
               child: Stack(
                 children: [
@@ -60,12 +81,15 @@ class GetStartedScreen extends StatelessWidget {
                         gradient: const LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [ Color.fromRGBO(49, 119, 255, 1),Color.fromRGBO(150, 124, 253, 1),],
+                          colors: [
+                            Color.fromRGBO(49, 119, 255, 1),
+                            Color.fromRGBO(150, 124, 253, 1),
+                          ],
                         ),
                       ),
                     ),
                   ),
-                  
+
                   // Contenu positionné sous la parabole
                   Positioned(
                     top: bumpHeight,
@@ -96,39 +120,20 @@ class GetStartedScreen extends StatelessWidget {
                           Text(
                             'Votre plateforme de suivi en temps réel des stocks.',
                             style: GoogleFonts.inter(
-                              fontSize: 14.sp,
+                              fontSize: 16.sp,
                               color: Colors.white70,
                             ),
                           ),
-                          const Spacer(),
-                          Center(
-                            child: ElevatedButton(
-                              onPressed: () => Navigator.pushNamed(context, '/login'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 8.w, vertical: 1.8.h),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15)),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'Commencer ici',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF007AFF),
-                                    ),
-                                  ),
-                                   SizedBox(width: 2.w),
-                                   Icon(Icons.arrow_forward_ios,
-                                      size: 18.sp, color: Color(0xFF007AFF)),
-                                ],
-                              ),
-                            ),
-                          ),
+                          SizedBox(height: 3.h),
+                        Center(
+  child: CustomElevatedButton(
+    text: 'Commencer ici',
+    backgroundColor: Colors.white,
+    textColor: const Color(0xFF007AFF),
+    onPressed: () => Navigator.pushNamed(context, '/login'),
+    width: 80.w, // Largeur augmentée (80% de l'écran)
+  ),
+),
                         ],
                       ),
                     ),
@@ -157,9 +162,10 @@ class TopParabolaClipper extends CustomClipper<Path> {
 
     // 2) on dessine la parabole vers -bump (crête) avant de redescendre à y=bump
     path.quadraticBezierTo(
-      size.width * 0.4,   // contrôle x (milieu)
-      -bump* 0.8,       // contrôle y (crête au-dessus - réduit pour un effet plus doux)
-      size.width ,        // fin à droite
+      size.width * 0.4, // contrôle x (milieu)
+      -bump *
+          0.8, // contrôle y (crête au-dessus - réduit pour un effet plus doux)
+      size.width, // fin à droite
       bump,
     );
 
@@ -167,7 +173,7 @@ class TopParabolaClipper extends CustomClipper<Path> {
     path.lineTo(size.width, size.height);
 
     // 4) on revient à gauche
-    path.lineTo(0, size.height,);
+    path.lineTo(0, size.height);
 
     // 5) fermeture
     path.close();

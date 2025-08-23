@@ -1,11 +1,13 @@
+import 'package:eebtp_frontend/screens/passwordCreatedConfirmation.dart';
+import 'package:eebtp_frontend/widgets/button.dart';
+import 'package:eebtp_frontend/widgets/input.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
 
 class NewPasswordScreen extends StatefulWidget {
   const NewPasswordScreen({super.key});
-
   @override
   State<NewPasswordScreen> createState() => _NewPasswordScreenState();
 }
@@ -15,6 +17,8 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
   final _confirmPassController = TextEditingController();
   bool _obscureNewPass = true;
   bool _obscureConfirmPass = true;
+
+  String? _errorMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -28,8 +32,8 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
               alignment: Alignment.centerLeft,
               child: IconButton(
                 icon: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF007AFF),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF007AFF),
                     shape: BoxShape.circle,
                   ),
                   padding: const EdgeInsets.all(6),
@@ -42,13 +46,10 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                 onPressed: () => Navigator.pop(context),
               ),
             ),
-            Center(
-              child: SvgPicture.asset(
-                'assets/Floor.svg',
-                height: 25.h,
-              ),
-            ),
+
+            Center(child: SvgPicture.asset('assets/Floor.svg', height: 25.h)),
             SizedBox(height: 2.h),
+
             Text(
               'Créer un nouveau mot de passe',
               style: GoogleFonts.poppins(
@@ -65,88 +66,59 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
               ),
             ),
             SizedBox(height: 5.h),
-            TextField(
-              controller: _newPassController,
-              obscureText: _obscureNewPass,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: const Color(0xFFF5F5F5),
-                hintText: 'Nouveau mot de passe',
-                hintStyle: GoogleFonts.poppins(
-                  fontSize: 14.sp,
-                  color: Colors.grey[600],
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscureNewPass ? Icons.visibility_off : Icons.visibility,
-                    color: Colors.grey,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _obscureNewPass = !_obscureNewPass;
-                    });
-                  },
-                ),
+            Text(
+              'Le mot de passe doit contenir au minimum 8 caractères, incluant des lettres et des chiffres',
+              style: GoogleFonts.poppins(
+                fontSize: 14.sp,
+                color: Colors.grey[600],
               ),
             ),
             SizedBox(height: 2.h),
-            TextField(
-              controller: _confirmPassController,
-              obscureText: _obscureConfirmPass,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: const Color(0xFFF5F5F5),
-                hintText: 'Confirmer le mot de passe',
-                hintStyle: GoogleFonts.poppins(
-                  fontSize: 14.sp,
-                  color: Colors.grey[600],
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscureConfirmPass ? Icons.visibility_off : Icons.visibility,
-                    color: Colors.grey,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _obscureConfirmPass = !_obscureConfirmPass;
-                    });
-                  },
-                ),
-              ),
+
+            /// --- Input Nouveau mot de passe
+            CustomInputField(
+              controller: _newPassController,
+              hintText: "Nouveau mot de passe",
+              obscureText: _obscureNewPass,
+              onToggleVisibility: () {
+                setState(() => _obscureNewPass = !_obscureNewPass);
+              },
+              hasError: _errorMessage != null,
             ),
+
+            SizedBox(height: 5.h),
+
+            /// --- Input Confirmation mot de passe
+            CustomInputField(
+              controller: _confirmPassController,
+              hintText: "Confirmer le mot de passe",
+              obscureText: _obscureConfirmPass,
+              onToggleVisibility: () {
+                setState(() => _obscureConfirmPass = !_obscureConfirmPass);
+              },
+              hasError: _errorMessage != null,
+              errorText: _errorMessage,
+            ),
+
             SizedBox(height: 16.h),
+
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              child: CustomElevatedButton(
+                text: 'Créer',
+                backgroundColor: const Color(0xFF007AFF),
+                textColor: Colors.white,
                 onPressed: () {
                   if (_validatePasswords()) {
                     _saveNewPassword();
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (context) => PasswordCreatedModal(),
+                    );
                   }
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF007AFF),
-                  padding: EdgeInsets.symmetric(vertical: 2.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-                child: Text(
-                  'Créer',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14.sp,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                width: 80.w, // Largeur augmentée (80% de l'écran)
               ),
             ),
           ],
@@ -156,32 +128,31 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
   }
 
   bool _validatePasswords() {
-    if (_newPassController.text.isEmpty || _confirmPassController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez remplir tous les champs')),
-      );
+    setState(() => _errorMessage = null);
+
+    if (_newPassController.text.isEmpty ||
+        _confirmPassController.text.isEmpty) {
+      setState(() => _errorMessage = "Veuillez remplir tous les champs");
       return false;
     }
-    
+
     if (_newPassController.text != _confirmPassController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Les mots de passe ne correspondent pas')),
+      setState(() => _errorMessage = "Les mots de passe ne correspondent pas");
+      return false;
+    }
+
+    if (_newPassController.text.length < 8) {
+      setState(
+        () => _errorMessage =
+            "Le mot de passe doit contenir au moins 8 caractères",
       );
       return false;
     }
-    
-    if (_newPassController.text.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Le mot de passe doit contenir au moins 6 caractères')),
-      );
-      return false;
-    }
-    
+
     return true;
   }
 
   void _saveNewPassword() {
-   
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 }

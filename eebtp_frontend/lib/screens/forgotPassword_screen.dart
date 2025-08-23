@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:eebtp_frontend/widgets/button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -20,7 +21,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   String _phone = '';
   final _phoneController = TextEditingController();
   final _otpController = TextEditingController();
-  int _countdown = 300; 
+  int _countdown = 300;
   late Timer _timer;
 
   @override
@@ -53,9 +54,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
-    } else {
-      
-    }
+    } else {}
   }
 
   void _resendCode() {
@@ -83,19 +82,23 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 
-  Widget _buildHeader({required String svgAsset, required String title, required String subtitle}) {
+  Widget _buildHeader({
+    required String svgAsset,
+    required String title,
+    required String subtitle,
+  }) {
     return Column(
       children: [
         Align(
           alignment: Alignment.centerLeft,
           child: IconButton(
             icon: Container(
-              decoration:  BoxDecoration(
+              decoration: BoxDecoration(
                 color: Color(0xFF007AFF),
                 shape: BoxShape.circle,
               ),
               padding: EdgeInsets.all(6.sp),
-              child:  Icon(
+              child: Icon(
                 Icons.arrow_back_ios_new,
                 color: Colors.white,
                 size: 14.sp,
@@ -107,10 +110,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             ),
           ),
         ),
-        SvgPicture.asset(
-          svgAsset,
-          height: 25.h,
-        ),
+        SvgPicture.asset(svgAsset, height: 25.h),
         Text(
           title,
           style: GoogleFonts.poppins(
@@ -121,10 +121,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         SizedBox(height: 1.h),
         Text(
           subtitle,
-          style: GoogleFonts.poppins(
-            fontSize: 14.sp,
-            color: Colors.grey[600],
-          ),
+          style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey[600]),
           textAlign: TextAlign.center,
         ),
       ],
@@ -140,7 +137,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           _buildHeader(
             svgAsset: 'assets/forgot_pass.svg',
             title: 'Mot de passe oublié ?',
-            subtitle: 'Ne vous inquiétez pas ! Cela se passe.\nVeuillez saisir le numéro de téléphone\nauquel nous enverrons l\'OTP.',
+            subtitle:
+                'Ne vous inquiétez pas ! Cela se passe.\nVeuillez saisir le numéro de téléphone\nauquel nous enverrons l\'OTP.',
           ),
           SizedBox(height: 5.h),
           Container(
@@ -167,7 +165,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               selectorTextStyle: GoogleFonts.poppins(color: Colors.black),
               textStyle: GoogleFonts.poppins(),
               formatInput: true,
-              keyboardType: const TextInputType.numberWithOptions(signed: true, decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                signed: true,
+                decimal: true,
+              ),
               inputDecoration: InputDecoration(
                 border: InputBorder.none,
                 hintText: 'Numéro de téléphone',
@@ -197,10 +198,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: _remember ? Color(0xFF007AFF): Colors.grey,
+                          color: _remember ? Color(0xFF007AFF) : Colors.grey,
                           width: 2,
                         ),
-                        color: _remember ? Color(0xFF007AFF) : Colors.transparent,
+                        color: _remember
+                            ? Color(0xFF007AFF)
+                            : Colors.transparent,
                       ),
                       child: _remember
                           ? const Icon(
@@ -235,7 +238,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             children: [
               _buildProgressIndicator(0),
               SizedBox(height: 2.h),
-              _buildNextButton('Suivant'),
+              CustomElevatedButton(
+                text: 'Suivant',
+                backgroundColor: const Color(0xFF007AFF),
+                textColor: Colors.white,
+                onPressed: () => _next(),
+                width: 70.w,
+              ),
             ],
           ),
         ],
@@ -244,8 +253,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Widget _buildOtpVerificationStep(BuildContext ctx) {
-    String displayedPhone = _phone.isNotEmpty 
-        ? _phone.replaceRange(5, _phone.length - 2, '*****') 
+    String displayedPhone = _phone.isNotEmpty
+        ? _phone.replaceRange(5, _phone.length - 2, '*****')
         : '+228-*******';
 
     return SingleChildScrollView(
@@ -269,7 +278,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 shape: PinCodeFieldShape.box,
                 borderRadius: BorderRadius.circular(10),
                 fieldHeight: 6.h,
-                fieldWidth: 6.w,
+                fieldWidth: 8.w,
                 activeFillColor: Colors.white,
                 activeColor: const Color(0xFF007AFF),
                 selectedColor: const Color(0xFF007AFF),
@@ -323,33 +332,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             children: [
               _buildProgressIndicator(1),
               SizedBox(height: 2.h),
-              ElevatedButton(
+              CustomElevatedButton(
+                text:
+                    'Envoyer  ', // J’ai ajouté la flèche directement dans le texte
+                backgroundColor: const Color(0xFF007AFF),
+                textColor: Colors.white,
                 onPressed: () {
                   Navigator.pushReplacementNamed(context, '/otp_confirmation');
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF007AFF),
-                  padding: EdgeInsets.symmetric(vertical: 2.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Envoyer',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14.sp,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(width: 2.w),
-                    const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white),
-                  ],
-                ),
+                width: 80.w, // tu peux ajuster si besoin
+                height: 7.h,
               ),
             ],
           ),
@@ -372,38 +364,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         );
       }),
-    );
-  }
-
-  Widget _buildNextButton(String text) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _next,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF007AFF),
-          padding: EdgeInsets.symmetric(vertical: 2.h),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              text,
-              style: GoogleFonts.poppins(
-                fontSize: 14.sp,
-                color: const Color.fromRGBO(255, 255, 255, 1),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            SizedBox(width: 2.w),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Color.fromRGBO(255, 255, 255, 1)),
-          ],
-        ),
-      ),
     );
   }
 }
