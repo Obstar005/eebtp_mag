@@ -104,7 +104,10 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
     );
   }
 
- Widget _buildPhoneStep(BuildContext ctx) {
+// Ajoute une variable d'état pour stocker l'erreur
+String? _phoneError;
+
+Widget _buildPhoneStep(BuildContext ctx) {
   return SingleChildScrollView(
     padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
     child: Column(
@@ -113,11 +116,15 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
         _buildHeader(),
         SizedBox(height: 5.h),
 
-        // Champ téléphone
+        // Champ téléphone avec bordure dynamique
         Container(
           decoration: BoxDecoration(
             color: const Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.circular(30), // arrondi
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(
+              color: _phoneError != null ? Colors.red : Colors.transparent,
+              width: 1.2,
+            ),
           ),
           child: InternationalPhoneNumberInput(
             onInputChanged: (PhoneNumber num) {
@@ -125,9 +132,10 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                 _phone = num.phoneNumber ?? '';
                 _initialPhone = num;
 
-                //formatation du numéro pour communication avec le backend:
-                // String formattedPhone = "${num.dialCode?.replaceAll('+', '00')}${num.parseNumber()}";
-                // print("Téléphone formaté : $formattedPhone");
+                // Réinitialiser l'erreur si saisie correcte
+                if (_phone.isNotEmpty && _phone.length > 7) {
+                  _phoneError = null;
+                }
               });
             },
             initialValue: _initialPhone,
@@ -141,7 +149,7 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
             autoValidateMode: AutovalidateMode.onUserInteraction,
             selectorTextStyle: GoogleFonts.poppins(color: Colors.black),
             textStyle: GoogleFonts.poppins(),
-            formatInput: true,
+            formatInput: false,
             keyboardType: const TextInputType.numberWithOptions(
               signed: true,
               decimal: true,
@@ -158,9 +166,29 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                 vertical: 2.h,
               ),
             ),
-            spaceBetweenSelectorAndTextField: 10, // plus d’espace pour pays longs
+            spaceBetweenSelectorAndTextField: 10,
           ),
         ),
+
+        // Message d’erreur en dehors du champ
+        if (_phoneError != null) ...[
+          SizedBox(height: 0.5.h),
+          Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.red, size: 4.w),
+              SizedBox(width: 1.w),
+              Expanded(
+                child: Text(
+                  _phoneError!,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13.sp,
+                    color: Colors.red,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
 
         SizedBox(height: 2.h),
 
@@ -184,11 +212,7 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                       color: _remember ? Colors.blue : Colors.transparent,
                     ),
                     child: _remember
-                        ? Icon(
-                            Icons.check,
-                            size: 2.w,
-                            color: Colors.white,
-                          )
+                        ? Icon(Icons.check, size: 2.w, color: Colors.white)
                         : null,
                   ),
                 ),
@@ -225,7 +249,16 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
               text: 'Suivant',
               backgroundColor: const Color(0xFF007AFF),
               textColor: Colors.white,
-              onPressed: () => _next(),
+              onPressed: () {
+                setState(() {
+                  if (_phone.isEmpty || _phone.length < 8) {
+                    _phoneError = "Veuillez entrer un numéro valide";
+                  } else {
+                    _phoneError = null;
+                    _next();
+                  }
+                });
+              },
               width: 70.w,
             ),
           ],
@@ -323,7 +356,9 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
     text: 'Se connecter',
     backgroundColor:const Color(0xFF007AFF) ,
     textColor: Colors.white,
-    onPressed: () =>_next(),
+    onPressed: () {
+      Navigator.pushNamed(context, '/profile');
+    },
     width: 70.w, 
   ),
              

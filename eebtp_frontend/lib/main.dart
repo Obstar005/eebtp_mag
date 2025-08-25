@@ -31,20 +31,17 @@ class MyApp extends StatelessWidget {
   '/forgot_password': (context) => ForgotPasswordScreen(),
   '/new_password': (context) => NewPasswordScreen(),
   '/otp_confirmation': (context) => const OTPConfirmationScreen(),
-  
+  '/profile': (context) => ProfilePage(),
   // Routes principales de navigation
  /*  '/home': (context) => const HomeScreen(),
   '/stock': (context) => const StockScreen(),
   '/demande': (context) => const DemandeScreen(),
-  '/profile': (context) => ProfilePage(),
+  
   
   // Routes de profil et paramètres
   '/edit_profile': (context) => const EditProfileScreen(),
   '/notifications': (context) => const NotificationsScreen(), */
-  
-
 },
-         
         );
       },
     );

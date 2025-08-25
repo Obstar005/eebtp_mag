@@ -4,12 +4,47 @@ import 'package:flutter_svg/svg.dart';
 import 'package:sizer/sizer.dart';
 
 class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
+
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin {
   int _currentIndex = 3; // Profile tab is selected
+  bool _isFabExpanded = false;
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 300),
+    );
+    _animation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _toggleFab() {
+    setState(() {
+      _isFabExpanded = !_isFabExpanded;
+    });
+    if (_isFabExpanded) {
+      _animationController.forward();
+    } else {
+      _animationController.reverse();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +52,7 @@ class _ProfilePageState extends State<ProfilePage> {
       body: Stack(
         children: [
           // Arrière-plan avec gradient et forme ondulée
-          Container(
+          SizedBox(
             height: 100.h,
             width: 100.w,
             child: Stack(
@@ -26,7 +61,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ClipPath(
                   clipper: ProfileTopClipper(),
                   child: Container(
-                    height: 55.h,
+                    height: 50.h,
                     width: 100.w,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -45,7 +80,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 Positioned(
                   bottom: 0,
                   child: Container(
-                    height: 50.h,
+                    height: 55.h,
                     width: 100.w,
                     color: Color(0xFFF8F9FA),
                   ),
@@ -70,13 +105,13 @@ class _ProfilePageState extends State<ProfilePage> {
                           fontSize: 24.sp,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
+                          fontFamily: 'Poppins',
                         ),
                       ),
                       Stack(
                         children: [
                           GestureDetector(
                             onTap: () {
-                              // Navigation vers page notifications
                               Navigator.pushNamed(context, '/notifications');
                             },
                             child: Container(
@@ -87,7 +122,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                               child: Icon(
                                 Icons.notifications_outlined,
-                                size: 6.w,
+                                size: 10.w,
                                 color: Color(0xFF007AFF),
                               ),
                             ),
@@ -106,8 +141,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                 '3',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 10.sp,
+                                  fontSize: 14.sp,
                                   fontWeight: FontWeight.bold,
+                                  fontFamily: 'Poppins',
                                 ),
                               ),
                             ),
@@ -118,9 +154,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
                 
-                SizedBox(height: 4.h),
+                SizedBox(height: 18.h),
                 
-                // Photo de profil avec bouton d'édition
+                // Photo de profil avec bouton d'édition (positionnée dans le creux)
                 Stack(
                   children: [
                     Container(
@@ -129,7 +165,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Colors.white,
+                          color: const Color(0xFF007AFF),
                           width: 4,
                         ),
                         boxShadow: [
@@ -139,22 +175,12 @@ class _ProfilePageState extends State<ProfilePage> {
                             offset: Offset(0, 5),
                           ),
                         ],
+                        //color: Colors.white,
                       ),
                       child: ClipOval(
                         child: SvgPicture.asset(
-                          'assets/Ellipse 3.svg', // Image par défaut
+                          'assets/profile.svg', 
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            // Avatar par défaut si l'image n'existe pas
-                            return Container(
-                              color: Color(0xFFE5E5EA),
-                              child: Icon(
-                                Icons.person,
-                                size: 15.w,
-                                color: Colors.grey[600],
-                              ),
-                            );
-                          },
                         ),
                       ),
                     ),
@@ -165,7 +191,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       right: 0,
                       child: GestureDetector(
                         onTap: () {
-                          // Action pour modifier la photo
                           _showImagePickerOptions(context);
                         },
                         child: Container(
@@ -198,6 +223,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     fontSize: 22.sp,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF007AFF),
+                    fontFamily: 'Poppins',
                   ),
                 ),
                 
@@ -209,6 +235,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     fontSize: 16.sp,
                     color: Color(0xFF8E8E93),
                     fontWeight: FontWeight.w500,
+                    fontFamily: 'Poppins',
                   ),
                 ),
                 
@@ -225,30 +252,30 @@ class _ProfilePageState extends State<ProfilePage> {
                         height: 6.5.h,
                         margin: EdgeInsets.only(bottom: 3.h),
                         child: CustomElevatedButton(
-  text: "Modifier votre profil",
-  backgroundColor: Colors.white,
-  textColor: const Color(0xFF007AFF),
-  onPressed: () => Navigator.pushNamed(context, '/edit_profile'),
-  icon: Icons.edit_outlined,
-  iconColor: const Color(0xFF007AFF),
-  outlined: true,
-),
- ),
+                          text: "Modifier votre profil",
+                          backgroundColor: Colors.white,
+                          textColor: const Color(0xFF007AFF),
+                          onPressed: () => Navigator.pushNamed(context, '/edit_profile'),
+                          icon: Icons.edit_outlined,
+                          iconColor: const Color(0xFF007AFF),
+                          outlined: true,
+                        ),
+                      ),
                       
                       // Bouton Déconnecter
-                      Container(
+                      SizedBox(
                         width: double.infinity,
                         height: 6.5.h,
                         child: CustomElevatedButton(
-  text: "Déconnecter",
-  backgroundColor: Colors.white,
-  textColor: const Color(0xFFFF3B30),
-  onPressed: () => _showLogoutDialog(context),
-  icon: Icons.logout,
-  iconColor: const Color(0xFFFF3B30),
-  outlined: true,
-),
- ),
+                          text: "Déconnecter",
+                          backgroundColor: Colors.white,
+                          textColor: const Color(0xFFFF3B30),
+                          onPressed: () => _showLogoutDialog(context),
+                          icon: Icons.logout,
+                          iconColor: const Color(0xFFFF3B30),
+                          outlined: true,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -258,47 +285,220 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
       ),
       
-      // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Color(0xFF007AFF),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(8.w),
-            topRight: Radius.circular(8.w),
-          ),
-        ),
-        child: SafeArea(
-          child: Container(
-            height: 10.h,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildNavItem(Icons.home_outlined, 'Accueil', 0),
-                _buildNavItem(Icons.inventory_2_outlined, 'Stock', 1),
-                // Bouton central "+"
-                Container(
-                  width: 15.w,
-                  height: 15.w,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.add,
-                    size: 8.w,
-                    color: Color(0xFF007AFF),
+      // Floating Action Button avec animation
+    // Navigation bar avec courbe centrale et FAB flottant
+floatingActionButton: Stack(
+  children: [
+    // Boutons secondaires animés
+    AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            // Bouton Entrée (gauche)
+            if (_isFabExpanded)
+              Positioned(
+                bottom: 12.h,
+                left: MediaQuery.of(context).size.width * 0.5 - 80 - (60 * _animation.value),
+                child: Transform.scale(
+                  scale: _animation.value,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 8,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: FloatingActionButton(
+                      
+                      mini: true,
+                      backgroundColor: Colors.green,
+                      heroTag: "entry",
+                      elevation: 0,
+                      onPressed: () {
+                        // Action pour entrée
+                        _toggleFab();
+                      },
+                      child: Icon(Icons.arrow_downward, color: Colors.white, size: 20),
+                    ),
                   ),
                 ),
-                _buildNavItem(Icons.assignment_outlined, 'Demande', 2),
-                _buildNavItem(Icons.person, 'Profil', 3),
-              ],
+              ),
+            
+            // Bouton Actualiser (haut)
+            if (_isFabExpanded)
+              Positioned(
+                bottom: 12.h + (70 * _animation.value),
+                left: MediaQuery.of(context).size.width * 0.5 - 20,
+                child: Transform.scale(
+                  scale: _animation.value,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.orange,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 8,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: FloatingActionButton(
+                      mini: true,
+                      backgroundColor: Colors.orange,
+                      heroTag: "refresh",
+                      elevation: 0,
+                      onPressed: () {
+                        // Action pour actualiser
+                        _toggleFab();
+                      },
+                      child: Icon(Icons.refresh, color: Colors.white, size: 20),
+                    ),
+                  ),
+                ),
+              ),
+            
+            // Bouton Sortie (droite)
+            if (_isFabExpanded)
+              Positioned(
+                bottom: 12.h,
+                left: MediaQuery.of(context).size.width * 0.5 + 20 + (60 * _animation.value),
+                child: Transform.scale(
+                  scale: _animation.value,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 8,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: FloatingActionButton(
+                      mini: true,
+                      backgroundColor: Colors.red,
+                      heroTag: "exit",
+                      elevation: 0,
+                      onPressed: () {
+                        // Action pour sortie
+                        _toggleFab();
+                      },
+                      child: Icon(Icons.arrow_upward, color: Colors.white, size: 20),
+                    ),
+                  ),
+                ),
+              ),
+               // Bouton principal
+          Positioned(
+            bottom: 8.h,
+            right: 25.w,
+            child: FloatingActionButton(
+              backgroundColor: Colors.white,
+              heroTag: "main",
+              onPressed: _toggleFab,
+              child: AnimatedRotation(
+                turns: _isFabExpanded ? 0.125 : 0,
+                duration: Duration(milliseconds: 300),
+                child: Icon(
+                  Icons.add,
+                  size: 8.w,
+                  color: Color(0xFF007AFF),
+                ),
+              ),
             ),
+          ),
+          ],
+        );
+      },
+    ),
+    
+    // Bouton principal FAB
+ /*    Container(
+      decoration: BoxDecoration(
+        color: Color(0xFF007AFF),
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: FloatingActionButton(
+        
+        backgroundColor: Color(0xFF007AFF),
+        heroTag: "main",
+        elevation: 0,
+        onPressed: _toggleFab,
+        child: AnimatedRotation(
+          turns: _isFabExpanded ? 0.125 : 0,
+          duration: Duration(milliseconds: 300),
+          child: Icon(
+            Icons.add,
+            size: 32,
+            color: Colors.white,
           ),
         ),
       ),
-    );
+    ),
+ */  ],
+),
+
+// Bottom Navigation Bar avec courbe exacte comme l'image
+bottomNavigationBar: Container(
+  height: 80,
+  child: Stack(
+    children: [
+      // Barre de navigation avec découpe
+      CustomPaint(
+        size: Size(MediaQuery.of(context).size.width, 80),
+        painter: BottomNavPainter(),
+      ),
+      
+      // Contenu de la navigation
+      Container(
+        height: 80,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            // Accueil
+            Expanded(
+              child: _buildNavItem(Icons.home_outlined, 'Accueil', 0),
+            ),
+            // Stock
+            Expanded(
+              child: _buildNavItem(Icons.inventory_2_outlined, 'Stock', 1),
+            ),
+            // Espace pour le FAB
+            SizedBox(width: 80),
+            // Demande
+            Expanded(
+              child: _buildNavItem(Icons.assignment_outlined, 'Demande', 2),
+            ),
+            // Profil
+            Expanded(
+              child: _buildNavItem(Icons.person_outline, 'Profil', 3),
+            ),
+          ],
+        ),
+      ),
+    ],
+  ),
+),
+floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+);
   }
-  
+
   Widget _buildNavItem(IconData icon, String label, int index) {
     bool isSelected = _currentIndex == index;
     return GestureDetector(
@@ -306,7 +506,6 @@ class _ProfilePageState extends State<ProfilePage> {
         setState(() {
           _currentIndex = index;
         });
-        // Navigation selon l'index
         _navigateToPage(index);
       },
       child: Column(
@@ -324,6 +523,7 @@ class _ProfilePageState extends State<ProfilePage> {
               fontSize: 10.sp,
               color: isSelected ? Colors.white : Colors.white.withOpacity(0.6),
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              fontFamily: 'Poppins',
             ),
           ),
         ],
@@ -378,12 +578,16 @@ class _ProfilePageState extends State<ProfilePage> {
               style: TextStyle(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w600,
+                fontFamily: 'Poppins',
               ),
             ),
             SizedBox(height: 3.h),
             ListTile(
               leading: Icon(Icons.camera_alt, color: Color(0xFF007AFF)),
-              title: Text('Prendre une photo'),
+              title: Text(
+                'Prendre une photo',
+                style: TextStyle(fontFamily: 'Poppins'),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 // Logique pour prendre une photo
@@ -391,7 +595,10 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             ListTile(
               leading: Icon(Icons.photo_library, color: Color(0xFF007AFF)),
-              title: Text('Choisir depuis la galerie'),
+              title: Text(
+                'Choisir depuis la galerie',
+                style: TextStyle(fontFamily: 'Poppins'),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 // Logique pour choisir depuis la galerie
@@ -416,24 +623,30 @@ class _ProfilePageState extends State<ProfilePage> {
           style: TextStyle(
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
+            fontFamily: 'Poppins',
           ),
         ),
         content: Text(
           'Êtes-vous sûr de vouloir vous déconnecter ?',
-          style: TextStyle(fontSize: 14.sp),
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontFamily: 'Poppins',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Annuler',
-              style: TextStyle(color: Color(0xFF8E8E93)),
+              style: TextStyle(
+                color: Color(0xFF8E8E93),
+                fontFamily: 'Poppins',
+              ),
             ),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // Logique de déconnexion
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 '/login',
@@ -442,7 +655,10 @@ class _ProfilePageState extends State<ProfilePage> {
             },
             child: Text(
               'Déconnecter',
-              style: TextStyle(color: Color(0xFFFF3B30)),
+              style: TextStyle(
+                color: Color(0xFFFF3B30),
+                fontFamily: 'Poppins',
+              ),
             ),
           ),
         ],
@@ -450,8 +666,49 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 }
+// Custom Painter pour créer la courbe exacte
+class BottomNavPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    Paint paint = Paint()
+      ..color = Color(0xFF007AFF)
+      ..style = PaintingStyle.fill;
 
-// Clipper pour la forme ondulée du haut
+    Path path = Path();
+    
+    // Commencer du coin gauche
+    path.moveTo(0, 20);
+    
+    // Coin arrondi gauche
+    path.quadraticBezierTo(0, 0, 20, 0);
+    
+    // Ligne droite jusqu'au début de la courbe
+    path.lineTo(size.width * 0.35, 0);
+    
+    // Courbe pour le FAB
+    path.quadraticBezierTo(size.width * 0.40, 0, size.width * 0.45, 10);
+    path.quadraticBezierTo(size.width * 0.50, 25, size.width * 0.55, 10);
+    path.quadraticBezierTo(size.width * 0.60, 0, size.width * 0.65, 0);
+    
+    // Ligne droite jusqu'au coin droit
+    path.lineTo(size.width - 20, 0);
+    
+    // Coin arrondi droit
+    path.quadraticBezierTo(size.width, 0, size.width, 20);
+    
+    // Ligne droite vers le bas
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
+} 
+  
+// Clipper modifié pour créer un creux plus prononcé
 class ProfileTopClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
@@ -459,14 +716,29 @@ class ProfileTopClipper extends CustomClipper<Path> {
     
     path.moveTo(0, 0);
     path.lineTo(size.width, 0);
-    path.lineTo(size.width, size.height * 0.7);
+    path.lineTo(size.width, size.height * 0.6);
     
-    // Courbe ondulée
+    // Courbe ondulée avec creux plus prononcé au centre
+    path.quadraticBezierTo(
+      size.width * 0.85,
+      size.height * 0.75,
+      size.width * 0.7,
+      size.height * 0.65,
+    );
+    
+    // Creux central pour la photo de profil
     path.quadraticBezierTo(
       size.width * 0.5,
-      size.height * 1.1,
+      size.height * 0.45,
+      size.width * 0.3,
+      size.height * 0.65,
+    );
+    
+    path.quadraticBezierTo(
+      size.width * 0.15,
+      size.height * 0.75,
       0,
-      size.height * 0.7,
+      size.height * 0.6,
     );
     
     path.close();

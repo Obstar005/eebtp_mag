@@ -5,6 +5,8 @@ import 'dart:ui';
 import 'dart:math' as math;
 
 class PasswordCreatedModal extends StatefulWidget {
+  const PasswordCreatedModal({super.key});
+
   @override
   _PasswordCreatedModalState createState() => _PasswordCreatedModalState();
 }
