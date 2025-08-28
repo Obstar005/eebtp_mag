@@ -334,7 +334,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               SizedBox(height: 2.h),
               CustomElevatedButton(
                 text:
-                    'Envoyer  ', // J’ai ajouté la flèche directement dans le texte
+                    'Envoyer  ',
                 backgroundColor: const Color(0xFF007AFF),
                 textColor: Colors.white,
                 onPressed: () {

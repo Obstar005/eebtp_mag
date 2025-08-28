@@ -1,6 +1,8 @@
+import 'dart:ui';
 import 'package:eebtp_frontend/widgets/button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -10,8 +12,9 @@ class ProfilePage extends StatefulWidget {
   _ProfilePageState createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin {
-  int _currentIndex = 3; // Profile tab is selected
+class _ProfilePageState extends State<ProfilePage>
+    with TickerProviderStateMixin {
+  int _currentIndex = 3; // Onglet profil sélectionné
   bool _isFabExpanded = false;
   late AnimationController _animationController;
   late Animation<double> _animation;
@@ -19,14 +22,10 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 300),
-    );
-    _animation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    );
+    _animationController =
+        AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+    _animation =
+        CurvedAnimation(parent: _animationController, curve: Curves.easeInOut);
   }
 
   @override
@@ -38,114 +37,94 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
   void _toggleFab() {
     setState(() {
       _isFabExpanded = !_isFabExpanded;
+      if (_isFabExpanded) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
     });
-    if (_isFabExpanded) {
-      _animationController.forward();
-    } else {
-      _animationController.reverse();
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       body: Stack(
         children: [
-          // Arrière-plan avec gradient et forme ondulée
+          // ----------- Background bleu + blanc ----------
           SizedBox(
             height: 100.h,
             width: 100.w,
             child: Stack(
               children: [
-                // Section bleue du haut
                 ClipPath(
                   clipper: ProfileTopClipper(),
                   child: Container(
-                    height: 50.h,
+                    height: 40.h,
                     width: 100.w,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFF007AFF),
-                          Color(0xFF0056CC),
-                        ],
+                        colors: [Color(0xFF007AFF), Color(0xFF0056CC)],
                       ),
                     ),
                   ),
                 ),
-                
-                // Section blanche du bas
                 Positioned(
                   bottom: 0,
                   child: Container(
-                    height: 55.h,
+                    height: 60.h,
                     width: 100.w,
-                    color: Color(0xFFF8F9FA),
+                    color: const Color(0xFFF8F9FA),
                   ),
                 ),
               ],
             ),
           ),
-          
-          // Contenu principal
+
+          // ----------- Contenu principal ----------
           SafeArea(
             child: Column(
               children: [
-                // Header avec titre et notifications
+                // Header
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Profil',
-                        style: TextStyle(
-                          fontSize: 24.sp,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
+                      Text("Profil",
+                          style: GoogleFonts.montserrat(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white)),
                       Stack(
                         children: [
                           GestureDetector(
-                            onTap: () {
-                              Navigator.pushNamed(context, '/notifications');
-                            },
+                            onTap: () =>
+                                Navigator.pushNamed(context, '/notifications'),
                             child: Container(
                               padding: EdgeInsets.all(2.w),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.notifications_outlined,
-                                size: 10.w,
-                                color: Color(0xFF007AFF),
-                              ),
+                              decoration: const BoxDecoration(
+                                  color: Colors.white, shape: BoxShape.circle),
+                              child: Icon(Icons.notifications_outlined,
+                                  size: 10.w, color: Color(0xFF007AFF)),
                             ),
                           ),
-                          // Badge de notification
                           Positioned(
                             right: 0,
                             top: 0,
                             child: Container(
                               padding: EdgeInsets.all(1.w),
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Text(
-                                '3',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Poppins',
-                                ),
-                              ),
+                              decoration: const BoxDecoration(
+                                  color: Colors.red, shape: BoxShape.circle),
+                              child: Text("3",
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Montserrat')),
                             ),
                           ),
                         ],
@@ -153,10 +132,10 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                     ],
                   ),
                 ),
-                
-                SizedBox(height: 18.h),
-                
-                // Photo de profil avec bouton d'édition (positionnée dans le creux)
+
+                SizedBox(height: 15.h),
+
+                // Photo profil + bouton édit
                 Stack(
                   children: [
                     Container(
@@ -165,88 +144,61 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: const Color(0xFF007AFF),
-                          width: 4,
-                        ),
+                            color: const Color(0xFF007AFF), width: 2),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: Offset(0, 5),
-                          ),
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5))
                         ],
-                        //color: Colors.white,
                       ),
                       child: ClipOval(
-                        child: SvgPicture.asset(
-                          'assets/profile.svg', 
-                          fit: BoxFit.cover,
-                        ),
+                        child: SvgPicture.asset("assets/profile.svg",
+                            height: 25.h, fit: BoxFit.cover),
                       ),
                     ),
-                    
-                    // Bouton d'édition
                     Positioned(
                       bottom: 0,
                       right: 0,
                       child: GestureDetector(
-                        onTap: () {
-                          _showImagePickerOptions(context);
-                        },
+                        onTap: () => _showImagePickerOptions(context),
                         child: Container(
                           padding: EdgeInsets.all(2.w),
                           decoration: BoxDecoration(
-                            color: Color(0xFF007AFF),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white,
-                              width: 2,
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.edit,
-                            size: 4.w,
-                            color: Colors.white,
-                          ),
+                              color: const Color(0xFF007AFF),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                  color: Colors.white, width: 2)),
+                          child: Icon(Icons.edit,
+                              size: 4.w, color: Colors.white),
                         ),
                       ),
-                    ),
+                    )
                   ],
                 ),
-                
-                SizedBox(height: 3.h),
-                
-                // Nom et poste
-                Text(
-                  'John Doe',
-                  style: TextStyle(
-                    fontSize: 22.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF007AFF),
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                
-                SizedBox(height: 1.h),
-                
-                Text(
-                  'Magasinier',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    color: Color(0xFF8E8E93),
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                
+
+                SizedBox(height: 1.5.h),
+
+                Text("John Doe",
+                    style: TextStyle(
+                        fontSize: 22.sp,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF007AFF),
+                        fontFamily: 'Montserrat')),
+                Text("Magasinier",
+                    style: TextStyle(
+                        fontSize: 16.sp,
+                        color: Color(0xFF8E8E93),
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Montserrat')),
+
                 SizedBox(height: 6.h),
-                
-                // Boutons d'action
+
+                // Boutons action
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 6.w),
                   child: Column(
                     children: [
-                      // Bouton Modifier profil
                       Container(
                         width: double.infinity,
                         height: 6.5.h,
@@ -255,14 +207,13 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                           text: "Modifier votre profil",
                           backgroundColor: Colors.white,
                           textColor: const Color(0xFF007AFF),
-                          onPressed: () => Navigator.pushNamed(context, '/edit_profile'),
+                          onPressed: () => Navigator.pushNamed(
+                              context, '/edit_profile'),
                           icon: Icons.edit_outlined,
                           iconColor: const Color(0xFF007AFF),
                           outlined: true,
                         ),
                       ),
-                      
-                      // Bouton Déconnecter
                       SizedBox(
                         width: double.infinity,
                         height: 6.5.h,
@@ -284,253 +235,135 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
           ),
         ],
       ),
-      
-      // Floating Action Button avec animation
-    // Navigation bar avec courbe centrale et FAB flottant
-floatingActionButton: Stack(
-  children: [
-    // Boutons secondaires animés
-    AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Stack(
+
+      // ----------- FAB principal + secondaires ----------
+      floatingActionButton: SizedBox(
+        width: 300,
+        height: 170,
+        child: Stack(
+          alignment: Alignment.center,
           children: [
-            // Bouton Entrée (gauche)
-            if (_isFabExpanded)
-              Positioned(
-                bottom: 12.h,
-                left: MediaQuery.of(context).size.width * 0.5 - 80 - (60 * _animation.value),
-                child: Transform.scale(
-                  scale: _animation.value,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.green,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 8,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: FloatingActionButton(
-                      
-                      mini: true,
-                      backgroundColor: Colors.green,
-                      heroTag: "entry",
-                      elevation: 0,
-                      onPressed: () {
-                        // Action pour entrée
-                        _toggleFab();
-                      },
-                      child: Icon(Icons.arrow_downward, color: Colors.white, size: 20),
-                    ),
-                  ),
+            // Bouton Entrée
+            AnimatedPositioned(
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              bottom: _isFabExpanded ? 100 : 0,
+              left: _isFabExpanded ? 60 : 0,
+              
+              child: Transform.scale(
+                scale: _isFabExpanded ? 1 : 0,
+                child: FloatingActionButton(
+                  shape: const CircleBorder(),
+                  mini: true,
+                  heroTag: "entry",
+                  backgroundColor: Color(0xFF007AFF),
+                  onPressed: () {},
+                  child: Icon(Icons.arrow_downward, color: Colors.white),
                 ),
               ),
-            
-            // Bouton Actualiser (haut)
-            if (_isFabExpanded)
-              Positioned(
-                bottom: 12.h + (70 * _animation.value),
-                left: MediaQuery.of(context).size.width * 0.5 - 20,
-                child: Transform.scale(
-                  scale: _animation.value,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.orange,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 8,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: FloatingActionButton(
-                      mini: true,
-                      backgroundColor: Colors.orange,
-                      heroTag: "refresh",
-                      elevation: 0,
-                      onPressed: () {
-                        // Action pour actualiser
-                        _toggleFab();
-                      },
-                      child: Icon(Icons.refresh, color: Colors.white, size: 20),
-                    ),
-                  ),
+            ),
+            // Bouton Actualiser
+            AnimatedPositioned(
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              bottom: _isFabExpanded ? 120 : 0,
+              child: Transform.scale(
+                scale: _isFabExpanded ? 1 : 0,
+                child: FloatingActionButton(
+                  shape: const CircleBorder(),
+                  mini: true,
+                  heroTag: "refresh",
+                  backgroundColor: Color(0xFF007AFF),
+                  onPressed: () {},
+                  child: Icon(Icons.refresh, color: Colors.white),
                 ),
               ),
-            
-            // Bouton Sortie (droite)
-            if (_isFabExpanded)
-              Positioned(
-                bottom: 12.h,
-                left: MediaQuery.of(context).size.width * 0.5 + 20 + (60 * _animation.value),
-                child: Transform.scale(
-                  scale: _animation.value,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 8,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: FloatingActionButton(
-                      mini: true,
-                      backgroundColor: Colors.red,
-                      heroTag: "exit",
-                      elevation: 0,
-                      onPressed: () {
-                        // Action pour sortie
-                        _toggleFab();
-                      },
-                      child: Icon(Icons.arrow_upward, color: Colors.white, size: 20),
-                    ),
-                  ),
+            ),
+            // Bouton Sortie
+            AnimatedPositioned(
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              bottom: _isFabExpanded ? 100 : 0,
+              right: _isFabExpanded ? 60 : 0,
+              child: Transform.scale(
+                scale: _isFabExpanded ? 1 : 0,
+                child: FloatingActionButton(
+                  shape: const CircleBorder(),
+                  mini: true,
+                  heroTag: "exit",
+                  backgroundColor: Color(0xFF007AFF),
+                  onPressed: () {},
+                  child: Icon(Icons.arrow_upward, color: Colors.white),
                 ),
               ),
-               // Bouton principal
-          Positioned(
-            bottom: 8.h,
-            right: 25.w,
-            child: FloatingActionButton(
-              backgroundColor: Colors.white,
+            ),
+
+            // FAB principal
+            FloatingActionButton(
               heroTag: "main",
+              backgroundColor: Color(0xFF007AFF),
               onPressed: _toggleFab,
+             shape: const CircleBorder(),
               child: AnimatedRotation(
                 turns: _isFabExpanded ? 0.125 : 0,
                 duration: Duration(milliseconds: 300),
-                child: Icon(
-                  Icons.add,
-                  size: 8.w,
-                  color: Color(0xFF007AFF),
-                ),
+                child: Icon(Icons.add, size: 50, color: Colors.white),
               ),
             ),
-          ),
           ],
-        );
-      },
-    ),
-    
-    // Bouton principal FAB
- /*    Container(
-      decoration: BoxDecoration(
-        color: Color(0xFF007AFF),
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 12,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-      child: FloatingActionButton(
-        
-        backgroundColor: Color(0xFF007AFF),
-        heroTag: "main",
-        elevation: 0,
-        onPressed: _toggleFab,
-        child: AnimatedRotation(
-          turns: _isFabExpanded ? 0.125 : 0,
-          duration: Duration(milliseconds: 300),
-          child: Icon(
-            Icons.add,
-            size: 32,
-            color: Colors.white,
-          ),
         ),
       ),
-    ),
- */  ],
-),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
 
-// Bottom Navigation Bar avec courbe exacte comme l'image
-bottomNavigationBar: Container(
-  height: 80,
-  child: Stack(
-    children: [
-      // Barre de navigation avec découpe
-      CustomPaint(
-        size: Size(MediaQuery.of(context).size.width, 80),
-        painter: BottomNavPainter(),
-      ),
-      
-      // Contenu de la navigation
-      Container(
-        height: 80,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      // ----------- BottomNav avec creux ----------
+      bottomNavigationBar: SizedBox(
+        height: 70,
+        child: Stack(
           children: [
-            // Accueil
-            Expanded(
-              child: _buildNavItem(Icons.home_outlined, 'Accueil', 0),
+            CustomPaint(
+              size: Size(MediaQuery.of(context).size.width, 70),
+              painter: BottomNavPainter(),
             ),
-            // Stock
-            Expanded(
-              child: _buildNavItem(Icons.inventory_2_outlined, 'Stock', 1),
-            ),
-            // Espace pour le FAB
-            SizedBox(width: 80),
-            // Demande
-            Expanded(
-              child: _buildNavItem(Icons.assignment_outlined, 'Demande', 2),
-            ),
-            // Profil
-            Expanded(
-              child: _buildNavItem(Icons.person_outline, 'Profil', 3),
-            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(Icons.home_outlined, "Accueil", 0),
+                _buildNavItem(Icons.inventory_2_outlined, "Stock", 1),
+                SizedBox(width: 60),
+                _buildNavItem(Icons.assignment_outlined, "Demande", 2),
+                _buildNavItem(Icons.person_outline, "Profil", 3),
+              ],
+            )
           ],
         ),
       ),
-    ],
-  ),
-),
-floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-);
+    );
   }
 
+  // ------------------- Helpers -------------------
   Widget _buildNavItem(IconData icon, String label, int index) {
     bool isSelected = _currentIndex == index;
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _currentIndex = index;
-        });
+        setState(() => _currentIndex = index);
         _navigateToPage(index);
       },
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            size: 6.w,
-            color: isSelected ? Colors.white : Colors.white.withOpacity(0.6),
-          ),
-          SizedBox(height: 0.5.h),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10.sp,
-              color: isSelected ? Colors.white : Colors.white.withOpacity(0.6),
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-              fontFamily: 'Poppins',
-            ),
-          ),
+          Icon(icon,
+              size: 22,
+              color: isSelected ? Colors.white : Colors.white70),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 12,
+                  color: isSelected ? Colors.white : Colors.white70,
+                  fontFamily: "Montserrat")),
         ],
       ),
     );
   }
-  
+
   void _navigateToPage(int index) {
     switch (index) {
       case 0:
@@ -543,11 +376,10 @@ floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         Navigator.pushReplacementNamed(context, '/demande');
         break;
       case 3:
-        // Déjà sur la page profil
         break;
     }
   }
-  
+
   void _showImagePickerOptions(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -557,9 +389,8 @@ floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(6.w),
-            topRight: Radius.circular(6.w),
-          ),
+              topLeft: Radius.circular(6.w),
+              topRight: Radius.circular(6.w)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -573,174 +404,161 @@ floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
               ),
             ),
             SizedBox(height: 3.h),
-            Text(
-              'Modifier la photo de profil',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Poppins',
-              ),
-            ),
+            Text("Modifier la photo de profil",
+                style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: "Montserrat")),
             SizedBox(height: 3.h),
             ListTile(
-              leading: Icon(Icons.camera_alt, color: Color(0xFF007AFF)),
-              title: Text(
-                'Prendre une photo',
-                style: TextStyle(fontFamily: 'Poppins'),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                // Logique pour prendre une photo
-              },
+              leading: const Icon(Icons.camera_alt, color: Color(0xFF007AFF)),
+              title: const Text("Prendre une photo",
+                  style: TextStyle(fontFamily: "Montserrat")),
+              onTap: () => Navigator.pop(context),
             ),
             ListTile(
-              leading: Icon(Icons.photo_library, color: Color(0xFF007AFF)),
-              title: Text(
-                'Choisir depuis la galerie',
-                style: TextStyle(fontFamily: 'Poppins'),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                // Logique pour choisir depuis la galerie
-              },
+              leading: const Icon(Icons.photo_library, color: Color(0xFF007AFF)),
+              title: const Text("Choisir depuis la galerie",
+                  style: TextStyle(fontFamily: "Montserrat")),
+              onTap: () => Navigator.pop(context),
             ),
-            SizedBox(height: 2.h),
           ],
         ),
       ),
     );
   }
-  
+
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4.w),
-        ),
-        title: Text(
-          'Déconnexion',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-            fontFamily: 'Poppins',
-          ),
-        ),
-        content: Text(
-          'Êtes-vous sûr de vouloir vous déconnecter ?',
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontFamily: 'Poppins',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Annuler',
-              style: TextStyle(
-                color: Color(0xFF8E8E93),
-                fontFamily: 'Poppins',
-              ),
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+        child: AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.w)),
+          title: Center(
+              child: Text("Déconnexion",
+                  style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: "Montserrat"))),
+          content: Text("Souhaitez-vous vous déconnecter ?",
+              style:
+                  TextStyle(fontSize: 14.sp, fontFamily: "Montserrat")),
+          actionsAlignment: MainAxisAlignment.spaceAround,
+          actions: [
+            CustomElevatedButton(
+              text: "NON",
+              backgroundColor: Colors.transparent,
+              textColor: const Color(0xFF8E8E93),
+              onPressed: () => Navigator.pop(context),
+              width: 30.w,
+              outlined: true,
             ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/login',
-                (route) => false,
-              );
-            },
-            child: Text(
-              'Déconnecter',
-              style: TextStyle(
-                color: Color(0xFFFF3B30),
-                fontFamily: 'Poppins',
-              ),
+            CustomElevatedButton(
+              text: "OUI",
+              backgroundColor: const Color(0xFFFF3B30),
+              textColor: Colors.white,
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pushNamedAndRemoveUntil(
+                    context, '/login', (route) => false);
+              },
+              width: 30.w,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
-// Custom Painter pour créer la courbe exacte
+
+// ----------- Bottom Nav Painter -----------
+/// Painter de la bottom bar avec un creux circulaire arrondi aux bords
 class BottomNavPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    Paint paint = Paint()
-      ..color = Color(0xFF007AFF)
-      ..style = PaintingStyle.fill;
+    final paint = Paint()
+      ..color = const Color(0xFF007AFF)
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
-    Path path = Path();
-    
-    // Commencer du coin gauche
-    path.moveTo(0, 20);
-    
+    // Rayon du FAB et creux
+    final double fabRadius = size.width * 0.08;
+    final double notchRadius = fabRadius + 8;
+
+    // Largeur horizontale de la zone du creux
+    final double notchStartX = size.width / 2 - notchRadius;
+    final double notchEndX = size.width / 2 + notchRadius;
+
+    // Facteur de douceur (ajuste si besoin)
+    final double smoothFactor = notchRadius * 0.4;
+
+    final path = Path();
+
     // Coin arrondi gauche
+    path.moveTo(0, 20);
     path.quadraticBezierTo(0, 0, 20, 0);
-    
-    // Ligne droite jusqu'au début de la courbe
-    path.lineTo(size.width * 0.35, 0);
-    
-    // Courbe pour le FAB
-    path.quadraticBezierTo(size.width * 0.40, 0, size.width * 0.45, 10);
-    path.quadraticBezierTo(size.width * 0.50, 25, size.width * 0.55, 10);
-    path.quadraticBezierTo(size.width * 0.60, 0, size.width * 0.65, 0);
-    
-    // Ligne droite jusqu'au coin droit
+
+    // Plateau gauche jusqu'avant le creux
+    path.lineTo(notchStartX - smoothFactor, 0);
+
+    // Transition douce vers le creux
+    path.cubicTo(
+      notchStartX, 0,                     // contrôle proche plateau
+      notchStartX, notchRadius * 0.3,     // contrôle qui descend légèrement
+      size.width / 2 - fabRadius, notchRadius * 0.6, // entrée arrondie
+    );
+
+    // Arc central du creux (semi-circulaire)
+    path.arcToPoint(
+      Offset(size.width / 2 + fabRadius, notchRadius * 0.6),
+      radius: Radius.circular(notchRadius),
+      clockwise: false,
+    );
+
+    // Transition douce vers le plateau droit
+    path.cubicTo(
+      notchEndX, notchRadius * 0.3,
+      notchEndX, 0,
+      notchEndX + smoothFactor, 0,
+    );
+
+    // Plateau droit jusqu'au coin
     path.lineTo(size.width - 20, 0);
-    
-    // Coin arrondi droit
     path.quadraticBezierTo(size.width, 0, size.width, 20);
-    
-    // Ligne droite vers le bas
+
+    // Bas de la barre
     path.lineTo(size.width, size.height);
     path.lineTo(0, size.height);
     path.close();
 
+    // Ombre
+    canvas.drawShadow(path, Colors.black26, 5, true);
     canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
-} 
-  
-// Clipper modifié pour créer un creux plus prononcé
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// Clipper pour créer une courbe simple comme dans l'image
+
+// ----------- Clipper Top -----------
 class ProfileTopClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    
     path.moveTo(0, 0);
     path.lineTo(size.width, 0);
     path.lineTo(size.width, size.height * 0.6);
-    
-    // Courbe ondulée avec creux plus prononcé au centre
     path.quadraticBezierTo(
-      size.width * 0.85,
-      size.height * 0.75,
-      size.width * 0.7,
-      size.height * 0.65,
-    );
-    
-    // Creux central pour la photo de profil
+        size.width * 0.85, size.height * 0.75, size.width * 0.7, size.height * 0.65);
     path.quadraticBezierTo(
-      size.width * 0.5,
-      size.height * 0.45,
-      size.width * 0.3,
-      size.height * 0.65,
-    );
-    
+        size.width * 0.5, size.height * 0.45, size.width * 0.3, size.height * 0.65);
     path.quadraticBezierTo(
-      size.width * 0.15,
-      size.height * 0.75,
-      0,
-      size.height * 0.6,
-    );
-    
+        size.width * 0.15, size.height * 0.75, 0, size.height * 0.6);
     path.close();
     return path;
   }

@@ -1,5 +1,9 @@
+import 'package:eebtp_frontend/screens/edit_profile.dart';
+import 'package:eebtp_frontend/screens/entry_screen.dart';
+import 'package:eebtp_frontend/screens/exit_screen.dart';
 import 'package:eebtp_frontend/screens/forgotPassword_screen.dart';
 import 'package:eebtp_frontend/screens/getStarted_screen.dart';
+import 'package:eebtp_frontend/screens/home_page.dart';
 import 'package:eebtp_frontend/screens/logintwosteps_screen.dart';
 import 'package:eebtp_frontend/screens/new_password_screen.dart';
 import 'package:eebtp_frontend/screens/otp_confirmation_screen.dart';
@@ -31,16 +35,20 @@ class MyApp extends StatelessWidget {
   '/forgot_password': (context) => ForgotPasswordScreen(),
   '/new_password': (context) => NewPasswordScreen(),
   '/otp_confirmation': (context) => const OTPConfirmationScreen(),
-  '/profile': (context) => ProfilePage(),
+
   // Routes principales de navigation
- /*  '/home': (context) => const HomeScreen(),
-  '/stock': (context) => const StockScreen(),
-  '/demande': (context) => const DemandeScreen(),
-  
-  
-  // Routes de profil et paramètres
-  '/edit_profile': (context) => const EditProfileScreen(),
-  '/notifications': (context) => const NotificationsScreen(), */
+  '/home': (context) => const HomePage(),
+//  '/stock': (context) => const StockScreen(),
+  //'/demande': (context) => const DemandeScreen(),
+  '/profile': (context) => ProfilePage(),
+
+  // Routes de gestion de stock
+  '/entry': (context) => const StockEntryScreen(),
+  '/exit': (context) => const StockExitScreen(),
+  // Routes de profil 
+ 
+'/edit_profile': (context) => const EditProfilePage(),
+  //'/notifications': (context) => const NotificationsScreen(),
 },
         );
       },

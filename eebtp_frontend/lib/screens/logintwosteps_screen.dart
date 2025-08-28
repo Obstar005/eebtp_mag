@@ -146,7 +146,7 @@ Widget _buildPhoneStep(BuildContext ctx) {
               setSelectorButtonAsPrefixIcon: true,
             ),
             ignoreBlank: false,
-            autoValidateMode: AutovalidateMode.onUserInteraction,
+            autoValidateMode: AutovalidateMode.disabled,
             selectorTextStyle: GoogleFonts.poppins(color: Colors.black),
             textStyle: GoogleFonts.poppins(),
             formatInput: false,
