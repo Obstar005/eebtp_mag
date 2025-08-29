@@ -15,6 +15,7 @@ import { ProfilesPage } from "../pages/ProfilesPage";
 import { ProjetsPage } from "../pages/projects/ProjectsPage";
 import { AddEditProjectPage } from "../pages/projects/AddEditProjectPage";
 import { ProjectDetailsPage } from "../pages/projects/ProjectDetailsPage";
+import { MagasinDetailsPage } from "../pages/projects/MagasinDetailsPage";
 
 export const router = createBrowserRouter([
   {
@@ -84,6 +85,10 @@ export const router = createBrowserRouter([
         path: "projects/:id/edit",
         element: <AddEditProjectPage />,
       },
+      {
+        path: "magasins/:id",
+        element: <MagasinDetailsPage />,
+      }
     ],
   },
 ]);

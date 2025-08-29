@@ -381,7 +381,7 @@ export function ProjectsPage() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => navigate(`/projects/${projet.id}/details`)}
-                            className="bg-green-600 text-white p-2 rounded hover:bg-green-700 transition-colors"
+                            className="p-1 px-4 text-gray-50 bg-green-600 rounded hover:bg-green-700 transition-colors"
                             title="Voir le projet"
                           >
                             <Eye className="h-4 w-4" />
@@ -390,14 +390,14 @@ export function ProjectsPage() {
                             onClick={() =>
                               navigate(`/projects/${projet.id}/edit`)
                             }
-                            className="bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600 transition-colors"
+                            className="p-1 px-4 text-gray-50 bg-yellow-500 rounded hover:bg-yellow-600 transition-colors"
                             title="Modifier le projet"
                           >
                             <Edit className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteProjet(projet.id)}
-                            className="bg-red-600 text-white p-2 rounded hover:bg-red-700 transition-colors"
+                            className="p-1 px-4 text-gray-50 bg-red-600 rounded hover:bg-red-700 transition-colors"
                             title="Supprimer le projet"
                           >
                             <Trash2 className="h-4 w-4" />

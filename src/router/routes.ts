@@ -21,6 +21,14 @@ export const routePaths = {
   projects: {
     list: "/projects",
     add: "/projects/add",
+    details: "/projects/:id",
+    edit: "/projects/:id/edit",
+  },
+  magasins: {
+    list: "/magasins",
+    add: "/magasins/add",
+    edit: "/magasins/:id/edit",
+    details: "/magasins/:id",
   },
   inventory: {
     list: "/inventory",

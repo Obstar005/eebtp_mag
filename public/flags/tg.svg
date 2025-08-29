@@ -1,0 +1,10 @@
+<svg width="20" height="15" viewBox="0 0 20 15" xmlns="http://www.w3.org/2000/svg">
+  <!-- Togo flag - green and yellow stripes with red square and star -->
+  <rect width="20" height="3" fill="#006a4e"/>
+  <rect width="20" height="3" y="3" fill="#ffde00"/>
+  <rect width="20" height="3" y="6" fill="#006a4e"/>
+  <rect width="20" height="3" y="9" fill="#ffde00"/>
+  <rect width="20" height="3" y="12" fill="#006a4e"/>
+  <rect width="8" height="9" fill="#d21034"/>
+  <polygon points="4,4.5 4.8,6.9 2.1,5.4 5.9,5.4 3.2,6.9" fill="white"/>
+</svg>

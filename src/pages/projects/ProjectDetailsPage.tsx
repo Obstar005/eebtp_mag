@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Eye, Edit, Trash2, Upload } from "lucide-react";
 import { useProjet, useDeleteProjet } from "../../hooks/useProjets";
+import { useCountries } from "../../hooks/useCountries";
 import { useModal } from "../../hooks/useModal";
 import { ConfirmationModal } from "../../components/layout/ConfirmationModal";
+import { EditMagasinModal } from "../../components/magasins/EditMagasinModal";
 
 export function ProjectDetailsPage() {
   const navigate = useNavigate();
@@ -11,8 +14,20 @@ export function ProjectDetailsPage() {
 
   // Hooks
   const { data: projet, isLoading } = useProjet(projetId);
+  const { getCountryByAbbreviation, getTogoCountry } = useCountries();
   const deleteProjetMutation = useDeleteProjet();
   const confirmDeleteModal = useModal();
+  const [showEditMagasinModal, setShowEditMagasinModal] = useState(false);
+
+  // Fonction pour obtenir le pays du projet
+  const getProjectCountry = () => {
+    if (!projet?.pays) return getTogoCountry(); // Fallback vers Togo
+
+    const country = getCountryByAbbreviation(projet.pays);
+    return country || getTogoCountry(); // Fallback vers Togo si pays non trouvé
+  };
+
+  const projectCountry = getProjectCountry();
 
   // Formatage des dates
   const formatDate = (dateValue: string | Date) => {
@@ -23,10 +38,6 @@ export function ProjectDetailsPage() {
       month: "2-digit",
       year: "numeric",
     });
-  };
-
-  const handleDeleteProjet = () => {
-    confirmDeleteModal.open();
   };
 
   const confirmDelete = async () => {
@@ -165,8 +176,18 @@ export function ProjectDetailsPage() {
                   Pays
                 </label>
                 <div className="p-3 bg-gray-50 rounded-lg flex items-center gap-2">
-                  <img src="/flags/tg.png" alt="Togo" className="w-5 h-4" />
-                  Togo
+                  {projectCountry?.flag &&
+                    (projectCountry.flag.includes("http") ||
+                    projectCountry.flag.includes(".svg") ? (
+                      <img
+                        src={projectCountry.flag}
+                        alt={`Drapeau ${projectCountry.name}`}
+                        className="w-5 h-4 object-cover rounded-sm"
+                      />
+                    ) : (
+                      <span className="text-lg">{projectCountry.flag}</span>
+                    ))}
+                  {projectCountry?.name || "Pays non défini"}
                 </div>
               </div>
             </div>
@@ -188,12 +209,14 @@ export function ProjectDetailsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
+                    onClick={() => navigate(`/projects/magasins/1`)}
                     className="bg-green-600 text-white p-1 rounded text-xs"
                     title="Voir le magasin"
                   >
                     <Eye className="h-3 w-3" />
                   </button>
                   <button
+                    onClick={() => setShowEditMagasinModal(true)}
                     className="bg-yellow-500 text-white p-1 rounded text-xs"
                     title="Modifier le magasin"
                   >
@@ -302,6 +325,13 @@ export function ProjectDetailsPage() {
         confirmText="Supprimer"
         cancelText="Annuler"
         loading={deleteProjetMutation.isPending}
+      />
+
+      {/* Modal d'édition de magasin */}
+      <EditMagasinModal
+        isOpen={showEditMagasinModal}
+        onClose={() => setShowEditMagasinModal(false)}
+        magasinId={1}
       />
     </div>
   );

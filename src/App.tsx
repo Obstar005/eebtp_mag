@@ -21,6 +21,7 @@ import { EditAccountPage } from "./pages/accounts/EditAccountPage";
 import { ProjectsPage } from "./pages/projects/ProjectsPage";
 import { AddEditProjectPage } from "./pages/projects/AddEditProjectPage";
 import { ProjectDetailsPage } from "./pages/projects/ProjectDetailsPage";
+import { MagasinDetailsPage } from "./pages/projects/MagasinDetailsPage";
 
 // Créer une instance du client React Query
 const queryClient = new QueryClient({
@@ -109,6 +110,7 @@ function AppContent() {
         <Route path="projects/add" element={<AddEditProjectPage />} />
         <Route path="projects/:id/edit" element={<AddEditProjectPage />} />
         <Route path="projects/:id/details" element={<ProjectDetailsPage />} />
+        <Route path="projects/magasins/:id" element={<MagasinDetailsPage />} />
         <Route
           path="inventory"
           element={<div>Page Inventaire (à implémenter)</div>}

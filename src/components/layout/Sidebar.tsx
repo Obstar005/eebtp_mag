@@ -102,19 +102,19 @@ const navigation: MenuItem[] = [
     icon: Store,
     children: [
       {
-        name: "Ajouter un article",
-        href: "/inventory/add",
+        name: "Liste des magasins",
+        href: "/magasins",
+        icon: List,
+      },
+      {
+        name: "Ajouter un magasin",
+        href: "/magasins/add",
         icon: Plus,
       },
       {
-        name: "Liste des articles",
+        name: "Gestion du stock",
         href: "/inventory",
         icon: Package,
-      },
-      {
-        name: "Liste des magasins",
-        href: "/stores",
-        icon: List,
       },
     ],
   },
