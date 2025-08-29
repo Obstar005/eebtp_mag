@@ -1,6 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Upload, X, Plus, Trash2, ChevronDown } from "lucide-react";
+import {
+  ArrowLeft,
+  Upload,
+  X,
+  Plus,
+  Trash2,
+  ChevronDown,
+  Search,
+} from "lucide-react";
 import {
   useCreateProjet,
   useUpdateProjet,
@@ -37,6 +45,8 @@ export function AddEditProjectPage() {
   // États pour les comptes associés (utilisation de strings simples pour le prototype)
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
   const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
+  const [accountSearchTerm, setAccountSearchTerm] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState<CreateProjetData>({
     name: "",
@@ -62,6 +72,24 @@ export function AddEditProjectPage() {
       }
     }
   }, [countries, selectedCountry]);
+
+  // Gérer la fermeture du dropdown quand on clique en dehors
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsAccountDropdownOpen(false);
+        setAccountSearchTerm(""); // Réinitialiser la recherche
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Charger les données du projet en mode édition
   useEffect(() => {
@@ -173,6 +201,18 @@ export function AddEditProjectPage() {
   const removeSelectedAccount = (accountName: string) => {
     setSelectedAccounts((prev) => prev.filter((name) => name !== accountName));
   };
+
+  // Filtrer les comptes selon le terme de recherche
+  const filteredAccounts =
+    accounts?.data?.filter((account) => {
+      const accountName = `${account.nom} ${account.prenoms}`.toLowerCase();
+      const profileName = account.profile.nom.toLowerCase();
+      const searchTerm = accountSearchTerm.toLowerCase();
+
+      return (
+        accountName.includes(searchTerm) || profileName.includes(searchTerm)
+      );
+    }) || [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -540,7 +580,7 @@ export function AddEditProjectPage() {
                   </label>
 
                   {/* Champ de sélection avec tags des comptes sélectionnés */}
-                  <div className="relative">
+                  <div className="relative" ref={dropdownRef}>
                     <div
                       onClick={() =>
                         setIsAccountDropdownOpen(!isAccountDropdownOpen)
@@ -552,7 +592,7 @@ export function AddEditProjectPage() {
                         {selectedAccounts.map((accountName) => (
                           <div
                             key={accountName}
-                            className="flex items-center bg-gray-100 text-gray-700 rounded-full px-3 py-1 text-sm"
+                            className="flex items-center bg-blue-100 text-blue-800 rounded-full px-3 py-1 text-sm"
                           >
                             <span className="mr-1">{accountName}</span>
                             <button
@@ -561,7 +601,7 @@ export function AddEditProjectPage() {
                                 e.stopPropagation();
                                 removeSelectedAccount(accountName);
                               }}
-                              className="ml-1 text-gray-500 hover:text-gray-700"
+                              className="ml-1 text-blue-600 hover:text-blue-800"
                               title={`Supprimer ${accountName}`}
                             >
                               <X className="h-3 w-3" />
@@ -569,9 +609,11 @@ export function AddEditProjectPage() {
                           </div>
                         ))}
 
-                        {/* Barre verticale de séparation */}
-                        {selectedAccounts.length > 0 && (
-                          <div className="w-px h-5 bg-red-400 mx-1" />
+                        {/* Placeholder quand rien n'est sélectionné */}
+                        {selectedAccounts.length === 0 && (
+                          <span className="text-gray-500 text-sm">
+                            Sélectionner des comptes...
+                          </span>
                         )}
 
                         {/* Flèche dropdown */}
@@ -584,6 +626,86 @@ export function AddEditProjectPage() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Dropdown des comptes disponibles */}
+                    {isAccountDropdownOpen && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-hidden">
+                        {/* Barre de recherche */}
+                        <div className="p-3 border-b border-gray-200">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                            <input
+                              type="text"
+                              value={accountSearchTerm}
+                              onChange={(e) =>
+                                setAccountSearchTerm(e.target.value)
+                              }
+                              placeholder="Rechercher un compte..."
+                              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Liste des comptes filtrés */}
+                        <div className="max-h-48 overflow-y-auto">
+                          {filteredAccounts.length > 0 ? (
+                            <div className="p-2">
+                              {filteredAccounts.map((account) => {
+                                const accountName = `${account.nom} ${account.prenoms}`;
+                                const isSelected =
+                                  selectedAccounts.includes(accountName);
+
+                                return (
+                                  <div
+                                    key={account.id}
+                                    onClick={() => {
+                                      toggleAccountSelection(accountName);
+                                    }}
+                                    className={`flex items-center justify-between px-3 py-2 rounded cursor-pointer hover:bg-gray-50 ${
+                                      isSelected
+                                        ? "bg-blue-50 text-blue-600"
+                                        : "text-gray-700"
+                                    }`}
+                                  >
+                                    <div className="flex items-center">
+                                      <div className="flex-1">
+                                        <div className="font-medium text-sm">
+                                          {accountName}
+                                        </div>
+                                        <div className="text-xs text-gray-500">
+                                          {account.profile.nom} •{" "}
+                                          {account.telephone}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    {isSelected && (
+                                      <div className="ml-2">
+                                        <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
+                                          <div className="w-2 h-2 bg-white rounded-full"></div>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="px-3 py-4 text-center">
+                              {accountSearchTerm ? (
+                                <div className="text-gray-500 text-sm">
+                                  Aucun compte trouvé pour "{accountSearchTerm}"
+                                </div>
+                              ) : (
+                                <div className="text-gray-500 text-sm">
+                                  Aucun compte disponible
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
