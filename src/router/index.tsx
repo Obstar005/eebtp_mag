@@ -16,6 +16,13 @@ import { ProjetsPage } from "../pages/projects/ProjectsPage";
 import { AddEditProjectPage } from "../pages/projects/AddEditProjectPage";
 import { ProjectDetailsPage } from "../pages/projects/ProjectDetailsPage";
 import { MagasinDetailsPage } from "../pages/projects/MagasinDetailsPage";
+// Pages des articles
+import { ArticlesPage } from "../pages/inventory/ArticlesPage";
+import { ArticleDetailsPage } from "../pages/inventory/ArticleDetailsPage";
+import { AddArticlePage } from "../pages/inventory/AddArticlePage";
+// Pages des magasins
+import { MagasinsPage } from "../pages/magasins/MagasinsPage";
+import { AddEditMagasinPage } from "../pages/magasins/AddEditMagasinPage";
 
 export const router = createBrowserRouter([
   {
@@ -88,7 +95,37 @@ export const router = createBrowserRouter([
       {
         path: "magasins/:id",
         element: <MagasinDetailsPage />,
-      }
+      },
+      // Routes des magasins
+      {
+        path: "magasins",
+        element: <MagasinsPage />,
+      },
+      {
+        path: "magasins/add",
+        element: <AddEditMagasinPage />,
+      },
+      {
+        path: "magasins/:id/edit",
+        element: <AddEditMagasinPage />,
+      },
+      // Routes des articles
+      {
+        path: "articles",
+        element: <ArticlesPage />,
+      },
+      {
+        path: "articles/add",
+        element: <AddArticlePage />,
+      },
+      {
+        path: "articles/:id",
+        element: <ArticleDetailsPage />,
+      },
+      {
+        path: "articles/:id/edit",
+        element: <ArticleDetailsPage />,
+      },
     ],
   },
 ]);

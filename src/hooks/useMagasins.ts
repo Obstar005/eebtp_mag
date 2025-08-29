@@ -152,11 +152,11 @@ export function useDeleteStockArticle() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id }: { id: number; magasinId: number }) =>
-      magasinService.deleteStockArticle(id),
-    onSuccess: (_, variables) => {
+    mutationFn: (id: number) => magasinService.deleteStockArticle(id),
+    onSuccess: () => {
+      // Invalider toutes les listes d'articles (on ne connaît pas forcément le magasinId)
       queryClient.invalidateQueries({
-        queryKey: magasinKeys.articles(variables.magasinId),
+        queryKey: magasinKeys.all,
       });
       queryClient.invalidateQueries({ queryKey: magasinKeys.stats() });
     },
