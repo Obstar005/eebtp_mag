@@ -12,6 +12,9 @@ import { AddAccountPage } from "../pages/accounts/AddAccountPage";
 import { EditAccountPage } from "../pages/accounts/EditAccountPage";
 import { AccountDetailsPage } from "../pages/accounts/AccountDetailsPage";
 import { ProfilesPage } from "../pages/ProfilesPage";
+import { ProjetsPage } from "../pages/projects/ProjectsPage";
+import { AddEditProjectPage } from "../pages/projects/AddEditProjectPage";
+import { ProjectDetailsPage } from "../pages/projects/ProjectDetailsPage";
 
 export const router = createBrowserRouter([
   {
@@ -63,6 +66,23 @@ export const router = createBrowserRouter([
       {
         path: "profiles",
         element: <ProfilesPage />,
+      },
+      // Routes des projets
+      {
+        path: "projects",
+        element: <ProjetsPage />,
+      },
+      {
+        path: "projects/add",
+        element: <AddEditProjectPage />,
+      },
+      {
+        path: "projects/:id",
+        element: <ProjectDetailsPage />,
+      },
+      {
+        path: "projects/:id/edit",
+        element: <AddEditProjectPage />,
       },
     ],
   },

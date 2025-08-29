@@ -1,0 +1,509 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Plus,
+  Search,
+  Filter,
+  Eye,
+  Edit,
+  Trash2,
+  MapPin,
+  Calendar,
+  Users,
+  Building2,
+  ChevronDown,
+  MoreHorizontal,
+} from "lucide-react";
+import {
+  useProjets,
+  useDeleteProjet,
+  useProjetStats,
+} from "../../hooks/useProjets";
+import { useModal } from "../../hooks/useModal";
+import { ConfirmationModal } from "../../components/layout";
+import { CountrySelector } from "../../components/ui/CountrySelector";
+import type { ProjetFilters, ProjetStatus } from "../../types/project";
+
+export function ProjectsPage() {
+  const navigate = useNavigate();
+  const [filters, setFilters] = useState<ProjetFilters>({
+    page: 1,
+    limit: 10,
+    search: "",
+  });
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedProjetId, setSelectedProjetId] = useState<number | null>(null);
+
+  const { data: projetsData, isLoading, error } = useProjets(filters);
+  const { data: stats } = useProjetStats();
+  const deleteProjetMutation = useDeleteProjet();
+  const confirmDeleteModal = useModal();
+
+  // Gestion de la recherche
+  const handleSearch = (searchTerm: string) => {
+    setFilters((prev) => ({ ...prev, search: searchTerm, page: 1 }));
+  };
+
+  // Gestion des filtres
+  const handleFilterChange = (
+    key: keyof ProjetFilters,
+    value: string | number
+  ) => {
+    setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
+  };
+
+  // Réinitialiser les filtres
+  const resetFilters = () => {
+    setFilters({ page: 1, limit: 10, search: "" });
+    setShowFilters(false);
+  };
+
+  // Gestion de la pagination
+  const handlePageChange = (page: number) => {
+    setFilters((prev) => ({ ...prev, page }));
+  };
+
+  // Suppression d'un projet
+  const handleDeleteProjet = (id: number) => {
+    setSelectedProjetId(id);
+    confirmDeleteModal.open();
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedProjetId) return;
+
+    try {
+      await deleteProjetMutation.mutateAsync(selectedProjetId);
+      confirmDeleteModal.close();
+      setSelectedProjetId(null);
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
+    }
+  };
+
+  // Couleurs et labels pour les statuts
+  const getStatusColor = (status: ProjetStatus) => {
+    const colors = {
+      planifie: "bg-blue-100 text-blue-800",
+      en_cours: "bg-green-100 text-green-800",
+      termine: "bg-gray-100 text-gray-800",
+      annule: "bg-red-100 text-red-800",
+    };
+    return colors[status] || "bg-gray-100 text-gray-800";
+  };
+
+  const getStatusLabel = (status: ProjetStatus) => {
+    const labels = {
+      planifie: "Planifié",
+      en_cours: "En cours",
+      termine: "Terminé",
+      annule: "Annulé",
+    };
+    return labels[status] || status;
+  };
+
+  // Formatage des dates
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900">Projets</h1>
+        </div>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900">Projets</h1>
+        </div>
+        <div className="text-center text-red-600">
+          Erreur lors du chargement des projets: {error.message}
+        </div>
+      </div>
+    );
+  }
+
+  const projets = projetsData?.data || [];
+  const totalPages = projetsData?.totalPages || 1;
+
+  return (
+    <div className="space-y-6">
+      {/* En-tête avec filtres par statut */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Liste des projets
+          </h1>
+        </div>
+        <button
+          onClick={() => navigate("/projects/add")}
+          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Ajouter un projet
+        </button>
+      </div>
+
+      {/* Filtres par statut sous forme d'onglets */}
+      <div className="flex items-center justify-between mt-4">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => handleFilterChange("status", "")}
+            className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+              !filters.status
+                ? "bg-blue-100 text-blue-800 font-medium"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            Tous {stats ? `(${stats.total})` : ""}
+          </button>
+          <button
+            onClick={() => handleFilterChange("status", "termine")}
+            className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+              filters.status === "termine"
+                ? "bg-green-100 text-green-800 font-medium"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            Terminer {stats ? `(${stats.termines || 0})` : ""}
+          </button>
+          <button
+            onClick={() => handleFilterChange("status", "en_cours")}
+            className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+              filters.status === "en_cours"
+                ? "bg-yellow-100 text-yellow-800 font-medium"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            En cours {stats ? `(${stats.en_cours || 0})` : ""}
+          </button>
+          <button
+            onClick={() => handleFilterChange("status", "annule")}
+            className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+              filters.status === "annule"
+                ? "bg-red-100 text-red-800 font-medium"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            Annuler {stats ? `(${stats.annules || 0})` : ""}
+          </button>
+        </div>
+
+        {/* Barre de recherche */}
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Rechercher"
+              value={filters.search || ""}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${
+                showFilters ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Panneau de filtres avancés */}
+      {showFilters && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Filtre par pays */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Pays
+              </label>
+              <CountrySelector
+                value={undefined}
+                displayMode="name"
+                placeholder="Tous les pays"
+                onChange={(country) =>
+                  handleFilterChange("pays", country.abbreviation)
+                }
+              />
+            </div>
+
+            {/* Date de début */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Date de début
+              </label>
+              <input
+                type="date"
+                value={filters.date_debut_from || ""}
+                onChange={(e) =>
+                  handleFilterChange("date_debut_from", e.target.value)
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Date de fin */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Date de fin
+              </label>
+              <input
+                type="date"
+                value={filters.date_fin_to || ""}
+                onChange={(e) =>
+                  handleFilterChange("date_fin_to", e.target.value)
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Actions filtres */}
+            <div className="flex items-end">
+              <button
+                onClick={resetFilters}
+                className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Réinitialiser
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Liste des projets */}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        {projets.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">
+            Aucun projet trouvé
+          </div>
+        ) : (
+          <>
+            {/* Tableau desktop */}
+            <div className="hidden lg:block">
+              <table className="min-w-full">
+                <thead className="bg-gray-100 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
+                      ID du projet
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
+                      Magasinier
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
+                      Chef projet
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
+                      Chef chantier
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
+                      Date du début
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
+                      État
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white">
+                  {projets.map((projet, index) => (
+                    <tr
+                      key={projet.id}
+                      className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                    >
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                        #
+                        {projet.name ||
+                          `PRJT${String(projet.id).padStart(3, "0")}`}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        John Doe
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        John Doe
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        John Doe
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {formatDate(projet.date_debut)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            projet.status === "termine"
+                              ? "bg-green-100 text-green-800"
+                              : projet.status === "en_cours"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : projet.status === "annule"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-blue-100 text-blue-800"
+                          }`}
+                        >
+                          <span
+                            className={`w-2 h-2 rounded-full mr-2 ${
+                              projet.status === "termine"
+                                ? "bg-green-500"
+                                : projet.status === "en_cours"
+                                ? "bg-yellow-500"
+                                : projet.status === "annule"
+                                ? "bg-red-500"
+                                : "bg-blue-500"
+                            }`}
+                          ></span>
+                          {getStatusLabel(projet.status)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => navigate(`/projects/${projet.id}/details`)}
+                            className="bg-green-600 text-white p-2 rounded hover:bg-green-700 transition-colors"
+                            title="Voir le projet"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() =>
+                              navigate(`/projects/${projet.id}/edit`)
+                            }
+                            className="bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600 transition-colors"
+                            title="Modifier le projet"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProjet(projet.id)}
+                            className="bg-red-600 text-white p-2 rounded hover:bg-red-700 transition-colors"
+                            title="Supprimer le projet"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Cartes mobile */}
+            <div className="lg:hidden">
+              {projets.map((projet) => (
+                <div key={projet.id} className="border-b border-gray-200 p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-sm font-medium text-gray-900">
+                        {projet.name}
+                      </h3>
+                      <div className="mt-1 flex items-center">
+                        <MapPin className="h-3 w-3 text-gray-400 mr-1" />
+                        <span className="text-xs text-gray-500">
+                          {projet.pays}
+                        </span>
+                        <span
+                          className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                            projet.status
+                          )}`}
+                        >
+                          {getStatusLabel(projet.status)}
+                        </span>
+                      </div>
+                      <div className="mt-2 text-xs text-gray-500">
+                        <div>Chef: {projet.chefProjet.name}</div>
+                        <div className="flex items-center mt-1">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {formatDate(projet.date_debut)} -{" "}
+                          {formatDate(projet.date_fin)}
+                        </div>
+                        <div className="flex items-center mt-1">
+                          <Users className="h-3 w-3 mr-1" />
+                          {projet.comptesAssociesCount} comptes
+                          <Building2 className="h-3 w-3 ml-3 mr-1" />
+                          {projet.magasinsCount} magasins
+                        </div>
+                      </div>
+                    </div>
+                    <div className="ml-4">
+                      <button
+                        className="p-2 text-gray-400 hover:text-gray-600"
+                        onClick={() => {
+                          /* TODO: Menu actions mobile */
+                        }}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="px-6 py-3 bg-gray-50 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-700">
+                    Page {filters.page} sur {totalPages}
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handlePageChange(filters.page! - 1)}
+                      disabled={filters.page === 1}
+                      className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      Précédent
+                    </button>
+                    <button
+                      onClick={() => handlePageChange(filters.page! + 1)}
+                      disabled={filters.page === totalPages}
+                      className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      Suivant
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Modal de confirmation de suppression */}
+      <ConfirmationModal
+        isOpen={confirmDeleteModal.isOpen}
+        onClose={confirmDeleteModal.close}
+        onConfirm={confirmDelete}
+        title="Confirmer la suppression"
+        message="Êtes-vous sûr de vouloir supprimer ce projet ? Cette action est irréversible."
+        variant="danger"
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        loading={deleteProjetMutation.isPending}
+      />
+    </div>
+  );
+}

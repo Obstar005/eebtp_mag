@@ -6,3 +6,4 @@ export * from "./order";
 export * from "./request";
 export * from "./api";
 export * from "./account";
+export * from "./project";

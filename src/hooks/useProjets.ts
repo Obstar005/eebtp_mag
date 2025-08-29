@@ -1,0 +1,190 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { projetService } from "../services/api/projetService";
+import type {
+  ProjetFilters,
+  CreateProjetData,
+  UpdateProjetData,
+  CreateMagasinData,
+} from "../types/project";
+
+// Clés de cache pour React Query
+export const projetKeys = {
+  all: ["projets"] as const,
+  lists: () => [...projetKeys.all, "list"] as const,
+  list: (filters: ProjetFilters) => [...projetKeys.lists(), filters] as const,
+  details: () => [...projetKeys.all, "detail"] as const,
+  detail: (id: number) => [...projetKeys.details(), id] as const,
+  stats: () => [...projetKeys.all, "stats"] as const,
+  magasins: (projetId: number) =>
+    [...projetKeys.detail(projetId), "magasins"] as const,
+  countries: () => ["countries"] as const,
+};
+
+// Hook pour récupérer la liste des projets
+export function useProjets(filters: ProjetFilters = {}) {
+  return useQuery({
+    queryKey: projetKeys.list(filters),
+    queryFn: () => projetService.getProjets(filters),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+}
+
+// Hook pour récupérer un projet spécifique
+export function useProjet(id: number) {
+  return useQuery({
+    queryKey: projetKeys.detail(id),
+    queryFn: () => projetService.getProjetById(id),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    enabled: !!id, // Ne pas exécuter si l'ID est falsy
+  });
+}
+
+// Hook pour créer un projet
+export function useCreateProjet() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateProjetData) => projetService.createProjet(data),
+    onSuccess: (newProjet) => {
+      // Invalider et refetch les listes de projets
+      queryClient.invalidateQueries({ queryKey: projetKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: projetKeys.stats() });
+
+      // Mettre en cache le nouveau projet
+      queryClient.setQueryData(projetKeys.detail(newProjet.id), newProjet);
+    },
+  });
+}
+
+// Hook pour mettre à jour un projet
+export function useUpdateProjet() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: UpdateProjetData) => projetService.updateProjet(data),
+    onSuccess: (updatedProjet, variables) => {
+      // Mettre à jour le cache du projet spécifique
+      queryClient.setQueryData(projetKeys.detail(variables.id), updatedProjet);
+
+      // Invalider les listes pour forcer une mise à jour
+      queryClient.invalidateQueries({ queryKey: projetKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: projetKeys.stats() });
+    },
+  });
+}
+
+// Hook pour supprimer un projet
+export function useDeleteProjet() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => projetService.deleteProjet(id),
+    onSuccess: (_, deletedId) => {
+      // Supprimer le projet du cache
+      queryClient.removeQueries({ queryKey: projetKeys.detail(deletedId) });
+
+      // Invalider les listes
+      queryClient.invalidateQueries({ queryKey: projetKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: projetKeys.stats() });
+    },
+  });
+}
+
+// Hook pour récupérer les statistiques des projets
+export function useProjetStats() {
+  return useQuery({
+    queryKey: projetKeys.stats(),
+    queryFn: () => projetService.getProjetStats(),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
+  });
+}
+
+// Hook pour récupérer les magasins d'un projet
+export function useProjetMagasins(projetId: number) {
+  return useQuery({
+    queryKey: projetKeys.magasins(projetId),
+    queryFn: () => projetService.getProjetMagasins(projetId),
+    staleTime: 5 * 60 * 1000,
+    enabled: !!projetId,
+  });
+}
+
+// Hook pour ajouter un magasin à un projet
+export function useAddMagasinToProjet() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      projetId,
+      magasinData,
+    }: {
+      projetId: number;
+      magasinData: CreateMagasinData;
+    }) => projetService.addMagasinToProjet(projetId, magasinData),
+    onSuccess: (_, variables) => {
+      // Invalider les magasins du projet
+      queryClient.invalidateQueries({
+        queryKey: projetKeys.magasins(variables.projetId),
+      });
+
+      // Invalider les détails du projet pour mettre à jour le compteur
+      queryClient.invalidateQueries({
+        queryKey: projetKeys.detail(variables.projetId),
+      });
+    },
+  });
+}
+
+// Hook pour supprimer un magasin d'un projet
+export function useRemoveMagasinFromProjet() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      projetId,
+      magasinId,
+    }: {
+      projetId: number;
+      magasinId: number;
+    }) => projetService.removeMagasinFromProjet(projetId, magasinId),
+    onSuccess: (_, variables) => {
+      // Invalider les magasins du projet
+      queryClient.invalidateQueries({
+        queryKey: projetKeys.magasins(variables.projetId),
+      });
+
+      // Invalider les détails du projet
+      queryClient.invalidateQueries({
+        queryKey: projetKeys.detail(variables.projetId),
+      });
+    },
+  });
+}
+
+// Hook pour récupérer les pays disponibles
+export function useAvailableCountries() {
+  return useQuery({
+    queryKey: projetKeys.countries(),
+    queryFn: () => projetService.getAvailableCountries(),
+    staleTime: 30 * 60 * 1000, // 30 minutes - les pays changent rarement
+    gcTime: 60 * 60 * 1000, // 1 heure
+  });
+}
+
+// Hook composé pour récupérer tous les projets (sans pagination) - utile pour les sélecteurs
+export function useAllProjets() {
+  return useProjets({ limit: 1000 }); // Grande limite pour récupérer tous les projets
+}
+
+// Hook pour recherche en temps réel
+export function useProjetSearch(searchTerm: string, enabled: boolean = true) {
+  return useQuery({
+    queryKey: [...projetKeys.lists(), "search", searchTerm],
+    queryFn: () => projetService.getProjets({ search: searchTerm, limit: 100 }),
+    staleTime: 30 * 1000, // 30 secondes pour la recherche
+    enabled: enabled && searchTerm.length >= 2, // Chercher seulement si 2+ caractères
+  });
+}
