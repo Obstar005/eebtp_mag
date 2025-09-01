@@ -1,10 +1,10 @@
 import 'dart:ui';
 import 'package:eebtp_frontend/screens/profileScreen.dart';
-import 'package:eebtp_frontend/widgets/button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
+
+// Ajoutez ici le code des composants ImprovedBottomNavigation et ImprovedFAB que vous avez fourni
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -165,8 +165,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               radius: 29, // un peu plus grand
               backgroundColor: Colors.white,
               child: ClipOval(
-                child: SvgPicture.asset(
-                  "assets/profile.svg",
+                child: Image.asset(
+                  "assets/profile.png",
                   fit: BoxFit.cover,
                 ),
               ),
@@ -494,141 +494,37 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ),
       ),
 
-      // ----------- FAB principal + secondaires ----------
-      floatingActionButton: SizedBox(
-        width: 300,
-        height: 170,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Bouton Entrée
-            AnimatedPositioned(
-              duration: Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-              bottom: _isFabExpanded ? 100 : 0,
-              left: _isFabExpanded ? 60 : 0,
-              child: Transform.scale(
-                scale: _isFabExpanded ? 1 : 0,
-                child: FloatingActionButton(
-                  shape: const CircleBorder(),
-                  mini: true,
-                  heroTag: "entry",
-                  backgroundColor: Color(0xFF007AFF),
-                 onPressed: () {
-  _toggleFab(); // referme le menu
-  Navigator.pushNamed(context, '/entry'); // navigue vers l'écran d'entrée
-},
-
-                  child: Icon(Icons.arrow_downward, color: Colors.white),
-                ),
-              ),
-            ),
-            // Bouton Actualiser
-            AnimatedPositioned(
-              duration: Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-              bottom: _isFabExpanded ? 120 : 0,
-              child: Transform.scale(
-                scale: _isFabExpanded ? 1 : 0,
-                child: FloatingActionButton(
-                  shape: const CircleBorder(),
-                  mini: true,
-                  heroTag: "refresh",
-                  backgroundColor: Color(0xFF007AFF),
-                  onPressed: () {},
-                  child: Icon(Icons.refresh, color: Colors.white),
-                ),
-              ),
-            ),
-            // Bouton Sortie
-            AnimatedPositioned(
-              duration: Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-              bottom: _isFabExpanded ? 100 : 0,
-              right: _isFabExpanded ? 60 : 0,
-              child: Transform.scale(
-                scale: _isFabExpanded ? 1 : 0,
-                child: FloatingActionButton(
-                  shape: const CircleBorder(),
-                  mini: true,
-                  heroTag: "exit",
-                  backgroundColor: Color(0xFF007AFF),
-                  onPressed: () {},
-                  child: Icon(Icons.arrow_upward, color: Colors.white),
-                ),
-              ),
-            ),
-
-            // FAB principal
-            FloatingActionButton(
-              heroTag: "main",
-              backgroundColor: Color(0xFF007AFF),
-              onPressed: _toggleFab,
-              shape: const CircleBorder(),
-              child: AnimatedRotation(
-                turns: _isFabExpanded ? 0.125 : 0,
-                duration: Duration(milliseconds: 300),
-                child: Icon(Icons.add, size: 50, color: Colors.white),
-              ),
-            ),
-          ],
-        ),
+      // ----------- FAB amélioré + secondaires ----------
+      floatingActionButton: ImprovedFAB(
+        isExpanded: _isFabExpanded,
+        onToggle: _toggleFab,
+        onSecondaryPressed: (action) {
+          if (action == 'entry') {
+            Navigator.pushNamed(context, '/entry');
+          } else if (action == 'refresh') {
+            // Ajoutez votre logique d'actualisation ici
+            print('Actualisation demandée');
+          } else if (action == 'exit') {
+           Navigator.pushNamed(context, '/exit'); // Ajoutez votre logique de sortie ici
+            print('Sortie demandée');
+          }
+        },
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
 
-      // ----------- BottomNav avec creux ----------
-      bottomNavigationBar: SizedBox(
-        height: 70,
-        child: Stack(
-          children: [
-            CustomPaint(
-              size: Size(MediaQuery.of(context).size.width, 70),
-              painter: BottomNavPainter(),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(Icons.home_outlined, "Accueil", 0),
-                _buildNavItem(Icons.inventory_2_outlined, "Stock", 1),
-                SizedBox(width: 60),
-                _buildNavItem(Icons.assignment_outlined, "Demande", 2),
-                _buildNavItem(Icons.person_outline, "Profil", 3),
-              ],
-            ),
-          ],
-        ),
+      // ----------- BottomNav amélioré avec creux ----------
+      bottomNavigationBar: ImprovedBottomNavigation(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() => _currentIndex = index);
+          _navigateToPage(index);
+        },
+        showFabIndicator: _isFabExpanded,
       ),
     );
   }
 
   // ------------------- Helpers -------------------
-  Widget _buildNavItem(IconData icon, String label, int index) {
-    bool isSelected = _currentIndex == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() => _currentIndex = index);
-        _navigateToPage(index);
-      },
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            size: 22,
-            color: isSelected ? Colors.white : Colors.white70,
-          ),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: isSelected ? Colors.white : Colors.white70,
-              fontFamily: "Montserrat",
-            ),
-          ),
-        ],
-      ),
-    );
-  }
   void _navigateToPage(int index) {
     switch (index) {
       case 0:

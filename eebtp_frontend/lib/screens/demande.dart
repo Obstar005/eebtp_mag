@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:sizer/sizer.dart';
-import 'package:signature/signature.dart';
 
 import '../widgets/button.dart';
 
-// Classes de la navbar (du document 2)
+// Classes de la navbar
 class ImprovedBottomNavigation extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
@@ -252,39 +250,25 @@ class ImprovedFAB extends StatelessWidget {
   }
 }
 
-class StockEntryScreen extends StatefulWidget {
-  const StockEntryScreen({super.key});
+class SupplyRequestScreen extends StatefulWidget {
+  const SupplyRequestScreen({super.key});
 
   @override
-  State<StockEntryScreen> createState() => _StockEntryScreenState();
+  State<SupplyRequestScreen> createState() => _SupplyRequestScreenState();
 }
 
-class _StockEntryScreenState extends State<StockEntryScreen> {
-  final PageController _pc = PageController();
-  int _currentStep = 0;
-
+class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
   // Controllers
-  final _requestController = TextEditingController();
-  final _productController = TextEditingController();
   final _quantityController = TextEditingController();
-  final _supplierController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _companyController = TextEditingController();
-  final SignatureController _signatureController = SignatureController(
-    penStrokeWidth: 2,
-    penColor: Colors.black,
-    exportBackgroundColor: Colors.white,
-  );
-
-  PhoneNumber _initialPhone = PhoneNumber(isoCode: 'TG');
+  final _motifController = TextEditingController();
 
   // Dropdown values
   String? _selectedProduct;
-  String? _selectedRequest;
+  String? _selectedResponsible;
   bool _isProductDropdownOpen = false;
-  bool _isRequestDropdownOpen = false;
+  bool _isResponsibleDropdownOpen = false;
 
-  // Sample data
+  // Sample data pour les produits
   final List<Map<String, dynamic>> _products = [
     {'name': 'Produit A', 'quantity': 150},
     {'name': 'Produit B', 'quantity': 75},
@@ -293,23 +277,25 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
     {'name': 'Souris optique', 'quantity': 300},
   ];
 
-  final List<Map<String, dynamic>> _requests = [
-    {'name': 'Demande urgente', 'quantity': 10, 'code': 'DEM-001'},
-    {'name': 'Réapprovisionnement', 'quantity': 50, 'code': 'DEM-002'},
-    {'name': 'Commande client', 'quantity': 25, 'code': 'DEM-003'},
-    {'name': 'Stock de sécurité', 'quantity': 100, 'code': 'DEM-004'},
+  // Sample data pour les responsables
+  final List<Map<String, dynamic>> _responsibles = [
+    {'name': 'Jean Dupont', 'role': 'Manager'},
+    {'name': 'Marie Martin', 'role': 'Superviseur'},
+    {'name': 'Pierre Durand', 'role': 'Chef équipe'},
+    {'name': 'Sophie Bernard', 'role': 'Directeur'},
+    {'name': 'Paul Moreau', 'role': 'Adjoint'},
   ];
 
   List<Map<String, dynamic>> _filteredProducts = [];
-  List<Map<String, dynamic>> _filteredRequests = [];
+  List<Map<String, dynamic>> _filteredResponsibles = [];
   String _productSearchQuery = '';
-  String _requestSearchQuery = '';
+  String _responsibleSearchQuery = '';
 
   @override
   void initState() {
     super.initState();
     _filteredProducts = _products;
-    _filteredRequests = _requests;
+    _filteredResponsibles = _responsibles;
   }
 
   void _filterProducts(String query) {
@@ -328,14 +314,18 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
     });
   }
 
-  void _filterRequests(String query) {
+  void _filterResponsibles(String query) {
     setState(() {
-      _requestSearchQuery = query;
+      _responsibleSearchQuery = query;
       if (query.isEmpty) {
-        _filteredRequests = _requests;
+        _filteredResponsibles = _responsibles;
       } else {
-        _filteredRequests = _requests
-            .where((request) => request['name']
+        _filteredResponsibles = _responsibles
+            .where((responsible) => responsible['name']
+                .toString()
+                .toLowerCase()
+                .contains(query.toLowerCase()) ||
+                responsible['role']
                 .toString()
                 .toLowerCase()
                 .contains(query.toLowerCase()))
@@ -344,23 +334,73 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
     });
   }
 
-  void _next() {
-    if (_pc.page == 0) {
-      _pc.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-      setState(() => _currentStep = 1);
-    } else {
-      // TODO: Envoyer le formulaire
-      debugPrint("Produit: $_selectedProduct");
-      debugPrint("Quantité: ${_quantityController.text}");
-      debugPrint("Fournisseur: ${_supplierController.text}");
-      debugPrint("Téléphone: ${_phoneController.text}");
-      debugPrint("Demande: $_selectedRequest");
-      debugPrint("Société: ${_companyController.text}");
-      Navigator.pop(context);
-    }
+  void _showConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            "Confirmation",
+            style: GoogleFonts.poppins(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+          content: Text(
+            "Êtes-vous sûr de vouloir enregistrer cette demande d'approvisionnement ?",
+            style: GoogleFonts.poppins(
+              fontSize: 14.sp,
+              color: Colors.black54,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                "Annuler",
+                style: GoogleFonts.poppins(
+                  fontSize: 14.sp,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _submitForm();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF007AFF),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                "Confirmer",
+                style: GoogleFonts.poppins(
+                  fontSize: 14.sp,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _submitForm() {
+    // TODO: Envoyer le formulaire
+    debugPrint("Produit: $_selectedProduct");
+    debugPrint("Quantité: ${_quantityController.text}");
+    debugPrint("Motif: ${_motifController.text}");
+    debugPrint("Responsable: $_selectedResponsible");
+    Navigator.pop(context);
   }
 
   Widget _buildAppBar() {
@@ -383,7 +423,7 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
             ),
           ),
           Text(
-            "Déclarer une\nentrée en stock",
+            "Demande\nd'approvisionnement",
             style: GoogleFonts.poppins(
               fontSize: 16.sp,
               color: Colors.white,
@@ -425,29 +465,12 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
     );
   }
 
-  Widget _buildProgressIndicator() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(2, (i) {
-        return Container(
-          margin: EdgeInsets.symmetric(horizontal: 1.w),
-          width: i == _currentStep ? 10.w : 4.w,
-          height: 1.h,
-          decoration: BoxDecoration(
-            color: i == _currentStep ? const Color(0xFF007AFF) : Colors.grey[300],
-            borderRadius: BorderRadius.circular(10),
-          ),
-        );
-      }),
-    );
-  }
-
   Widget _buildSectionHeader(String title) {
     return Row(
       children: [
         Container(
           height: 2,
-          width: 60.w,
+          width: 15.w,
           color: const Color(0xFF007AFF),
         ),
         SizedBox(width: 3.w),
@@ -467,15 +490,17 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
     required TextEditingController controller,
     required String hintText,
     String? labelText,
+    int maxLines = 1,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 201, 199, 199),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Color(0xFF007AFF)),
+        color: const Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(maxLines > 1 ? 12 : 50),
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: TextFormField(
         controller: controller,
+        maxLines: maxLines,
         style: GoogleFonts.poppins(fontSize: 14.sp),
         decoration: InputDecoration(
           border: InputBorder.none,
@@ -485,7 +510,10 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
             fontSize: 14.sp,
             color: Colors.grey[600],
           ),
-          contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.8.h),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 4.w, 
+            vertical: maxLines > 1 ? 2.h : 1.8.h
+          ),
         ),
       ),
     );
@@ -498,7 +526,7 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
           onTap: () {
             setState(() {
               _isProductDropdownOpen = !_isProductDropdownOpen;
-              _isRequestDropdownOpen = false;
+              _isResponsibleDropdownOpen = false;
             });
           },
           child: Container(
@@ -611,13 +639,13 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
     );
   }
 
-  Widget _buildRequestDropdown() {
+  Widget _buildResponsibleDropdown() {
     return Column(
       children: [
         GestureDetector(
           onTap: () {
             setState(() {
-              _isRequestDropdownOpen = !_isRequestDropdownOpen;
+              _isResponsibleDropdownOpen = !_isResponsibleDropdownOpen;
               _isProductDropdownOpen = false;
             });
           },
@@ -633,22 +661,22 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    _selectedRequest ?? "Sélectionner la demande",
+                    _selectedResponsible ?? "Sélectionner celui qui a ordonner",
                     style: GoogleFonts.poppins(
                       fontSize: 14.sp,
-                      color: _selectedRequest != null ? Colors.black87 : Colors.grey[600],
+                      color: _selectedResponsible != null ? Colors.black87 : Colors.grey[600],
                     ),
                   ),
                 ),
                 Icon(
-                  _isRequestDropdownOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  _isResponsibleDropdownOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                   color: Colors.grey[600],
                 ),
               ],
             ),
           ),
         ),
-        if (_isRequestDropdownOpen)
+        if (_isResponsibleDropdownOpen)
           Container(
             margin: EdgeInsets.only(top: 1.h),
             decoration: BoxDecoration(
@@ -672,11 +700,11 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
                       borderRadius: BorderRadius.circular(25),
                     ),
                     child: TextFormField(
-                      onChanged: _filterRequests,
+                      onChanged: _filterResponsibles,
                       style: GoogleFonts.poppins(fontSize: 14.sp),
                       decoration: InputDecoration(
                         border: InputBorder.none,
-                        hintText: "Rechercher une demande...",
+                        hintText: "Rechercher un responsable...",
                         prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
                         hintStyle: GoogleFonts.poppins(
                           fontSize: 14.sp,
@@ -691,42 +719,33 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
                   constraints: BoxConstraints(maxHeight: 200),
                   child: ListView.builder(
                     shrinkWrap: true,
-                    itemCount: _filteredRequests.length,
+                    itemCount: _filteredResponsibles.length,
                     itemBuilder: (context, index) {
-                      final request = _filteredRequests[index];
+                      final responsible = _filteredResponsibles[index];
                       return ListTile(
                         title: Text(
-                          request['name'],
+                          responsible['name'],
                           style: GoogleFonts.poppins(fontSize: 14.sp),
                         ),
-                        subtitle: Row(
-                          children: [
-                            Text(
-                              "Quantité: ${request['quantity']}",
-                              style: GoogleFonts.poppins(fontSize: 12.sp, color: Colors.grey[600]),
+                        trailing: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF007AFF),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            responsible['role'],
+                            style: GoogleFonts.poppins(
+                              fontSize: 12.sp,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
                             ),
-                            SizedBox(width: 2.w),
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.3.h),
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                request['code'],
-                                style: GoogleFonts.poppins(
-                                  fontSize: 10.sp,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                         onTap: () {
                           setState(() {
-                            _selectedRequest = request['name'];
-                            _isRequestDropdownOpen = false;
+                            _selectedResponsible = responsible['name'];
+                            _isResponsibleDropdownOpen = false;
                           });
                         },
                       );
@@ -740,230 +759,74 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
     );
   }
 
-  Widget _buildStep1() {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _isProductDropdownOpen = false;
-          _isRequestDropdownOpen = false;
-        });
-      },
-      child: SingleChildScrollView(
-        padding: EdgeInsets.all(5.w),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: GestureDetector(
+        onTap: () {
+          setState(() {
+            _isProductDropdownOpen = false;
+            _isResponsibleDropdownOpen = false;
+          });
+        },
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionHeader("Produit"),
-            SizedBox(height: 2.h),
-            _buildProductDropdown(),
-            SizedBox(height: 2.h),
-            _buildBasicInputField(
-              controller: _quantityController,
-              hintText: "Définir la quantité",
-            ),
-            SizedBox(height: 3.h),
-            _buildSectionHeader("Fournisseur"),
-            SizedBox(height: 2.h),
-            _buildBasicInputField(
-              controller: _supplierController,
-              hintText: "Renseigner le nom de la société",
-            ),
-            SizedBox(height: 2.h),
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(50),
+            _buildAppBar(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(5.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionHeader("Produit"),
+                    SizedBox(height: 2.h),
+                    _buildProductDropdown(),
+                    SizedBox(height: 2.h),
+                    _buildBasicInputField(
+                      controller: _quantityController,
+                      hintText: "Définir la quantité",
+                    ),
+                    SizedBox(height: 2.h),
+                    _buildBasicInputField(
+                      controller: _motifController,
+                      hintText: "Le motif",
+                      maxLines: 4,
+                    ),
+                    SizedBox(height: 3.h),
+                    _buildSectionHeader("Responsable"),
+                    SizedBox(height: 2.h),
+                    _buildResponsibleDropdown(),
+                    SizedBox(height: 15.h),
+                    Center(
+                      child: CustomElevatedButton(
+                        text: 'Enregistrer',
+                        backgroundColor: const Color(0xFF007AFF),
+                        textColor: Colors.white,
+                        onPressed: _showConfirmationDialog,
+                        width: 80.w,
+                      ),
+                    ),
+                    SizedBox(height: 3.h),
+                  ],
+                ),
               ),
-              child: InternationalPhoneNumberInput(
-                onInputChanged: (PhoneNumber num) {
-                  _initialPhone = num;
-                },
-                initialValue: _initialPhone,
-                textFieldController: _phoneController,
-                selectorConfig: const SelectorConfig(
-                  selectorType: PhoneInputSelectorType.DROPDOWN,
-                  showFlags: true,
-                ),
-                inputDecoration: InputDecoration(
-                  border: InputBorder.none,
-                  hintText: 'Numéro de téléphone',
-                  hintStyle: GoogleFonts.poppins(
-                    fontSize: 14.sp,
-                    color: Colors.grey[600],
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                      horizontal: 4.w, vertical: 1.8.h),
-                ),
-                spaceBetweenSelectorAndTextField: 0,
-              ),
-            ),
-            SizedBox(height: 3.h),
-            _buildSectionHeader("Demande"),
-            SizedBox(height: 2.h),
-            _buildRequestDropdown(),
-            SizedBox(height: 15.h),
-            Column(
-              children: [
-                _buildProgressIndicator(),
-                SizedBox(height: 2.h),
-                CustomElevatedButton(
-                  text: 'Suivant',
-                  backgroundColor: const Color(0xFF007AFF),
-                  textColor: Colors.white,
-                  onPressed: _next,
-                  width: 70.w,
-                ),
-              ],
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildStep2() {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(5.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader("Livreur"),
-          SizedBox(height: 2.h),
-          _buildBasicInputField(
-            controller: _companyController,
-            hintText: "Renseigner le nom de la société",
-          ),
-          SizedBox(height: 2.h),
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(50),
-            ),
-            child: InternationalPhoneNumberInput(
-              onInputChanged: (PhoneNumber num) {
-                _initialPhone = num;
-              },
-              initialValue: _initialPhone,
-              textFieldController: _phoneController,
-              selectorConfig: const SelectorConfig(
-                selectorType: PhoneInputSelectorType.DROPDOWN,
-                showFlags: true,
-              ),
-              inputDecoration: InputDecoration(
-                border: InputBorder.none,
-                hintText: 'Numéro de téléphone',
-                hintStyle: GoogleFonts.poppins(
-                  fontSize: 14.sp,
-                  color: Colors.grey[600],
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                    horizontal: 4.w, vertical: 1.8.h),
-              ),
-              spaceBetweenSelectorAndTextField: 0,
-            ),
-          ),
-          SizedBox(height: 3.h),
-          Text(
-            "Signature",
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w500,
-              fontSize: 12.sp,
-              color: Colors.grey[700],
-            ),
-          ),
-          SizedBox(height: 1.h),
-          Container(
-            width: double.infinity,
-            height: 200,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Signature(
-              controller: _signatureController,
-              backgroundColor: Colors.white,
-            ),
-          ),
-          SizedBox(height: 1.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Dessiner votre signature",
-                style: GoogleFonts.poppins(
-                  fontSize: 12.sp,
-                  color: Colors.grey[600],
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  _signatureController.clear();
-                },
-                child: Text(
-                  "Effacer",
-                  style: GoogleFonts.poppins(
-                    fontSize: 12.sp,
-                    color: const Color(0xFF007AFF),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 10.h),
-          Column(
-            children: [
-              _buildProgressIndicator(),
-              SizedBox(height: 2.h),
-              CustomElevatedButton(
-                text: 'Enregistrer',
-                backgroundColor: const Color(0xFF007AFF),
-                textColor: Colors.white,
-                onPressed: _next,
-                width: 70.w,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          _buildAppBar(),
-          Expanded(
-            child: PageView(
-              controller: _pc,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                _buildStep1(),
-                _buildStep2(),
-              ],
-            ),
-          ),
-        ],
-      ),
       bottomNavigationBar: ImprovedBottomNavigation(
-        currentIndex: 1, // Index pour "Stock"
+        currentIndex: 2, // Index pour "Demande"
         showFabIndicator: true,
         onTap: (index) {
-          // TODO: Gérer la navigation
           debugPrint("Navigation index: $index");
         },
       ),
       floatingActionButton: ImprovedFAB(
-        isExpanded: false, // Vous pouvez gérer l'état d'expansion
+        isExpanded: false,
         onToggle: () {
-          // TODO: Gérer l'expansion du FAB
           debugPrint("FAB toggled");
         },
         onSecondaryPressed: (String action) {
-          // TODO: Gérer les actions secondaires
           debugPrint("FAB action: $action");
         },
       ),
@@ -973,13 +836,8 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
 
   @override
   void dispose() {
-    _productController.dispose();
     _quantityController.dispose();
-    _supplierController.dispose();
-    _phoneController.dispose();
-    _requestController.dispose();
-    _companyController.dispose();
-    _signatureController.dispose();
+    _motifController.dispose();
     super.dispose();
   }
 }

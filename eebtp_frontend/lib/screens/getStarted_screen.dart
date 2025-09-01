@@ -24,42 +24,43 @@ class GetStartedScreen extends StatelessWidget {
           ),
 
           // Bannière blanche avec logo en haut à droite
-         Positioned(
-  top: -6.h,  // Converti à partir de -50 pixels (environ 6% de la hauteur d'écran)
-  right: -6.h, // Converti à partir de -50 pixels
-  child: Container(
-    height: 20.h,
-    width: 60.w,
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.only(
-        bottomLeft: Radius.circular(30.h), // Responsive courbure
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black12,
-          blurRadius: 6.0,
-          offset: Offset(0, 3),
-        ),
-      ],
-    ),
-    padding: EdgeInsets.only(
-      left: 8.w,
-      right: 17.w,
-      bottom: 1.5.h,
-      top: 5.h,
-    ),
-    child: Align(
-      alignment: Alignment.centerRight,
-      child: Image.asset(
-        'assets/logo_eebtp.png',
-        fit: BoxFit.contain,
-        height: 11.h,
-        width: 11.h,
-      ),
-    ),
-  ),
-),
+          Positioned(
+            top: -6
+                .h, // Converti à partir de -50 pixels (environ 6% de la hauteur d'écran)
+            right: -6.h, // Converti à partir de -50 pixels
+            child: Container(
+              height: 20.h,
+              width: 60.w,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30.h), // Responsive courbure
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 6.0,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.only(
+                left: 8.w,
+                right: 17.w,
+                bottom: 1.5.h,
+                top: 5.h,
+              ),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Image.asset(
+                  'assets/logo_eebtp.png',
+                  fit: BoxFit.contain,
+                  height: 11.h,
+                  width: 11.h,
+                ),
+              ),
+            ),
+          ),
 
           // Container bas avec la parabole
           Positioned(
@@ -124,16 +125,17 @@ class GetStartedScreen extends StatelessWidget {
                               color: Colors.white70,
                             ),
                           ),
-                          SizedBox(height: 3.h),
-                        Center(
-  child: CustomElevatedButton(
-    text: 'Commencer ici',
-    backgroundColor: Colors.white,
-    textColor: const Color(0xFF007AFF),
-    onPressed: () => Navigator.pushNamed(context, '/login'),
-    width: 80.w, // Largeur augmentée (80% de l'écran)
-  ),
-),
+                      //    SizedBox(height: 0.5.h),
+                          Center(
+                            child: CustomElevatedButton(
+                              text: 'Commencer ici',
+                              backgroundColor: Colors.white,
+                              textColor: const Color(0xFF007AFF),
+                              onPressed: () =>
+                                  Navigator.pushNamed(context, '/login'),
+                              width: 80.w, // Largeur augmentée (80% de l'écran)
+                            ),
+                          ),
                         ],
                       ),
                     ),

@@ -1,3 +1,4 @@
+import 'package:eebtp_frontend/screens/demande.dart';
 import 'package:eebtp_frontend/screens/edit_profile.dart';
 import 'package:eebtp_frontend/screens/entry_screen.dart';
 import 'package:eebtp_frontend/screens/exit_screen.dart';
@@ -37,9 +38,9 @@ class MyApp extends StatelessWidget {
   '/otp_confirmation': (context) => const OTPConfirmationScreen(),
 
   // Routes principales de navigation
-  '/home': (context) => const HomePage(),
+  '/home': (context) =>  HomePage(),
 //  '/stock': (context) => const StockScreen(),
-  //'/demande': (context) => const DemandeScreen(),
+ '/demande': (context) => const SupplyRequestScreen(),
   '/profile': (context) => ProfilePage(),
 
   // Routes de gestion de stock
@@ -50,7 +51,7 @@ class MyApp extends StatelessWidget {
 '/edit_profile': (context) => const EditProfilePage(),
   //'/notifications': (context) => const NotificationsScreen(),
 },
-        );
+        ); 
       },
     );
   }
