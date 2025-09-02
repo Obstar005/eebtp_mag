@@ -232,7 +232,7 @@ def delete_photo(request, pk):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_magasin(request):
-    data = request.data.copy()
+    data = request.data
    
     projet_id = data.get('projet')  
     # Vérifier si le magasin existe déjà pour ce projet
@@ -245,7 +245,7 @@ def create_magasin(request):
     # Assigner l'utilisateur connecté comme créateur du magasin
     data['creator'] = request.user.id  
 
-    serializer = MagasinSerializer(data=data)
+    serializer = MagasinSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
         return Response({'message': 'Magasin créé avec succès'}, status=status.HTTP_201_CREATED)    

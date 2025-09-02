@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django_countries.fields import CountryField
 from users.models import CustomUser
+from stocks.models import Produit
 
 
 class Projet(models.Model):
@@ -36,7 +37,6 @@ class Magasin(models.Model):
     nom = models.CharField(max_length=255)
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)
-    creator = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, related_name="magasins_crees")
     adresse = models.CharField(max_length=255, blank=True, null=True)
     projet = models.ForeignKey(Projet, on_delete=models.CASCADE, 
                                related_name="magasin_associé", blank=True, null=True)
@@ -46,3 +46,29 @@ class Magasin(models.Model):
 
     def __str__(self):
         return self.nom
+    
+# Modèle pour les stocks dans un magasin
+class StockItem(models.Model):
+    produit = models.ForeignKey(Produit, on_delete=models.CASCADE, related_name="stocks")
+    magasin = models.ForeignKey(Magasin, on_delete=models.CASCADE, related_name="stocks")
+    quantite = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    quantite_seuil = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # seuil minimum
+    etat = models.CharField(max_length=50, choices=[
+        ('neuf', 'Neuf'),
+        ('usagé', 'Usagé'),
+        ('endommagé', 'Endommagé'),
+    ], default='neuf')
+
+    date_ajout = models.DateTimeField(auto_now_add=True)
+    date_modification = models.DateTimeField(auto_now=True)
+    add_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, 
+                               related_name="ajouteur_stock", null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    updated_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, 
+                                   related_name="modificateur_stock", null=True, blank=True)
+
+    class Meta:
+        unique_together = ('produit', 'magasin')  # Un produit ne peut exister qu'une fois dans un magasin
+
+    def __str__(self):
+        return f"{self.produit.designation} - {self.magasin.nom} ({self.quantite} {self.produit.unite})"

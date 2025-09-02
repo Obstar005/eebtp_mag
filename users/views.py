@@ -41,7 +41,7 @@ def get_countries(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_profils(request):
-    profils = Profil.objects.filter(is_active=True)
+    profils = Profil.objects.filter(is_active=True).order_by('-date_creation')
     serializer = ProfilSerializer(profils, many=True)
     return Response(serializer.data)
 
@@ -127,7 +127,7 @@ def delete_profil(request, pk):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_users(request):
-    users = CustomUser.objects.filter(is_active=True)
+    users = CustomUser.objects.filter(is_active=True).order_by('-date_creation')
     serializer = CustomUserSerializer(users, many=True)
     return Response(serializer.data)
 
@@ -144,7 +144,7 @@ def create_user(request):
     serializer = CustomUserSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
-        return Response(CustomUserSerializer(user).data, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Utilisateur crée avec succès'}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @swagger_auto_schema(

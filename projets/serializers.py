@@ -17,6 +17,7 @@ class ProjetSerializer(serializers.ModelSerializer):
         read_only_fields = ['creator', 'date_creation', 'date_modification']
 
 class MagasinSerializer(serializers.ModelSerializer):
+    creator = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     class Meta:
         model = Magasin
         fields = '__all__'

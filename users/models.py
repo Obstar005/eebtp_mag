@@ -9,6 +9,8 @@ class Profil(models.Model):
     libelle = models.CharField(max_length=100)
     description = models.TextField()
     is_active = models.BooleanField(default=True)
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_modif = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.libelle
@@ -25,6 +27,8 @@ class CustomUser(AbstractUser):
     photo_profil = models.ImageField(upload_to='photos/', null=True, blank=True)
     telephone = models.CharField(max_length=20, unique=True)
     is_active = models.BooleanField(default=True)
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_modif = models.DateTimeField(auto_now=True)
 
 
     def __str__(self):
