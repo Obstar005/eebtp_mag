@@ -117,7 +117,7 @@ class GetStartedScreen extends StatelessWidget {
                               fontStyle: FontStyle.italic,
                             ),
                           ),
-                          SizedBox(height: 1.5.h),
+                          SizedBox(height: 1.h),
                           Text(
                             'Votre plateforme de suivi en temps réel des stocks.',
                             style: GoogleFonts.inter(
