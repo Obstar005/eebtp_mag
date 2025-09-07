@@ -181,7 +181,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         className={({ isActive }) =>
           `group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${paddingLeft} ${
             isActive
-              ? "bg-blue-50 text-blue-700"
+              ? "text-white bg-blue-500"
               : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
           }`
         }
@@ -191,7 +191,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
             <item.icon
               className={`mr-3 h-5 w-5 flex-shrink-0 ${
                 isActive
-                  ? "text-blue-700"
+                  ? "text-white"
                   : "text-gray-400 group-hover:text-gray-500"
               }`}
             />

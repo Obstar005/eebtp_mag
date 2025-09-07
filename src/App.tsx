@@ -26,6 +26,12 @@ import MagasinsPage from "./pages/magasins/MagasinsPage";
 import { ArticlesPage } from "./pages/inventory/ArticlesPage";
 import { AddArticlePage } from "./pages/inventory/AddArticlePage";
 import ArticleDetailsPage from "./pages/inventory/ArticleDetailsPage";
+import EditArticlePage from "./pages/inventory/EditArticlePage";
+// Pages des déclarations
+import { DeclarationsPage } from "./pages/declarations/DeclarationsPage";
+import { DeclarationEntreeDetailPage } from "./pages/declarations/DeclarationEntreeDetailPage";
+import { DeclarationSortieDetailPage } from "./pages/declarations/DeclarationSortieDetailPage";
+import { DeclarationRetourDetailPage } from "./pages/declarations/DeclarationRetourDetailPage";
 
 // Créer une instance du client React Query
 const queryClient = new QueryClient({
@@ -106,8 +112,26 @@ function AppContent() {
         <Route path="magasins" element={<MagasinsPage />} />
         <Route path="articles" element={<ArticlesPage />} />
         <Route path="articles/add" element={<AddArticlePage />} />
-        <Route path="articles/:id/edit" element={<AddArticlePage />} />
-        <Route path="articles/:id/details" element={<ArticleDetailsPage />} />
+        <Route path="articles/:id" element={<ArticleDetailsPage />} />
+        <Route path="articles/:id/edit" element={<EditArticlePage />} />
+
+        {/* Routes des déclarations */}
+        <Route
+          path="magasins/:magasinId/declarations"
+          element={<DeclarationsPage />}
+        />
+        <Route
+          path="magasins/:magasinId/declarations/:declarationId/detail/entree"
+          element={<DeclarationEntreeDetailPage />}
+        />
+        <Route
+          path="magasins/:magasinId/declarations/:declarationId/detail/sortie"
+          element={<DeclarationSortieDetailPage />}
+        />
+        <Route
+          path="magasins/:magasinId/declarations/:declarationId/detail/retour"
+          element={<DeclarationRetourDetailPage />}
+        />
 
         <Route path="profiles" element={<ProfilesPage />} />
         <Route
@@ -119,7 +143,10 @@ function AppContent() {
         <Route path="projects/:id/edit" element={<AddEditProjectPage />} />
         <Route path="projects/:id/details" element={<ProjectDetailsPage />} />
         <Route path="projects/magasins/:id" element={<MagasinDetailsPage />} />
-        <Route path="magasins" element={<div>Page Magasins (à implémenter)</div>} />
+        <Route
+          path="magasins"
+          element={<div>Page Magasins (à implémenter)</div>}
+        />
         <Route
           path="inventory"
           element={<div>Page Inventaire (à implémenter)</div>}

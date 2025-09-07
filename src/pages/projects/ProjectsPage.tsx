@@ -142,7 +142,7 @@ export function ProjectsPage() {
   const totalPages = projetsData?.totalPages || 1;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-4">
       {/* En-tête avec filtres par statut */}
       <div className="flex items-center justify-between">
         <div>
@@ -305,25 +305,25 @@ export function ProjectsPage() {
               <table className="min-w-full">
                 <thead className="bg-gray-100 border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
                       ID du projet
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
                       Magasinier
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
                       Chef projet
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
                       Chef chantier
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
                       Date du début
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
                       État
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-gray-700">
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
                       Action
                     </th>
                   </tr>
@@ -334,21 +334,21 @@ export function ProjectsPage() {
                       key={projet.id}
                       className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
                     >
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                      <td className="px-6 py-3 text-sm font-medium text-gray-900">
                         #
                         {projet.name ||
                           `PRJT${String(projet.id).padStart(3, "0")}`}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">
+                      <td className="px-6 py-3 text-sm text-gray-700">
                         John Doe
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">
+                      <td className="px-6 py-3 text-sm text-gray-700">
                         John Doe
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">
+                      <td className="px-6 py-3 text-sm text-gray-700">
                         John Doe
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">
+                      <td className="px-6 py-3 text-sm text-gray-700">
                         {formatDate(projet.date_debut)}
                       </td>
                       <td className="px-6 py-4">
@@ -380,8 +380,10 @@ export function ProjectsPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => navigate(`/projects/${projet.id}/details`)}
-                            className="p-1 px-4 text-gray-50 bg-green-600 rounded hover:bg-green-700 transition-colors"
+                            onClick={() =>
+                              navigate(`/projects/${projet.id}/details`)
+                            }
+                            className="p-0.5 px-2  text-gray-50 bg-green-600 rounded hover:bg-green-700 transition-colors"
                             title="Voir le projet"
                           >
                             <Eye className="h-4 w-4" />
@@ -390,14 +392,14 @@ export function ProjectsPage() {
                             onClick={() =>
                               navigate(`/projects/${projet.id}/edit`)
                             }
-                            className="p-1 px-4 text-gray-50 bg-yellow-500 rounded hover:bg-yellow-600 transition-colors"
+                            className="p-0.5 px-2  text-gray-50 bg-yellow-500 rounded hover:bg-yellow-600 transition-colors"
                             title="Modifier le projet"
                           >
                             <Edit className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteProjet(projet.id)}
-                            className="p-1 px-4 text-gray-50 bg-red-600 rounded hover:bg-red-700 transition-colors"
+                            className="p-0.5 px-2  text-gray-50 bg-red-600 rounded hover:bg-red-700 transition-colors"
                             title="Supprimer le projet"
                           >
                             <Trash2 className="h-4 w-4" />

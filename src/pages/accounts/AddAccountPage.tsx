@@ -399,7 +399,7 @@ export function AddAccountPage() {
             </div>
 
             <div className="flex-1">
-               <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Photo de profil
               </label>
 
@@ -441,7 +441,7 @@ export function AddAccountPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isLoading ? (
                 <>
@@ -455,7 +455,7 @@ export function AddAccountPage() {
             <button
               type="button"
               onClick={() => navigate("/accounts")}
-              className="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300"
+              className="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300"
             >
               Annuler
             </button>

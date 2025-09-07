@@ -451,31 +451,41 @@ export function AddEditProjectPage() {
                 {formData.magasins?.map((magasin, index) => (
                   <div
                     key={index}
-                    className="flex gap-4 items-start p-4 bg-gray-50 rounded-lg"
+                    className="flex gap-4 items-start bg-gray-50 rounded-lg mt-6"
                   >
                     <div className="flex-1 space-y-3">
-                      <input
-                        type="text"
-                        value={magasin.name}
-                        onChange={(e) =>
-                          updateMagasin(index, "name", e.target.value)
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Nom du magasin"
-                        title={`Nom du magasin ${index + 1}`}
-                        aria-label={`Nom du magasin ${index + 1}`}
-                      />
-                      <input
-                        type="text"
-                        value={magasin.adresse}
-                        onChange={(e) =>
-                          updateMagasin(index, "adresse", e.target.value)
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Adresse du magasin"
-                        title={`Adresse du magasin ${index + 1}`}
-                        aria-label={`Adresse du magasin ${index + 1}`}
-                      />
+                      <div className="">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Nom du magasin
+                        </label>
+                        <input
+                          type="text"
+                          value={magasin.name}
+                          onChange={(e) =>
+                            updateMagasin(index, "name", e.target.value)
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Nom du magasin"
+                          title={`Nom du magasin ${index + 1}`}
+                          aria-label={`Nom du magasin ${index + 1}`}
+                        />
+                      </div>
+                      <div className="">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Adresse du magasin
+                        </label>
+                        <input
+                          type="text"
+                          value={magasin.adresse}
+                          onChange={(e) =>
+                            updateMagasin(index, "adresse", e.target.value)
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Adresse du magasin"
+                          title={`Adresse du magasin ${index + 1}`}
+                          aria-label={`Adresse du magasin ${index + 1}`}
+                        />
+                      </div>
                     </div>
                     <button
                       type="button"
@@ -565,12 +575,6 @@ export function AddEditProjectPage() {
                 <h3 className="text-lg font-semibold text-gray-900">
                   Comptes Associés
                 </h3>
-                <button
-                  type="button"
-                  className="flex items-center px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Ajouter <Plus className="h-4 w-4 ml-1" />
-                </button>
               </div>
 
               <div className="space-y-4">
@@ -579,133 +583,142 @@ export function AddEditProjectPage() {
                     Comptes
                   </label>
 
-                  {/* Champ de sélection avec tags des comptes sélectionnés */}
-                  <div className="relative" ref={dropdownRef}>
-                    <div
-                      onClick={() =>
-                        setIsAccountDropdownOpen(!isAccountDropdownOpen)
-                      }
-                      className="min-h-[42px] w-full px-3 py-2 border border-gray-300 rounded-md bg-white cursor-pointer focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent"
+                  <div className="relative">
+                    <button
+                      type="button"
+                      className="flex items-center px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors absolute right-0 top-0 z-20 inset-y-1"
                     >
-                      <div className="flex items-center flex-wrap gap-2">
-                        {/* Tags des comptes sélectionnés */}
-                        {selectedAccounts.map((accountName) => (
-                          <div
-                            key={accountName}
-                            className="flex items-center bg-blue-100 text-blue-800 rounded-full px-3 py-1 text-sm"
-                          >
-                            <span className="mr-1">{accountName}</span>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeSelectedAccount(accountName);
-                              }}
-                              className="ml-1 text-blue-600 hover:text-blue-800"
-                              title={`Supprimer ${accountName}`}
+                      Ajouter <Plus className="h-4 w-4 ml-1" />
+                    </button>
+                    {/* Champ de sélection avec tags des comptes sélectionnés */}
+                    <div className="relative" ref={dropdownRef}>
+                      <div
+                        onClick={() =>
+                          setIsAccountDropdownOpen(!isAccountDropdownOpen)
+                        }
+                        className="min-h-[42px] w-full px-3 py-2 border border-gray-300 rounded-md bg-white cursor-pointer focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent"
+                      >
+                        <div className="flex items-center flex-wrap gap-2">
+                          {/* Tags des comptes sélectionnés */}
+                          {selectedAccounts.map((accountName) => (
+                            <div
+                              key={accountName}
+                              className="flex items-center bg-blue-100 text-blue-800 rounded-full px-3 py-1 text-sm"
                             >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ))}
+                              <span className="mr-1">{accountName}</span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeSelectedAccount(accountName);
+                                }}
+                                className="ml-1 text-blue-600 hover:text-blue-800"
+                                title={`Supprimer ${accountName}`}
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
 
-                        {/* Placeholder quand rien n'est sélectionné */}
-                        {selectedAccounts.length === 0 && (
-                          <span className="text-gray-500 text-sm">
-                            Sélectionner des comptes...
-                          </span>
-                        )}
+                          {/* Placeholder quand rien n'est sélectionné */}
+                          {selectedAccounts.length === 0 && (
+                            <span className="text-gray-500 text-sm">
+                              Sélectionner des comptes...
+                            </span>
+                          )}
 
-                        {/* Flèche dropdown */}
-                        <div className="flex-1 flex justify-end">
-                          <ChevronDown
-                            className={`h-4 w-4 text-gray-400 transition-transform ${
-                              isAccountDropdownOpen ? "rotate-180" : ""
-                            }`}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Dropdown des comptes disponibles */}
-                    {isAccountDropdownOpen && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-hidden">
-                        {/* Barre de recherche */}
-                        <div className="p-3 border-b border-gray-200">
-                          <div className="relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                            <input
-                              type="text"
-                              value={accountSearchTerm}
-                              onChange={(e) =>
-                                setAccountSearchTerm(e.target.value)
-                              }
-                              placeholder="Rechercher un compte..."
-                              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              onClick={(e) => e.stopPropagation()}
+                          {/* Flèche dropdown */}
+                          <div className="flex-1 flex justify-end">
+                            <ChevronDown
+                              className={`h-4 w-4 text-gray-400 transition-transform ${
+                                isAccountDropdownOpen ? "rotate-180" : ""
+                              }`}
                             />
                           </div>
                         </div>
-
-                        {/* Liste des comptes filtrés */}
-                        <div className="max-h-48 overflow-y-auto">
-                          {filteredAccounts.length > 0 ? (
-                            <div className="p-2">
-                              {filteredAccounts.map((account) => {
-                                const accountName = `${account.nom} ${account.prenoms}`;
-                                const isSelected =
-                                  selectedAccounts.includes(accountName);
-
-                                return (
-                                  <div
-                                    key={account.id}
-                                    onClick={() => {
-                                      toggleAccountSelection(accountName);
-                                    }}
-                                    className={`flex items-center justify-between px-3 py-2 rounded cursor-pointer hover:bg-gray-50 ${
-                                      isSelected
-                                        ? "bg-blue-50 text-blue-600"
-                                        : "text-gray-700"
-                                    }`}
-                                  >
-                                    <div className="flex items-center">
-                                      <div className="flex-1">
-                                        <div className="font-medium text-sm">
-                                          {accountName}
-                                        </div>
-                                        <div className="text-xs text-gray-500">
-                                          {account.profile.nom} •{" "}
-                                          {account.telephone}
-                                        </div>
-                                      </div>
-                                    </div>
-                                    {isSelected && (
-                                      <div className="ml-2">
-                                        <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
-                                          <div className="w-2 h-2 bg-white rounded-full"></div>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            <div className="px-3 py-4 text-center">
-                              {accountSearchTerm ? (
-                                <div className="text-gray-500 text-sm">
-                                  Aucun compte trouvé pour "{accountSearchTerm}"
-                                </div>
-                              ) : (
-                                <div className="text-gray-500 text-sm">
-                                  Aucun compte disponible
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
                       </div>
-                    )}
+
+                      {/* Dropdown des comptes disponibles */}
+                      {isAccountDropdownOpen && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-hidden">
+                          {/* Barre de recherche */}
+                          <div className="p-3 border-b border-gray-200">
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                              <input
+                                type="text"
+                                value={accountSearchTerm}
+                                onChange={(e) =>
+                                  setAccountSearchTerm(e.target.value)
+                                }
+                                placeholder="Rechercher un compte..."
+                                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Liste des comptes filtrés */}
+                          <div className="max-h-48 overflow-y-auto">
+                            {filteredAccounts.length > 0 ? (
+                              <div className="p-2">
+                                {filteredAccounts.map((account) => {
+                                  const accountName = `${account.nom} ${account.prenoms}`;
+                                  const isSelected =
+                                    selectedAccounts.includes(accountName);
+
+                                  return (
+                                    <div
+                                      key={account.id}
+                                      onClick={() => {
+                                        toggleAccountSelection(accountName);
+                                      }}
+                                      className={`flex items-center justify-between px-3 py-2 rounded cursor-pointer hover:bg-gray-50 ${
+                                        isSelected
+                                          ? "bg-blue-50 text-blue-600"
+                                          : "text-gray-700"
+                                      }`}
+                                    >
+                                      <div className="flex items-center">
+                                        <div className="flex-1">
+                                          <div className="font-medium text-sm">
+                                            {accountName}
+                                          </div>
+                                          <div className="text-xs text-gray-500">
+                                            {account.profile.nom} •{" "}
+                                            {account.telephone}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      {isSelected && (
+                                        <div className="ml-2">
+                                          <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
+                                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <div className="px-3 py-4 text-center">
+                                {accountSearchTerm ? (
+                                  <div className="text-gray-500 text-sm">
+                                    Aucun compte trouvé pour "
+                                    {accountSearchTerm}"
+                                  </div>
+                                ) : (
+                                  <div className="text-gray-500 text-sm">
+                                    Aucun compte disponible
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -718,7 +731,7 @@ export function AddEditProjectPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isLoading ? "Enregistrement..." : "Enregistrer"}
           </button>

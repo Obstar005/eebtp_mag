@@ -8,7 +8,6 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
-  MoreHorizontal,
 } from "lucide-react";
 import {
   useAccounts,
@@ -249,11 +248,11 @@ export function AccountsPage() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {accounts.map((account) => (
-                <tr key={account.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <tr key={account.id} className="hover:bg-gray-50 ">
+                  <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                     {account.code}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-3 whitespace-nowrap">
                     <div>
                       <div className="text-sm font-medium text-gray-900">
                         {account.prenoms} {account.nom}
@@ -263,37 +262,37 @@ export function AccountsPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                     {account.telephone}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                     {account.profile.nom}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-3 whitespace-nowrap">
                     {getTypeBadge(account.type)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                     {account.derniere_connexion
                       ? new Date(account.derniere_connexion).toLocaleDateString(
                           "fr-FR"
                         )
                       : "Jamais"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
                     <div className="flex items-center gap-2">
                       {getStatusBadge(account.is_active)}
 
                       <div className="flex items-center gap-1">
                         <a
                           href={`/accounts/${account.id}`}
-                          className="p-1 px-4 text-gray-50 bg-blue-500 hover:bg-blue-600 rounded-md"
+                          className="p-0.5 px-2  text-gray-50 bg-blue-500 hover:bg-blue-600 rounded-md"
                           title="Voir les détails"
                         >
                           <Eye className="h-4 w-4" />
                         </a>
                         <a
                           href={`/accounts/${account.id}/edit`}
-                          className="p-1 px-4 text-gray-50 bg-green-500 hover:bg-green-600 rounded-md"
+                          className="p-0.5 px-2  text-gray-50 bg-green-500 hover:bg-green-600 rounded-md"
                           title="Modifier"
                         >
                           <Edit className="h-4 w-4" />
@@ -303,13 +302,13 @@ export function AccountsPage() {
                             setSelectedAccountId(account.id);
                             deleteModal.open();
                           }}
-                          className="p-1 px-4 text-gray-50 bg-red-400 hover:bg-red-600 rounded-md"
+                          className="p-0.5 px-2  text-gray-50 bg-red-400 hover:bg-red-600 rounded-md"
                           title="Supprimer"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
                         {/* <div className="relative">
-                          <button className="p-1 px-4 text-gray-400 hover:text-gray-600">
+                          <button className="p-0.5 px-2  text-gray-400 hover:text-gray-600">
                             <MoreHorizontal className="h-4 w-4" />
                           </button>
                         </div> */}

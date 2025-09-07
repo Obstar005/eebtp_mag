@@ -1,9 +1,12 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Upload, X } from "lucide-react";
-import { useCreateStockArticle } from "../../hooks/useMagasins";
+import {
+  useStockArticle,
+  useUpdateStockArticle,
+} from "../../hooks/useMagasins";
 import type {
-  CreateStockArticleData,
+  UpdateStockArticleData,
   ArticleEtat,
   ArticleType,
 } from "../../types/magasin";
@@ -17,10 +20,8 @@ interface ArticleForm {
   quantite: number;
   quantite_seuil: number;
   prix_unitaire: number;
-  magasin_id: number;
 }
 
-// Types locaux
 interface ArticleFormErrors {
   name?: string;
   description?: string;
@@ -29,11 +30,12 @@ interface ArticleFormErrors {
   quantite?: string;
   quantite_seuil?: string;
   prix_unitaire?: string;
-  magasin_id?: string;
 }
 
-export function AddArticlePage() {
+export default function EditArticlePage() {
+  const { id: articleId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState<ArticleForm>({
     name: "",
@@ -43,44 +45,53 @@ export function AddArticlePage() {
     quantite: 0,
     quantite_seuil: 0,
     prix_unitaire: 0,
-    magasin_id: 1, // Valeur par défaut, à adapter selon le contexte
   });
-
   const [errors, setErrors] = useState<ArticleFormErrors>({});
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
 
-  // Hooks
-  const createArticleMutation = useCreateStockArticle();
+  // Récupérer l'article existant
+  const { data: article } = useStockArticle(
+    articleId ? parseInt(articleId) : 0
+  );
+  const updateArticleMutation = useUpdateStockArticle();
+
+  useEffect(() => {
+    if (article) {
+      setForm({
+        name: article.name || "",
+        description: article.description || "",
+        etat: article.etat,
+        type_enum: article.type_enum || "matiere_premiere",
+        quantite: article.quantite,
+        quantite_seuil: article.quantite_seuil,
+        prix_unitaire: article.prix_unitaire || 0,
+      });
+      // TODO: Charger les images existantes si besoin
+    }
+  }, [article]);
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<ArticleForm> = {};
-
+    const newErrors: ArticleFormErrors = {};
     if (!form.name.trim()) {
       newErrors.name = "La désignation est requise";
     }
-
     if (form.quantite < 0) {
       newErrors.quantite = "La quantité ne peut pas être négative";
     }
-
     if (form.quantite_seuil < 0) {
       newErrors.quantite_seuil = "Le seuil ne peut pas être négatif";
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
+    if (!validateForm() || !articleId) return;
     try {
-      const createData: CreateStockArticleData = {
+      const updateData: UpdateStockArticleData = {
+        id: parseInt(articleId),
         name: form.name.trim(),
         description: form.description.trim(),
         etat: form.etat,
@@ -88,12 +99,11 @@ export function AddArticlePage() {
         quantite: form.quantite,
         quantite_seuil: form.quantite_seuil,
         prix_unitaire: form.prix_unitaire,
-        magasin_id: form.magasin_id,
       };
-      await createArticleMutation.mutateAsync(createData);
+      await updateArticleMutation.mutateAsync(updateData);
       navigate("/articles");
     } catch (error) {
-      console.error("Erreur lors de la création:", error);
+      console.error("Erreur lors de la modification:", error);
     }
   };
 
@@ -107,11 +117,8 @@ export function AddArticlePage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-
     const newFiles = [...uploadedFiles, ...files];
     setUploadedFiles(newFiles);
-
-    // Créer des prévisualisations
     files.forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -125,13 +132,12 @@ export function AddArticlePage() {
     const newFiles = [...uploadedFiles];
     newFiles.splice(index, 1);
     setUploadedFiles(newFiles);
-
     const newPreviews = [...previewImages];
     newPreviews.splice(index, 1);
     setPreviewImages(newPreviews);
   };
 
-  const isLoading = createArticleMutation.isPending;
+  const isSaving = updateArticleMutation.isPending;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -148,11 +154,10 @@ export function AddArticlePage() {
               <ArrowLeft className="h-5 w-5" />
             </button>
             <h1 className="text-2xl font-bold text-gray-900">
-              Ajouter un article
+              Modifier l'article
             </h1>
           </div>
         </div>
-
         <form
           onSubmit={handleSubmit}
           className="grid grid-cols-1 lg:grid-cols-2 gap-6"
@@ -162,7 +167,6 @@ export function AddArticlePage() {
             <h3 className="text-lg font-semibold text-gray-900 mb-6">
               Détails Basique
             </h3>
-
             <div className="space-y-4">
               {/* Désignation */}
               <div>
@@ -182,7 +186,6 @@ export function AddArticlePage() {
                   <p className="mt-1 text-sm text-red-600">{errors.name}</p>
                 )}
               </div>
-
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -196,7 +199,6 @@ export function AddArticlePage() {
                   placeholder="Description de l'article"
                 />
               </div>
-
               {/* Type avec switch toggle */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -231,7 +233,6 @@ export function AddArticlePage() {
                   </div>
                 </div>
               </div>
-
               {/* Unité */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -249,7 +250,6 @@ export function AddArticlePage() {
                   <option value="metre">Mètre</option>
                 </select>
               </div>
-
               {/* État */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -267,7 +267,6 @@ export function AddArticlePage() {
                   <option value="Abandonné">Abandonné</option>
                 </select>
               </div>
-
               {/* Quantité et seuil */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -322,7 +321,6 @@ export function AddArticlePage() {
                   )}
                 </div>
               </div>
-
               {/* Prix unitaire */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -343,29 +341,25 @@ export function AddArticlePage() {
                   placeholder="0.00"
                 />
               </div>
-
               {/* Bouton de sauvegarde */}
               <div className="pt-4">
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isSaving}
                   className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLoading ? "Enregistrement..." : "Enregistrer"}
+                  {isSaving ? "Enregistrement..." : "Enregistrer"}
                 </button>
               </div>
             </div>
           </div>
-
           {/* Colonne droite - Images */}
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-6">
               Les images de l'article
             </h3>
-
             <div className="space-y-4">
               <p className="text-sm text-gray-600">Photo</p>
-
               {/* Zone de drop pour les images */}
               <div
                 onClick={() => fileInputRef.current?.click()}
@@ -389,18 +383,17 @@ export function AddArticlePage() {
                   Ajouter une image
                 </button>
               </div>
-
               {/* Input file caché */}
               <input
                 type="file"
                 accept="image/*"
                 multiple
+                ref={fileInputRef}
                 onChange={handleImageUpload}
                 className="hidden"
                 title="Sélectionner des images"
                 aria-label="Sélectionner des images pour l'article"
               />
-
               {/* Prévisualisation des images */}
               {previewImages.length > 0 && (
                 <div className="grid grid-cols-2 gap-4">

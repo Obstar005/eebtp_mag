@@ -5,3 +5,4 @@ export {
   ProductImage,
 } from "./CustomImage";
 export { CountrySelector } from "./CountrySelector";
+export { PhoneDisplay } from "./PhoneDisplay";

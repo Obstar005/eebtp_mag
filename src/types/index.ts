@@ -6,5 +6,39 @@ export * from "./order";
 export * from "./request";
 export * from "./api";
 export * from "./account";
-export * from "./project";
-export * from "./magasin";
+
+// Export explicite pour éviter les conflits de noms
+export type {
+  Projet,
+  CompteAssocie,
+  ProjetRole,
+  ProjetRoleLabels,
+  CreateProjetData,
+  UpdateProjetData,
+  ProjetFilters,
+  ProjetStatus,
+  ProjetStatusLabels,
+  ProjetStatusColors,
+  ProjetWithDetails,
+  ProjetStats,
+  ProjetListResponse,
+} from "./project";
+
+export type {
+  Magasin,
+  CreateMagasinData,
+  CreateMagasinRequest,
+  UpdateMagasinData,
+  UpdateMagasinRequest,
+  StockArticle,
+  CreateStockArticleData,
+  UpdateStockArticleData,
+  ArticleEtat,
+  ArticleType,
+  ArticleAction,
+  MagasinFilter,
+  StockArticleFilter,
+  MagasinStats,
+} from "./magasin";
+
+export * from "./declaration";

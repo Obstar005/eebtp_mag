@@ -97,10 +97,7 @@ export function MagasinDetailsPage() {
   const confirmDelete = async () => {
     if (selectedArticleId) {
       try {
-        await deleteArticleMutation.mutateAsync({
-          id: selectedArticleId,
-          magasinId,
-        });
+        await deleteArticleMutation.mutateAsync(selectedArticleId);
         confirmDeleteModal.close();
         setSelectedArticleId(null);
       } catch (error) {
@@ -282,17 +279,17 @@ export function MagasinDetailsPage() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {articles.map((article) => (
                       <tr key={article.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-3 whitespace-nowrap">
                           <div className="font-medium text-gray-900">
                             {article.name}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-3 whitespace-nowrap">
                           <div className="text-gray-900">
                             {article.quantite} t
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-3 whitespace-nowrap">
                           <span
                             className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getEtatColor(
                               article.etat
@@ -301,25 +298,25 @@ export function MagasinDetailsPage() {
                             {article.etat}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => handleViewArticle(article.id)}
-                              className="p-1 px-4 text-gray-50 bg-green-600 hover:bg-green-700 rounded-md transition-colors"
+                              className="p-0.5 px-2  text-gray-50 bg-green-600 hover:bg-green-700 rounded-md transition-colors"
                               title="Voir les détails"
                             >
                               <Eye className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => handleEditArticle(article.id)}
-                              className="p-1 px-4 text-gray-50 bg-yellow-600 hover:bg-yellow-700 rounded-md transition-colors"
+                              className="p-0.5 px-2  text-gray-50 bg-yellow-600 hover:bg-yellow-700 rounded-md transition-colors"
                               title="Modifier"
                             >
                               <Edit className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteArticle(article.id)}
-                              className="p-1 px-4 text-gray-50 bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+                              className="p-0.5 px-2  text-gray-50 bg-red-600 hover:bg-red-700 rounded-md transition-colors"
                               title="Supprimer"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -334,7 +331,7 @@ export function MagasinDetailsPage() {
             </div>
 
             {/* Footer avec pagination */}
-            <div className="px-6 py-4 border-t border-gray-200">
+            <div className="px-6 py-3 border-t border-gray-200">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-500">
                   {articles.length} Articles
@@ -466,7 +463,7 @@ export function MagasinDetailsPage() {
                 </div>
                 <button
                   onClick={() => navigate(`/projects/${magasin.projet?.id}`)}
-                  className="w-full px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                  className="min-w-52 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-between gap-2"
                 >
                   Consulter le projet
                   <svg
@@ -509,13 +506,46 @@ export function MagasinDetailsPage() {
             )}
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-3">
+          {/* Déclarations */}
+          <div className="bg-white rounded-xl shadow-sm p-4 space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Déclarations
+            </h3>
+            <div className="bg-gray-50 rounded-xl shadow-sm p-4">
+              <div className=" flex items-center gap-4 min-h-[90px]">
+                <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center mr-2">
+                  {/* Placeholder image, à remplacer par une icône ou image si besoin */}
+                  <span className="w-8 h-8 bg-gray-200 rounded"></span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-gray-900 text-base mb-1">
+                    Liste des déclarations entrées et sorties
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Total de déclarations:{" "}
+                    <span className="font-semibold">20</span>
+                  </div>
+                </div>
+              </div>
+            </div>
             <button
-              onClick={() => setShowEditMagasinModal(true)}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 min-w-52 bg-blue-600 text-white rounded-lg flex items-center justify-between gap-2 hover:bg-blue-700 transition-colors "
+              onClick={() => navigate(`/magasins/${magasinId}/declarations`)}
             >
-              Modifier
+              Consulter
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                />
+              </svg>
             </button>
           </div>
         </div>

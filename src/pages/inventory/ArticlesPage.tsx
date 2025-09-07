@@ -249,7 +249,7 @@ export function ArticlesPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredArticles.map((article) => (
                   <tr key={article.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-3 whitespace-nowrap">
                       <div className="font-medium text-gray-900">
                         {article.name}
                       </div>
@@ -259,17 +259,17 @@ export function ArticlesPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                    <td className="px-6 py-3 whitespace-nowrap text-gray-900">
                       Kilogramme
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                    <td className="px-6 py-3 whitespace-nowrap text-gray-900">
                       {article.type_enum === "matiere_premiere"
                         ? "Matériaux"
                         : article.type_enum === "equipement"
                         ? "Matériel"
                         : "Consommable"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-3 whitespace-nowrap">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEtatColor(
                           article.etat
@@ -282,7 +282,7 @@ export function ArticlesPage() {
                           : article.etat}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                    <td className="px-6 py-3 whitespace-nowrap text-gray-900">
                       {new Date(article.date_creation).toLocaleDateString(
                         "fr-FR",
                         {
@@ -294,11 +294,11 @@ export function ArticlesPage() {
                         }
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-1">
                         <button
-                          onClick={() => navigate(`/articles/${article.id}/details`)}
-                          className="p-1 px-4 text-gray-50 bg-green-600 hover:bg-green-700 rounded-md transition-colors"
+                          onClick={() => navigate(`/articles/${article.id}`)}
+                          className="p-0.5 px-2  text-gray-50 bg-green-600 hover:bg-green-700 rounded-md transition-colors"
                           title="Voir les détails"
                         >
                           <Eye className="h-4 w-4" />
@@ -307,14 +307,14 @@ export function ArticlesPage() {
                           onClick={() =>
                             navigate(`/articles/${article.id}/edit`)
                           }
-                          className="p-1 px-4 text-gray-50 bg-yellow-600 hover:bg-yellow-700 rounded-md transition-colors"
+                          className="p-0.5 px-2  text-gray-50 bg-yellow-600 hover:bg-yellow-700 rounded-md transition-colors"
                           title="Modifier"
                         >
                           <Edit className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteArticle(article.id)}
-                          className="p-1 px-4 text-gray-50 bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+                          className="p-0.5 px-2  text-gray-50 bg-red-600 hover:bg-red-700 rounded-md transition-colors"
                           title="Supprimer"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -330,7 +330,7 @@ export function ArticlesPage() {
 
         {/* Footer avec pagination */}
         {filteredArticles.length > 0 && (
-          <div className="px-6 py-4 border-t border-gray-200">
+          <div className="px-6 py-3 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-500">
                 Affichage de 1-10 sur {filteredArticles.length} données

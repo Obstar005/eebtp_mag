@@ -532,7 +532,7 @@ export function EditAccountPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isLoading ? (
                 <>
@@ -546,7 +546,7 @@ export function EditAccountPage() {
             <button
               type="button"
               onClick={() => navigate(`/accounts/${id}`)}
-              className="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300"
+              className="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300"
             >
               Annuler
             </button>

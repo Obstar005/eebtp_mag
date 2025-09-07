@@ -12,17 +12,22 @@ import { AddAccountPage } from "../pages/accounts/AddAccountPage";
 import { EditAccountPage } from "../pages/accounts/EditAccountPage";
 import { AccountDetailsPage } from "../pages/accounts/AccountDetailsPage";
 import { ProfilesPage } from "../pages/ProfilesPage";
-import { ProjetsPage } from "../pages/projects/ProjectsPage";
+import { ProjectsPage } from "../pages/projects/ProjectsPage";
 import { AddEditProjectPage } from "../pages/projects/AddEditProjectPage";
 import { ProjectDetailsPage } from "../pages/projects/ProjectDetailsPage";
 import { MagasinDetailsPage } from "../pages/projects/MagasinDetailsPage";
 // Pages des articles
 import { ArticlesPage } from "../pages/inventory/ArticlesPage";
-import { ArticleDetailsPage } from "../pages/inventory/ArticleDetailsPage";
+import ArticleDetailsPage from "../pages/inventory/ArticleDetailsPage";
 import { AddArticlePage } from "../pages/inventory/AddArticlePage";
 // Pages des magasins
-import { MagasinsPage } from "../pages/magasins/MagasinsPage";
+import MagasinsPage from "../pages/magasins/MagasinsPage";
 import { AddEditMagasinPage } from "../pages/magasins/AddEditMagasinPage";
+// Pages des déclarations
+import { DeclarationsPage } from "../pages/declarations/DeclarationsPage";
+import { DeclarationEntreeDetailPage } from "../pages/declarations/DeclarationEntreeDetailPage";
+import { DeclarationSortieDetailPage } from "../pages/declarations/DeclarationSortieDetailPage";
+import { DeclarationRetourDetailPage } from "../pages/declarations/DeclarationRetourDetailPage";
 
 export const router = createBrowserRouter([
   {
@@ -78,7 +83,7 @@ export const router = createBrowserRouter([
       // Routes des projets
       {
         path: "projects",
-        element: <ProjetsPage />,
+        element: <ProjectsPage />,
       },
       {
         path: "projects/add",
@@ -108,6 +113,23 @@ export const router = createBrowserRouter([
       {
         path: "magasins/:id/edit",
         element: <AddEditMagasinPage />,
+      },
+      // Routes des déclarations
+      {
+        path: "magasins/:magasinId/declarations",
+        element: <DeclarationsPage />,
+      },
+      {
+        path: "magasins/:magasinId/declarations/:declarationId/detail/entree",
+        element: <DeclarationEntreeDetailPage />,
+      },
+      {
+        path: "magasins/:magasinId/declarations/:declarationId/detail/sortie",
+        element: <DeclarationSortieDetailPage />,
+      },
+      {
+        path: "magasins/:magasinId/declarations/:declarationId/detail/retour",
+        element: <DeclarationRetourDetailPage />,
       },
       // Routes des articles
       {

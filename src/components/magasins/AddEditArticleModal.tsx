@@ -5,10 +5,13 @@ import {
   useUpdateStockArticle,
   useStockArticle,
 } from "../../hooks/useMagasins";
-import type {
-  CreateStockArticleData,
-  UpdateStockArticleData,
+import { useProducts } from "../../hooks/useProducts";
+import { SelectWithSearch } from "../ui/SelectWithSearch";
+import {
+  type CreateStockArticleData,
+  type UpdateStockArticleData,
   ArticleEtat,
+  ArticleType,
 } from "../../types/magasin";
 
 interface AddEditArticleModalProps {
@@ -26,8 +29,20 @@ export function AddEditArticleModal({
 }: AddEditArticleModalProps) {
   const isEditing = !!articleId;
 
-  const [formData, setFormData] = useState<CreateStockArticleData>({
-    name: "",
+  // Charger tous les produits du catalogue pour le select
+  const { data: productsList } = useProducts();
+
+  const [formData, setFormData] = useState<{
+    articleId: number;
+    description: string;
+    quantite: number;
+    quantite_seuil: number;
+    etat: ArticleEtat;
+    type_enum: ArticleType;
+    magasin_id: number;
+    prix_unitaire: number;
+  }>({
+    articleId: 0,
     description: "",
     quantite: 0,
     quantite_seuil: 0,
@@ -48,7 +63,7 @@ export function AddEditArticleModal({
   useEffect(() => {
     if (isEditing && article) {
       setFormData({
-        name: article.name,
+        articleId: Number(article.id),
         description: article.description || "",
         quantite: article.quantite,
         quantite_seuil: article.quantite_seuil,
@@ -64,7 +79,7 @@ export function AddEditArticleModal({
   useEffect(() => {
     if (!isOpen) {
       setFormData({
-        name: "",
+        articleId: 0,
         description: "",
         quantite: 0,
         quantite_seuil: 0,
@@ -77,8 +92,24 @@ export function AddEditArticleModal({
     }
   }, [isOpen, magasinId]);
 
+  // Si on sélectionne un article dans la liste, on pré-remplit le formulaire
+  const handleArticleSelect = (selectedId: string | number) => {
+    const idStr = String(selectedId);
+    const selected = productsList?.data.find((p) => p.id === idStr);
+    if (selected) {
+      setFormData((prev) => ({
+        ...prev,
+        articleId: Number(idStr),
+        description: selected.description || "",
+        prix_unitaire: selected.unitPrice || 0,
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, articleId: 0 }));
+    }
+  };
+
   const handleInputChange = (
-    field: keyof CreateStockArticleData,
+    field: keyof typeof formData,
     value: string | number
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -88,8 +119,8 @@ export function AddEditArticleModal({
     setError(null);
 
     // Validations
-    if (!formData.name.trim()) {
-      setError("Le nom de l'article est requis");
+    if (!formData.articleId) {
+      setError("Veuillez sélectionner un article");
       return;
     }
     if (formData.quantite < 0) {
@@ -103,13 +134,40 @@ export function AddEditArticleModal({
 
     try {
       if (isEditing && articleId) {
-        const updateData: UpdateStockArticleData = {
+        const updateData: UpdateStockArticleData & {
+          article_id: number;
+          type_enum: ArticleType;
+        } = {
           id: articleId,
-          ...formData,
+          article_id: formData.articleId,
+          description: formData.description,
+          quantite: formData.quantite,
+          quantite_seuil: formData.quantite_seuil,
+          etat: formData.etat,
+          type_enum: formData.type_enum,
+          magasin_id: formData.magasin_id,
+          prix_unitaire: formData.prix_unitaire,
         };
         await updateMutation.mutateAsync(updateData);
       } else {
-        await createMutation.mutateAsync(formData);
+        const selectedProduct = productsList?.data.find(
+          (p) => p.id === String(formData.articleId)
+        );
+        const createData: CreateStockArticleData & {
+          article_id: number;
+          type_enum: ArticleType;
+        } = {
+          article_id: formData.articleId,
+          name: selectedProduct?.name || "",
+          description: formData.description,
+          quantite: formData.quantite,
+          quantite_seuil: formData.quantite_seuil,
+          etat: formData.etat,
+          type_enum: formData.type_enum,
+          magasin_id: formData.magasin_id,
+          prix_unitaire: formData.prix_unitaire,
+        };
+        await createMutation.mutateAsync(createData);
       }
       onClose();
     } catch (error) {
@@ -139,37 +197,30 @@ export function AddEditArticleModal({
 
       {/* Form Fields */}
       <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Article
-          </label>
-          <input
-            type="text"
-            required
-            value={formData.name}
-            onChange={(e) => handleInputChange("name", e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Nom de l'article"
-          />
-        </div>
+        <SelectWithSearch
+          label="Article"
+          options={
+            productsList?.data.map((product) => ({
+              value: String(product.id),
+              label: product.name,
+            })) || []
+          }
+          value={formData.articleId}
+          onChange={handleArticleSelect}
+          placeholder="-- Sélectionner un article du catalogue --"
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            État
-          </label>
-          <select
-            value={formData.etat}
-            onChange={(e) =>
-              handleInputChange("etat", e.target.value as ArticleEtat)
-            }
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            title="Sélectionner l'état de l'article"
-          >
-            <option value="Neuf">Neuf</option>
-            <option value="Usagé">Usagé</option>
-            <option value="Abandonné">Abandonné</option>
-          </select>
-        </div>
+        <SelectWithSearch
+          label="État"
+          options={[
+            { value: "Neuf", label: "Neuf" },
+            { value: "Usagé", label: "Usagé" },
+            { value: "Abandonné", label: "Abandonné" },
+          ]}
+          value={formData.etat}
+          onChange={(v) => handleInputChange("etat", v as ArticleEtat)}
+          placeholder="Sélectionner l'état de l'article"
+        />
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">

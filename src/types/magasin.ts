@@ -83,6 +83,7 @@ export interface CreateStockArticleData {
   magasin_id: number;
   project_id?: number;
   prix_unitaire?: number;
+  article_id?: number;
 }
 
 export interface UpdateStockArticleData {
@@ -94,6 +95,8 @@ export interface UpdateStockArticleData {
   etat?: ArticleEtat;
   type_enum?: ArticleType;
   prix_unitaire?: number;
+  magasin_id?: number;
+  article_id?: number;
 }
 
 // Énumérations pour les états des articles

@@ -4,8 +4,6 @@ import type {
   UpdateMagasinData,
   MagasinFilter,
   StockArticle,
-  CreateStockArticleData,
-  UpdateStockArticleData,
   StockArticleFilter,
   MagasinStats,
 } from "../../types/magasin";
@@ -167,13 +165,37 @@ class MagasinService {
   }
 
   async createStockArticle(
-    data: CreateStockArticleData
+    data: any
   ): Promise<StockArticle> {
     console.log("Création article:", data);
-    // Mock response
+    // Si on reçoit un article_id, on va chercher le nom correspondant dans la liste mock
+    let name = data.name;
+    if (data.article_id) {
+      // Simuler la recherche dans la liste mock
+      const mockArticles: StockArticle[] = Array.from(
+        { length: 18 },
+        (_, i) => ({
+          id: i + 1,
+          name: "Ciment",
+          description: "Ciment Portland pour construction",
+          quantite: 100,
+          quantite_seuil: 20,
+          etat: i % 3 === 0 ? "Neuf" : i % 3 === 1 ? "Usagé" : "Abandonné",
+          date_creation: new Date("2025-07-10"),
+          date_modif: new Date("2025-07-10"),
+          user_id: 1,
+          magasin_id: data.magasin_id,
+          prix_unitaire: 15000,
+          user: { id: 1, name: "John", surname: "Doe" },
+          magasin: { id: data.magasin_id, name: "MAG-001" },
+        })
+      );
+      const found = mockArticles.find((a) => a.id === Number(data.article_id));
+      name = found ? found.name : "Article inconnu";
+    }
     return {
       id: Date.now(),
-      name: data.name,
+      name,
       description: data.description,
       quantite: data.quantite,
       quantite_seuil: data.quantite_seuil,
@@ -189,13 +211,35 @@ class MagasinService {
   }
 
   async updateStockArticle(
-    data: UpdateStockArticleData
+    data: any // Accept both {name,...} and {article_id,...}
   ): Promise<StockArticle> {
     console.log("Mise à jour article:", data);
-    // Mock response
+    let name = data.name;
+    if (data.article_id) {
+      const mockArticles: StockArticle[] = Array.from(
+        { length: 18 },
+        (_, i) => ({
+          id: i + 1,
+          name: "Ciment",
+          description: "Ciment Portland pour construction",
+          quantite: 100,
+          quantite_seuil: 20,
+          etat: i % 3 === 0 ? "Neuf" : i % 3 === 1 ? "Usagé" : "Abandonné",
+          date_creation: new Date("2025-07-10"),
+          date_modif: new Date("2025-07-10"),
+          user_id: 1,
+          magasin_id: 1,
+          prix_unitaire: 15000,
+          user: { id: 1, name: "John", surname: "Doe" },
+          magasin: { id: 1, name: "MAG-001" },
+        })
+      );
+      const found = mockArticles.find((a) => a.id === Number(data.article_id));
+      name = found ? found.name : "Article inconnu";
+    }
     return {
       id: data.id,
-      name: data.name || "CIMENT",
+      name: name || "CIMENT",
       description: data.description,
       quantite: data.quantite || 100,
       quantite_seuil: data.quantite_seuil || 20,

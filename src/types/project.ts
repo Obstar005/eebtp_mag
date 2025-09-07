@@ -1,4 +1,6 @@
 // Types pour la gestion des projets
+import type { User } from "./auth";
+
 export interface Projet {
   id: number;
   name: string; // Nom du projet
@@ -175,9 +177,3 @@ export interface ProjetListResponse {
   limit: number;
   totalPages: number;
 }
-
-// Import des types utilisateur depuis account.ts
-import type { Account as User } from "./account";
-
-// Ré-export pour compatibilité
-export type { User };

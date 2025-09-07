@@ -5,8 +5,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  Filter,
   ListFilter,
+  Search,
 } from "lucide-react";
 
 export function ReportsPage() {
@@ -257,7 +257,7 @@ export function ReportsPage() {
         <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Projet avec dropdown */}
           <div className="relative max-lg:order-1">
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+            <label className="text-sm font-medium text-gray-700 mb-2 flex items-center">
               Projet <span className="text-red-500 ml-1">*</span>
             </label>
             <div className="relative">
@@ -565,7 +565,7 @@ export function ReportsPage() {
         </div>
 
         {/* Bouton Générer */}
-        <div className="flex justify-center justify-end">
+        <div className="flex items-center justify-end">
           <button
             onClick={generateReport}
             disabled={isLoading}
@@ -620,11 +620,11 @@ export function ReportsPage() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {reportData.map((row, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <tr key={index} className="hover:bg-gray-50 max-h-12">
+                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                       {row.date}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <td className="px-6 py-3 whitespace-nowrap text-sm">
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded-full ${
                           row.mouvement === "Entrée"
@@ -635,13 +635,13 @@ export function ReportsPage() {
                         {row.mouvement}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                       {row.article}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
                       {row.type}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
                       {row.compte}
                     </td>
                   </tr>

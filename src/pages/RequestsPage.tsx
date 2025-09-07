@@ -186,36 +186,36 @@ export function RequestsPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {paginatedRequests.map((request) => (
                 <tr key={request.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                     {request.demande}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                     {request.nomMagasinier}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                     {request.quantiteDemandee}t
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
                     {request.profil}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-3 whitespace-nowrap">
                     <span className={getStatusBadge(request.status)}>
                       {RequestStatusLabels[request.status]}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
                     {request.dateDemande}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
                     <div className="flex items-center space-x-2">
                       <button
-                        className="p-1 px-4 bg-green-500 text-gray-100 hover:bg-green-600 transition-colors"
+                        className="p-0.5 px-2  bg-green-500 text-gray-100 hover:bg-green-600 transition-colors"
                         title="Voir"
                       >
                         <Eye className="h-4 w-4" />
                       </button>
                       <button
-                        className="p-1 px-4 bg-orange-400 text-gray-100 hover:bg-orange-600 transition-colors"
+                        className="p-0.5 px-2  bg-orange-400 text-gray-100 hover:bg-orange-600 transition-colors"
                         title="Modifier"
                       >
                         <Edit className="h-4 w-4" />
