@@ -1,59 +1,11 @@
-// Types pour les demandes de matériel basé sur le schéma de base de données
-export interface Demande {
-  id: number;
-  number: number; // Numéro de la demande
-  stock_item_id: number; // ID de l'article en stock
-  magasin_id: number; // ID du magasin
-  quantite: number; // Quantité demandée (float)
-  statut: DemandeStatut; // Statut de la demande (Enum)
-  date_creation: Date; // Date de création
-  emis_par: number; // ID utilisateur qui a émis la demande
-  date_emission: Date; // Date d'émission
-  confirme_par?: number; // ID utilisateur qui a confirmé (optionnel)
-  date_confirmation?: Date; // Date de confirmation (optionnel)
-  date_modif: Date; // Date de modification
-  approuve_par?: number; // ID utilisateur qui a approuvé (optionnel)
-  date_approbation?: Date; // Date d'approbation (optionnel)
-  valide_par?: number; // ID utilisateur qui a validé (optionnel)
-  date_validation?: Date; // Date de validation (optionnel)
-}
-
-// Interface avec les relations pour l'affichage
-export interface DemandeWithRelations extends Demande {
-  stock_item?: {
-    id: number;
-    name: string;
-    description?: string;
-  };
-  magasin?: {
-    id: number;
-    name: string;
-  };
-  emetteur?: {
-    id: number;
-    name: string;
-    profil: string;
-  };
-  confirmateur?: {
-    id: number;
-    name: string;
-  };
-  approbateur?: {
-    id: number;
-    name: string;
-  };
-  validateur?: {
-    id: number;
-    name: string;
-  };
-}
-
+// Statuts possibles pour une demande (enum et labels)
 export const DemandeStatut = {
   EMIS: "emis",
   CONFIRME: "confirme",
   APPROUVE: "approuve",
   VALIDE: "valide",
   LIVRE: "livre",
+  REFUSE: "refuse",
 } as const;
 
 export type DemandeStatut = (typeof DemandeStatut)[keyof typeof DemandeStatut];
@@ -74,6 +26,7 @@ export const RequestStatusLabels: Record<RequestStatus, string> = {
   approuve: "Approuvé",
   valide: "Validé",
   livre: "Livré",
+  refuse: "Refusé",
 };
 
 // Couleurs pour les statuts
@@ -84,9 +37,10 @@ export const RequestStatusColors: Record<RequestStatus, string> = {
   approuve: "text-green-600",
   valide: "text-purple-600",
   livre: "text-orange-600",
+  refuse: "text-red-600",
 };
 
-// Interface pour compatibilité avec le code existant (à migrer progressivement)
+// Interface d'une demande de matériel (version complète)
 export interface MaterialRequest {
   id: string;
   demande: string; // Nom du matériel demandé
@@ -99,4 +53,22 @@ export interface MaterialRequest {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+  // Champs additionnels pour le détail
+  nomMagasin?: string;
+  nomProjet?: string;
+  adresseMagasin?: string;
+  donneurOrdre?: string;
+  quantiteValidee?: number;
+  motif?: string;
+  observation?: string;
+  traitements?: RequestTreatment[];
+}
+
+// Traitement d'une demande
+export interface RequestTreatment {
+  id: string;
+  nom: string;
+  profil: string;
+  action: RequestStatus; // approuve, valide, refuse, etc.
+  date: string;
 }

@@ -12,11 +12,15 @@ import { AppLayout } from "./components/layout/AppLayout";
 import { Dashboard } from "./pages/Dashboard";
 import { ReportsPage } from "./pages/ReportsPage";
 import { RequestsPage } from "./pages/RequestsPage";
+import RequestDetailPage from "./pages/RequestDetailPage";
 import { routePaths } from "./router/routes";
 import { AccountsPage } from "./pages/accounts/AccountsPage";
 import { AddAccountPage } from "./pages/accounts/AddAccountPage";
 import { AccountDetailsPage } from "./pages/accounts/AccountDetailsPage";
 import { ProfilesPage } from "./pages/ProfilesPage";
+import { ProfileDetailPage } from "./pages/profiles/ProfileDetailPage";
+import { ProfileEditPage } from "./pages/profiles/ProfileEditPage";
+import { ProfileAddPage } from "./pages/profiles/ProfileAddPage";
 import { EditAccountPage } from "./pages/accounts/EditAccountPage";
 import { ProjectsPage } from "./pages/projects/ProjectsPage";
 import { AddEditProjectPage } from "./pages/projects/AddEditProjectPage";
@@ -103,6 +107,7 @@ function AppContent() {
         {/* Pages principales */}
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="requests" element={<RequestsPage />} />
+        <Route path="requests/:id" element={<RequestDetailPage />} />
 
         {/* Comptes */}
         <Route path="accounts" element={<AccountsPage />} />
@@ -134,10 +139,9 @@ function AppContent() {
         />
 
         <Route path="profiles" element={<ProfilesPage />} />
-        <Route
-          path="profiles/add"
-          element={<div>Ajouter un Profil (à implémenter)</div>}
-        />
+        <Route path="profiles/add" element={<ProfileAddPage />} />
+        <Route path="profiles/:profileId" element={<ProfileDetailPage />} />
+        <Route path="profiles/:profileId/edit" element={<ProfileEditPage />} />
         <Route path="projects" element={<ProjectsPage />} />
         <Route path="projects/add" element={<AddEditProjectPage />} />
         <Route path="projects/:id/edit" element={<AddEditProjectPage />} />

@@ -2,25 +2,16 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   User,
   Calendar,
-  Phone,
-  Mail,
-  MapPin,
-  Shield,
-  Edit3,
-  Trash2,
   ArrowLeft,
   Eye,
   EyeOff,
+  MoreHorizontal,
+  Edit2Icon,
 } from "lucide-react";
-import {
-  useAccount,
-  useDeleteAccount,
-  useToggleAccountStatus,
-} from "../../hooks";
+import { useAccount, useDeleteAccount } from "../../hooks";
 import { ConfirmationModal, FormModal } from "../../components/layout";
 import { useModal } from "../../hooks/useModal";
 import { useState } from "react";
-import type { AccountType } from "../../types/account";
 
 export function AccountDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -29,7 +20,6 @@ export function AccountDetailsPage() {
 
   const { data: account, isLoading, error } = useAccount(id!);
   const deleteAccountMutation = useDeleteAccount();
-  const toggleStatusMutation = useToggleAccountStatus();
 
   const deleteModal = useModal();
   const editModal = useModal();
@@ -65,285 +55,240 @@ export function AccountDetailsPage() {
     }
   };
 
-  const handleToggleStatus = async () => {
-    try {
-      await toggleStatusMutation.mutateAsync(account.id);
-    } catch (error) {
-      console.error("Erreur lors du changement de statut:", error);
-    }
-  };
-
-  const getStatusColor = (isActive: boolean) => {
-    return isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
-  };
-
-  const getTypeColor = (type: AccountType) => {
-    return type === "Interne"
-      ? "bg-blue-100 text-blue-800"
-      : "bg-purple-100 text-purple-800";
-  };
-
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={() => navigate("/accounts")}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Détails du compte N°{account.code}
-            </h1>
-            <p className="text-gray-600">Informations détaillées du compte</p>
-          </div>
-        </div>
+      {/* Header simple */}
+      <div className="flex items-center space-x-4">
+        <button
+          onClick={() => navigate("/accounts")}
+          className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <h1 className="text-xl font-semibold text-gray-900">
+          Détails du compte N°{account.code}
+        </h1>
+      </div>
 
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={handleToggleStatus}
-            disabled={toggleStatusMutation.isPending}
-            className={`px-4 py-2 rounded-lg font-medium ${
-              account.is_active
-                ? "bg-red-100 text-red-700 hover:bg-red-200"
-                : "bg-green-100 text-green-700 hover:bg-green-200"
-            } ${toggleStatusMutation.isPending ? "opacity-50" : ""}`}
-          >
-            {toggleStatusMutation.isPending ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-            ) : (
-              <>
-                {account.is_active ? (
-                  <>
-                    <EyeOff className="h-4 w-4 mr-2 inline" />
-                    Désactiver
-                  </>
+      <div className="flex gap-4">
+        <div className="flex-3">
+          {/* Card principale avec photo et informations */}
+          <div className="bg-white rounded-lg shadow p-6 mb-6 relative flex flex-col pt-12">
+            {/* bg linear with courbes */}
+            <div className="bg-gradient-to-br from-blue-500 via-purple-500 to-green-400 rounded-xl absolute top-0 left-0 inset-0 inset-y-1/2 h-32 rounded-b-none z-10"></div>
+            <div className="space-y-6 z-20">
+              <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 p-1 relative">
+                {account.photo ? (
+                  <img
+                    src={account.photo}
+                    alt="Photo de profil"
+                    className="w-full h-full object-cover rounded-full border border-blue-500"
+                  />
                 ) : (
-                  <>
-                    <Eye className="h-4 w-4 mr-2 inline" />
-                    Activer
-                  </>
+                  <div className="w-full h-full flex items-center justify-center rounded-full border border-blue-500">
+                    <User className="h-12 w-12" />
+                  </div>
                 )}
-              </>
-            )}
-          </button>
 
-          <button
-            onClick={editModal.open}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
-          >
-            <Edit3 className="h-4 w-4 mr-2" />
-            Modifier
-          </button>
-
-          <button
-            onClick={deleteModal.open}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center"
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Supprimer
-          </button>
-        </div>
-      </div>
-
-      {/* Card principale avec photo et informations */}
-      <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl p-8 text-white">
-        <div className="flex items-center space-x-6">
-          <div className="h-24 w-24 bg-white/20 rounded-full flex items-center justify-center">
-            {account.photo_profil ? (
-              <img
-                src={account.photo_profil}
-                alt={`${account.prenoms} ${account.nom}`}
-                className="h-24 w-24 rounded-full object-cover"
-              />
-            ) : (
-              <User className="h-12 w-12 text-white/80" />
-            )}
-          </div>
-
-          <div className="flex-1">
-            <div className="flex items-center space-x-4 mb-2">
-              <h2 className="text-2xl font-bold">{account.nom_utilisateur}</h2>
-              <span
-                className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                  account.is_active
-                )}`}
-              >
-                {account.is_active ? "En ligne" : "Hors ligne"}
-              </span>
-            </div>
-
-            <p className="text-xl text-white/90 mb-2">
-              {account.prenoms} {account.nom}
-            </p>
-
-            <div className="flex items-center space-x-6 text-white/80">
-              <div className="flex items-center">
-                <Phone className="h-4 w-4 mr-2" />
-                <span>{account.telephone}</span>
-              </div>
-              {account.derniere_connexion && (
-                <div className="flex items-center">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  <span>
-                    Créé le{" "}
-                    {new Date(account.date_creation).toLocaleDateString(
-                      "fr-FR"
-                    )}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="text-right">
-            {account.derniere_connexion && (
-              <p className="text-white/80 text-sm">
-                Mise à jour le{" "}
-                {new Date(account.date_modification).toLocaleDateString(
-                  "fr-FR"
-                )}
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Sections d'informations */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Informations personnelles */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Informations personnelles
-          </h3>
-
-          <div className="space-y-4">
-            <div className="flex items-start">
-              <User className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
-              <div>
-                <p className="text-sm text-gray-500">Nom complet</p>
-                <p className="font-medium">
-                  {account.prenoms} {account.nom}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start">
-              <Calendar className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
-              <div>
-                <p className="text-sm text-gray-500">Date de naissance</p>
-                <p className="font-medium">
-                  {new Date(account.date_naissance).toLocaleDateString("fr-FR")}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start">
-              <MapPin className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
-              <div>
-                <p className="text-sm text-gray-500">Nationalité</p>
-                <p className="font-medium">{account.nationalite}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Informations de compte */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Informations du compte
-          </h3>
-
-          <div className="space-y-4">
-            <div className="flex items-start">
-              <Shield className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
-              <div>
-                <p className="text-sm text-gray-500">Profil</p>
-                <p className="font-medium">{account.profile?.nom}</p>
-                {account.profile?.description && (
-                  <p className="text-sm text-gray-600 mt-1">
-                    {account.profile.description}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-start">
-              <div className="h-5 w-5 mr-3 mt-0.5 flex items-center justify-center">
-                <div
-                  className={`h-3 w-3 rounded-full ${
-                    getTypeColor(account.type)
-                      .replace("text-", "bg-")
-                      .split(" ")[0]
-                  }`}
-                ></div>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Type de compte</p>
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${getTypeColor(
-                    account.type
-                  )}`}
+                {/* edit btn */}
+                <button
+                  onClick={editModal.open}
+                  className="absolute bottom-0 right-0 -translate-1/3 origin-center bg-blue-500 p-1 rounded-full shadow hover:bg-bg-600 border border-blue-600"
+                  title="Modifier le compte"
                 >
-                  {account.type}
+                  <Edit2Icon className="h-4 w-4 text-white" />
+                </button>
+              </div>
+              {/* isOnligne badge */}
+              <span
+                className="absolute top-3/7 right-12 p-1 px-4 text-white bg-green-500 border-2 border-white rounded-full"
+                title="En ligne"
+              >
+                En ligne
+              </span>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {account.prenoms} {account.nom}
+                </h2>
+                <div className="space-y-2">
+                  {/* Phone number aligned right */}
+                  <p className="text-right text-sm text-gray-500">
+                    Téléphone: {account.telephone}
+                  </p>
+                  <div className="flex justify-between items-center gap-4">
+                    <p className="text-sm text-gray-500">N° {account.code}</p>
+                    <div className="flex gap-6 items-center">
+                      {/* created at */}
+                      <p className="text-sm text-gray-500">
+                        Créé le:{" "}
+                        {new Date().toLocaleDateString("fr-FR", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "2-digit",
+                        })}
+                      </p>
+                      {/* updated at */}
+                      <p className="text-sm text-gray-500">
+                        Mis à jour:{" "}
+                        {new Date().toLocaleDateString("fr-FR", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* Sections d'informations */}
+          <div className="bg-white rounded-lg shadow p-4 space-y-4">
+            {/* Nom */}
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase tracking-wide">
+                Nom
+              </label>
+              <div className="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50">
+                <span className="text-gray-900">{account.nom}</span>
+              </div>
+            </div>
+            {/* Prénom */}
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase tracking-wide">
+                Prénom
+              </label>
+              <div className="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50">
+                <span className="text-gray-900">{account.prenoms}</span>
+              </div>
+            </div>
+            {/* Date de naissance */}
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase tracking-wide">
+                Date de naissance
+              </label>
+              <div className="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50 flex items-center">
+                <span className="text-gray-900">
+                  {new Date(account.date_naissance).toLocaleDateString("fr-FR")}
+                </span>
+                <Calendar className="h-4 w-4 ml-2 text-gray-400" />
+              </div>
+            </div>
+            {/* Nationalité */}
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase tracking-wide">
+                Nationalité
+              </label>
+              <div className="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50 flex items-center">
+                <img
+                  src="/flags/tg.svg"
+                  alt="TG"
+                  className="w-5 h-4 mr-2"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+                <span className="text-gray-900">{account.nationalite}</span>
+              </div>
+            </div>
+            {/* Type */}
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase tracking-wide">
+                Type
+              </label>
+              <div className="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50">
+                <span className="text-gray-900">{account.type}</span>
+              </div>
+            </div>
+            {/* Magasin */}
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase tracking-wide">
+                Magasin
+              </label>
+              <div className="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50">
+                <span className="text-gray-900">
+                  {account.profile?.nom || "Consultant"}
                 </span>
               </div>
             </div>
-
-            <div className="flex items-start">
-              <div className="h-5 w-5 text-gray-400 mr-3 mt-0.5 flex items-center justify-center">
-                <div className="h-2 w-2 rounded-full bg-current"></div>
-                <div className="h-2 w-2 rounded-full bg-current ml-0.5"></div>
-                <div className="h-2 w-2 rounded-full bg-current ml-0.5"></div>
+            {/* Mot de passe */}
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase tracking-wide">
+                Mot de passe
+              </label>
+              <div className="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50 flex items-center justify-between">
+                <span className="font-mono text-gray-900">
+                  {showPassword ? account.mot_de_passe : "••••••••••"}
+                </span>
+                <button
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
-              <div>
-                <p className="text-sm text-gray-500">Mot de passe</p>
-                <div className="flex items-center space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="font-mono text-sm"
-                  >
-                    {showPassword ? account.mot_de_passe : "••••••••••"}
-                  </button>
-                  <button
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
+            </div>
+          </div>
+        </div>
+        {/* Section Activités */}
+        <div className="bg-white rounded-lg shadow flex-1">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">Activités</h3>
+              <input
+                type="date"
+                defaultValue="2025-07-10"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+              />
+            </div>
+          </div>
+          <div className="p-6">
+            <div className="flex items-center space-x-4 p-4 bg-blue-50 rounded-lg">
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-semibold">D</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-gray-900">
+                  Demande d'appro de ciment
+                </h4>
+                <p className="text-xs text-gray-500">Activité récente</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs font-semibold">0</span>
+                </div>
+                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                  <div className="w-6 h-6 bg-white rounded-full"></div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Section Activités */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Activités</h3>
-            <input
-              type="date"
-              defaultValue="2025-07-10"
-              className="px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+        {/* Bouton Voir le projet associé */}
+        <button className="fixed bottom-10 right-10 w-max min-w-48 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 flex items-center justify-center">
+          <span>Voir le projet associé</span>
+          <svg
+            className="w-4 h-4 ml-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
             />
-          </div>
-        </div>
-
-        <div className="p-6">
-          <p className="text-gray-500 text-center py-8">
-            Aucune activité récente à afficher
-          </p>
-        </div>
+          </svg>
+        </button>
       </div>
 
       {/* Modal de confirmation de suppression */}

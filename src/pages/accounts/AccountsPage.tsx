@@ -76,14 +76,30 @@ export function AccountsPage() {
   const total = accountsData?.total || 0;
 
   const getStatusBadge = (isActive: boolean) => {
-    return isActive ? (
-      <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-        Actif
-      </span>
-    ) : (
-      <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
-        Inactif
-      </span>
+    return (
+      <div
+        className={[
+          "flex items-center gap-2 px-2 py-1 rounded-full",
+          isActive ? "bg-green-100" : "bg-red-100",
+        ].join(" ")}
+      >
+        {" "}
+        {isActive ? (
+          <>
+            <span className="h-4 w-4 rounded-full border-2 border-white bg-green-800"></span>
+            <span className="text-xs font-medium text-green-800">
+              Actif
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="h-4 w-4 rounded-full border-2 border-white bg-red-800"></span>
+            <span className="text-xs font-medium text-red-800">
+              Inactif
+            </span>
+          </>
+        )}
+      </div>
     );
   };
 
@@ -242,6 +258,9 @@ export function AccountsPage() {
                   Dernière Connexion
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Statut
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -278,41 +297,35 @@ export function AccountsPage() {
                         )
                       : "Jamais"}
                   </td>
+                  <td className="px-6 py-3 whitespace-nowrap">
+                    {getStatusBadge(account.is_active)}
+                  </td>
                   <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
                     <div className="flex items-center gap-2">
-                      {getStatusBadge(account.is_active)}
-
-                      <div className="flex items-center gap-1">
-                        <a
-                          href={`/accounts/${account.id}`}
-                          className="p-0.5 px-2  text-gray-50 bg-blue-500 hover:bg-blue-600 rounded-md"
-                          title="Voir les détails"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </a>
-                        <a
-                          href={`/accounts/${account.id}/edit`}
-                          className="p-0.5 px-2  text-gray-50 bg-green-500 hover:bg-green-600 rounded-md"
-                          title="Modifier"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </a>
-                        <button
-                          onClick={() => {
-                            setSelectedAccountId(account.id);
-                            deleteModal.open();
-                          }}
-                          className="p-0.5 px-2  text-gray-50 bg-red-400 hover:bg-red-600 rounded-md"
-                          title="Supprimer"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                        {/* <div className="relative">
-                          <button className="p-0.5 px-2  text-gray-400 hover:text-gray-600">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </button>
-                        </div> */}
-                      </div>
+                      <a
+                        href={`/accounts/${account.id}`}
+                        className="p-0.5 px-2  text-gray-50 bg-blue-500 hover:bg-blue-600 rounded-md"
+                        title="Voir les détails"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </a>
+                      <a
+                        href={`/accounts/${account.id}/edit`}
+                        className="p-0.5 px-2  text-gray-50 bg-green-500 hover:bg-green-600 rounded-md"
+                        title="Modifier"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </a>
+                      <button
+                        onClick={() => {
+                          setSelectedAccountId(account.id);
+                          deleteModal.open();
+                        }}
+                        className="p-0.5 px-2  text-gray-50 bg-red-400 hover:bg-red-600 rounded-md"
+                        title="Supprimer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </td>
                 </tr>

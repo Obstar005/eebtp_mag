@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, Eye, Edit, Trash2, ArrowUpRight } from "lucide-react";
 import {
   type MaterialRequest,
@@ -71,6 +72,7 @@ export function RequestsPage() {
     return matchesTab && matchesSearch;
   });
 
+  const navigate = useNavigate();
   // Pagination
   const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -87,18 +89,17 @@ export function RequestsPage() {
 
   const getStatusBadge = (status: RequestStatus) => {
     const baseClasses = "px-2 py-1 text-xs font-medium rounded-full";
-
     switch (status) {
       case "approuve":
         return `${baseClasses} bg-green-100 text-green-800`;
       case "emis":
         return `${baseClasses} bg-yellow-100 text-yellow-800`;
-      case "confirme":
-        return `${baseClasses} bg-blue-100 text-blue-800`;
       case "valide":
         return `${baseClasses} bg-purple-100 text-purple-800`;
       case "livre":
         return `${baseClasses} bg-orange-100 text-orange-800`;
+      case "refuse":
+        return `${baseClasses} bg-red-100 text-red-800`;
       default:
         return `${baseClasses} bg-gray-100 text-gray-800`;
     }
@@ -109,10 +110,101 @@ export function RequestsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Demandes</h1>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
-          <ArrowUpRight className="h-4 w-4" />
-          Nouvelle demande
-        </button>
+        {/* Filtres Jour/Semaine/Mois */}
+        <div className="flex bg-blue-50 rounded-full p-1 gap-1">
+          {["Jour", "Semaine", "Mois"].map((label, idx) => (
+            <button
+              key={label}
+              className={`px-5 py-1.5 rounded-full text-sm font-medium transition-colors focus:outline-none ${
+                idx === 0
+                  ? "bg-white text-blue-600 shadow" // Par défaut, 'Jour' sélectionné
+                  : "text-gray-500 hover:text-blue-600"
+              }`}
+              // TODO: Gérer l'état sélectionné si besoin
+              type="button"
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Statistiques */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* Utilisateurs total */}
+        <div className="bg-white rounded-lg shadow p-6 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500 font-medium">
+              Utilisateurs Total
+            </span>
+            <button className="text-gray-400 hover:text-gray-600">
+              <span className="text-lg">&#8942;</span>
+            </button>
+          </div>
+          <div className="flex items-end gap-2 justify-between">
+            <span className="text-3xl font-bold text-gray-900">2,420</span>
+            <div className="flex items-end justify-end gap-2">
+              <span className="text-green-600 text-xs font-semibold bg-green-100 px-2 py-0.5 rounded-full">
+                +20%
+              </span>
+              <span className="text-xs text-gray-400">vs. Hier</span>
+            </div>
+          </div>
+        </div>
+        {/* Projets actifs */}
+        <div className="bg-white rounded-lg shadow p-6 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500 font-medium">
+              Projets Actif
+            </span>
+            <button className="text-gray-400 hover:text-gray-600">
+              <span className="text-lg">&#8942;</span>
+            </button>
+          </div>
+          <div className="flex items-end gap-2 justify-between">
+            <span className="text-3xl font-bold text-gray-900">2,420</span>
+            <div className="flex items-end gap-2">
+              <span className="text-red-600 text-xs font-semibold bg-red-100 px-2 py-0.5 rounded-full">
+                -20%
+              </span>
+              <span className="text-xs text-gray-400">vs. Hier</span>
+            </div>
+          </div>
+        </div>
+        {/* Utilisateurs connectés */}
+        <div className="bg-white rounded-lg shadow p-6 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500 font-medium">
+              Utilisateurs Connectés
+            </span>
+            <button className="text-gray-400 hover:text-gray-600">
+              <span className="text-lg">&#8942;</span>
+            </button>
+          </div>
+          <div className="flex items-center gap-2 justify-between">
+            <span className="text-3xl font-bold text-gray-900">316</span>
+            <div className="flex -space-x-2">
+              <img
+                src="/vite.svg"
+                alt="avatar"
+                className="w-6 h-6 rounded-full border-2 border-white"
+              />
+              <img
+                src="/vite.svg"
+                alt="avatar"
+                className="w-6 h-6 rounded-full border-2 border-white"
+              />
+              <img
+                src="/vite.svg"
+                alt="avatar"
+                className="w-6 h-6 rounded-full border-2 border-white"
+              />
+              <span className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-600 border-2 border-white">
+                +6
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Tabs et Search */}
@@ -121,7 +213,16 @@ export function RequestsPage() {
           <div className="flex items-center justify-between p-4">
             {/* Tabs */}
             <div className="flex space-x-8">
-              {Object.values(RequestStatus).map((status) => (
+              {(
+                [
+                  "tous",
+                  "emis",
+                  "approuve",
+                  "valide",
+                  "livre",
+                  "refuse",
+                ] as RequestStatus[]
+              ).map((status) => (
                 <button
                   key={status}
                   onClick={() => {
@@ -211,6 +312,7 @@ export function RequestsPage() {
                       <button
                         className="p-0.5 px-2  bg-green-500 text-gray-100 hover:bg-green-600 transition-colors"
                         title="Voir"
+                        onClick={() => navigate(`/requests/${request.id}`)}
                       >
                         <Eye className="h-4 w-4" />
                       </button>
