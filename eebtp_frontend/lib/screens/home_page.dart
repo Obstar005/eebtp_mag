@@ -502,11 +502,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           if (action == 'entry') {
             Navigator.pushNamed(context, '/entry');
           } else if (action == 'refresh') {
-            // Ajoutez votre logique d'actualisation ici
-            print('Actualisation demandée');
+            Navigator.pushNamed(context, '/refresh');
           } else if (action == 'exit') {
-           Navigator.pushNamed(context, '/exit'); // Ajoutez votre logique de sortie ici
-            print('Sortie demandée');
+           Navigator.pushNamed(context, '/exit');
           }
         },
       ),
@@ -528,7 +526,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void _navigateToPage(int index) {
     switch (index) {
       case 0:
-        break; // Déjà sur la page d'accueil
+        Navigator.pushReplacementNamed(context, '/home');
       case 1:
         Navigator.pushReplacementNamed(context, '/stock');
         break;
@@ -689,7 +687,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  // Nouvelle fonction pour afficher le menu déroulant des types de carte
   void _showCardTypeDialog() {
     showDialog(
       context: context,
