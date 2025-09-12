@@ -1,198 +1,220 @@
 import React from "react";
-import {
-  Calendar,
-  BarChart3,
-  TrendingUp,
-  Users,
-  FolderOpen,
-  UserCheck,
-  MoreHorizontal,
-  ArrowUpRight,
-  ArrowDownRight,
-} from "lucide-react";
-// Définir vos filtres avec icônes
-const filters = [
-  { period: "Jours", icon: <TrendingUp className="w-4 h-4" /> },
-  { period: "Semaines", icon: <BarChart3 className="w-4 h-4" /> },
-  { period: "Mois", icon: <Calendar className="w-4 h-4" /> },
-];
+import { MoreHorizontal } from "lucide-react";
 
 export function Dashboard() {
-  const [selectedPeriod, setSelectedPeriod] = React.useState("Mois");
+  const [selectedPeriod, setSelectedPeriod] = React.useState("Jour");
   return (
     <div className="space-y-6">
-      <div className="flex max-lg:flex-col gap-4 lg:justify-between p-4 bg-white shadow-lg rounded-xl border border-gray-100">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Statistiques</h1>
-          <p className="text-gray-500 mt-1">
-            Vue d'ensemble de votre stock et activités
-          </p>
-        </div>
+      {/* Header avec titre et filtres */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900">Statistiques</h1>
 
-        {/* Filtre jours|semaines|mois */}
-        <div className="flex space-x-2 bg-gray-50 p-1 rounded-xl border border-gray-200">
-          {filters.map((item) => (
-            <div key={item.period}>
-              <input
-                type="radio"
-                name="filterPeriod"
-                id={"period-" + item.period}
-                className="hidden"
-                checked={item.period === selectedPeriod}
-                value={item.period}
-                onChange={() => {
-                  setSelectedPeriod(item.period);
-                }}
-              />
-              <label htmlFor={"period-" + item.period}>
-                <span
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                    item.period === selectedPeriod
-                      ? "bg-blue-600 text-white shadow-md"
-                      : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
-                  }`}
-                >
-                  {item.icon}
-                  {item.period}
-                </span>
-              </label>
-            </div>
+        {/* Filtres Jour/Semaine/Mois */}
+        <div className="flex bg-blue-50 rounded-full p-1 gap-1">
+          {["Jour", "Semaine", "Mois"].map((label) => (
+            <button
+              key={label}
+              onClick={() => setSelectedPeriod(label)}
+              className={`px-5 py-1.5 rounded-full text-sm font-medium transition-colors focus:outline-none ${
+                selectedPeriod === label
+                  ? "bg-white text-blue-600 shadow"
+                  : "text-gray-500 hover:text-blue-600"
+              }`}
+              type="button"
+            >
+              {label}
+            </button>
           ))}
         </div>
       </div>
 
       {/* Statistiques rapides */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Utilisateurs Total */}
-        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg mr-3">
-                <Users className="w-5 h-5 text-blue-600" />
-              </div>
-              <span className="text-sm font-medium text-gray-600">
-                Utilisateurs Total
-              </span>
-            </div>
-            <button
-              className="text-gray-400 hover:text-gray-600"
-              title="Plus d'options"
-              aria-label="Plus d'options pour utilisateurs total"
-            >
-              <MoreHorizontal className="w-4 h-4" />
+        <div className="bg-white rounded-lg shadow p-6 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500 font-medium">
+              Utilisateurs Total
+            </span>
+            <button className="text-gray-400 hover:text-gray-600">
+              <MoreHorizontal className="h-4 w-4" />
             </button>
           </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-3xl font-bold text-gray-900">2,420</p>
-              <div className="flex items-center mt-2">
-                <ArrowUpRight className="w-4 h-4 text-green-500 mr-1" />
-                <span className="text-sm text-green-500 font-medium">20%</span>
-                <span className="text-sm text-gray-500 ml-2">vs. Hier</span>
-              </div>
-            </div>
+          <div className="flex items-end gap-2">
+            <span className="text-3xl font-bold text-gray-900">2,420</span>
+            <span className="text-green-600 text-xs font-semibold bg-green-100 px-2 py-0.5 rounded-full">
+              +20%
+            </span>
           </div>
+          <span className="text-xs text-gray-400">vs. Hier</span>
         </div>
 
         {/* Projets Actif */}
-        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center">
-              <div className="p-2 bg-orange-100 rounded-lg mr-3">
-                <FolderOpen className="w-5 h-5 text-orange-600" />
-              </div>
-              <span className="text-sm font-medium text-gray-600">
-                Projets Actif
-              </span>
-            </div>
-            <button
-              className="text-gray-400 hover:text-gray-600"
-              title="Plus d'options"
-              aria-label="Plus d'options pour projets actifs"
-            >
-              <MoreHorizontal className="w-4 h-4" />
+        <div className="bg-white rounded-lg shadow p-6 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500 font-medium">
+              Projets Actif
+            </span>
+            <button className="text-gray-400 hover:text-gray-600">
+              <MoreHorizontal className="h-4 w-4" />
             </button>
           </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-3xl font-bold text-gray-900">2,420</p>
-              <div className="flex items-center mt-2">
-                <ArrowDownRight className="w-4 h-4 text-red-500 mr-1" />
-                <span className="text-sm text-red-500 font-medium">20%</span>
-                <span className="text-sm text-gray-500 ml-2">vs. Hier</span>
-              </div>
-            </div>
+          <div className="flex items-end gap-2">
+            <span className="text-3xl font-bold text-gray-900">2,420</span>
+            <span className="text-red-600 text-xs font-semibold bg-red-100 px-2 py-0.5 rounded-full">
+              -20%
+            </span>
           </div>
+          <span className="text-xs text-gray-400">vs. Hier</span>
         </div>
 
         {/* Utilisateurs Connectés */}
-        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg mr-3">
-                <UserCheck className="w-5 h-5 text-green-600" />
-              </div>
-              <span className="text-sm font-medium text-gray-600">
-                Utilisateurs Connectés
-              </span>
-            </div>
-            <button
-              className="text-gray-400 hover:text-gray-600"
-              title="Plus d'options"
-              aria-label="Plus d'options pour utilisateurs connectés"
-            >
-              <MoreHorizontal className="w-4 h-4" />
+        <div className="bg-white rounded-lg shadow p-6 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500 font-medium">
+              Utilisateurs Connectés
+            </span>
+            <button className="text-gray-400 hover:text-gray-600">
+              <MoreHorizontal className="h-4 w-4" />
             </button>
           </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-3xl font-bold text-gray-900">316</p>
-              <div className="flex items-center mt-2">
-                <div className="flex -space-x-2 mr-3">
-                  <div className="w-6 h-6 bg-blue-500 rounded-full border-2 border-white"></div>
-                  <div className="w-6 h-6 bg-green-500 rounded-full border-2 border-white"></div>
-                  <div className="w-6 h-6 bg-yellow-500 rounded-full border-2 border-white"></div>
-                  <div className="w-6 h-6 bg-red-500 rounded-full border-2 border-white"></div>
-                  <div className="w-6 h-6 bg-purple-500 rounded-full border-2 border-white flex items-center justify-center text-xs text-white font-medium">
-                    +
-                  </div>
-                </div>
-              </div>
+          <div className="flex items-center gap-2 justify-between">
+            <span className="text-3xl font-bold text-gray-900">316</span>
+            <div className="flex -space-x-2">
+              <img
+                src="/vite.svg"
+                alt="avatar"
+                className="w-6 h-6 rounded-full border-2 border-white"
+              />
+              <img
+                src="/vite.svg"
+                alt="avatar"
+                className="w-6 h-6 rounded-full border-2 border-white"
+              />
+              <img
+                src="/vite.svg"
+                alt="avatar"
+                className="w-6 h-6 rounded-full border-2 border-white"
+              />
+              <span className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-600 border-2 border-white">
+                +6
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Activités récentes */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">
-            Activités récentes
-          </h2>
+      {/* Graphiques État du stock */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Graphique en barres - État du stock */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              État du stock
+            </h3>
+            <div className="flex gap-2">
+              <span className="flex items-center gap-1 text-xs">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                SOK
+              </span>
+              <span className="flex items-center gap-1 text-xs">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                ENR
+              </span>
+              <span className="flex items-center gap-1 text-xs">
+                <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                SOK
+              </span>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <div className="flex gap-2 text-xs bg-blue-600 text-white px-3 py-1 rounded">
+              Projet A
+            </div>
+            <div className="flex gap-2 text-xs bg-blue-600 text-white px-3 py-1 rounded">
+              Jour
+            </div>
+          </div>
+          <div className="mt-6 h-64 flex items-end justify-between gap-2">
+            {/* Simulation de barres */}
+            {Array.from({ length: 12 }, (_, i) => (
+              <div key={i} className="flex flex-col items-center gap-1 flex-1">
+                <div className="w-full flex flex-col gap-1">
+                  <div
+                    className="w-full bg-gradient-to-t from-blue-400 to-blue-600 rounded-t"
+                    style={{ height: `${Math.random() * 120 + 40}px` }}
+                  ></div>
+                  <div
+                    className="w-full bg-gradient-to-t from-purple-400 to-purple-600"
+                    style={{ height: `${Math.random() * 80 + 20}px` }}
+                  ></div>
+                </div>
+                <span className="text-xs text-gray-400">
+                  {
+                    [
+                      "Jan",
+                      "Fév",
+                      "Mar",
+                      "Avr",
+                      "Mai",
+                      "Jun",
+                      "Jul",
+                      "Aoû",
+                      "Sep",
+                      "Oct",
+                      "Nov",
+                      "Déc",
+                    ][i]
+                  }
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="p-6">
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <p className="text-sm text-gray-900">
-                Nouvelle commande #1234 reçue
-                <span className="text-gray-500 ml-2">il y a 2 minutes</span>
-              </p>
+
+        {/* Graphique courbe - État du stock */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              État du stock
+            </h3>
+            <div className="flex gap-2">
+              <span className="flex items-center gap-1 text-xs">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                ENR
+              </span>
+              <span className="flex items-center gap-1 text-xs">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                ENR
+              </span>
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <p className="text-sm text-gray-900">
-                Stock du produit "Ciment Portland" mis à jour
-                <span className="text-gray-500 ml-2">il y a 15 minutes</span>
-              </p>
+          </div>
+          <div className="flex gap-2">
+            <div className="flex gap-2 text-xs bg-blue-600 text-white px-3 py-1 rounded">
+              Projet A
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-              <p className="text-sm text-gray-900">
-                Alerte : Stock faible pour "Fer à béton 12mm"
-                <span className="text-gray-500 ml-2">il y a 1 heure</span>
-              </p>
+            <div className="flex gap-2 text-xs bg-blue-600 text-white px-3 py-1 rounded">
+              Jour
             </div>
+          </div>
+          <div className="mt-6 h-64 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-lg relative overflow-hidden">
+            {/* Simulation de courbes */}
+            <svg className="w-full h-full" viewBox="0 0 400 200">
+              <path
+                d="M0,150 Q100,100 200,120 T400,80"
+                stroke="#8B5CF6"
+                strokeWidth="3"
+                fill="none"
+                className="opacity-80"
+              />
+              <path
+                d="M0,180 Q100,140 200,160 T400,120"
+                stroke="#3B82F6"
+                strokeWidth="3"
+                fill="none"
+                className="opacity-80"
+              />
+            </svg>
           </div>
         </div>
       </div>

@@ -8,6 +8,8 @@ import type {
   SimplePhoneVerificationRequest,
   SimplePhoneVerificationResponse,
   SimpleLoginRequest,
+  SimpleLoginResponse,
+  ChangePasswordRequest,
   User,
   EmailLoginCredentials,
 } from "../../types";
@@ -24,6 +26,7 @@ export class MockAuthService {
       lastName?: string;
       email?: string;
       isNewUser: boolean;
+      isFirstLogin?: boolean; // Nouveau champ pour détecter la première connexion
     }
   >();
 
@@ -36,6 +39,7 @@ export class MockAuthService {
       lastName: "Doe",
       email: "john.doe@example.com",
       isNewUser: false,
+      isFirstLogin: false, // Utilisateur existant
     });
 
     this.mockUsers.set("+22891234567", {
@@ -45,6 +49,18 @@ export class MockAuthService {
       lastName: "Dupont",
       email: "marie.dupont@example.com",
       isNewUser: false,
+      isFirstLogin: false, // Utilisateur existant
+    });
+
+    // Utilisateur qui doit changer son mot de passe (première connexion)
+    this.mockUsers.set("+22892345678", {
+      phone: "+22892345678",
+      password: "temp123", // Mot de passe temporaire
+      firstName: "Pierre",
+      lastName: "Martin",
+      email: "pierre.martin@example.com",
+      isNewUser: false,
+      isFirstLogin: true, // Première connexion obligatoire
     });
   }
 
@@ -262,10 +278,6 @@ export class MockAuthService {
         lastName: "EEBTP",
         isNewUser: false,
       });
-
-      console.log(
-        `🔐 Utilisateur créé pour ${data.phone} avec mot de passe par défaut: ${defaultPassword}`
-      );
     }
 
     return {
@@ -276,12 +288,7 @@ export class MockAuthService {
   }
 
   // Connexion simple (téléphone + mot de passe)
-  async simpleLogin(data: SimpleLoginRequest): Promise<{
-    success: boolean;
-    user: User;
-    token: string;
-    refreshToken: string;
-  }> {
+  async simpleLogin(data: SimpleLoginRequest): Promise<SimpleLoginResponse> {
     await this.delay(1500);
 
     const existingUser = this.mockUsers.get(data.phone);
@@ -317,12 +324,14 @@ export class MockAuthService {
       .substr(2, 9)}`;
 
     console.log("✅ Connexion réussie pour:", data.phone);
+    console.log("🔑 Première connexion:", existingUser.isFirstLogin || true);
 
     return {
       success: true,
       user,
       token,
       refreshToken,
+      isFirstLogin: existingUser.isFirstLogin || true,
     };
   }
 
@@ -374,6 +383,60 @@ export class MockAuthService {
       .substr(2, 9)}`;
 
     console.log("🎉 Compte créé avec succès pour:", data.phone);
+
+    return {
+      success: true,
+      user,
+      token,
+      refreshToken,
+    };
+  }
+
+  // Changement de mot de passe pour les nouveaux utilisateurs
+  async changePassword(data: ChangePasswordRequest): Promise<{
+    success: boolean;
+    user: User;
+    token: string;
+    refreshToken: string;
+  }> {
+    await this.delay(1500);
+
+    const existingUser = this.mockUsers.get(data.phone);
+
+    if (!existingUser) {
+      throw new Error("Utilisateur non trouvé");
+    }
+
+    // Mettre à jour le mot de passe et marquer comme non première connexion
+    this.mockUsers.set(data.phone, {
+      ...existingUser,
+      password: data.newPassword,
+      isFirstLogin: false,
+    });
+
+    const user: User = {
+      id: `user_${data.phone.replace(/\D/g, "")}`,
+      firstName: existingUser.firstName || "Utilisateur",
+      lastName: existingUser.lastName || "Test",
+      email: existingUser.email,
+      phone: data.phone,
+      role: "employee",
+      isActive: true,
+      isPhoneVerified: true,
+      isEmailVerified: !!existingUser.email,
+      hasCompletedSetup: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const token = `token_${Date.now()}_${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
+    const refreshToken = `refresh_${Date.now()}_${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
+
+    console.log("🔐 Mot de passe changé avec succès pour:", data.phone);
 
     return {
       success: true,

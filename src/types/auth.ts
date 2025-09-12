@@ -82,6 +82,7 @@ export const AuthStep = {
   PHONE_INPUT: "phone_input",
   OTP_VERIFICATION: "otp_verification",
   PASSWORD_INPUT: "password_input", // Nouveau : saisie du mot de passe après téléphone
+  CHANGE_PASSWORD: "change_password", // Nouveau : changement de mot de passe obligatoire
   ACCOUNT_SETUP: "account_setup",
   DIRECT_LOGIN: "direct_login",
   AUTHENTICATED: "authenticated",
@@ -104,6 +105,19 @@ export interface SimplePhoneVerificationResponse {
 export interface SimpleLoginRequest {
   phone: string;
   password: string;
+}
+
+export interface SimpleLoginResponse {
+  success: boolean;
+  user: User;
+  token: string;
+  refreshToken: string;
+  isFirstLogin: boolean; // Indique si c'est la première connexion de l'utilisateur
+}
+
+export interface ChangePasswordRequest {
+  phone: string;
+  newPassword: string;
 }
 
 export interface AuthState {

@@ -129,14 +129,6 @@ export function PhoneInputPage({
                   required
                 />
               </div>
-
-              {/* Prévisualisation du numéro complet */}
-              {selectedCountry && phone && (
-                <p className="mt-2 text-sm text-gray-600">
-                  Numéro complet:{" "}
-                  {formatPhoneNumber(phone, selectedCountry.code)}
-                </p>
-              )}
             </div>
 
             {/* Message d'erreur */}

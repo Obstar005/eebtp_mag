@@ -44,7 +44,7 @@ export function PasswordInputPage({
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex max-lg:flex-col-reverse">
       {/* Partie gauche - Formulaire */}
       <div className="flex-1 bg-gray-50 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
@@ -61,18 +61,6 @@ export function PasswordInputPage({
             <p className="text-gray-600 mb-4">
               Saisissez votre mot de passe pour accéder à votre compte
             </p>
-            <div className="bg-blue-50 px-4 py-2 rounded-lg mb-4">
-              <p className="text-sm text-blue-800">
-                <span className="font-medium">Téléphone:</span>{" "}
-                {formatPhone(phone)}
-              </p>
-            </div>
-            <div className="bg-green-50 px-4 py-2 rounded-lg">
-              <p className="text-sm text-green-800">
-                <span className="font-medium">💡 Mot de passe par défaut:</span>{" "}
-                123456
-              </p>
-            </div>
           </div>
 
           {/* Formulaire */}

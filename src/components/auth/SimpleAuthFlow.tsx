@@ -2,14 +2,15 @@ import { useState } from "react";
 import {
   useSimpleVerifyPhone,
   useSimpleLogin,
+  useChangePassword,
   useSimpleAuthState,
 } from "../../hooks/useSimpleAuth";
 import { PhoneInputPage } from "./PhoneInputPage";
 import { PasswordInputPage } from "./PasswordInputPage";
-
+import { ChangePasswordPage } from "./ChangePasswordPage";
 
 interface SimpleAuthFlowProps {
-  onAuthSuccess: () => void
+  onAuthSuccess: () => void;
   onAuthError: (error: string) => void;
 }
 
@@ -23,6 +24,7 @@ export function SimpleAuthFlow({
   // Mutations
   const verifyPhoneMutation = useSimpleVerifyPhone();
   const loginMutation = useSimpleLogin();
+  const changePasswordMutation = useChangePassword();
 
   // Étape 1 : Vérification du téléphone
   const handlePhoneSubmit = async (phoneNumber: string) => {
@@ -45,13 +47,34 @@ export function SimpleAuthFlow({
   // Étape 2 : Connexion avec mot de passe
   const handlePasswordSubmit = async (password: string) => {
     try {
-      await loginMutation.mutateAsync({
+      const response = await loginMutation.mutateAsync({
         phone,
         password,
       });
-      onAuthSuccess();
+
+      // Vérifier si c'est la première connexion
+      if (response.isFirstLogin) {
+        updateAuthState({
+          currentStep: "change_password",
+        });
+      } else {
+        onAuthSuccess();
+      }
     } catch {
       onAuthError("Mot de passe incorrect");
+    }
+  };
+
+  // Étape 3 : Changement de mot de passe (première connexion)
+  const handleChangePassword = async (newPassword: string) => {
+    try {
+      await changePasswordMutation.mutateAsync({
+        phone,
+        newPassword,
+      });
+      onAuthSuccess();
+    } catch {
+      onAuthError("Erreur lors du changement de mot de passe");
     }
   };
 
@@ -60,6 +83,9 @@ export function SimpleAuthFlow({
     switch (authState.currentStep) {
       case "password_input":
         updateAuthState({ currentStep: "phone_input" });
+        break;
+      case "change_password":
+        // Pas de retour possible depuis le changement de mot de passe
         break;
       default:
         break;
@@ -84,6 +110,15 @@ export function SimpleAuthFlow({
           onSubmit={handlePasswordSubmit}
           onBack={handleGoBack}
           isLoading={loginMutation.isPending}
+        />
+      );
+
+    case "change_password":
+      return (
+        <ChangePasswordPage
+          phone={phone}
+          onSubmit={handleChangePassword}
+          isLoading={changePasswordMutation.isPending}
         />
       );
 

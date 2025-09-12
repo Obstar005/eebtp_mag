@@ -9,6 +9,8 @@ import type {
   SimplePhoneVerificationRequest,
   SimplePhoneVerificationResponse,
   SimpleLoginRequest,
+  SimpleLoginResponse,
+  ChangePasswordRequest,
   User,
   EmailLoginCredentials,
 } from "../../types";
@@ -101,14 +103,21 @@ export class AuthService {
     throw new Error("API not implemented");
   }
 
-  async simpleLogin(data: SimpleLoginRequest): Promise<{
+  async simpleLogin(data: SimpleLoginRequest): Promise<SimpleLoginResponse> {
+    if (useMockService) {
+      return mockService.simpleLogin(data);
+    }
+    throw new Error("API not implemented");
+  }
+
+  async changePassword(data: ChangePasswordRequest): Promise<{
     success: boolean;
     user: User;
     token: string;
     refreshToken: string;
   }> {
     if (useMockService) {
-      return mockService.simpleLogin(data);
+      return mockService.changePassword(data);
     }
     throw new Error("API not implemented");
   }

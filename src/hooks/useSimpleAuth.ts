@@ -4,6 +4,7 @@ import { authService } from "../services/api";
 import type {
   SimplePhoneVerificationRequest,
   SimpleLoginRequest,
+  ChangePasswordRequest,
   AuthStep,
 } from "../types";
 
@@ -59,6 +60,25 @@ export function useSimpleSetupAccount() {
     },
     onError: (error) => {
       console.error("Erreur lors de la configuration du compte:", error);
+    },
+  });
+}
+
+// Hook pour le changement de mot de passe (première connexion)
+export function useChangePassword() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: ChangePasswordRequest) =>
+      authService.changePassword(request),
+    onSuccess: (authResponse) => {
+      // Stocker les tokens
+      localStorage.setItem("authToken", authResponse.token);
+      localStorage.setItem("refreshToken", authResponse.refreshToken);
+      // Mettre à jour le cache avec les données utilisateur
+      queryClient.setQueryData(["user"], authResponse.user);
+    },
+    onError: (error) => {
+      console.error("Erreur lors du changement de mot de passe:", error);
     },
   });
 }
