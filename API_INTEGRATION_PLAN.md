@@ -15,12 +15,14 @@ Ce document détaille le plan d'intégration de l'API EEBTP_MAG avec le frontend
 ## 🔍 Points Clés Identifiés
 
 ### 1. Différences de Structure
+
 - **API**: Utilise `nom` pour les projets et magasins
-- **Frontend**: Utilise `name` 
+- **Frontend**: Utilise `name`
 - **API**: Les IDs sont des entiers
 - **Frontend**: Certains types utilisent des strings pour les IDs
 
 ### 2. Authentification
+
 - **Actuel**: Basic Auth dans l'API
 - **Frontend**: Système de tokens JWT préparé
 - **Migration**: Le client est déjà configuré pour envoyer des tokens Bearer
@@ -28,6 +30,7 @@ Ce document détaille le plan d'intégration de l'API EEBTP_MAG avec le frontend
 ### 3. Endpoints Disponibles pour Projets/Magasins
 
 #### Projets
+
 - `GET /Projets/liste-projets` - Liste des projets
 - `GET /Projets/projet-detail/{id}` - Détails d'un projet
 - `POST /Projets/projet-create` - Créer un projet
@@ -35,6 +38,7 @@ Ce document détaille le plan d'intégration de l'API EEBTP_MAG avec le frontend
 - `DELETE /Projets/projet-delete/{id}` - Supprimer un projet
 
 #### Magasins
+
 - `GET /Projets/liste-magasins` - Liste des magasins
 - `GET /Projets/magasin-detail/{id}` - Détails d'un magasin
 - `POST /Projets/magasin-create` - Créer un magasin
@@ -42,6 +46,7 @@ Ce document détaille le plan d'intégration de l'API EEBTP_MAG avec le frontend
 - `DELETE /Projets/magasin-delete/{id}` - Supprimer un magasin
 
 #### Photos de Projets
+
 - `GET /Projets/liste-photos-by-projet/{id}` - Photos d'un projet
 - `POST /Projets/projet-photo-create/{id}` - Ajouter photo
 - `PUT /Projets/projet-photo-update/{id}` - Mettre à jour photo
@@ -52,6 +57,7 @@ Ce document détaille le plan d'intégration de l'API EEBTP_MAG avec le frontend
 ### 1. Mapping des Types
 
 #### Projet (API → Frontend)
+
 ```typescript
 // API Definition
 interface ProjetAPI {
@@ -82,6 +88,7 @@ interface Projet {
 ```
 
 #### Magasin (API → Frontend)
+
 ```typescript
 // API Definition
 interface MagasinAPI {
@@ -108,6 +115,7 @@ interface Magasin {
 ### 2. Configuration du Client API
 
 #### Authentification Hybride
+
 ```typescript
 // client.ts - Mise à jour nécessaire
 private setupInterceptors() {
@@ -136,27 +144,32 @@ private setupInterceptors() {
 ## 📋 Plan d'Intégration par Étapes
 
 ### ✅ Étape 1 : Préparation et Analyse
+
 - [x] Analyser la documentation API
 - [x] Examiner le code frontend existant
 - [x] Identifier les écarts et adaptations nécessaires
 - [x] Créer le plan d'intégration
 
 ### 🔄 Étape 2 : Adaptation des Types
+
 - [ ] Créer des types API pour mapper les réponses
 - [ ] Créer des fonctions de transformation API ↔ Frontend
 - [ ] Mettre à jour les types existants si nécessaire
 
 ### 🔄 Étape 3 : Services API Réels
+
 - [ ] Remplacer `projetService` mock par implémentation réelle
 - [ ] Remplacer `magasinService` mock par implémentation réelle
 - [ ] Implémenter la gestion des photos de projets
 
 ### 🔄 Étape 4 : Configuration Authentification
+
 - [ ] Modifier le client API pour l'authentification hybride
 - [ ] Tester avec Basic Auth d'abord
 - [ ] Préparer la migration vers tokens JWT
 
 ### 🔄 Étape 5 : Tests et Validation
+
 - [ ] Tester toutes les opérations CRUD
 - [ ] Valider la gestion d'erreurs
 - [ ] Tester l'upload de photos
@@ -164,25 +177,31 @@ private setupInterceptors() {
 ## ⚠️ Points d'Attention
 
 ### 1. Gestion des Rôles dans les Projets
+
 L'API semble utiliser un système de `comptes` (array d'IDs) plutôt que des rôles spécifiques. Il faudra :
+
 - Clarifier comment mapper les rôles (chef_projet, directeur_travaux, etc.)
 - Comprendre la structure du champ `comptes`
 - Éventuellement adapter l'interface utilisateur
 
 ### 2. Gestion des Pays
+
 - API utilise les noms complets de pays
 - Frontend utilise des codes (TG, FR, etc.)
 - Nécessite une fonction de mapping bidirectionnelle
 
 ### 3. Upload de Photos
+
 L'API supporte l'upload de photos pour les projets mais la structure exacte n'est pas claire dans la documentation Swagger.
 
 ### 4. Articles/Stock
+
 L'API a des endpoints pour les articles (`/Stocks/`) mais le frontend appelle ça "stock articles". Vérifier la cohérence.
 
 ## 🎯 Questions à Clarifier
 
 ### Sur l'API
+
 1. **Authentification** : Quand et comment passer de Basic Auth à JWT ?
 2. **Rôles Projets** : Comment le système `comptes` mappe-t-il aux rôles spécifiques ?
 3. **Upload Photos** : Quel est le format exact pour l'upload d'images ?
@@ -190,6 +209,7 @@ L'API a des endpoints pour les articles (`/Stocks/`) mais le frontend appelle ç
 5. **Filtres** : Quels paramètres de filtrage sont supportés ?
 
 ### Sur l'Intégration
+
 1. **Migration Progressive** : Garder les mocks en parallèle pendant les tests ?
 2. **Gestion d'Erreurs** : Format des erreurs retournées par l'API ?
 3. **Variables d'Environnement** : Quelles configs pour Basic Auth en attendant JWT ?
