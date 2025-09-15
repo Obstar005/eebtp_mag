@@ -1,5 +1,4 @@
 import { NavLink } from "react-router-dom";
-import { useState } from "react";
 import {
   ArrowUpRightFromSquare,
   Settings,
@@ -10,16 +9,10 @@ import {
   BarChart3,
   FileText,
   MessageSquare,
-  Users,
   UserPlus,
   List,
-  Briefcase,
-  FolderPlus,
   Store,
-  Package,
   Plus,
-  ChevronDown,
-  ChevronRight,
   User,
   LogOut,
 } from "lucide-react";
@@ -33,26 +26,38 @@ interface MenuItem {
   children?: MenuItem[];
 }
 
-const navigation: MenuItem[] = [
+// Structure des sections avec titre et items
+interface NavigationSection {
+  title?: string;
+  items: MenuItem[];
+}
+
+const navigation: NavigationSection[] = [
+  // Section principale - Tableau de bord
   {
-    name: "Statistiques",
-    href: "/dashboard",
-    icon: BarChart3,
+    title: "Tableau de bord",
+    items: [
+      {
+        name: "Statistiques",
+        href: "/dashboard",
+        icon: BarChart3,
+      },
+      {
+        name: "Rapport",
+        href: "/reports",
+        icon: FileText,
+      },
+      {
+        name: "Demande",
+        href: "/requests",
+        icon: MessageSquare,
+      },
+    ],
   },
+  // Section Comptes
   {
-    name: "Rapport",
-    href: "/reports",
-    icon: FileText,
-  },
-  {
-    name: "Demande",
-    href: "/requests",
-    icon: MessageSquare,
-  },
-  {
-    name: "Comptes",
-    icon: Users,
-    children: [
+    title: "Comptes",
+    items: [
       {
         name: "Ajouter un compte",
         href: "/accounts/add",
@@ -65,10 +70,10 @@ const navigation: MenuItem[] = [
       },
     ],
   },
+  // Section Profils
   {
-    name: "Profils",
-    icon: Briefcase,
-    children: [
+    title: "Profils",
+    items: [
       {
         name: "Ajouter un profil",
         href: "/profiles/add",
@@ -81,10 +86,10 @@ const navigation: MenuItem[] = [
       },
     ],
   },
+  // Section Projets
   {
-    name: "Projets",
-    icon: FolderPlus,
-    children: [
+    title: "Projets",
+    items: [
       {
         name: "Ajouter un projet",
         href: "/projects/add",
@@ -97,10 +102,10 @@ const navigation: MenuItem[] = [
       },
     ],
   },
+  // Section Magasins
   {
-    name: "Magasins",
-    icon: Store,
-    children: [
+    title: "Magasins",
+    items: [
       {
         name: "Ajouter un article",
         href: "/articles/add",
@@ -116,11 +121,6 @@ const navigation: MenuItem[] = [
         href: "/magasins",
         icon: Store,
       },
-      {
-        name: "Déclarations",
-        href: "/declarations",
-        icon: FileText,
-      },
     ],
   },
 ];
@@ -131,57 +131,17 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
-  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const { user, logout } = useAuth();
 
-  const toggleMenu = (menuName: string) => {
-    setExpandedMenus((prev) =>
-      prev.includes(menuName)
-        ? prev.filter((name) => name !== menuName)
-        : [...prev, menuName]
-    );
-  };
-
-  const renderMenuItem = (item: MenuItem, depth: number = 0) => {
-    const hasChildren = item.children && item.children.length > 0;
-    const isExpanded = expandedMenus.includes(item.name);
-    const paddingLeft = depth === 0 ? "pl-3" : "pl-8";
-
-    if (hasChildren) {
-      return (
-        <div key={item.name}>
-          <button
-            onClick={() => toggleMenu(item.name)}
-            className={`group flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-50 hover:text-gray-900 ${paddingLeft}`}
-          >
-            <div className="flex items-center">
-              <item.icon className="mr-3 h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-gray-500" />
-              {item.name}
-            </div>
-            {isExpanded ? (
-              <ChevronDown className="h-4 w-4 text-gray-400" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-gray-400" />
-            )}
-          </button>
-
-          {isExpanded && (
-            <div className="mt-1 space-y-1">
-              {item.children?.map((child) => renderMenuItem(child, depth + 1))}
-            </div>
-          )}
-        </div>
-      );
-    }
-
+  const renderMenuItem = (item: MenuItem) => {
     return (
       <NavLink
         key={item.name}
         to={item.href!}
         className={({ isActive }) =>
-          `group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${paddingLeft} ${
+          `group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
             isActive
-              ? "text-white bg-blue-500"
+              ? "text-white bg-blue-600"
               : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
           }`
         }
@@ -189,7 +149,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         {({ isActive }) => (
           <>
             <item.icon
-              className={`mr-3 h-5 w-5 flex-shrink-0 ${
+              className={`mr-3 h-4 w-4 flex-shrink-0 ${
                 isActive
                   ? "text-white"
                   : "text-gray-400 group-hover:text-gray-500"
@@ -199,6 +159,21 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
           </>
         )}
       </NavLink>
+    );
+  };
+
+  const renderSection = (section: NavigationSection, index: number) => {
+    return (
+      <div key={index} className={index > 0 ? "mt-6" : ""}>
+        {section.title && (
+          <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+            {section.title}
+          </h3>
+        )}
+        <div className="space-y-1">
+          {section.items.map((item) => renderMenuItem(item))}
+        </div>
+      </div>
     );
   };
 
@@ -216,13 +191,14 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       <div
         className={`
         fixed lg:static inset-y-0 left-0 z-50 lg:z-auto
-        w-64 bg-white shadow-sm border-r border-gray-200 min-h-screen
+        w-64 bg-white shadow-sm border-r border-gray-200 
         transform transition-transform duration-300 ease-in-out lg:transform-none
         ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+        flex flex-col h-screen
       `}
       >
         {/* Logo et titre */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center">
             <img src={logoPng} alt="EEBTP" className="h-8 w-8 mr-3" />
             <div>
@@ -241,18 +217,18 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="mt-6 px-3">
+        {/* Navigation - Zone scrollable */}
+        <nav className="flex-1 overflow-y-auto px-3 py-6">
           <div className="space-y-1">
-            {navigation.map((item) => renderMenuItem(item))}
+            {navigation.map((section, index) => renderSection(section, index))}
           </div>
         </nav>
 
-        {/* Pied de page */}
-        <div className="absolute bottom-0 px-6 py-4 border-t border-gray-200 w-full">
-          <div className="flex items-center justify-between space-x-3">
-            <div className="flex items-center space-x-2">
-              <div className="flex items-center justify-center h-8 w-8 bg-blue-600 rounded-full">
+        {/* Pied de page - Fixe en bas */}
+        <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200">
+          <div className="flex items-center justify-between space-x-3 mb-3">
+            <div className="flex items-center space-x-2 min-w-0 flex-1">
+              <div className="flex items-center justify-center h-8 w-8 bg-blue-600 rounded-full flex-shrink-0">
                 <User className="h-4 w-4 text-white" />
               </div>
               <div className="min-w-0 flex-1">
@@ -275,11 +251,12 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
               <LogOut className="h-4 w-4" />
             </button>
           </div>
+
           {/* Paramètres */}
-          <div className="flex items-center justify-between space-x-3 py-2">
+          <div className="flex items-center justify-between space-x-3 mb-3">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <Settings className="h-5 w-5 flex-shrink-0" />
-              <span className="truncate">Paramètres</span>
+              <Settings className="h-4 w-4 flex-shrink-0 text-gray-600" />
+              <span className="text-sm text-gray-700 truncate">Paramètres</span>
             </div>
             <button
               title="Paramètres"
@@ -289,7 +266,8 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
               <ArrowUpRightFromSquare className="h-4 w-4" />
             </button>
           </div>
-          <p className="text-xs text-gray-500 mt-2 truncate">
+
+          <p className="text-xs text-gray-500 truncate">
             &copy; {new Date().getFullYear()} EEBTP. Tous droits réservés.
           </p>
         </div>

@@ -1,0 +1,1578 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "EEBTP_MAG API",
+    "description": "This API is used to manage our projet eebtp_mag. It's contains all informations and details about the API and fonctions about this application",
+    "termsOfService": "https://www.google.com/policies/terms/",
+    "contact": { "email": "obstar300@gmail.com" },
+    "license": { "name": "BSD License" },
+    "version": "v3.7"
+  },
+  "host": "185.197.195.209:8000",
+  "schemes": ["http"],
+  "basePath": "/",
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "securityDefinitions": { "Basic": { "type": "basic" } },
+  "security": [{ "Basic": [] }],
+  "paths": {
+    "/Projets/liste-magasins": {
+      "get": {
+        "operationId": "Projets_liste-magasins_list",
+        "description": "Cette API permet de récupérer la liste des magasins.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Liste des magasins",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/Magasin" }
+            }
+          }
+        },
+        "tags": ["Projets"]
+      },
+      "parameters": []
+    },
+    "/Projets/liste-photos-by-projet/{id}": {
+      "get": {
+        "operationId": "Projets_liste-photos-by-projet_read",
+        "description": "Cette API permet de récupérer toutes les photos d'un projet spécifique.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Liste des photos du projet",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/ProjetPhoto" }
+            }
+          },
+          "404": { "description": "Projet non trouvé" }
+        },
+        "tags": ["Projets"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Projets/liste-projets": {
+      "get": {
+        "operationId": "Projets_liste-projets_list",
+        "description": "Cette API permet de récupérer la liste des projets.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Liste des projets",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/Projet" }
+            }
+          }
+        },
+        "tags": ["Projets"]
+      },
+      "parameters": []
+    },
+    "/Projets/magasin-create": {
+      "post": {
+        "operationId": "Projets_magasin-create_create",
+        "description": "Cette API permet de créer un nouveau magasin.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Magasin" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Magasin créé avec succès",
+            "schema": { "$ref": "#/definitions/Magasin" }
+          },
+          "400": { "description": "Données invalides" }
+        },
+        "tags": ["Projets"]
+      },
+      "parameters": []
+    },
+    "/Projets/magasin-delete/{id}": {
+      "delete": {
+        "operationId": "Projets_magasin-delete_delete",
+        "description": "Cette API permet de supprimer un magasin.",
+        "parameters": [],
+        "responses": {
+          "204": { "description": "Magasin supprimé avec succès" },
+          "404": { "description": "Magasin non trouvé" }
+        },
+        "tags": ["Projets"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Projets/magasin-detail/{id}": {
+      "get": {
+        "operationId": "Projets_magasin-detail_read",
+        "description": "Cette API permet de récupérer les détails d'un magasin spécifique.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Détails du magasin",
+            "schema": { "$ref": "#/definitions/Magasin" }
+          },
+          "404": { "description": "Magasin non trouvé" }
+        },
+        "tags": ["Projets"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Projets/magasin-update/{id}": {
+      "put": {
+        "operationId": "Projets_magasin-update_update",
+        "description": "Cette API permet de mettre à jour un magasin existant.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Magasin" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Magasin mis à jour avec succès",
+            "schema": { "$ref": "#/definitions/Magasin" }
+          },
+          "404": { "description": "Magasin non trouvé" },
+          "400": { "description": "Données invalides" }
+        },
+        "tags": ["Projets"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Projets/projet-create": {
+      "post": {
+        "operationId": "Projets_projet-create_create",
+        "description": "Cette API permet de créer un nouveau projet.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Projet" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Projet créé avec succès",
+            "schema": { "$ref": "#/definitions/Projet" }
+          },
+          "400": { "description": "Données invalides" }
+        },
+        "tags": ["Projets"]
+      },
+      "parameters": []
+    },
+    "/Projets/projet-delete/{id}": {
+      "delete": {
+        "operationId": "Projets_projet-delete_delete",
+        "description": "Cette API permet de supprimer un projet.",
+        "parameters": [],
+        "responses": {
+          "204": { "description": "Projet supprimé avec succès" },
+          "404": { "description": "Projet non trouvé" }
+        },
+        "tags": ["Projets"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Projets/projet-detail/{id}": {
+      "get": {
+        "operationId": "Projets_projet-detail_read",
+        "description": "Cette API permet de récupérer les détails d'un projet spécifique.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Détails du projet",
+            "schema": { "$ref": "#/definitions/Projet" }
+          },
+          "404": { "description": "Projet non trouvé" }
+        },
+        "tags": ["Projets"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Projets/projet-photo-create/{id}": {
+      "post": {
+        "operationId": "Projets_projet-photo-create_create",
+        "description": "Cette API permet d'ajouter des photos pour un projet.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/ProjetPhoto" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Photo créée avec succès",
+            "schema": { "$ref": "#/definitions/ProjetPhoto" }
+          },
+          "400": { "description": "Données invalides" },
+          "404": { "description": "Projet non trouvé" }
+        },
+        "tags": ["Projets"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Projets/projet-photo-delete/{id}": {
+      "delete": {
+        "operationId": "Projets_projet-photo-delete_delete",
+        "description": "",
+        "parameters": [],
+        "responses": { "204": { "description": "" } },
+        "tags": ["Projets"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Projets/projet-photo-update/{id}": {
+      "put": {
+        "operationId": "Projets_projet-photo-update_update",
+        "description": "Cette API permet de mettre à jour une photo d'un projet.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/ProjetPhoto" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Photo mise à jour avec succès",
+            "schema": { "$ref": "#/definitions/ProjetPhoto" }
+          },
+          "404": { "description": "Photo non trouvée" },
+          "400": { "description": "Données invalides" }
+        },
+        "tags": ["Projets"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Projets/projet-update/{id}": {
+      "put": {
+        "operationId": "Projets_projet-update_update",
+        "description": "Cette API permet de mettre à jour un projet existant.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Projet" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Projet mis à jour avec succès",
+            "schema": { "$ref": "#/definitions/Projet" }
+          },
+          "404": { "description": "Projet non trouvé" },
+          "400": { "description": "Données invalides" }
+        },
+        "tags": ["Projets"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Stocks/article-create": {
+      "post": {
+        "operationId": "Stocks_article-create_create",
+        "description": "Créer un nouveau produit",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Produit" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Produit" }
+          },
+          "400": { "description": "Bad Request" }
+        },
+        "tags": ["Stocks"]
+      },
+      "parameters": []
+    },
+    "/Stocks/article-delete/{id}": {
+      "delete": {
+        "operationId": "Stocks_article-delete_delete",
+        "description": "Supprimer un article par son ID",
+        "parameters": [],
+        "responses": {
+          "204": { "description": "No Content" },
+          "404": { "description": "Not Found" }
+        },
+        "tags": ["Stocks"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Stocks/article-detail/{id}": {
+      "get": {
+        "operationId": "Stocks_article-detail_read",
+        "description": "Récupérer un article par son ID",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Produit" }
+          },
+          "404": { "description": "Not Found" }
+        },
+        "tags": ["Stocks"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Stocks/article-update/{id}": {
+      "put": {
+        "operationId": "Stocks_article-update_update",
+        "description": "Mettre à jour un article par son ID",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Produit" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Produit" }
+          },
+          "400": { "description": "Bad Request" },
+          "404": { "description": "Not Found" }
+        },
+        "tags": ["Stocks"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Stocks/liste-articles": {
+      "get": {
+        "operationId": "Stocks_liste-articles_list",
+        "description": "Récupérer la liste des articles de stocks dans le magasin",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/Produit" }
+            }
+          }
+        },
+        "tags": ["Stocks"]
+      },
+      "parameters": []
+    },
+    "/Users/authentication/check-user-exists/": {
+      "post": {
+        "operationId": "Users_authentication_check-user-exists_create",
+        "description": "Vérifie si un utilisateur existe avec ce numéro de téléphone ",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "required": ["telephone"],
+              "type": "object",
+              "properties": {
+                "telephone": {
+                  "description": "Numéro de téléphone de l'utilisateur",
+                  "type": "string"
+                }
+              },
+              "example": { "telephone": "0022890099009" }
+            }
+          }
+        ],
+        "responses": { "200": { "description": "Résultat" } },
+        "tags": ["Users"]
+      },
+      "parameters": []
+    },
+    "/Users/authentication/login-by-phone/": {
+      "post": {
+        "operationId": "Users_authentication_login-by-phone_create",
+        "description": "Authentifier un utilisateur par téléphone et mot de passe",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "required": ["telephone", "password"],
+              "type": "object",
+              "properties": {
+                "telephone": {
+                  "description": "Numéro de téléphone de l'utilisateur",
+                  "type": "string",
+                  "example": "0022890099009"
+                },
+                "password": {
+                  "description": "Mot de passe de l'utilisateur",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Connexion réussie" },
+          "400": { "description": "Bad Request" },
+          "401": { "description": "Mot de passe incorrect" },
+          "404": { "description": "Utilisateur introuvable" },
+          "403": { "description": "Utilisateur désactivé ou accès refusé" }
+        },
+        "tags": ["Users"]
+      },
+      "parameters": []
+    },
+    "/Users/authentication/set-password/": {
+      "post": {
+        "operationId": "Users_authentication_set-password_create",
+        "description": "Pour modifier le mot de passe d'un utilisateur que ce soit lors de la première connexion ou indéfiniement",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "required": ["telephone", "old_password", "new_password"],
+              "type": "object",
+              "properties": {
+                "telephone": {
+                  "description": "Numéro de téléphone de l'utilisateur",
+                  "type": "string",
+                  "example": "0022890099009"
+                },
+                "old_password": {
+                  "description": "Ancien mot de passe de l'utilisateur",
+                  "type": "string"
+                },
+                "new_password": {
+                  "description": "Nouveau mot de passe de l'utilisateur",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Mot de passe modifié avec succès" },
+          "400": { "description": "Bad Request" },
+          "404": { "description": "Utilisateur introuvable" },
+          "403": { "description": "Accès refusé" }
+        },
+        "tags": ["Users"]
+      },
+      "parameters": []
+    },
+    "/Users/authentication/user-info/": {
+      "get": {
+        "operationId": "Users_authentication_user-info_list",
+        "description": "Récupérer les informations de l'utilisateur connecté, tu m'envoies un token JWT dans         l'en-tête Authorization et je te renvoie les infos de l'utilisateur",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/CustomUser" }
+          }
+        },
+        "tags": ["Users"]
+      },
+      "parameters": []
+    },
+    "/Users/authentication/verify-sms": {
+      "post": {
+        "operationId": "Users_authentication_verify-sms_create",
+        "description": "",
+        "parameters": [],
+        "responses": { "201": { "description": "" } },
+        "tags": ["Users"]
+      },
+      "parameters": []
+    },
+    "/Users/countries/": {
+      "get": {
+        "operationId": "Users_countries_list",
+        "description": "Liste de tous les pays qui existent",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Liste des pays",
+            "examples": {
+              "application/json": [
+                { "code": "FR", "name": "France" },
+                { "code": "US", "name": "United States" },
+                { "code": "CA", "name": "Canada" }
+              ]
+            }
+          }
+        },
+        "tags": ["Users"]
+      },
+      "parameters": []
+    },
+    "/Users/liste-profils": {
+      "get": {
+        "operationId": "Users_liste-profils_list",
+        "description": "Liste de tous les profils",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/Profil" }
+            }
+          }
+        },
+        "tags": ["Users"]
+      },
+      "parameters": []
+    },
+    "/Users/liste-users": {
+      "get": {
+        "operationId": "Users_liste-users_list",
+        "description": "Liste de tous les utilisateurs",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/CustomUser" }
+            }
+          }
+        },
+        "tags": ["Users"]
+      },
+      "parameters": []
+    },
+    "/Users/profil-create": {
+      "post": {
+        "operationId": "Users_profil-create_create",
+        "description": "Créer un nouvel utilisateur",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Profil" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Profil" }
+          },
+          "400": { "description": "Bad Request" }
+        },
+        "tags": ["Users"]
+      },
+      "parameters": []
+    },
+    "/Users/profil-delete/{id}": {
+      "delete": {
+        "operationId": "Users_profil-delete_delete",
+        "description": "Supprimer un utilisateur",
+        "parameters": [],
+        "responses": { "204": { "description": "Supprimé avec succès" } },
+        "tags": ["Users"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Users/profil-detail/{id}": {
+      "get": {
+        "operationId": "Users_profil-detail_read",
+        "description": "Récupérer un profil par son ID",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Profil" }
+          },
+          "404": { "description": "Profil introuvable" }
+        },
+        "tags": ["Users"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Users/profil-update/{id}": {
+      "put": {
+        "operationId": "Users_profil-update_update",
+        "description": "Modifier un profil existant",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Profil" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Profil" }
+          },
+          "404": { "description": "Profil introuvable" },
+          "400": { "description": "Bad Request" }
+        },
+        "tags": ["Users"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Users/user-create": {
+      "post": {
+        "operationId": "Users_user-create_create",
+        "description": "Créer un nouvel utilisateur",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/CustomUser" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/CustomUser" }
+          },
+          "400": { "description": "Bad Request" }
+        },
+        "tags": ["Users"]
+      },
+      "parameters": []
+    },
+    "/Users/user-delete/{id}": {
+      "delete": {
+        "operationId": "Users_user-delete_delete",
+        "description": "Supprimer un utilisateur",
+        "parameters": [],
+        "responses": { "204": { "description": "Supprimé avec succès" } },
+        "tags": ["Users"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Users/user-detail{id}": {
+      "get": {
+        "operationId": "Users_read",
+        "description": "Récupérer un utilisateur par ID",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/CustomUser" }
+          }
+        },
+        "tags": ["Users"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Users/user-update/{id}": {
+      "put": {
+        "operationId": "Users_user-update_update",
+        "description": "Modifier un utilisateur existant",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/CustomUser" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/CustomUser" }
+          }
+        },
+        "tags": ["Users"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    }
+  },
+  "definitions": {
+    "Magasin": {
+      "required": ["creator", "nom"],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "creator": { "title": "Creator", "type": "integer" },
+        "nom": {
+          "title": "Nom",
+          "type": "string",
+          "maxLength": 255,
+          "minLength": 1
+        },
+        "date_creation": {
+          "title": "Date creation",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "date_modification": {
+          "title": "Date modification",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "adresse": {
+          "title": "Adresse",
+          "type": "string",
+          "maxLength": 255,
+          "x-nullable": true
+        },
+        "is_active": { "title": "Is active", "type": "boolean" },
+        "projet": { "title": "Projet", "type": "integer", "x-nullable": true }
+      }
+    },
+    "ProjetPhoto": {
+      "required": ["projet"],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "projet": { "title": "Projet", "type": "integer" },
+        "image": {
+          "title": "Image",
+          "type": "string",
+          "readOnly": true,
+          "format": "uri"
+        },
+        "date_upload": {
+          "title": "Date upload",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "is_active": { "title": "Is active", "type": "boolean" }
+      }
+    },
+    "Projet": {
+      "required": ["creator", "pays", "nom", "date_debut"],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "creator": { "title": "Creator", "type": "integer" },
+        "comptes": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "uniqueItems": true
+        },
+        "pays": {
+          "title": "Pays",
+          "type": "string",
+          "enum": [
+            "Afghanistan",
+            "Åland Islands",
+            "Albania",
+            "Algeria",
+            "American Samoa",
+            "Andorra",
+            "Angola",
+            "Anguilla",
+            "Antarctica",
+            "Antigua and Barbuda",
+            "Argentina",
+            "Armenia",
+            "Aruba",
+            "Australia",
+            "Austria",
+            "Azerbaijan",
+            "Bahamas",
+            "Bahrain",
+            "Bangladesh",
+            "Barbados",
+            "Belarus",
+            "Belgium",
+            "Belize",
+            "Benin",
+            "Bermuda",
+            "Bhutan",
+            "Bolivia",
+            "Bonaire, Sint Eustatius and Saba",
+            "Bosnia and Herzegovina",
+            "Botswana",
+            "Bouvet Island",
+            "Brazil",
+            "British Indian Ocean Territory",
+            "Brunei",
+            "Bulgaria",
+            "Burkina Faso",
+            "Burundi",
+            "Cabo Verde",
+            "Cambodia",
+            "Cameroon",
+            "Canada",
+            "Cayman Islands",
+            "Central African Republic",
+            "Chad",
+            "Chile",
+            "China",
+            "Christmas Island",
+            "Cocos (Keeling) Islands",
+            "Colombia",
+            "Comoros",
+            "Congo",
+            "Congo (the Democratic Republic of the)",
+            "Cook Islands",
+            "Costa Rica",
+            "Côte d'Ivoire",
+            "Croatia",
+            "Cuba",
+            "Curaçao",
+            "Cyprus",
+            "Czechia",
+            "Denmark",
+            "Djibouti",
+            "Dominica",
+            "Dominican Republic",
+            "Ecuador",
+            "Egypt",
+            "El Salvador",
+            "Equatorial Guinea",
+            "Eritrea",
+            "Estonia",
+            "Eswatini",
+            "Ethiopia",
+            "Falkland Islands (Malvinas)",
+            "Faroe Islands",
+            "Fiji",
+            "Finland",
+            "France",
+            "French Guiana",
+            "French Polynesia",
+            "French Southern Territories",
+            "Gabon",
+            "Gambia",
+            "Georgia",
+            "Germany",
+            "Ghana",
+            "Gibraltar",
+            "Greece",
+            "Greenland",
+            "Grenada",
+            "Guadeloupe",
+            "Guam",
+            "Guatemala",
+            "Guernsey",
+            "Guinea",
+            "Guinea-Bissau",
+            "Guyana",
+            "Haiti",
+            "Heard Island and McDonald Islands",
+            "Holy See",
+            "Honduras",
+            "Hong Kong",
+            "Hungary",
+            "Iceland",
+            "India",
+            "Indonesia",
+            "Iran",
+            "Iraq",
+            "Ireland",
+            "Isle of Man",
+            "Israel",
+            "Italy",
+            "Jamaica",
+            "Japan",
+            "Jersey",
+            "Jordan",
+            "Kazakhstan",
+            "Kenya",
+            "Kiribati",
+            "Kuwait",
+            "Kyrgyzstan",
+            "Laos",
+            "Latvia",
+            "Lebanon",
+            "Lesotho",
+            "Liberia",
+            "Libya",
+            "Liechtenstein",
+            "Lithuania",
+            "Luxembourg",
+            "Macao",
+            "Madagascar",
+            "Malawi",
+            "Malaysia",
+            "Maldives",
+            "Mali",
+            "Malta",
+            "Marshall Islands",
+            "Martinique",
+            "Mauritania",
+            "Mauritius",
+            "Mayotte",
+            "Mexico",
+            "Micronesia",
+            "Moldova",
+            "Monaco",
+            "Mongolia",
+            "Montenegro",
+            "Montserrat",
+            "Morocco",
+            "Mozambique",
+            "Myanmar",
+            "Namibia",
+            "Nauru",
+            "Nepal",
+            "Netherlands",
+            "New Caledonia",
+            "New Zealand",
+            "Nicaragua",
+            "Niger",
+            "Nigeria",
+            "Niue",
+            "Norfolk Island",
+            "North Korea",
+            "North Macedonia",
+            "Northern Mariana Islands",
+            "Norway",
+            "Oman",
+            "Pakistan",
+            "Palau",
+            "Palestine, State of",
+            "Panama",
+            "Papua New Guinea",
+            "Paraguay",
+            "Peru",
+            "Philippines",
+            "Pitcairn",
+            "Poland",
+            "Portugal",
+            "Puerto Rico",
+            "Qatar",
+            "Réunion",
+            "Romania",
+            "Russia",
+            "Rwanda",
+            "Saint Barthélemy",
+            "Saint Helena, Ascension and Tristan da Cunha",
+            "Saint Kitts and Nevis",
+            "Saint Lucia",
+            "Saint Martin (French part)",
+            "Saint Pierre and Miquelon",
+            "Saint Vincent and the Grenadines",
+            "Samoa",
+            "San Marino",
+            "Sao Tome and Principe",
+            "Saudi Arabia",
+            "Senegal",
+            "Serbia",
+            "Seychelles",
+            "Sierra Leone",
+            "Singapore",
+            "Sint Maarten (Dutch part)",
+            "Slovakia",
+            "Slovenia",
+            "Solomon Islands",
+            "Somalia",
+            "South Africa",
+            "South Georgia and the South Sandwich Islands",
+            "South Korea",
+            "South Sudan",
+            "Spain",
+            "Sri Lanka",
+            "Sudan",
+            "Suriname",
+            "Svalbard and Jan Mayen",
+            "Sweden",
+            "Switzerland",
+            "Syria",
+            "Taiwan",
+            "Tajikistan",
+            "Tanzania",
+            "Thailand",
+            "Timor-Leste",
+            "Togo",
+            "Tokelau",
+            "Tonga",
+            "Trinidad and Tobago",
+            "Tunisia",
+            "Türkiye",
+            "Turkmenistan",
+            "Turks and Caicos Islands",
+            "Tuvalu",
+            "Uganda",
+            "Ukraine",
+            "United Arab Emirates",
+            "United Kingdom",
+            "United States Minor Outlying Islands",
+            "United States of America",
+            "Uruguay",
+            "Uzbekistan",
+            "Vanuatu",
+            "Venezuela",
+            "Vietnam",
+            "Virgin Islands (British)",
+            "Virgin Islands (U.S.)",
+            "Wallis and Futuna",
+            "Western Sahara",
+            "Yemen",
+            "Zambia",
+            "Zimbabwe"
+          ]
+        },
+        "nom": {
+          "title": "Nom",
+          "type": "string",
+          "maxLength": 255,
+          "minLength": 1
+        },
+        "date_creation": {
+          "title": "Date creation",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "date_modification": {
+          "title": "Date modification",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "description": {
+          "title": "Description",
+          "type": "string",
+          "x-nullable": true
+        },
+        "date_debut": {
+          "title": "Date debut",
+          "type": "string",
+          "format": "date"
+        },
+        "date_fin": {
+          "title": "Date fin",
+          "type": "string",
+          "format": "date",
+          "x-nullable": true
+        },
+        "is_active": { "title": "Is active", "type": "boolean" }
+      }
+    },
+    "Produit": {
+      "required": ["designation", "type", "unite"],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "nom_magasin": {
+          "title": "Nom magasin",
+          "type": "string",
+          "readOnly": true
+        },
+        "designation": {
+          "title": "Designation",
+          "type": "string",
+          "maxLength": 200,
+          "minLength": 1
+        },
+        "type": {
+          "title": "Type",
+          "type": "string",
+          "enum": ["materiel", "materiau"]
+        },
+        "date_creation": {
+          "title": "Date creation",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "date_modif": {
+          "title": "Date modif",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "unite": {
+          "title": "Unite",
+          "type": "string",
+          "enum": ["litre", "kg", "m3", "unite", "m", "autre"]
+        },
+        "is_active": { "title": "Is active", "type": "boolean" }
+      }
+    },
+    "CustomUser": {
+      "required": [
+        "nationality",
+        "password",
+        "username",
+        "surname",
+        "type",
+        "titre",
+        "poste",
+        "telephone"
+      ],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "nationality": {
+          "title": "Nationality",
+          "type": "string",
+          "enum": [
+            "Afghanistan",
+            "Åland Islands",
+            "Albania",
+            "Algeria",
+            "American Samoa",
+            "Andorra",
+            "Angola",
+            "Anguilla",
+            "Antarctica",
+            "Antigua and Barbuda",
+            "Argentina",
+            "Armenia",
+            "Aruba",
+            "Australia",
+            "Austria",
+            "Azerbaijan",
+            "Bahamas",
+            "Bahrain",
+            "Bangladesh",
+            "Barbados",
+            "Belarus",
+            "Belgium",
+            "Belize",
+            "Benin",
+            "Bermuda",
+            "Bhutan",
+            "Bolivia",
+            "Bonaire, Sint Eustatius and Saba",
+            "Bosnia and Herzegovina",
+            "Botswana",
+            "Bouvet Island",
+            "Brazil",
+            "British Indian Ocean Territory",
+            "Brunei",
+            "Bulgaria",
+            "Burkina Faso",
+            "Burundi",
+            "Cabo Verde",
+            "Cambodia",
+            "Cameroon",
+            "Canada",
+            "Cayman Islands",
+            "Central African Republic",
+            "Chad",
+            "Chile",
+            "China",
+            "Christmas Island",
+            "Cocos (Keeling) Islands",
+            "Colombia",
+            "Comoros",
+            "Congo",
+            "Congo (the Democratic Republic of the)",
+            "Cook Islands",
+            "Costa Rica",
+            "Côte d'Ivoire",
+            "Croatia",
+            "Cuba",
+            "Curaçao",
+            "Cyprus",
+            "Czechia",
+            "Denmark",
+            "Djibouti",
+            "Dominica",
+            "Dominican Republic",
+            "Ecuador",
+            "Egypt",
+            "El Salvador",
+            "Equatorial Guinea",
+            "Eritrea",
+            "Estonia",
+            "Eswatini",
+            "Ethiopia",
+            "Falkland Islands (Malvinas)",
+            "Faroe Islands",
+            "Fiji",
+            "Finland",
+            "France",
+            "French Guiana",
+            "French Polynesia",
+            "French Southern Territories",
+            "Gabon",
+            "Gambia",
+            "Georgia",
+            "Germany",
+            "Ghana",
+            "Gibraltar",
+            "Greece",
+            "Greenland",
+            "Grenada",
+            "Guadeloupe",
+            "Guam",
+            "Guatemala",
+            "Guernsey",
+            "Guinea",
+            "Guinea-Bissau",
+            "Guyana",
+            "Haiti",
+            "Heard Island and McDonald Islands",
+            "Holy See",
+            "Honduras",
+            "Hong Kong",
+            "Hungary",
+            "Iceland",
+            "India",
+            "Indonesia",
+            "Iran",
+            "Iraq",
+            "Ireland",
+            "Isle of Man",
+            "Israel",
+            "Italy",
+            "Jamaica",
+            "Japan",
+            "Jersey",
+            "Jordan",
+            "Kazakhstan",
+            "Kenya",
+            "Kiribati",
+            "Kuwait",
+            "Kyrgyzstan",
+            "Laos",
+            "Latvia",
+            "Lebanon",
+            "Lesotho",
+            "Liberia",
+            "Libya",
+            "Liechtenstein",
+            "Lithuania",
+            "Luxembourg",
+            "Macao",
+            "Madagascar",
+            "Malawi",
+            "Malaysia",
+            "Maldives",
+            "Mali",
+            "Malta",
+            "Marshall Islands",
+            "Martinique",
+            "Mauritania",
+            "Mauritius",
+            "Mayotte",
+            "Mexico",
+            "Micronesia",
+            "Moldova",
+            "Monaco",
+            "Mongolia",
+            "Montenegro",
+            "Montserrat",
+            "Morocco",
+            "Mozambique",
+            "Myanmar",
+            "Namibia",
+            "Nauru",
+            "Nepal",
+            "Netherlands",
+            "New Caledonia",
+            "New Zealand",
+            "Nicaragua",
+            "Niger",
+            "Nigeria",
+            "Niue",
+            "Norfolk Island",
+            "North Korea",
+            "North Macedonia",
+            "Northern Mariana Islands",
+            "Norway",
+            "Oman",
+            "Pakistan",
+            "Palau",
+            "Palestine, State of",
+            "Panama",
+            "Papua New Guinea",
+            "Paraguay",
+            "Peru",
+            "Philippines",
+            "Pitcairn",
+            "Poland",
+            "Portugal",
+            "Puerto Rico",
+            "Qatar",
+            "Réunion",
+            "Romania",
+            "Russia",
+            "Rwanda",
+            "Saint Barthélemy",
+            "Saint Helena, Ascension and Tristan da Cunha",
+            "Saint Kitts and Nevis",
+            "Saint Lucia",
+            "Saint Martin (French part)",
+            "Saint Pierre and Miquelon",
+            "Saint Vincent and the Grenadines",
+            "Samoa",
+            "San Marino",
+            "Sao Tome and Principe",
+            "Saudi Arabia",
+            "Senegal",
+            "Serbia",
+            "Seychelles",
+            "Sierra Leone",
+            "Singapore",
+            "Sint Maarten (Dutch part)",
+            "Slovakia",
+            "Slovenia",
+            "Solomon Islands",
+            "Somalia",
+            "South Africa",
+            "South Georgia and the South Sandwich Islands",
+            "South Korea",
+            "South Sudan",
+            "Spain",
+            "Sri Lanka",
+            "Sudan",
+            "Suriname",
+            "Svalbard and Jan Mayen",
+            "Sweden",
+            "Switzerland",
+            "Syria",
+            "Taiwan",
+            "Tajikistan",
+            "Tanzania",
+            "Thailand",
+            "Timor-Leste",
+            "Togo",
+            "Tokelau",
+            "Tonga",
+            "Trinidad and Tobago",
+            "Tunisia",
+            "Türkiye",
+            "Turkmenistan",
+            "Turks and Caicos Islands",
+            "Tuvalu",
+            "Uganda",
+            "Ukraine",
+            "United Arab Emirates",
+            "United Kingdom",
+            "United States Minor Outlying Islands",
+            "United States of America",
+            "Uruguay",
+            "Uzbekistan",
+            "Vanuatu",
+            "Venezuela",
+            "Vietnam",
+            "Virgin Islands (British)",
+            "Virgin Islands (U.S.)",
+            "Wallis and Futuna",
+            "Western Sahara",
+            "Yemen",
+            "Zambia",
+            "Zimbabwe"
+          ]
+        },
+        "password": {
+          "title": "Password",
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 1
+        },
+        "last_login": {
+          "title": "Last login",
+          "type": "string",
+          "format": "date-time",
+          "x-nullable": true
+        },
+        "is_superuser": {
+          "title": "Superuser status",
+          "description": "Designates that this user has all permissions without explicitly assigning them.",
+          "type": "boolean"
+        },
+        "username": {
+          "title": "Username",
+          "description": "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
+          "type": "string",
+          "pattern": "^[\\w.@+-]+$",
+          "maxLength": 150,
+          "minLength": 1
+        },
+        "first_name": {
+          "title": "First name",
+          "type": "string",
+          "maxLength": 150
+        },
+        "last_name": {
+          "title": "Last name",
+          "type": "string",
+          "maxLength": 150
+        },
+        "email": {
+          "title": "Email address",
+          "type": "string",
+          "format": "email",
+          "maxLength": 254
+        },
+        "is_staff": {
+          "title": "Staff status",
+          "description": "Designates whether the user can log into this admin site.",
+          "type": "boolean"
+        },
+        "date_joined": {
+          "title": "Date joined",
+          "type": "string",
+          "format": "date-time"
+        },
+        "surname": {
+          "title": "Surname",
+          "type": "string",
+          "maxLength": 100,
+          "minLength": 1
+        },
+        "birth_date": {
+          "title": "Birth date",
+          "type": "string",
+          "format": "date",
+          "x-nullable": true
+        },
+        "type": {
+          "title": "Type",
+          "type": "string",
+          "enum": ["Interne", "Consultant"]
+        },
+        "titre": {
+          "title": "Titre",
+          "type": "string",
+          "maxLength": 100,
+          "minLength": 1
+        },
+        "poste": {
+          "title": "Poste",
+          "type": "string",
+          "maxLength": 100,
+          "minLength": 1
+        },
+        "photo_profil": {
+          "title": "Photo profil",
+          "type": "string",
+          "readOnly": true,
+          "x-nullable": true,
+          "format": "uri"
+        },
+        "telephone": {
+          "title": "Telephone",
+          "type": "string",
+          "maxLength": 20,
+          "minLength": 1
+        },
+        "is_active": { "title": "Is active", "type": "boolean" },
+        "date_creation": {
+          "title": "Date creation",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "date_modif": {
+          "title": "Date modif",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "id_profil": {
+          "title": "Id profil",
+          "type": "integer",
+          "x-nullable": true
+        },
+        "groups": {
+          "description": "The groups this user belongs to. A user will get all permissions granted to each of their groups.",
+          "type": "array",
+          "items": {
+            "description": "The groups this user belongs to. A user will get all permissions granted to each of their groups.",
+            "type": "integer"
+          },
+          "uniqueItems": true
+        },
+        "user_permissions": {
+          "description": "Specific permissions for this user.",
+          "type": "array",
+          "items": {
+            "description": "Specific permissions for this user.",
+            "type": "integer"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "Profil": {
+      "required": ["libelle", "description"],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "libelle": {
+          "title": "Libelle",
+          "type": "string",
+          "maxLength": 100,
+          "minLength": 1
+        },
+        "description": {
+          "title": "Description",
+          "type": "string",
+          "minLength": 1
+        },
+        "is_active": { "title": "Is active", "type": "boolean" },
+        "date_creation": {
+          "title": "Date creation",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "date_modif": {
+          "title": "Date modif",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    }
+  }
+}
