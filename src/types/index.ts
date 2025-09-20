@@ -6,6 +6,8 @@ export * from "./order";
 export * from "./request";
 export * from "./api";
 export * from "./account";
+export * from "./api-users";
+export * from "./api-stocks";
 
 // Export explicite pour éviter les conflits de noms
 export type {

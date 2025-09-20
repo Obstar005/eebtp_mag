@@ -103,6 +103,8 @@ export interface ProjetFilters {
   chef_projet_id?: number;
   date_debut_from?: string;
   date_debut_to?: string;
+  date_fin_from?: string;
+  date_fin_to?: string;
   status?: ProjetStatus;
   page?: number;
   limit?: number;
@@ -163,6 +165,7 @@ export interface ProjetStats {
   planifies: number;
   en_cours: number;
   termines: number;
+  annules: number;
   par_pays: Array<{
     pays: string;
     count: number;

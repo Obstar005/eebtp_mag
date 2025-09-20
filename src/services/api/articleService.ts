@@ -5,136 +5,69 @@ import type {
   PaginatedResponse,
   ProductFilter,
 } from "../../types";
+import { stockApiService } from "./stockApiService";
 
-// Mock service for articles/products
 export class ArticleService {
-  private articles: Product[] = [
-    {
-      id: "1",
-      name: "Ciment Portland",
-      description: "Ciment Portland de qualité supérieure",
-      sku: "CIM001",
-      barcode: "1234567890123",
-      category: {
-        id: "cat1",
-        name: "Matériaux",
-        isActive: true,
-      },
-      supplier: {
-        id: "sup1",
-        name: "Fournisseur ABC",
-        email: "contact@abc.com",
-        phone: "22890123456",
-        address: {
-          street: "123 Avenue de la Paix",
-          city: "Lomé",
-          postalCode: "01BP123",
-          country: "Togo",
-        },
-        isActive: true,
-      },
-      unitPrice: 5500,
-      costPrice: 4500,
-      minStockLevel: 10,
-      maxStockLevel: 100,
-      currentStock: 50,
-      unit: "sac" as any,
-      isActive: true,
-      images: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ];
-
   async getArticles(
     filter?: ProductFilter
   ): Promise<PaginatedResponse<Product>> {
-    let filteredArticles = [...this.articles];
-
-    if (filter?.search) {
-      const search = filter.search.toLowerCase();
-      filteredArticles = filteredArticles.filter(
-        (article) =>
-          article.name.toLowerCase().includes(search) ||
-          article.sku.toLowerCase().includes(search) ||
-          (article.description &&
-            article.description.toLowerCase().includes(search))
-      );
+    if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
+      return mockArticleService.getArticles(filter);
     }
-
-    if (filter?.categoryId) {
-      filteredArticles = filteredArticles.filter(
-        (article) => article.category.id === filter.categoryId
-      );
-    }
-
-    if (filter?.supplierId) {
-      filteredArticles = filteredArticles.filter(
-        (article) => article.supplier.id === filter.supplierId
-      );
-    }
-
-    if (filter?.isActive !== undefined) {
-      filteredArticles = filteredArticles.filter(
-        (article) => article.isActive === filter.isActive
-      );
-    }
-
-    return {
-      data: filteredArticles,
-      pagination: {
-        page: 1,
-        limit: 50,
-        total: filteredArticles.length,
-        totalPages: 1,
-      },
-    };
+    return await stockApiService.getProducts().then((products) => ({
+      data: products,
+      pagination: { page: 1, limit: 50, total: products.length, totalPages: 1 },
+    }));
   }
 
   async getArticle(id: string): Promise<Product> {
-    const article = this.articles.find((a) => a.id === id);
-    if (!article) {
-      throw new Error(`Article with id ${id} not found`);
+    if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
+      return mockArticleService.getArticle(id);
     }
-    return article;
+    return await stockApiService.getProduct(id);
   }
 
   async createArticle(data: CreateProductData): Promise<Product> {
-    const newArticle: Product = {
-      id: Date.now().toString(),
-      ...data,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    this.articles.push(newArticle);
-    return newArticle;
+    if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
+      return mockArticleService.createArticle(data);
+    }
+    return await stockApiService.createProduct(data);
   }
 
   async updateArticle(data: UpdateProductData): Promise<Product> {
-    const index = this.articles.findIndex((a) => a.id === data.id);
-    if (index === -1) {
-      throw new Error(`Article with id ${data.id} not found`);
-    }
-
-    const updatedArticle = {
-      ...this.articles[index],
-      ...data,
-      updatedAt: new Date().toISOString(),
-    };
-
-    this.articles[index] = updatedArticle;
-    return updatedArticle;
+    return mockArticleService.updateArticle(data);
   }
 
   async deleteArticle(id: string): Promise<void> {
-    const index = this.articles.findIndex((a) => a.id === id);
-    if (index === -1) {
-      throw new Error(`Article with id ${id} not found`);
+    if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
+      return mockArticleService.deleteArticle(id);
     }
-
-    this.articles.splice(index, 1);
+    return await stockApiService.deleteProduct(id);
   }
 }
+
+const mockArticleService = {
+  articles: [] as Product[],
+  async getArticles(
+    _filter?: ProductFilter
+  ): Promise<PaginatedResponse<Product>> {
+    return {
+      data: this.articles,
+      pagination: { page: 1, limit: 50, total: 0, totalPages: 0 },
+    };
+  },
+  async getArticle(id: string): Promise<Product> {
+    throw new Error(`Article ${id} not found`);
+  },
+  async createArticle(_data: CreateProductData): Promise<Product> {
+    throw new Error("Not implemented");
+  },
+  async updateArticle(_data: UpdateProductData): Promise<Product> {
+    throw new Error("Not implemented");
+  },
+  async deleteArticle(id: string): Promise<void> {
+    throw new Error(`Delete ${id} not implemented`);
+  },
+};
 
 export const articleService = new ArticleService();

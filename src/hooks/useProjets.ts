@@ -164,11 +164,20 @@ export function useRemoveMagasinFromProjet() {
   });
 }
 
+import { countriesService } from "../services/countriesService";
+
 // Hook pour récupérer les pays disponibles
 export function useAvailableCountries() {
   return useQuery({
     queryKey: projetKeys.countries(),
-    queryFn: () => projetService.getAvailableCountries(),
+    queryFn: () => {
+      // Utilise le service pays existant et convertit au format attendu
+      const countries = countriesService.getAllCountries();
+      return countries.map((country) => ({
+        code: country.abbreviation,
+        name: country.name,
+      }));
+    },
     staleTime: 30 * 60 * 1000, // 30 minutes - les pays changent rarement
     gcTime: 60 * 60 * 1000, // 1 heure
   });

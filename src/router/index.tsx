@@ -28,6 +28,8 @@ import { DeclarationsPage } from "../pages/declarations/DeclarationsPage";
 import { DeclarationEntreeDetailPage } from "../pages/declarations/DeclarationEntreeDetailPage";
 import { DeclarationSortieDetailPage } from "../pages/declarations/DeclarationSortieDetailPage";
 import { DeclarationRetourDetailPage } from "../pages/declarations/DeclarationRetourDetailPage";
+// Page de test API (développement uniquement)
+import ApiTestPage from "../pages/ApiTestPage";
 
 export const router = createBrowserRouter([
   {
@@ -147,6 +149,11 @@ export const router = createBrowserRouter([
       {
         path: "articles/:id/edit",
         element: <ArticleDetailsPage />,
+      },
+      // Route de test API (développement uniquement)
+      {
+        path: "api-test",
+        element: <ApiTestPage />,
       },
     ],
   },

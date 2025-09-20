@@ -52,7 +52,7 @@ export function SimpleAuthFlow({
         password,
       });
 
-      // Vérifier si c'est la première connexion
+      // Vérifier si c'est la première connexion (isFirstLogin = is_firstlogin de l'API)
       if (response.isFirstLogin) {
         updateAuthState({
           currentStep: "change_password",

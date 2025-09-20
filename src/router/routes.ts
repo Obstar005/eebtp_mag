@@ -38,6 +38,8 @@ export const routePaths = {
   reports: "/reports",
   settings: "/settings",
   profile: "/profile",
+  // Route de test (développement uniquement)
+  apiTest: "/api-test",
 } as const;
 
 // Types pour la navigation

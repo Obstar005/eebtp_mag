@@ -106,3 +106,14 @@ export interface AccountListResponse {
   limit: number;
   totalPages: number;
 }
+
+// Types pour la gestion des profils
+export interface CreateProfileData {
+  nom: string;
+  description?: string;
+}
+
+export interface UpdateProfileData {
+  nom: string;
+  description?: string;
+}

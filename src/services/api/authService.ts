@@ -1,4 +1,5 @@
 import { MockAuthService } from "./mockService";
+import { authApiService } from "./authApiService";
 import type {
   PhoneVerificationRequest,
   PhoneVerificationResponse,
@@ -56,7 +57,7 @@ export class AuthService {
     success: boolean;
     user: User;
     token: string;
-    refreshToken: string | undefined;
+    refreshToken?: string;
   }> {
     if (useMockService) {
       return mockService.directLogin(data);
@@ -100,14 +101,44 @@ export class AuthService {
     if (useMockService) {
       return mockService.simpleVerifyPhone(data);
     }
-    throw new Error("API not implemented");
+
+    try {
+      // Utiliser l'API pour vérifier si l'utilisateur existe
+      const userExists = await authApiService.checkUserExists(data.phone);
+
+      return {
+        success: true,
+        isNewUser: !userExists.exists,
+        message: userExists.exists
+          ? "Utilisateur trouvé. Connectez-vous avec votre mot de passe."
+          : "Nouveau numéro. Vous devrez créer un compte.",
+      };
+    } catch (error) {
+      console.error("Erreur lors de la vérification du téléphone:", error);
+      throw new Error("Erreur lors de la vérification du numéro");
+    }
   }
 
   async simpleLogin(data: SimpleLoginRequest): Promise<SimpleLoginResponse> {
     if (useMockService) {
       return mockService.simpleLogin(data);
     }
-    throw new Error("API not implemented");
+
+    try {
+      // Utiliser le service API et transformer la réponse
+      const authResponse = await authApiService.loginByPhone(data);
+
+      return {
+        success: true,
+        user: authResponse.user,
+        token: authResponse.token,
+        refreshToken: authResponse.refreshToken,
+        isFirstLogin: authResponse.requiresSetup ?? false, // Mapper requiresSetup vers isFirstLogin avec fallback
+      };
+    } catch (error) {
+      console.error("Erreur lors de la connexion simple:", error);
+      throw new Error("Erreur lors de la connexion");
+    }
   }
 
   async changePassword(data: ChangePasswordRequest): Promise<{
@@ -119,7 +150,37 @@ export class AuthService {
     if (useMockService) {
       return mockService.changePassword(data);
     }
-    throw new Error("API not implemented");
+
+    try {
+      // Pour le changement de mot de passe, on suppose que c'est pour un premier login
+      // L'API nécessite old_password, on peut utiliser une valeur par défaut ou demander à l'utilisateur
+      const setPasswordResponse = await authApiService.setPassword({
+        telephone: data.phone,
+        old_password: "", // Pour les nouveaux utilisateurs, l'ancien mot de passe peut être vide
+        new_password: data.newPassword,
+        confirm_password: data.newPassword,
+      });
+
+      if (setPasswordResponse.success) {
+        // Reconnecter l'utilisateur après changement de mot de passe
+        const loginResponse = await authApiService.loginByPhone({
+          phone: data.phone,
+          password: data.newPassword,
+        });
+
+        return {
+          success: true,
+          user: loginResponse.user,
+          token: loginResponse.token,
+          refreshToken: loginResponse.refreshToken || "",
+        };
+      } else {
+        throw new Error(setPasswordResponse.message);
+      }
+    } catch (error) {
+      console.error("Erreur lors du changement de mot de passe:", error);
+      throw new Error("Erreur lors du changement de mot de passe");
+    }
   }
 
   async simpleSetupAccount(data: {

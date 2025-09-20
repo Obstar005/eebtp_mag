@@ -17,31 +17,83 @@ class ApiClient {
   }
 
   private setupInterceptors() {
-    // Request interceptor pour ajouter le token d'authentification
+    // Request interceptor pour authentification hybride Basic Auth → JWT
     this.axiosInstance.interceptors.request.use(
       (config) => {
-        const token = localStorage.getItem("authToken");
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+        // 1. Priorité au JWT token si disponible (authToken ou auth_token)
+        const jwtToken =
+          localStorage.getItem("authToken") ||
+          localStorage.getItem("auth_token");
+        if (jwtToken) {
+          config.headers.Authorization = `Bearer ${jwtToken}`;
+          return config;
         }
+
+        // 2. Fallback vers Basic Auth pour les endpoints non-auth
+        const username = import.meta.env.VITE_API_USERNAME;
+        const password = import.meta.env.VITE_API_PASSWORD;
+        if (username && password && username !== "your_username") {
+          const basicAuth = btoa(`${username}:${password}`);
+          config.headers.Authorization = `Basic ${basicAuth}`;
+        }
+
         return config;
       },
       (error) => Promise.reject(error)
     );
 
-    // Response interceptor pour gérer les erreurs globalement
+    // Response interceptor pour gestion des erreurs avec refresh automatique JWT
     this.axiosInstance.interceptors.response.use(
       (response: AxiosResponse<ApiResponse<unknown>>) => response,
-      (error) => {
-        if (error.response?.status === 401) {
-          // Token expiré ou invalide
-          localStorage.removeItem("authToken");
-          localStorage.removeItem("refreshToken");
-          window.location.href = "/login";
+      async (error) => {
+        const originalRequest = error.config;
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+
+          // Tentative de refresh du JWT token
+          const refreshToken = localStorage.getItem("refreshToken");
+          if (refreshToken) {
+            try {
+              // Import dynamique pour éviter les dépendances circulaires
+              const { authService } = await import("./authService");
+              const { token, refreshToken: newRefreshToken } =
+                await authService.refreshToken();
+
+              // Mise à jour des tokens
+              localStorage.setItem("authToken", token);
+              localStorage.setItem("refreshToken", newRefreshToken);
+
+              // Retry la requête originale avec le nouveau token
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              return this.axiosInstance.request(originalRequest);
+            } catch (refreshError) {
+              console.error("Échec du refresh token:", refreshError);
+              // Échec du refresh, déconnexion complète
+              this.clearAuthAndRedirect();
+            }
+          } else {
+            // Pas de refresh token disponible
+            this.clearAuthAndRedirect();
+          }
         }
+
         return Promise.reject(error);
       }
     );
+  }
+
+  private clearAuthAndRedirect() {
+    // Nettoyage de tous les tokens et données utilisateur
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user_data");
+
+    // Redirection vers la page de connexion
+    if (window.location.pathname !== "/auth/login") {
+      window.location.href = "/auth/login";
+    }
   }
 
   public getInstance() {

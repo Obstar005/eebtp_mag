@@ -66,7 +66,8 @@ export function useUpdateAccount() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: UpdateAccountData) => accountService.updateAccount(data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateAccountData }) =>
+      accountService.updateAccount(id, data),
     onSuccess: (updatedAccount) => {
       // Invalider et mettre à jour les caches
       queryClient.invalidateQueries({ queryKey: accountKeys.lists() });

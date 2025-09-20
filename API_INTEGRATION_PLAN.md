@@ -56,6 +56,96 @@ Ce document détaille le plan d'intégration de l'API EEBTP_MAG avec le frontend
 
 ### 1. Mapping des Types
 
+#### Authentication & Users (API → Frontend)
+
+```typescript
+// API Authentication Endpoints
+- POST /Users/authentication/check-user-exists/ - Vérifier si utilisateur existe
+- POST /Users/authentication/login-by-phone/ - Connexion par téléphone/mot de passe
+- POST /Users/authentication/set-password/ - Modifier mot de passe
+- GET /Users/authentication/user-info/ - Infos utilisateur connecté (avec JWT)
+- POST /Users/authentication/verify-sms - Vérification SMS
+
+// API Users Management
+- GET /Users/liste-users - Liste des utilisateurs
+- POST /Users/user-create - Créer utilisateur
+- GET /Users/user-detail{id} - Détails utilisateur
+- PUT /Users/user-update/{id} - Modifier utilisateur
+- DELETE /Users/user-delete/{id} - Supprimer utilisateur
+
+// API Profiles Management
+- GET /Users/liste-profils - Liste des profils
+- POST /Users/profil-create - Créer profil
+- GET /Users/profil-detail/{id} - Détails profil
+- PUT /Users/profil-update/{id} - Modifier profil
+- DELETE /Users/profil-delete/{id} - Supprimer profil
+```
+
+#### CustomUser (API → Frontend)
+
+```typescript
+// API Definition
+interface CustomUserAPI {
+  id: number;
+  nationality: string; // Nom complet du pays
+  password: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+  surname: string;
+  email?: string;
+  birth_date?: string; // YYYY-MM-DD
+  type: "Interne" | "Consultant";
+  titre: string;
+  poste: string;
+  telephone: string;
+  photo_profil?: string; // URI
+  is_active: boolean;
+  id_profil?: number;
+  date_creation: string; // ISO datetime
+  date_modif: string;
+  // ... autres champs Django
+}
+
+// Frontend Type (à adapter)
+interface Account {
+  id: string; // ⚠️ Convertir number → string
+  code: string; // ⚠️ Générer ou mapper
+  nom: string; // ⚠️ Mapper depuis 'last_name'
+  prenoms: string; // ⚠️ Mapper depuis 'first_name'
+  nom_utilisateur: string; // ✅ Mapper depuis 'username'
+  date_naissance: string; // ✅ Mapper depuis 'birth_date'
+  nationalite: string; // ⚠️ Convertir nom pays → code pays
+  type: AccountType; // ✅ Compatible
+  telephone: string; // ✅ Compatible
+  photo_profil?: string; // ✅ Compatible
+  is_active: boolean; // ✅ Compatible
+  profile_id: string; // ⚠️ Mapper depuis 'id_profil' + convertir
+  // Relations adaptées
+}
+```
+
+#### Profil (API → Frontend)
+
+```typescript
+// API Definition
+interface ProfilAPI {
+  id: number;
+  libelle: string;
+  description: string;
+  is_active: boolean;
+  date_creation: string;
+  date_modif: string;
+}
+
+// Frontend Type (à adapter)
+interface Profile {
+  id: string; // ⚠️ Convertir number → string
+  nom: string; // ⚠️ Mapper depuis 'libelle'
+  description?: string; // ✅ Compatible
+}
+```
+
 #### Projet (API → Frontend)
 
 ```typescript
@@ -116,29 +206,80 @@ interface Magasin {
 
 #### Authentification Hybride
 
+````typescript
+### 2. Configuration du Client API
+
+#### Authentification Hybride Basic → JWT
 ```typescript
-// client.ts - Mise à jour nécessaire
+// client.ts - Mise à jour pour transition automatique
 private setupInterceptors() {
   this.axiosInstance.interceptors.request.use(
     (config) => {
-      // Vérifier d'abord si on a un token JWT
-      const token = localStorage.getItem("authToken");
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      } else {
-        // Fallback vers Basic Auth si pas de token
-        const username = import.meta.env.VITE_API_USERNAME;
-        const password = import.meta.env.VITE_API_PASSWORD;
-        if (username && password) {
-          const basicAuth = btoa(`${username}:${password}`);
-          config.headers.Authorization = `Basic ${basicAuth}`;
-        }
+      // 1. Priorité au JWT token si disponible
+      const jwtToken = localStorage.getItem("authToken") || localStorage.getItem("auth_token");
+      if (jwtToken) {
+        config.headers.Authorization = `Bearer ${jwtToken}`;
+        return config;
       }
+
+      // 2. Fallback vers Basic Auth pour les endpoints non-auth
+      const username = import.meta.env.VITE_API_USERNAME;
+      const password = import.meta.env.VITE_API_PASSWORD;
+      if (username && password) {
+        const basicAuth = btoa(`${username}:${password}`);
+        config.headers.Authorization = `Basic ${basicAuth}`;
+      }
+
       return config;
     },
     (error) => Promise.reject(error)
   );
+
+  // Gestion des erreurs avec refresh automatique du JWT
+  this.axiosInstance.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      if (error.response?.status === 401) {
+        const refreshToken = localStorage.getItem("refreshToken");
+        if (refreshToken) {
+          try {
+            // Tentative de refresh du token
+            const { token, refreshToken: newRefreshToken } = await authService.refreshToken();
+            localStorage.setItem("authToken", token);
+            localStorage.setItem("refreshToken", newRefreshToken);
+            // Retry la requête
+            return this.axiosInstance.request(error.config);
+          } catch {
+            // Échec du refresh, déconnexion
+            localStorage.removeItem("authToken");
+            localStorage.removeItem("refreshToken");
+            window.location.href = "/auth/login";
+          }
+        } else {
+          // Pas de refresh token, déconnexion
+          localStorage.clear();
+          window.location.href = "/auth/login";
+        }
+      }
+      return Promise.reject(error);
+    }
+  );
 }
+````
+
+#### Variables d'Environnement
+
+```env
+# .env.development
+VITE_API_URL=http://185.197.195.209:8000
+VITE_API_USERNAME=your_basic_username
+VITE_API_PASSWORD=your_basic_password
+
+# Migration flags
+VITE_USE_JWT_AUTH=true
+VITE_ENABLE_VERIFICATION=false
+```
+
 ```
 
 ## 📋 Plan d'Intégration par Étapes
@@ -150,39 +291,64 @@ private setupInterceptors() {
 - [x] Identifier les écarts et adaptations nécessaires
 - [x] Créer le plan d'intégration
 
-### 🔄 Étape 2 : Adaptation des Types
+### 🔄 Étape 2A : Authentification & Users (PRIORITÉ)
 
-- [ ] Créer des types API pour mapper les réponses
+- [ ] Créer les types API pour authentication/users/profils
+- [ ] Adapter le client API pour Basic Auth → JWT automatique
+- [ ] Créer les services API réels pour authentification
+- [ ] Créer les services API réels pour users/profils
+- [ ] Mettre à jour les hooks d'authentification
+- [ ] Tester l'authentification avec l'API réelle
+
+### 🔄 Étape 2B : Adaptation des Types Projets/Magasins
+
+- [ ] Créer des types API pour mapper les réponses projets/magasins
 - [ ] Créer des fonctions de transformation API ↔ Frontend
 - [ ] Mettre à jour les types existants si nécessaire
 
-### 🔄 Étape 3 : Services API Réels
+### 🔄 Étape 3 : Services API Réels Projets/Magasins
 
 - [ ] Remplacer `projetService` mock par implémentation réelle
 - [ ] Remplacer `magasinService` mock par implémentation réelle
 - [ ] Implémenter la gestion des photos de projets
 
-### 🔄 Étape 4 : Configuration Authentification
+### 🔄 Étape 4 : Tests et Validation
 
-- [ ] Modifier le client API pour l'authentification hybride
-- [ ] Tester avec Basic Auth d'abord
-- [ ] Préparer la migration vers tokens JWT
-
-### 🔄 Étape 5 : Tests et Validation
-
-- [ ] Tester toutes les opérations CRUD
+- [ ] Tester toutes les opérations CRUD authentication/users
+- [ ] Tester toutes les opérations CRUD projets/magasins
+- [ ] Valider la transition Basic Auth → JWT
 - [ ] Valider la gestion d'erreurs
 - [ ] Tester l'upload de photos
 
 ## ⚠️ Points d'Attention
 
-### 1. Gestion des Rôles dans les Projets
+### 1. Authentification et Sécurité
+
+- **API actuelle** : Basic Auth documentée, mais JWT supporté sur `/Users/authentication/user-info/`
+- **Migration automatique** : Le client détecte automatiquement la présence de JWT token
+- **Stockage cohérent** : Unifier `authToken`/`auth_token` dans le localStorage
+- **Refresh automatique** : Implémenté dans l'interceptor pour éviter les déconnexions
+
+### 2. Mapping Users/Accounts
+
+- **API** : `CustomUser` avec `first_name`, `last_name`, `surname`
+- **Frontend** : `Account` avec `nom`, `prenoms`
+- **Nationalités** : API utilise noms complets vs codes pays frontend
+- **Profile mapping** : `id_profil` (number) → `profile_id` (string)
+
+### 3. Gestion des Rôles dans les Projets
 
 L'API semble utiliser un système de `comptes` (array d'IDs) plutôt que des rôles spécifiques. Il faudra :
 
 - Clarifier comment mapper les rôles (chef_projet, directeur_travaux, etc.)
 - Comprendre la structure du champ `comptes`
 - Éventuellement adapter l'interface utilisateur
+
+### 4. Cohérence des Types
+
+- **API** : Tous les IDs sont des `number`
+- **Frontend** : Mix entre `string` et `number` pour les IDs
+- **Dates** : API utilise format ISO vs formats localisés frontend
 
 ### 2. Gestion des Pays
 
@@ -227,3 +393,4 @@ L'API a des endpoints pour les articles (`/Stocks/`) mais le frontend appelle ç
 4. **Les variables d'environnement** : Dois-je ajouter des variables pour les credentials Basic Auth ?
 
 Une fois ces points clarifiés, nous pourrons passer à l'étape 2 d'adaptation des types et commencer l'implémentation.
+```
