@@ -143,7 +143,7 @@ def list_users(request):
 def create_user(request):
     serializer = CustomUserSerializer(data=request.data)
     if serializer.is_valid():
-        user = serializer.save()
+        serializer.save()
         return Response({'message': 'Utilisateur crée avec succès'}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
