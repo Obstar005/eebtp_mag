@@ -83,8 +83,8 @@ class GetStartedScreen extends StatelessWidget {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Color.fromRGBO(49, 119, 255, 1),
-                            Color.fromRGBO(150, 124, 253, 1),
+                            Color(0xFF0649AD), // #0649AD,
+                            Color(0xFF7197FB),
                           ],
                         ),
                       ),
@@ -93,50 +93,53 @@ class GetStartedScreen extends StatelessWidget {
 
                   // Contenu positionné sous la parabole
                   Positioned(
-                    top: bumpHeight,
+                    top: bumpHeight*0.3,
                     left: 0,
                     right: 0,
                     bottom: 0,
                     child: Padding(
                       padding: EdgeInsets.only(
                         top: 5.h,
-                        left: 6.w,
+                        left: 14.w,
                         right: 6.w,
                         bottom: 5.h,
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'BIENVENUE SUR\nEEBTP_MAG',
-                            style: GoogleFonts.inter(
-                              fontSize: 22.sp,
-                              fontWeight: FontWeight.w900,
-                              color: const Color.fromRGBO(255, 255, 255, 1),
-                              fontStyle: FontStyle.italic,
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'BIENVENUE SUR\nEEBTP_MAG',
+                              style: GoogleFonts.inter(
+                                fontSize: 22.sp,
+                                fontWeight: FontWeight.w900,
+                                color: const Color.fromRGBO(255, 255, 255, 1),
+                                fontStyle: FontStyle.italic,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 1.h),
-                          Text(
-                            'Votre plateforme de suivi en temps réel des stocks.',
-                            style: GoogleFonts.inter(
-                              fontSize: 16.sp,
-                              color: Colors.white70,
+                            SizedBox(height: 1.h),
+                            Text(
+                              'Votre plateforme de suivi en temps réel des stocks.',
+                              style: GoogleFonts.inter(
+                                fontSize: 16.sp,
+                                color: Colors.white70,
+                              ),
                             ),
-                          ),
-                      //    SizedBox(height: 0.5.h),
-                          Center(
-                            child: CustomElevatedButton(
-                              text: 'Commencer ici',
-                              backgroundColor: Colors.white,
-                              textColor: const Color(0xFF007AFF),
-                              onPressed: () =>
-                                  Navigator.pushNamed(context, '/login'),
-                              width: 80.w, // Largeur augmentée (80% de l'écran)
+                            //Spacer(),
+                            SizedBox(height: 8.h),
+                            Center(
+                              child: CustomElevatedButton(
+                                text: 'Commencer ici',
+                                backgroundColor: Colors.white,
+                                textColor: const Color(0xFF007AFF),
+                                onPressed: () =>
+                                    Navigator.pushNamed(context, '/login'),
+                                width: 80.w, // Largeur augmentée (80% de l'écran)
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),

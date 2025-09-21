@@ -5,260 +5,26 @@ import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:sizer/sizer.dart';
 
 import '../widgets/button.dart';
+import '../widgets/nav.dart'; // <-- ton NavContainer + ImprovedFAB + ImprovedBottomNavigation
 
-// Classes de la navbar
-class ImprovedBottomNavigation extends StatelessWidget {
-  final int currentIndex;
-  final Function(int) onTap;
-  final bool showFabIndicator;
-
-  const ImprovedBottomNavigation({
-    Key? key,
-    required this.currentIndex,
-    required this.onTap,
-    this.showFabIndicator = false,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 70,
-      child: Stack(
-        children: [
-          CustomPaint(
-            size: Size(MediaQuery.of(context).size.width, 70),
-            painter: ImprovedBottomNavPainter(showFabIndicator: showFabIndicator),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(Icons.home_outlined, Icons.home, "Accueil", 0),
-              _buildNavItem(Icons.inventory_2_outlined, Icons.inventory_2, "Stock", 1),
-              SizedBox(width: 60),
-              _buildNavItem(Icons.assignment_outlined, Icons.assignment, "Demande", 2),
-              _buildNavItem(Icons.person_outline, Icons.person, "Profil", 3),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData outlinedIcon, IconData filledIcon, String label, int index) {
-    bool isSelected = currentIndex == index;
-    
-    return GestureDetector(
-      onTap: () => onTap(index),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            isSelected ? filledIcon : outlinedIcon,
-            size: 22,
-            color: Colors.white,
-          ),
-          SizedBox(height: 2),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 4),
-            child: Column(
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white,
-                    fontFamily: "Montserrat",
-                  ),
-                ),
-                if (isSelected)
-                  Container(
-                    margin: EdgeInsets.only(top: 2),
-                    height: 2,
-                    width: label.length * 8.0,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(1),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class ImprovedBottomNavPainter extends CustomPainter {
-  final bool showFabIndicator;
-
-  ImprovedBottomNavPainter({this.showFabIndicator = false});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF007AFF)
-      ..style = PaintingStyle.fill
-      ..isAntiAlias = true;
-
-    final double fabRadius = size.width * 0.08;
-    final double notchRadius = fabRadius + 8;
-    final double notchStartX = size.width / 2 - notchRadius;
-    final double notchEndX = size.width / 2 + notchRadius;
-    final double smoothFactor = notchRadius * 0.4;
-
-    final path = Path();
-
-    path.moveTo(0, 20);
-    path.quadraticBezierTo(0, 0, 20, 0);
-    path.lineTo(notchStartX - smoothFactor, 0);
-    path.cubicTo(
-      notchStartX, 0,
-      notchStartX, notchRadius * 0.3,
-      size.width / 2 - fabRadius, notchRadius * 0.6,
-    );
-    path.arcToPoint(
-      Offset(size.width / 2 + fabRadius, notchRadius * 0.6),
-      radius: Radius.circular(notchRadius),
-      clockwise: false,
-    );
-    path.cubicTo(
-      notchEndX, notchRadius * 0.3,
-      notchEndX, 0,
-      notchEndX + smoothFactor, 0,
-    );
-    path.lineTo(size.width - 20, 0);
-    path.quadraticBezierTo(size.width, 0, size.width, 20);
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-
-    canvas.drawShadow(path, Colors.black26, 5, true);
-    canvas.drawPath(path, paint);
-
-    if (showFabIndicator) {
-      final indicatorPaint = Paint()
-        ..color = Colors.white
-        ..style = PaintingStyle.fill;
-
-      final indicatorPath = Path();
-      final indicatorY = notchRadius * 0.8;
-      final indicatorWidth = 30.0;
-      final indicatorHeight = 3.0;
-
-      indicatorPath.addRRect(
-        RRect.fromLTRBR(
-          size.width / 2 - indicatorWidth / 2,
-          indicatorY,
-          size.width / 2 + indicatorWidth / 2,
-          indicatorY + indicatorHeight,
-          Radius.circular(1.5),
-        ),
-      );
-
-      canvas.drawPath(indicatorPath, indicatorPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
-class ImprovedFAB extends StatelessWidget {
-  final bool isExpanded;
-  final VoidCallback onToggle;
-  final Function(String) onSecondaryPressed;
-
-  const ImprovedFAB({
-    Key? key,
-    required this.isExpanded,
-    required this.onToggle,
-    required this.onSecondaryPressed,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 300,
-      height: 170,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          AnimatedPositioned(
-            duration: Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-            bottom: isExpanded ? 100 : 0,
-            left: isExpanded ? 60 : 0,
-            child: Transform.scale(
-              scale: isExpanded ? 1 : 0,
-              child: FloatingActionButton(
-                shape: const CircleBorder(),
-                mini: true,
-                heroTag: "entry",
-                backgroundColor: Color(0xFF007AFF),
-                onPressed: () => onSecondaryPressed('entry'),
-                child: Icon(Icons.arrow_downward, color: Colors.white),
-              ),
-            ),
-          ),
-          AnimatedPositioned(
-            duration: Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-            bottom: isExpanded ? 120 : 0,
-            child: Transform.scale(
-              scale: isExpanded ? 1 : 0,
-              child: FloatingActionButton(
-                shape: const CircleBorder(),
-                mini: true,
-                heroTag: "refresh",
-                backgroundColor: Color(0xFF007AFF),
-                onPressed: () => onSecondaryPressed('refresh'),
-                child: Icon(Icons.refresh, color: Colors.white),
-              ),
-            ),
-          ),
-          AnimatedPositioned(
-            duration: Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-            bottom: isExpanded ? 100 : 0,
-            right: isExpanded ? 60 : 0,
-            child: Transform.scale(
-              scale: isExpanded ? 1 : 0,
-              child: FloatingActionButton(
-                shape: const CircleBorder(),
-                mini: true,
-                heroTag: "exit",
-                backgroundColor: Color(0xFF007AFF),
-                onPressed: () => onSecondaryPressed('exit'),
-                child: Icon(Icons.arrow_upward, color: Colors.white),
-              ),
-            ),
-          ),
-          FloatingActionButton(
-            heroTag: "main",
-            backgroundColor: Color(0xFF007AFF),
-            onPressed: onToggle,
-            shape: const CircleBorder(),
-            child: AnimatedRotation(
-              turns: isExpanded ? 0.125 : 0,
-              duration: Duration(milliseconds: 300),
-              child: Icon(Icons.add, size: 50, color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class StockExitScreen extends StatefulWidget {
+class StockExitScreen extends StatelessWidget {
   const StockExitScreen({super.key});
 
   @override
-  State<StockExitScreen> createState() => _StockExitScreenState();
+  Widget build(BuildContext context) {
+    return NavContainer(
+     
+      body: _StockExitForm(), initialIndex: 1,
+    );
+  }
 }
 
-class _StockExitScreenState extends State<StockExitScreen> {
+class _StockExitForm extends StatefulWidget {
+  @override
+  State<_StockExitForm> createState() => _StockExitFormState();
+}
+
+class _StockExitFormState extends State<_StockExitForm> {
   // Controllers
   final _quantityController = TextEditingController();
   final _motifController = TextEditingController();
@@ -268,11 +34,11 @@ class _StockExitScreenState extends State<StockExitScreen> {
 
   PhoneNumber _initialPhone = PhoneNumber(isoCode: 'TG');
 
-  // Dropdown values
+  // Dropdown
   String? _selectedProduct;
   bool _isProductDropdownOpen = false;
 
-  // Sample data pour les produits
+  // Sample data produits
   final List<Map<String, dynamic>> _products = [
     {'name': 'Produit A', 'quantity': 150},
     {'name': 'Produit B', 'quantity': 75},
@@ -293,31 +59,118 @@ class _StockExitScreenState extends State<StockExitScreen> {
   void _filterProducts(String query) {
     setState(() {
       _productSearchQuery = query;
-      if (query.isEmpty) {
-        _filteredProducts = _products;
-      } else {
-        _filteredProducts = _products
-            .where((product) => product['name']
-                .toString()
-                .toLowerCase()
-                .contains(query.toLowerCase()))
-            .toList();
-      }
+      _filteredProducts = query.isEmpty
+          ? _products
+          : _products
+              .where((p) =>
+                  p['name'].toString().toLowerCase().contains(query.toLowerCase()))
+              .toList();
     });
   }
 
   void _submitForm() {
-    // TODO: Envoyer le formulaire
     debugPrint("Produit: $_selectedProduct");
     debugPrint("Quantité: ${_quantityController.text}");
     debugPrint("Motif: ${_motifController.text}");
-    debugPrint("Nom du receveur: ${_receiverNameController.text}");
+    debugPrint("Nom receveur: ${_receiverNameController.text}");
     debugPrint("Téléphone: ${_phoneController.text}");
     debugPrint("Fonction: ${_functionController.text}");
     Navigator.pop(context);
   }
 
-  Widget _buildAppBar() {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => setState(() => _isProductDropdownOpen = false),
+      child: Column(
+        children: [
+          _buildAppBar(context),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(5.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionHeader("Produit"),
+                  SizedBox(height: 2.h),
+                  _buildProductDropdown(),
+                  SizedBox(height: 2.h),
+                  _buildBasicInputField(
+                    controller: _quantityController,
+                    hintText: "Définir la quantité",
+                  ),
+                  SizedBox(height: 2.h),
+                  _buildBasicInputField(
+                    controller: _motifController,
+                    hintText: "Motif",
+                    maxLines: 4,
+                  ),
+                  SizedBox(height: 3.h),
+                  _buildSectionHeader("Receveur"),
+                  SizedBox(height: 2.h),
+                  _buildBasicInputField(
+                    controller: _receiverNameController,
+                    hintText: "Renseigner le nom du receveur",
+                  ),
+                  SizedBox(height: 2.h),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    child: InternationalPhoneNumberInput(
+                      onInputChanged: (PhoneNumber num) {
+                        _initialPhone = num;
+                      },
+                      initialValue: _initialPhone,
+                      textFieldController: _phoneController,
+                      selectorConfig: const SelectorConfig(
+                        selectorType: PhoneInputSelectorType.DROPDOWN,
+                        showFlags: true,
+                      ),
+                      inputDecoration: InputDecoration(
+                        border: InputBorder.none,
+                        hintText: 'Numéro de téléphone',
+                        hintStyle: GoogleFonts.poppins(
+                          fontSize: 14.sp,
+                          color: Colors.grey[600],
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 4.w,
+                          vertical: 1.8.h,
+                        ),
+                      ),
+                      spaceBetweenSelectorAndTextField: 0,
+                      autoValidateMode: AutovalidateMode.onUserInteraction,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  _buildBasicInputField(
+                    controller: _functionController,
+                    hintText: "Renseigner la fonction du receveur",
+                  ),
+                  SizedBox(height: 8.h),
+                  Center(
+                    child: CustomElevatedButton(
+                      text: 'Enregistrer',
+                      backgroundColor: const Color(0xFF007AFF),
+                      textColor: Colors.white,
+                      onPressed: _submitForm,
+                      width: 80.w,
+                    ),
+                  ),
+                  SizedBox(height: 3.h),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ------- Widgets -------
+  Widget _buildAppBar(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
       decoration: const BoxDecoration(
@@ -403,7 +256,6 @@ class _StockExitScreenState extends State<StockExitScreen> {
   Widget _buildBasicInputField({
     required TextEditingController controller,
     required String hintText,
-    String? labelText,
     int maxLines = 1,
   }) {
     return Container(
@@ -419,14 +271,13 @@ class _StockExitScreenState extends State<StockExitScreen> {
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hintText,
-          labelText: labelText,
           hintStyle: GoogleFonts.poppins(
             fontSize: 14.sp,
             color: Colors.grey[600],
           ),
           contentPadding: EdgeInsets.symmetric(
-            horizontal: 4.w, 
-            vertical: maxLines > 1 ? 2.h : 1.8.h
+            horizontal: 4.w,
+            vertical: maxLines > 1 ? 2.h : 1.8.h,
           ),
         ),
       ),
@@ -437,11 +288,7 @@ class _StockExitScreenState extends State<StockExitScreen> {
     return Column(
       children: [
         GestureDetector(
-          onTap: () {
-            setState(() {
-              _isProductDropdownOpen = !_isProductDropdownOpen;
-            });
-          },
+          onTap: () => setState(() => _isProductDropdownOpen = !_isProductDropdownOpen),
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.8.h),
             decoration: BoxDecoration(
@@ -457,12 +304,16 @@ class _StockExitScreenState extends State<StockExitScreen> {
                     _selectedProduct ?? "Sélectionner le produit",
                     style: GoogleFonts.poppins(
                       fontSize: 14.sp,
-                      color: _selectedProduct != null ? Colors.black87 : Colors.grey[600],
+                      color: _selectedProduct != null
+                          ? Colors.black87
+                          : Colors.grey[600],
                     ),
                   ),
                 ),
                 Icon(
-                  _isProductDropdownOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  _isProductDropdownOpen
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
                   color: Colors.grey[600],
                 ),
               ],
@@ -498,12 +349,16 @@ class _StockExitScreenState extends State<StockExitScreen> {
                       decoration: InputDecoration(
                         border: InputBorder.none,
                         hintText: "Rechercher un produit...",
-                        prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                        prefixIcon:
+                            Icon(Icons.search, color: Colors.grey[600]),
                         hintStyle: GoogleFonts.poppins(
                           fontSize: 14.sp,
                           color: Colors.grey[600],
                         ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 4.w,
+                          vertical: 1.5.h,
+                        ),
                       ),
                     ),
                   ),
@@ -521,7 +376,8 @@ class _StockExitScreenState extends State<StockExitScreen> {
                           style: GoogleFonts.poppins(fontSize: 14.sp),
                         ),
                         trailing: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 2.w, vertical: 0.5.h),
                           decoration: BoxDecoration(
                             color: const Color(0xFF007AFF),
                             borderRadius: BorderRadius.circular(8),
@@ -549,120 +405,6 @@ class _StockExitScreenState extends State<StockExitScreen> {
             ),
           ),
       ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: GestureDetector(
-        onTap: () {
-          setState(() {
-            _isProductDropdownOpen = false;
-          });
-        },
-        child: Column(
-          children: [
-            _buildAppBar(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(5.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSectionHeader("Produit"),
-                    SizedBox(height: 2.h),
-                    _buildProductDropdown(),
-                    SizedBox(height: 2.h),
-                    _buildBasicInputField(
-                      controller: _quantityController,
-                      hintText: "Définir la quantité",
-                    ),
-                    SizedBox(height: 2.h),
-                    _buildBasicInputField(
-                      controller: _motifController,
-                      hintText: "Motif",
-                      maxLines: 4,
-                    ),
-                    SizedBox(height: 3.h),
-                    _buildSectionHeader("Receveur"),
-                    SizedBox(height: 2.h),
-                    _buildBasicInputField(
-                      controller: _receiverNameController,
-                      hintText: "Renseigner le le nom du receveur",
-                    ),
-                    SizedBox(height: 2.h),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: InternationalPhoneNumberInput(
-                        onInputChanged: (PhoneNumber num) {
-                          _initialPhone = num;
-                        },
-                        initialValue: _initialPhone,
-                        textFieldController: _phoneController,
-                        selectorConfig: const SelectorConfig(
-                          selectorType: PhoneInputSelectorType.DROPDOWN,
-                          showFlags: true,
-                        ),
-                        inputDecoration: InputDecoration(
-                          border: InputBorder.none,
-                          hintText: 'Numéro de téléphone',
-                          hintStyle: GoogleFonts.poppins(
-                            fontSize: 14.sp,
-                            color: Colors.grey[600],
-                          ),
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 4.w, vertical: 1.8.h),
-                        ),
-                        spaceBetweenSelectorAndTextField: 0,
-                        autoValidateMode:
-                            AutovalidateMode.onUserInteraction,
-                        
-                      ),
-                    ),
-                    SizedBox(height: 2.h), 
-                    _buildBasicInputField(
-                      controller: _functionController,
-                      hintText: "Renseigner la fonction du receveur",
-                    ),
-                    SizedBox(height: 8.h),
-                    Center(
-                      child: CustomElevatedButton(
-                        text: 'Enregistrer',
-                        backgroundColor: const Color(0xFF007AFF),
-                        textColor: Colors.white,
-                        onPressed: _submitForm,
-                        width: 80.w,
-                      ),
-                    ),
-                    SizedBox(height: 3.h),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: ImprovedBottomNavigation(
-        currentIndex: 1,
-        showFabIndicator: true,
-        onTap: (index) {
-          debugPrint("Navigation index: $index");
-        },
-      ),
-      floatingActionButton: ImprovedFAB(
-        isExpanded: false,
-        onToggle: () {
-          debugPrint("FAB toggled");
-        },
-        onSecondaryPressed: (String action) {
-          debugPrint("FAB action: $action");
-        },
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 

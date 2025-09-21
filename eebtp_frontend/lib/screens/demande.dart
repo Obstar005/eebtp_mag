@@ -1,3 +1,4 @@
+import 'package:eebtp_frontend/widgets/nav.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -761,7 +762,8 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NavContainer(
+      initialIndex: 2,
       body: GestureDetector(
         onTap: () {
           setState(() {
@@ -814,23 +816,7 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: ImprovedBottomNavigation(
-        currentIndex: 2, // Index pour "Demande"
-        showFabIndicator: true,
-        onTap: (index) {
-          debugPrint("Navigation index: $index");
-        },
-      ),
-      floatingActionButton: ImprovedFAB(
-        isExpanded: false,
-        onToggle: () {
-          debugPrint("FAB toggled");
-        },
-        onSecondaryPressed: (String action) {
-          debugPrint("FAB action: $action");
-        },
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+     
     );
   }
 

@@ -111,11 +111,11 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                 onPressed: () {
                   if (_validatePasswords()) {
                     _saveNewPassword();
-                    showDialog(
+           /*          showDialog(
                       context: context,
                       barrierDismissible: false,
                       builder: (context) => PasswordCreatedModal(),
-                    );
+                    ); */
                   }
                 },
                 width: 80.w, // Largeur augmentée (80% de l'écran)
@@ -153,6 +153,6 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
   }
 
   void _saveNewPassword() {
-    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    Navigator.pushNamedAndRemoveUntil(context, '/profile', (route) => false);
   }
 }

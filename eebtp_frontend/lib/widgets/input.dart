@@ -30,7 +30,7 @@ class CustomInputField extends StatelessWidget {
           obscureText: obscureText,
           decoration: InputDecoration(
             filled: true,
-            fillColor: const Color(0xFFF5F5F5),
+            fillColor: const Color.fromARGB(255, 255, 255, 255),
             hintText: hintText,
             hintStyle: GoogleFonts.poppins(
               fontSize: 14.sp,
@@ -39,19 +39,19 @@ class CustomInputField extends StatelessWidget {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(50),
               borderSide: BorderSide(
-                color: hasError ? Colors.red : const Color.fromARGB(0, 0, 0, 0),
+                color: hasError ? Colors.red : const Color.fromRGBO(226, 232, 240, 1),
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(50),
               borderSide: BorderSide(
-                color: hasError ? Colors.red : Colors.transparent,
+                color: hasError ? Colors.red : Color.fromRGBO(226, 232, 240, 1),
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(50),
               borderSide: BorderSide(
-                color: hasError ? Colors.red :  Colors.transparent,
+                color: hasError ? Colors.red :  Color.fromRGBO(226, 232, 240, 1),
                 width: 1.5,
               ),
             ),

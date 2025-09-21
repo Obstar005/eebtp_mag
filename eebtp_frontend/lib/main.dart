@@ -7,10 +7,12 @@ import 'package:eebtp_frontend/screens/forgotPassword_screen.dart';
 import 'package:eebtp_frontend/screens/getStarted_screen.dart';
 import 'package:eebtp_frontend/screens/home_page.dart';
 import 'package:eebtp_frontend/screens/logintwosteps_screen.dart';
+import 'package:eebtp_frontend/screens/modal_success.dart';
 import 'package:eebtp_frontend/screens/new_password_screen.dart';
 import 'package:eebtp_frontend/screens/notificationScreen.dart';
 import 'package:eebtp_frontend/screens/otp_confirmation_screen.dart';
 import 'package:eebtp_frontend/screens/outputDetail.dart';
+import 'package:eebtp_frontend/screens/passwordCreatedConfirmation.dart';
 import 'package:eebtp_frontend/screens/productDetail.dart';
 import 'package:eebtp_frontend/screens/profileScreen.dart';
 import 'package:eebtp_frontend/screens/request_choice.dart';
@@ -80,6 +82,8 @@ class MyApp extends StatelessWidget {
             '/forgot_password': (context) => ForgotPasswordScreen(),
             '/new_password': (context) => NewPasswordScreen(),
             '/otp_confirmation': (context) => const OTPConfirmationScreen(),
+            '/modal_success': (context) => const PasswordVerifiedModal(),
+            '/mdp_page': (context) => const PasswordCreatedPage(),
 
             // Routes principales de navigation
             '/home': (context) => HomePage(),

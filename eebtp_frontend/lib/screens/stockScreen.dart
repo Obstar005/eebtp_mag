@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
 import 'package:eebtp_frontend/models/product.dart';
+import 'package:eebtp_frontend/widgets/nav.dart'; // Importez votre NavContainer
 
 class StockPage extends StatefulWidget {
   const StockPage({super.key});
@@ -15,13 +16,9 @@ class StockPage extends StatefulWidget {
   _StockPageState createState() => _StockPageState();
 }
 
-class _StockPageState extends State<StockPage> with TickerProviderStateMixin {
-  int _currentIndex = 1; // Onglet stock sélectionné
+class _StockPageState extends State<StockPage> {
   int _stockTabIndex = 0; // 0: Stock, 1: Entrée, 2: Sortie
   int _entreeSubTabIndex = 0; // 0: Livraison, 1: Retour
-  bool _isFabExpanded = false;
-  late AnimationController _animationController;
-  late Animation<double> _animation;
 
   // Données factices pour les produits
   final List<Product> products = [
@@ -87,77 +84,9 @@ class _StockPageState extends State<StockPage> with TickerProviderStateMixin {
   ];
 
   @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _animation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    );
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  void _toggleFab() {
-    setState(() {
-      _isFabExpanded = !_isFabExpanded;
-      if (_isFabExpanded) {
-        _animationController.forward();
-      } else {
-        _animationController.reverse();
-      }
-    });
-  }
-
-  void _handleSecondaryFabPressed(String type) {
-    switch (type) {
-      case 'entry':
-        _toggleFab();
-        Navigator.pushNamed(context, '/entry');
-        break;
-      case 'exit':
-        _toggleFab();
-        Navigator.pushNamed(context, '/exit');
-        break;
-      case 'refresh':
-        _toggleFab();
-        Navigator.pushNamed(context, '/refresh');
-        break;
-    }
-  }
-
-  void _handleNavigation(int index) {
-    setState(() => _currentIndex = index);
-    _navigateToPage(index);
-  }
-
-  void _navigateToPage(int index) {
-    switch (index) {
-      case 0:
-        Navigator.pushReplacementNamed(context, '/home');
-        break;
-      case 1:
-        break; // Current page
-      case 2:
-        Navigator.pushReplacementNamed(context, '/demande');
-        break;
-      case 3:
-        Navigator.pushReplacementNamed(context, '/profile');
-        break;
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBody: true,
+    return NavContainer(
+      initialIndex: 1, // Index pour "Stock"
       body: Column(
         children: [
           // Header avec dégradé bleu
@@ -287,19 +216,6 @@ class _StockPageState extends State<StockPage> with TickerProviderStateMixin {
             ),
           ),
         ],
-      ),
-      
-      floatingActionButton: ImprovedFAB(
-        isExpanded: _isFabExpanded,
-        onToggle: _toggleFab,
-        onSecondaryPressed: _handleSecondaryFabPressed,
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      
-      bottomNavigationBar: ImprovedBottomNavigation(
-        currentIndex: _currentIndex,
-        onTap: _handleNavigation,
-        showFabIndicator: false,
       ),
     );
   }
@@ -748,251 +664,5 @@ class _StockPageState extends State<StockPage> with TickerProviderStateMixin {
 
   void _navigateToExitDetail(ExitItem exit) {
     Navigator.pushNamed(context, '/exit-detail', arguments: exit);
-  }
-}
-
-
-// Composants réutilisés du code original
-class ImprovedBottomNavigation extends StatelessWidget {
-  final int currentIndex;
-  final Function(int) onTap;
-  final bool showFabIndicator;
-
-  const ImprovedBottomNavigation({
-    Key? key,
-    required this.currentIndex,
-    required this.onTap,
-    this.showFabIndicator = false,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 70,
-      child: Stack(
-        children: [
-          CustomPaint(
-            size: Size(MediaQuery.of(context).size.width, 70),
-            painter: ImprovedBottomNavPainter(showFabIndicator: showFabIndicator),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(Icons.home_outlined, Icons.home, "Accueil", 0),
-              _buildNavItem(Icons.inventory_2_outlined, Icons.inventory_2, "Stock", 1),
-              SizedBox(width: 60),
-              _buildNavItem(Icons.assignment_outlined, Icons.assignment, "Demande", 2),
-              _buildNavItem(Icons.person_outline, Icons.person, "Profil", 3),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData outlinedIcon, IconData filledIcon, String label, int index) {
-    bool isSelected = currentIndex == index;
-    
-    return GestureDetector(
-      onTap: () => onTap(index),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            isSelected ? filledIcon : outlinedIcon,
-            size: 22,
-            color: Colors.white,
-          ),
-          SizedBox(height: 2),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 4),
-            child: Column(
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white,
-                    fontFamily: "Montserrat",
-                  ),
-                ),
-                if (isSelected)
-                  Container(
-                    margin: EdgeInsets.only(top: 2),
-                    height: 2,
-                    width: label.length * 8.0,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(1),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class ImprovedBottomNavPainter extends CustomPainter {
-  final bool showFabIndicator;
-
-  ImprovedBottomNavPainter({this.showFabIndicator = false});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF007AFF)
-      ..style = PaintingStyle.fill
-      ..isAntiAlias = true;
-
-    final double fabRadius = size.width * 0.08;
-    final double notchRadius = fabRadius + 8;
-    final double notchStartX = size.width / 2 - notchRadius;
-    final double notchEndX = size.width / 2 + notchRadius;
-    final double smoothFactor = notchRadius * 0.4;
-
-    final path = Path();
-
-    path.moveTo(0, 20);
-    path.quadraticBezierTo(0, 0, 20, 0);
-    path.lineTo(notchStartX - smoothFactor, 0);
-    path.cubicTo(
-      notchStartX, 0,
-      notchStartX, notchRadius * 0.3,
-      size.width / 2 - fabRadius, notchRadius * 0.6,
-    );
-    path.arcToPoint(
-      Offset(size.width / 2 + fabRadius, notchRadius * 0.6),
-      radius: Radius.circular(notchRadius),
-      clockwise: false,
-    );
-    path.cubicTo(
-      notchEndX, notchRadius * 0.3,
-      notchEndX, 0,
-      notchEndX + smoothFactor, 0,
-    );
-    path.lineTo(size.width - 20, 0);
-    path.quadraticBezierTo(size.width, 0, size.width, 20);
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-
-    canvas.drawShadow(path, Colors.black26, 5, true);
-    canvas.drawPath(path, paint);
-
-    if (showFabIndicator) {
-      final indicatorPaint = Paint()
-        ..color = Colors.white
-        ..style = PaintingStyle.fill;
-
-      final indicatorPath = Path();
-      final indicatorY = notchRadius * 0.8;
-      final indicatorWidth = 30.0;
-      final indicatorHeight = 3.0;
-
-      indicatorPath.addRRect(
-        RRect.fromLTRBR(
-          size.width / 2 - indicatorWidth / 2,
-          indicatorY,
-          size.width / 2 + indicatorWidth / 2,
-          indicatorY + indicatorHeight,
-          Radius.circular(1.5),
-        ),
-      );
-
-      canvas.drawPath(indicatorPath, indicatorPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
-class ImprovedFAB extends StatelessWidget {
-  final bool isExpanded;
-  final VoidCallback onToggle;
-  final Function(String) onSecondaryPressed;
-
-  const ImprovedFAB({
-    Key? key,
-    required this.isExpanded,
-    required this.onToggle,
-    required this.onSecondaryPressed,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 300,
-      height: 170,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          AnimatedPositioned(
-            duration: Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-            bottom: isExpanded ? 100 : 0,
-            left: isExpanded ? 60 : 0,
-            child: Transform.scale(
-              scale: isExpanded ? 1 : 0,
-              child: FloatingActionButton(
-                shape: const CircleBorder(),
-                mini: true,
-                heroTag: "entry",
-                backgroundColor: Color(0xFF007AFF),
-                onPressed: () => onSecondaryPressed('entry'),
-                child: Icon(Icons.arrow_downward, color: Colors.white),
-              ),
-            ),
-          ),
-          AnimatedPositioned(
-            duration: Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-            bottom: isExpanded ? 120 : 0,
-            child: Transform.scale(
-              scale: isExpanded ? 1 : 0,
-              child: FloatingActionButton(
-                shape: const CircleBorder(),
-                mini: true,
-                heroTag: "refresh",
-                backgroundColor: Color(0xFF007AFF),
-                onPressed: () => onSecondaryPressed('refresh'),
-                child: Icon(Icons.refresh, color: Colors.white),
-              ),
-            ),
-          ),
-          AnimatedPositioned(
-            duration: Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-            bottom: isExpanded ? 100 : 0,
-            right: isExpanded ? 60 : 0,
-            child: Transform.scale(
-              scale: isExpanded ? 1 : 0,
-              child: FloatingActionButton(
-                shape: const CircleBorder(),
-                mini: true,
-                heroTag: "exit",
-                backgroundColor: Color(0xFF007AFF),
-                onPressed: () => onSecondaryPressed('exit'),
-                child: Icon(Icons.arrow_upward, color: Colors.white),
-              ),
-            ),
-          ),
-          FloatingActionButton(
-            heroTag: "main",
-            backgroundColor: Color(0xFF007AFF),
-            onPressed: onToggle,
-            shape: const CircleBorder(),
-            child: AnimatedRotation(
-              turns: isExpanded ? 0.125 : 0,
-              duration: Duration(milliseconds: 300),
-              child: Icon(Icons.add, size: 50, color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
