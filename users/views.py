@@ -125,7 +125,7 @@ def delete_profil(request, pk):
     responses={200: CustomUserSerializer(many=True)}
 )
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def list_users(request):
     users = CustomUser.objects.filter(is_active=True).order_by('-date_creation')
     serializer = CustomUserSerializer(users, many=True)
@@ -139,7 +139,7 @@ def list_users(request):
     responses={201: CustomUserSerializer, 400: 'Bad Request'}
 )
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def create_user(request):
     serializer = CustomUserSerializer(data=request.data)
     if serializer.is_valid():
