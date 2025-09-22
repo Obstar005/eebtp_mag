@@ -1,10 +1,24 @@
+import 'package:eebtp_frontend/services/auth.dart';
 import 'package:eebtp_frontend/widgets/button.dart';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/svg.dart';
-class PasswordCreatedPage extends StatelessWidget {
-  const PasswordCreatedPage({super.key});
+
+class PasswordCreatedPage extends StatefulWidget {
+  final String phone; // ✅ récupéré depuis la page précédente
+
+  const PasswordCreatedPage({super.key, required this.phone});
+
+  @override
+  State<PasswordCreatedPage> createState() => _PasswordCreatedPageState();
+}
+
+class _PasswordCreatedPageState extends State<PasswordCreatedPage> {
+  final _passController = TextEditingController();
+  final UserService _userService = UserService();
+  bool _obscure = true;
+  String? _errorMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +40,7 @@ class PasswordCreatedPage extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     padding: const EdgeInsets.all(8),
-                    child: Icon(
+                    child: const Icon(
                       Icons.arrow_back_ios_new,
                       color: Colors.white,
                       size: 15,
@@ -37,12 +51,14 @@ class PasswordCreatedPage extends StatelessWidget {
                   },
                 ),
               ),
-                 Center(
-                   child: SvgPicture.asset(
-                             'assets/illustration.svg',
-                             height: 23.h,
-                           ),
-                 ),
+
+              // Illustration
+              Center(
+                child: SvgPicture.asset(
+                  'assets/illustration.svg',
+                  height: 23.h,
+                ),
+              ),
 
               SizedBox(height: 2.h),
 
@@ -58,7 +74,6 @@ class PasswordCreatedPage extends StatelessWidget {
 
               SizedBox(height: 1.h),
 
-              // Sous-titre
               Text(
                 "Connectez vous à votre compte",
                 style: GoogleFonts.poppins(
@@ -68,7 +83,6 @@ class PasswordCreatedPage extends StatelessWidget {
               ),
 
               SizedBox(height: 2.h),
-
               // Bloc règles de mot de passe
               Container(
                 width: double.infinity,
@@ -89,22 +103,18 @@ class PasswordCreatedPage extends StatelessWidget {
                   ),
                 ),
               ),
-
               SizedBox(height: 3.h),
-
               // Champ mot de passe
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 3.w),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(
-                    color: const Color(0xFFE2E8F0),
-                    width: 1,
-                  ),
+                  border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
                 ),
                 child: TextField(
-                  obscureText: true,
+                  controller: _passController,
+                  obscureText: _obscure,
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: "Mot de passe",
@@ -112,82 +122,97 @@ class PasswordCreatedPage extends StatelessWidget {
                       fontSize: 13.sp,
                       color: Colors.grey,
                     ),
-                    suffixIcon: const Icon(Icons.visibility_off,
-                        color: Colors.grey),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscure ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() => _obscure = !_obscure);
+                      },
+                    ),
                   ),
                 ),
-              ),
+                // Options
+          ),
 
-              SizedBox(height: 2.h),
-
-              // Options
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.check_circle,
-                          color: const Color(0xFF007AFF), size: 16.sp),
-                      SizedBox(width: 2.w),
-                      Text(
-                        "Se souvenir de moi",
+              if (_errorMessage != null) ...[
+                SizedBox(height: 1.h),
+                Text(
+                  _errorMessage!,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.sp,
+                    color: Colors.red,
+                  ),
+                ),
+              ],
+      Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle,
+                          color: const Color(0xFF007AFF),
+                          size: 16.sp,
+                        ),
+                        SizedBox(width: 2.w),
+                        Text(
+                          "Se souvenir de moi",
+                          style: GoogleFonts.poppins(
+                            fontSize: 12.sp,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/forgot_password');
+                      },
+                      child: Text(
+                        "Mots de pass oublié?",
                         style: GoogleFonts.poppins(
                           fontSize: 12.sp,
-                          color: Colors.black54,
+                          color: const Color(0xFF007AFF),
                         ),
                       ),
-                    ],
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, '/forgot_password');
-                    },
-                    child: Text(
-                      "Mots de pass oublié?",
-                      style: GoogleFonts.poppins(
-                        fontSize: 12.sp,
-                        color: const Color(0xFF007AFF),
-                      ),
                     ),
-                  ),
-                ],
-              ),
-
+                  ],
+                ),
+                SizedBox(height: 10.h), 
+                // Progression
+            
               SizedBox(height: 10.h),
-
-              // Progression
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 8.w,
-                    height: 0.8.h,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF007AFF),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  SizedBox(width: 2.w),
-                  Container(
-                    width: 3.w,
-                    height: 0.8.h,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ],
-              ),
-
-              SizedBox(height: 5.h),
 
               // Bouton
               CustomElevatedButton(
                 text: "Se connecter",
                 backgroundColor: const Color(0xFF007AFF),
                 textColor: Colors.white,
-                onPressed: () {
-                  Navigator.pushNamed(context, '/profile');
+                onPressed: () async {
+                  final password = _passController.text.trim();
+
+                  if (password.isEmpty) {
+                    setState(() {
+                      _errorMessage = "Veuillez entrer votre mot de passe";
+                    });
+                    return;
+                  }
+
+                  final success = await _userService.loginByPhone(
+                    widget.phone, // ✅ récupéré depuis la page précédente
+                    password,
+                  );
+
+                  if (success) {
+                    Navigator.pushNamed(context, '/profile');
+                  } else {
+                    setState(() {
+                      _errorMessage =
+                          "Échec de connexion. Vérifiez vos identifiants.";
+                    });
+                  }
                 },
                 width: 80.w,
               ),

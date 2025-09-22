@@ -6,11 +6,11 @@ class UserService {
   final String baseUrl = 'http://185.197.195.209:8000';
 
   // 🔐 Authentification
-  Future<bool> loginByPhone(String phone) async {
+  Future<bool> loginByPhone(String phone, String password) async {
     final response = await http.post(
       Uri.parse('$baseUrl/Users/authentication/login-by-phone/'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'telephone': phone}),
+      body: jsonEncode({'telephone': _formatPhone(phone),'password': password}),
     );
     return response.statusCode == 200;
   }
@@ -24,14 +24,42 @@ class UserService {
     return response.statusCode == 200;
   }
 
-  Future<bool> setPassword(String phone, String password) async {
+/*   Future<bool> setPassword(String phone, String password) async {
     final response = await http.post(
       Uri.parse('$baseUrl/Users/authentication/set-password/'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'telephone': phone, 'password': password}),
+      body: jsonEncode({'telephone': _formatPhone(phone), 'password': password}),
     );
     return response.statusCode == 200;
+  } */
+Future<bool> setPassword({
+  required String phone,
+  required String oldPassword,
+  required String newPassword,
+}) async {
+  final url = Uri.parse('$baseUrl/Users/authentication/set-password/');
+
+  final Map<String, dynamic> payload = {
+    "telephone": _formatPhone(phone),
+    "old_password": oldPassword,
+    "new_password": newPassword,
+  };
+
+  final response = await http.post(
+    url,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode(payload),
+  );
+
+  if (response.statusCode == 200) {
+    return true;
+  } else {
+    print("Erreur setPassword: ${response.statusCode} - ${response.body}");
+    return false;
   }
+}
 
   Future<Utilisateur> getUserInfo(String token) async {
     final response = await http.get(
@@ -48,11 +76,17 @@ class UserService {
     }
   }
 
+String _formatPhone(String phone) {
+  if (phone.startsWith('+')) {
+    return phone.replaceFirst('+', '00');
+  }
+  return phone;
+}
   Future<bool> checkUserExists(String phone) async {
     final response = await http.post(
       Uri.parse('$baseUrl/Users/authentication/check-user-exists/'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'telephone': phone}),
+      body: jsonEncode({'telephone':_formatPhone(phone)}),
     );
     return response.statusCode == 200;
   }

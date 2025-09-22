@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:eebtp_frontend/screens/passwordCreatedConfirmation.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:sizer/sizer.dart';
@@ -6,7 +7,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:eebtp_frontend/widgets/button.dart';
 
 class PasswordVerifiedModal extends StatelessWidget {
-  const PasswordVerifiedModal({super.key});
+  final String phone; // ✅ récupéré depuis LoginTwoStepScreen
+
+  const PasswordVerifiedModal({super.key, required this.phone});
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +17,7 @@ class PasswordVerifiedModal extends StatelessWidget {
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          //  Fond flouté et sombre
+          // Fond flouté
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
@@ -24,7 +27,7 @@ class PasswordVerifiedModal extends StatelessWidget {
             ),
           ),
 
-          //  Modal qui slide du bas
+          // Modal qui slide du bas
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
@@ -39,7 +42,7 @@ class PasswordVerifiedModal extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  // ✅ petit handle gris
+                  // Petit handle
                   Container(
                     width: 10.w,
                     height: 0.7.h,
@@ -60,7 +63,6 @@ class PasswordVerifiedModal extends StatelessWidget {
 
                   SizedBox(height: 2.h),
 
-                  // ✅ Titre
                   Text(
                     "Mot de passe vérifié",
                     style: GoogleFonts.poppins(
@@ -72,7 +74,6 @@ class PasswordVerifiedModal extends StatelessWidget {
 
                   SizedBox(height: 1.h),
 
-                  // ✅ Description
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 8.w),
                     child: Text(
@@ -98,7 +99,14 @@ class PasswordVerifiedModal extends StatelessWidget {
                       width: double.infinity,
                       height: 7.h,
                       onPressed: () {
-                        Navigator.pushReplacementNamed(context, "/mdp_page");
+                        // ✅ envoie le phone à PasswordCreatedPage
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                PasswordCreatedPage(phone: phone),
+                          ),
+                        );
                       },
                     ),
                   ),

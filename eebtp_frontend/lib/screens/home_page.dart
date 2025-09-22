@@ -353,7 +353,7 @@ class _HomePageState extends State<HomePage> {
                             height: 16.h, // réduit
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [Color(0xFF957BFD),  Color(0xFF3076FF)],
+                                colors: [Color(0xFF3076FF),Color(0xFF957BFD)],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),

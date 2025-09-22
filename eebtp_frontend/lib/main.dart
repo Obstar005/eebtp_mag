@@ -46,6 +46,7 @@ class MyApp extends StatelessWidget {
           initialRoute: '/',
           onGenerateRoute: (settings) {
             switch (settings.name) {
+              // ✅ Pages avec modèles
               case '/product-detail':
                 final product = settings.arguments as Product;
                 return MaterialPageRoute(
@@ -70,22 +71,33 @@ class MyApp extends StatelessWidget {
                   builder: (_) => ExitDetailPage(exit: exit),
                 );
 
+              // ✅ Pages avec paramètre phone
+              case '/modal_success':
+                final phone = settings.arguments as String;
+                return MaterialPageRoute(
+                  builder: (_) => PasswordVerifiedModal(phone: phone),
+                );
+
+              case '/mdp_page':
+                final phone = settings.arguments as String;
+                return MaterialPageRoute(
+                  builder: (_) => PasswordCreatedPage(phone: phone),
+                );
+
               default:
-                return null; 
+                return null;
             }
           },
           routes: {
-            // Routes d'authentification
+            // Routes simples sans paramètre
             '/': (context) => const SplashScreen(),
             '/getStarted': (context) => const GetStartedScreen(),
             '/login': (context) => LoginTwoStepScreen(),
             '/forgot_password': (context) => ForgotPasswordScreen(),
             '/new_password': (context) => NewPasswordScreen(),
             '/otp_confirmation': (context) => const OTPConfirmationScreen(),
-            '/modal_success': (context) => const PasswordVerifiedModal(),
-            '/mdp_page': (context) => const PasswordCreatedPage(),
 
-            // Routes principales de navigation
+            // Navigation principale
             '/home': (context) => HomePage(),
             '/stock': (context) => StockPage(),
             '/demande_form': (context) => const SupplyRequestScreen(),
@@ -93,12 +105,12 @@ class MyApp extends StatelessWidget {
             '/suivi_demande': (context) => RequestsTrackingScreen(),
             '/profile': (context) => ProfilePage(),
 
-            // Routes de gestion de stock
+            // Gestion stock
             '/entry': (context) => const StockEntryScreen(),
             '/exit': (context) => const StockExitScreen(),
             '/refresh': (context) => const StockReturnScreen(),
 
-            // Routes de profil
+            // Profil & notifications
             '/edit_profile': (context) => const EditProfilePage(),
             '/notifications': (context) => const NotificationScreen(),
           },

@@ -7,6 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:sizer/sizer.dart';
+import 'package:eebtp_frontend/services/auth.dart';
 
 class LoginTwoStepScreen extends StatefulWidget {
   const LoginTwoStepScreen({super.key});
@@ -21,10 +22,13 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
   bool _remember = false;
   String _phone = '';
   final _phoneController = TextEditingController();
-  final _passController = TextEditingController();
+ final oldPassController = TextEditingController();
+  final newPassController = TextEditingController();
+  final confirmPassController = TextEditingController();
   bool _obscurePass = true;
   String? _errorMessage;
   String? _phoneError;
+final UserService _userService = UserService();
 
   void _next() {
     if (_pc.page == 0) {
@@ -40,11 +44,7 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
       }
     }
     
-     else {
-      if (_validatePassword(_passController.text)) {
-      
-      }
-    }
+
   }
 
   @override
@@ -250,18 +250,34 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                 text: 'Suivant',
                 backgroundColor: const Color(0xFF007AFF),
                 textColor: Colors.white,
-                onPressed: () {
+                onPressed: () async {
                   setState(() {
+                    
       if (_phone.isEmpty) {
         _phoneError = "Veuillez entrer un numéro de téléphone";
       } else if (_phone.length < 8) {
         _phoneError = "Numéro trop court";
       } else {
         _phoneError = null;
-        _next(); // Passe à l’étape suivante
+       
       }
     });
-  },
+    try {
+    final exists = await  _userService.checkUserExists(_phone);
+    print(_phone);
+    if (exists) {
+      _next(); // passe à l’étape suivante
+    } else {
+      setState(() {
+        _phoneError = "Ce numéro n'est pas associé à un utilisateur";
+      });
+    }
+  } catch (e) {
+    setState(() {
+      _phoneError = "Erreur de connexion au serveur";
+    });
+  }
+},
                 width: 70.w,
               ),
             ],
@@ -272,6 +288,8 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
   }
 
 Widget _buildPasswordStep(BuildContext ctx) {
+ 
+
   return SingleChildScrollView(
     padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
     child: Column(
@@ -353,7 +371,7 @@ Widget _buildPasswordStep(BuildContext ctx) {
 
         // Champ ancien mot de passe
         CustomInputField(
-          controller: _passController,
+          controller: oldPassController,
           hintText: "Ancien mot de passe",
           obscureText: _obscurePass,
           onToggleVisibility: () {
@@ -364,7 +382,7 @@ Widget _buildPasswordStep(BuildContext ctx) {
 
         // Champ nouveau mot de passe
         CustomInputField(
-          controller: TextEditingController(),
+          controller: newPassController,
           hintText: "Nouveau mot de passe",
           obscureText: _obscurePass,
           onToggleVisibility: () {
@@ -375,7 +393,7 @@ Widget _buildPasswordStep(BuildContext ctx) {
 
         // Champ confirmation
         CustomInputField(
-          controller: TextEditingController(),
+          controller: confirmPassController,
           hintText: "Confirmer le mot de passe",
           obscureText: _obscurePass,
           onToggleVisibility: () {
@@ -394,35 +412,68 @@ Widget _buildPasswordStep(BuildContext ctx) {
               text: 'Suivant',
               backgroundColor: const Color(0xFF007AFF),
               textColor: Colors.white,
-              onPressed: () {
-                if (_validatePassword(_passController.text)) {
-                  showPasswordVerifiedModal(context);
+              onPressed: () async{
+                final oldPass = oldPassController.text.trim();
+                final newPass = newPassController.text.trim();
+                final confirmPass = confirmPassController.text.trim();
+           if (!_validatePassword(newPass)) return;
+
+                if (newPass != confirmPass) {
+                  setState(() {
+                    _errorMessage = "Les mots de passe ne correspondent pas";
+                  });
+                  return;
+                }
+
+                final success = await _userService.setPassword(
+                  phone: _phone,
+                  oldPassword: oldPass,
+                  newPassword: newPass,
+                );
+
+                if (success) {
+                  showPasswordVerifiedModal(context,_phone);
+                } else {
+                  setState(() {
+                    _errorMessage = "Échec de la mise à jour du mot de passe";
+                  });
                 }
               },
               width: 70.w,
             ),
+
+            if (_errorMessage != null) ...[
+              SizedBox(height: 1.h),
+              Text(
+                _errorMessage!,
+                style: GoogleFonts.poppins(
+                  fontSize: 12.sp,
+                  color: Colors.red,
+                ),
+              ),
+            ],
           ],
         ),
       ],
     ),
-    
   );
   
 }
-void showPasswordVerifiedModal(BuildContext context) {
+
+void showPasswordVerifiedModal(BuildContext context, String phone) {
   showGeneralDialog(
     context: context,
-    barrierDismissible: true, // ferme si on clique dehors
+    barrierDismissible: true,
     barrierLabel: "Mot de passe vérifié",
-    barrierColor: Colors.black.withOpacity(0.2), // assombrissement léger
+    barrierColor: Colors.black.withOpacity(0.2),
     transitionDuration: const Duration(milliseconds: 300),
     pageBuilder: (context, anim1, anim2) {
-      return const PasswordVerifiedModal();
+      return PasswordVerifiedModal(phone: phone); // ✅ ici
     },
     transitionBuilder: (context, anim1, anim2, child) {
       return SlideTransition(
         position: Tween<Offset>(
-          begin: const Offset(0, 1), // sort du bas
+          begin: const Offset(0, 1),
           end: Offset.zero,
         ).animate(CurvedAnimation(
           parent: anim1,
