@@ -22,7 +22,7 @@ export function PhoneInputPage({
 
   const {
     validatePhoneNumber,
-    formatPhoneNumber,
+    formatPhoneNumberForAPI,
     getTogoCountry,
     isLoading: countriesLoading,
   } = useCountries();
@@ -59,8 +59,9 @@ export function PhoneInputPage({
       return;
     }
 
-    const fullPhoneNumber = formatPhoneNumber(phone, selectedCountry.code);
-    onSubmit(fullPhoneNumber);
+    // Utiliser le format API (00XXXXXXXX au lieu de +XXXXXXXX)
+    const apiPhoneNumber = formatPhoneNumberForAPI(phone, selectedCountry.code);
+    onSubmit(apiPhoneNumber);
   };
 
   return (
@@ -90,8 +91,7 @@ export function PhoneInputPage({
               Bienvenue sur EEBTP_MAG
             </h1>
             <p className="text-gray-600">
-              Bien vouloir rentrez votre adresse numéro de téléphone pour
-              commencer
+              Saisissez votre numéro de téléphone pour vous connecter
             </p>
           </div>
 

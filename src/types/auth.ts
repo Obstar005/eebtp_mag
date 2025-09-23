@@ -126,4 +126,5 @@ export interface AuthState {
   tempToken?: string;
   isNewUser?: boolean;
   phone?: string;
+  isPhoneVerified?: boolean; // Indique si le numéro a été vérifié avec l'API
 }

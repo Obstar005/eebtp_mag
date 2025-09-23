@@ -13,7 +13,6 @@ import type {
   ApiLoginByPhoneResponse,
   ApiSetPasswordRequest,
   ApiSetPasswordResponse,
-  ApiUserInfoResponse,
   ApiCustomUser,
   ApiProfil,
   ApiUpdateProfilRequest,
@@ -46,20 +45,54 @@ export class AuthApiService {
     phone: string
   ): Promise<{ exists: boolean; userId?: number; message: string }> {
     try {
+      // Appel sans authentification car cet endpoint est public
       const response = await apiClient.post<ApiCheckUserExistsResponse>(
         "/Users/authentication/check-user-exists/",
         {
           telephone: phone,
+        },
+        {
+          headers: {
+            "X-No-Auth": "true", // Flag pour désactiver l'authentification
+          },
         }
       );
       return {
-        exists: response.data.exists,
+        exists: response.data.Verifié, // Adapter au format réel de l'API
         userId: response.data.user_id,
-        message: response.data.message,
+        message:
+          response.data.message ||
+          (response.data.Verifié
+            ? "Utilisateur trouvé"
+            : "Utilisateur non trouvé"),
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Erreur checkUserExists:", error);
-      throw error;
+
+      // Gérer le cas spécifique 404 = utilisateur n'existe pas
+      if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as {
+          response?: { status: number; data: Record<string, unknown> };
+        };
+        if (axiosError.response?.status === 404) {
+          const errorData = axiosError.response.data;
+          if (
+            errorData?.["L'utilisateur n'existe pas dans le système"] === false
+          ) {
+            return {
+              exists: false,
+              userId: undefined,
+              message:
+                "Ce numéro de téléphone n'est pas enregistré dans le système",
+            };
+          }
+        }
+      }
+
+      // Pour les autres erreurs, relancer avec un message générique
+      throw new Error(
+        "Impossible de vérifier le numéro de téléphone. Veuillez réessayer."
+      );
     }
   }
 
@@ -68,17 +101,24 @@ export class AuthApiService {
     credentials: DirectLoginCredentials
   ): Promise<AuthResponse> {
     try {
+      // Utiliser Basic Auth admin pour cette requête, credentials utilisateur dans le body
       const response = await apiClient.post<ApiLoginByPhoneResponse>(
         "/Users/authentication/login-by-phone/",
         {
           telephone: credentials.phone,
           password: credentials.password,
+        },
+        {
+          headers: {
+            "X-No-Auth": "true", // Désactiver auto-auth pour utiliser Basic Auth admin
+          },
         }
       );
 
-      if (response.data.success) {
+      // L'API retourne toujours un message, access_token si succès
+      if (response.data.access_token) {
         // Stocker le token pour les futures requêtes
-        localStorage.setItem("auth_token", response.data.token);
+        localStorage.setItem("auth_token", response.data.access_token);
         if (response.data.refresh_token) {
           localStorage.setItem("refresh_token", response.data.refresh_token);
         }
@@ -86,7 +126,7 @@ export class AuthApiService {
         // Utiliser le transformateur pour inclure is_firstlogin
         return apiLoginResponseToAuthResponse(response.data);
       } else {
-        throw new Error(response.data.message);
+        throw new Error(response.data.message || "Échec de la connexion");
       }
     } catch (error) {
       console.error("Erreur loginByPhone:", error);
@@ -133,10 +173,10 @@ export class AuthApiService {
   // Récupérer les informations de l'utilisateur connecté (nécessite JWT)
   async getUserInfo(): Promise<User> {
     try {
-      const response = await apiClient.get<ApiUserInfoResponse>(
+      const response = await apiClient.get<ApiCustomUser>(
         "/Users/authentication/user-info/"
       );
-      return apiUserToUser(response.data.user);
+      return apiUserToUser(response.data);
     } catch (error) {
       console.error(
         "Erreur lors de la récupération des infos utilisateur:",

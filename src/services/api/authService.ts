@@ -16,10 +16,9 @@ import type {
   EmailLoginCredentials,
 } from "../../types";
 
-// Utiliser le service mock si la vérification est désactivée OU en développement
-const useVerification = import.meta.env.VITE_ENABLE_VERIFICATION === "false";
-const isDevelopment = import.meta.env.VITE_APP_ENV === "development";
-const useMockService = useVerification || isDevelopment;
+// Utiliser l'API réelle si la vérification est activée
+const enableVerification = import.meta.env.VITE_ENABLE_VERIFICATION === "true";
+const useMockService = !enableVerification;
 
 const mockService = new MockAuthService();
 
@@ -109,13 +108,12 @@ export class AuthService {
       return {
         success: true,
         isNewUser: !userExists.exists,
-        message: userExists.exists
-          ? "Utilisateur trouvé. Connectez-vous avec votre mot de passe."
-          : "Nouveau numéro. Vous devrez créer un compte.",
+        message: userExists.message, // Utiliser le message de l'API
       };
     } catch (error) {
       console.error("Erreur lors de la vérification du téléphone:", error);
-      throw new Error("Erreur lors de la vérification du numéro");
+      // Propager l'erreur avec son message original
+      throw error;
     }
   }
 

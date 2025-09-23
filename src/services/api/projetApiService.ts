@@ -5,7 +5,7 @@ import {
   createProjetDataToApiCreateProjet,
   updateProjetDataToApiUpdateProjet,
   createMagasinDataToApiCreateMagasin,
-  apiProjetListResponseToProjetListResponse,
+  apiProjetsArrayToProjetListResponse,
 } from "./api-transformers";
 import type {
   Projet,
@@ -17,11 +17,7 @@ import type {
   Magasin,
   CreateMagasinData,
 } from "../../types/project";
-import type {
-  ApiProjetListResponse,
-  ApiProjet,
-  ApiMagasin,
-} from "../../types/api-projets";
+import type { ApiProjet, ApiMagasin } from "../../types/api-projets";
 
 // Service API pour les projets - utilise les endpoints de l'API EEBTP
 export class ProjetApiService {
@@ -43,15 +39,23 @@ export class ProjetApiService {
     if (filters.page) params.append("page", filters.page.toString());
     if (filters.limit) params.append("limit", filters.limit.toString());
 
-    const response = await client.get<ApiProjetListResponse>(
-      `${this.basePath}/liste-projets?${params.toString()}`
-    );
+    try {
+      // L'API retourne directement un tableau de projets, pas un objet avec pagination
+      const response = await client.get<ApiProjet[]>(
+        `${this.basePath}/liste-projets?${params.toString()}`
+      );
 
-    return apiProjetListResponseToProjetListResponse(
-      response.data,
-      filters.page || 1,
-      filters.limit || 10
-    );
+      console.log("Réponse API projets:", response.data);
+
+      return apiProjetsArrayToProjetListResponse(
+        response.data,
+        filters.page || 1,
+        filters.limit || 10
+      );
+    } catch (error) {
+      console.error("Erreur lors de la récupération des projets:", error);
+      throw error;
+    }
   }
 
   // Récupérer un projet par ID
@@ -131,13 +135,13 @@ export class ProjetApiService {
 
   // Récupérer les statistiques des projets
   async getProjetStats(): Promise<ProjetStats> {
-    // Note: L'API ne semble pas avoir d'endpoint de stats, on simule avec la liste
-    const response = await client.get<ApiProjetListResponse>(
+    // L'API ne semble pas avoir d'endpoint de stats, on simule avec la liste
+    const response = await client.get<ApiProjet[]>(
       `${this.basePath}/liste-projets`
     );
 
     // Calculer les stats à partir de la liste complète
-    const projets = response.data.results;
+    const projets = response.data;
     const stats = {
       total: projets.length,
       planifies: 0,

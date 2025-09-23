@@ -103,7 +103,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
                 <User className="h-4 w-4 text-white" />
               </div>
               <div className="hidden lg:block">
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-gray-900 capitalize">
                   {user?.firstName || "John"} {user?.lastName || "Doe"}
                 </p>
                 <p className="text-xs text-gray-500">

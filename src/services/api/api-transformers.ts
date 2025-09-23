@@ -62,8 +62,12 @@ export function apiUserToUser(apiUser: ApiCustomUser): User {
     id: apiUser.id.toString(),
     email: apiUser.email,
     phone: apiUser.telephone,
-    firstName: apiUser.first_name,
-    lastName: apiUser.last_name,
+    // Utiliser surname comme prénom si first_name est "ADMIN", sinon garder first_name
+    firstName:
+      apiUser.first_name === "ADMIN" ? apiUser.surname : apiUser.first_name,
+    // Si first_name était "ADMIN", utiliser username comme nom de famille, sinon garder last_name
+    lastName:
+      apiUser.first_name === "ADMIN" ? apiUser.username : apiUser.last_name,
     role: apiUser.is_superuser ? "admin" : "employee", // Mapper selon la logique métier
     isActive: apiUser.is_active,
     isPhoneVerified: true, // Assumer vérifié si dans l'API
@@ -78,11 +82,27 @@ export function apiUserToUser(apiUser: ApiCustomUser): User {
 export function apiLoginResponseToAuthResponse(
   apiResponse: ApiLoginByPhoneResponse
 ): AuthResponse {
+  // Pour l'instant, créer un utilisateur temporaire car l'API ne retourne que le token
+  const tempUser: User = {
+    id: "temp_user",
+    email: "",
+    phone: "",
+    firstName: "Utilisateur",
+    lastName: "Connecté",
+    role: "employee",
+    isActive: true,
+    isPhoneVerified: true,
+    isEmailVerified: false,
+    hasCompletedSetup: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
   return {
-    user: apiUserToUser(apiResponse.user),
-    token: apiResponse.token,
+    user: apiResponse.user ? apiUserToUser(apiResponse.user) : tempUser,
+    token: apiResponse.access_token || "",
     refreshToken: apiResponse.refresh_token || "",
-    requiresSetup: apiResponse.is_firstlogin, // Mapper is_firstlogin vers requiresSetup
+    requiresSetup: apiResponse.is_firstlogin || false,
   };
 }
 
@@ -306,6 +326,27 @@ export function apiProjetListResponseToProjetListResponse(
       apiProjetToProjetWithDetails(projet)
     ),
     total: apiResponse.count,
+    page,
+    limit,
+    totalPages,
+  };
+}
+
+// API → Frontend : Transformer un tableau de ApiProjet vers ProjetListResponse
+export function apiProjetsArrayToProjetListResponse(
+  apiProjets: ApiProjet[],
+  page: number = 1,
+  limit: number = 10
+): ProjetListResponse {
+  // Simuler la pagination côté client
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  const paginatedData = apiProjets.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(apiProjets.length / limit);
+
+  return {
+    data: paginatedData.map((projet) => apiProjetToProjetWithDetails(projet)),
+    total: apiProjets.length,
     page,
     limit,
     totalPages,

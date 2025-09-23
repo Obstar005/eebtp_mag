@@ -11,38 +11,46 @@ export class ArticleService {
   async getArticles(
     filter?: ProductFilter
   ): Promise<PaginatedResponse<Product>> {
-    if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
-      return mockArticleService.getArticles(filter);
+    if (import.meta.env.VITE_ENABLE_VERIFICATION === "true") {
+      return await stockApiService.getProducts().then((products) => ({
+        data: products,
+        pagination: {
+          page: 1,
+          limit: 50,
+          total: products.length,
+          totalPages: 1,
+        },
+      }));
     }
-    return await stockApiService.getProducts().then((products) => ({
-      data: products,
-      pagination: { page: 1, limit: 50, total: products.length, totalPages: 1 },
-    }));
+    return mockArticleService.getArticles(filter);
   }
 
   async getArticle(id: string): Promise<Product> {
-    if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
-      return mockArticleService.getArticle(id);
+    if (import.meta.env.VITE_ENABLE_VERIFICATION === "true") {
+      return await stockApiService.getProduct(id);
     }
-    return await stockApiService.getProduct(id);
+    return mockArticleService.getArticle(id);
   }
 
   async createArticle(data: CreateProductData): Promise<Product> {
-    if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
-      return mockArticleService.createArticle(data);
+    if (import.meta.env.VITE_ENABLE_VERIFICATION === "true") {
+      return await stockApiService.createProduct(data);
     }
-    return await stockApiService.createProduct(data);
+    return mockArticleService.createArticle(data);
   }
 
   async updateArticle(data: UpdateProductData): Promise<Product> {
+    if (import.meta.env.VITE_ENABLE_VERIFICATION === "true") {
+      return await stockApiService.updateProduct(data.id, data);
+    }
     return mockArticleService.updateArticle(data);
   }
 
   async deleteArticle(id: string): Promise<void> {
-    if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
-      return mockArticleService.deleteArticle(id);
+    if (import.meta.env.VITE_ENABLE_VERIFICATION === "true") {
+      return await stockApiService.deleteProduct(id);
     }
-    return await stockApiService.deleteProduct(id);
+    return mockArticleService.deleteArticle(id);
   }
 }
 

@@ -5,6 +5,7 @@ import {
   useChangePassword,
   useSimpleAuthState,
 } from "../../hooks/useSimpleAuth";
+import { useAuth } from "../../contexts/AuthContext";
 import { PhoneInputPage } from "./PhoneInputPage";
 import { PasswordInputPage } from "./PasswordInputPage";
 import { ChangePasswordPage } from "./ChangePasswordPage";
@@ -19,6 +20,7 @@ export function SimpleAuthFlow({
   onAuthError,
 }: SimpleAuthFlowProps) {
   const { authState, updateAuthState } = useSimpleAuthState();
+  const { login, refreshUserInfo } = useAuth();
   const [phone, setPhone] = useState<string>("");
 
   // Mutations
@@ -29,18 +31,19 @@ export function SimpleAuthFlow({
   // Étape 1 : Vérification du téléphone
   const handlePhoneSubmit = async (phoneNumber: string) => {
     try {
-      await verifyPhoneMutation.mutateAsync({
+      const response = await verifyPhoneMutation.mutateAsync({
         phone: phoneNumber,
       });
 
       setPhone(phoneNumber);
       updateAuthState({
         currentStep: "password_input",
-        isNewUser: false, // Toujours false maintenant
+        isNewUser: response.isNewUser,
         phone: phoneNumber,
+        isPhoneVerified: true, // Marquer le téléphone comme vérifié
       });
     } catch {
-      onAuthError("Erreur lors de la vérification du téléphone");
+      onAuthError("Erreur lors de la vérification du numéro");
     }
   };
 
@@ -51,6 +54,15 @@ export function SimpleAuthFlow({
         phone,
         password,
       });
+
+      // Stocker le token et récupérer les vraies informations utilisateur
+      localStorage.setItem("auth_token", response.token);
+
+      // Récupérer les vraies informations utilisateur depuis l'API
+      await login(response.user, response.token);
+
+      // Actualiser les informations utilisateur depuis l'API
+      await refreshUserInfo();
 
       // Vérifier si c'est la première connexion (isFirstLogin = is_firstlogin de l'API)
       if (response.isFirstLogin) {
@@ -82,7 +94,10 @@ export function SimpleAuthFlow({
   const handleGoBack = () => {
     switch (authState.currentStep) {
       case "password_input":
-        updateAuthState({ currentStep: "phone_input" });
+        updateAuthState({
+          currentStep: "phone_input",
+          isPhoneVerified: false, // Réinitialiser la vérification
+        });
         break;
       case "change_password":
         // Pas de retour possible depuis le changement de mot de passe
@@ -91,6 +106,28 @@ export function SimpleAuthFlow({
         break;
     }
   };
+
+  // Protection : Vérifier que le numéro est vérifié avant d'afficher la page de mot de passe
+  const isCurrentStepAllowed = () => {
+    switch (authState.currentStep) {
+      case "phone_input":
+        return true; // Toujours autorisé
+      case "password_input":
+        return authState.isPhoneVerified === true; // Nécessite vérification
+      case "change_password":
+        return authState.isPhoneVerified === true; // Nécessite vérification
+      default:
+        return false;
+    }
+  };
+
+  // Si l'étape actuelle n'est pas autorisée, rediriger vers la vérification du téléphone
+  if (!isCurrentStepAllowed()) {
+    updateAuthState({
+      currentStep: "phone_input",
+      isPhoneVerified: false,
+    });
+  }
 
   // Rendu conditionnel des pages
   switch (authState.currentStep) {

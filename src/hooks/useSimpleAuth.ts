@@ -89,6 +89,7 @@ interface SimpleAuthState {
   currentStep: AuthStep;
   isNewUser?: boolean;
   phone?: string;
+  isPhoneVerified?: boolean;
 }
 
 export function useSimpleAuthState() {

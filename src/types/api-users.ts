@@ -41,9 +41,9 @@ export interface ApiCheckUserExistsRequest {
 }
 
 export interface ApiCheckUserExistsResponse {
-  exists: boolean;
+  Verifié: boolean; // Format réel de l'API
   user_id?: number;
-  message: string;
+  message?: string;
 }
 
 export interface ApiLoginByPhoneRequest {
@@ -52,12 +52,12 @@ export interface ApiLoginByPhoneRequest {
 }
 
 export interface ApiLoginByPhoneResponse {
-  success: boolean;
-  user: ApiCustomUser;
-  token: string;
+  success?: boolean;
+  user?: ApiCustomUser;
+  access_token?: string; // Format réel de l'API
   refresh_token?: string;
   message: string;
-  is_firstlogin: boolean; // Indique si c'est la première connexion de l'utilisateur
+  is_firstlogin?: boolean; // Indique si c'est la première connexion de l'utilisateur
 }
 
 export interface ApiSetPasswordRequest {

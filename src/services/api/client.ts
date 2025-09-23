@@ -20,6 +20,13 @@ class ApiClient {
     // Request interceptor pour authentification hybride Basic Auth → JWT
     this.axiosInstance.interceptors.request.use(
       (config) => {
+        // Permettre de désactiver l'authentification explicitement
+        if (config.headers?.["X-No-Auth"] === "true") {
+          delete config.headers.Authorization;
+          delete config.headers["X-No-Auth"];
+          return config;
+        }
+
         // 1. Priorité au JWT token si disponible (authToken ou auth_token)
         const jwtToken =
           localStorage.getItem("authToken") ||

@@ -20,13 +20,13 @@ export const accountService = {
     page: number = 1,
     limit: number = 10
   ): Promise<AccountListResponse> {
-    // En mode développement, retourner des données mock
-    if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
-      return mockAccountService.getAccounts(filters, page, limit);
+    // Utiliser l'API réelle si la vérification est activée
+    if (import.meta.env.VITE_ENABLE_VERIFICATION === "true") {
+      return await userApiService.getAccounts(filters, page, limit);
     }
 
-    // Utiliser l'API Users pour récupérer les comptes
-    return await userApiService.getAccounts(filters, page, limit);
+    // En mode développement, retourner des données mock
+    return mockAccountService.getAccounts(filters, page, limit);
   },
 
   // Récupérer un compte par ID

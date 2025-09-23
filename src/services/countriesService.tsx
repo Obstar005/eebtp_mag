@@ -151,6 +151,18 @@ export const countriesService = {
     return `${countryCode} ${cleanNumber}`;
   },
 
+  // Formater un numéro pour l'API (remplacer + par 00)
+  formatPhoneNumberForAPI(phoneNumber: string, countryCode: string): string {
+    const country = countriesService.getCountryByCode(countryCode);
+    if (!country) return phoneNumber;
+
+    const cleanNumber = phoneNumber.replace(/\D/g, "");
+    // Convertir +228 en 0028
+    const apiCountryCode = countryCode.replace("+", "00");
+
+    return `${apiCountryCode}${cleanNumber}`;
+  },
+
   // Ajouter/remplacer la liste des pays avec votre JSON
   updateCountriesData(countries: Country[]): void {
     countriesData = [...countries];

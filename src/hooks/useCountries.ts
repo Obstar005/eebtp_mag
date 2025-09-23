@@ -63,5 +63,6 @@ export function useCountries() {
     // Méthodes du service
     validatePhoneNumber: countriesService.validatePhoneNumber,
     formatPhoneNumber: countriesService.formatPhoneNumber,
+    formatPhoneNumberForAPI: countriesService.formatPhoneNumberForAPI,
   };
 }

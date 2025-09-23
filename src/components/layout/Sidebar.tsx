@@ -232,7 +232,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                 <User className="h-4 w-4 text-white" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-900 truncate">
+                <p className="text-sm font-medium text-gray-900 truncate capitalize">
                   {user?.firstName || "John"} {user?.lastName || "Doe"}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
