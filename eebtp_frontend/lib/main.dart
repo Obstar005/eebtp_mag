@@ -1,3 +1,4 @@
+import 'package:eebtp_frontend/models/utilisateur.dart';
 import 'package:eebtp_frontend/screens/demande.dart';
 import 'package:eebtp_frontend/screens/edit_profile.dart';
 import 'package:eebtp_frontend/screens/entryDetail.dart';
@@ -43,9 +44,27 @@ class MyApp extends StatelessWidget {
       builder: (context, orientation, deviceType) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+
+            primarySwatch: Colors.blue,
+            scaffoldBackgroundColor: Colors.white,
+          ),
           initialRoute: '/',
           onGenerateRoute: (settings) {
             switch (settings.name) {
+              case '/profile':
+                final token = settings.arguments as String;
+                return MaterialPageRoute(
+                  builder: (_) => ProfilePage(token: token),
+                );
+              case '/edit_profile':
+                final args = settings.arguments as Map<String, dynamic>;
+                final token = args['token'] as String;
+                final user = args['user'] as Utilisateur;
+                return MaterialPageRoute(
+                  builder: (_) => EditProfilePage(token: token, user: user),
+                );
               // ✅ Pages avec modèles
               case '/product-detail':
                 final product = settings.arguments as Product;
@@ -103,7 +122,7 @@ class MyApp extends StatelessWidget {
             '/demande_form': (context) => const SupplyRequestScreen(),
             '/demande': (context) => const SupplyRequestHomeScreen(),
             '/suivi_demande': (context) => RequestsTrackingScreen(),
-            '/profile': (context) => ProfilePage(),
+            //   '/profile': (context) => ProfilePage(),
 
             // Gestion stock
             '/entry': (context) => const StockEntryScreen(),
@@ -111,7 +130,7 @@ class MyApp extends StatelessWidget {
             '/refresh': (context) => const StockReturnScreen(),
 
             // Profil & notifications
-            '/edit_profile': (context) => const EditProfilePage(),
+            //  '/edit_profile': (context) => const EditProfilePage(),
             '/notifications': (context) => const NotificationScreen(),
           },
         );

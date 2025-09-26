@@ -1,466 +1,239 @@
+import 'dart:io';
 import 'dart:ui';
+import 'package:eebtp_frontend/models/utilisateur.dart';
+import 'package:eebtp_frontend/services/auth.dart';
 import 'package:eebtp_frontend/widgets/button.dart';
-import 'package:eebtp_frontend/widgets/input.dart';
 import 'package:eebtp_frontend/widgets/nav.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:sizer/sizer.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
+import 'package:sizer/sizer.dart';
 
+/// ----------------- Helpers pour indicatifs / ISO -----------------
+const Map<String, String> _prefixToIso = {
+  "00228": "TG", // Togo
+  "00229": "BJ", // Bénin
+  "00221": "SN", // Sénégal
+  "00225": "CI", // Côte d'Ivoire
+};
+
+const Map<String, String> _isoToDial = {
+  "TG": "228",
+  "BJ": "229",
+  "SN": "221",
+  "CI": "225",
+};
+
+String _getIsoFromRawPhone(String phone) {
+  for (final e in _prefixToIso.entries) {
+    if (phone.startsWith(e.key)) return e.value;
+  }
+  return "TG"; // fallback
+}
+
+String _stripCountryCode(String phone) {
+  final regex = RegExp(r"^00\d{2,3}");
+  return phone.replaceFirst(regex, "");
+}
+
+/// ----------------- Page -----------------
 class EditProfilePage extends StatefulWidget {
-  const EditProfilePage({super.key});
+  final Utilisateur user;
+  final String token;
+
+  const EditProfilePage({super.key, required this.user, required this.token});
 
   @override
   _EditProfilePageState createState() => _EditProfilePageState();
 }
 
-class _EditProfilePageState extends State<EditProfilePage>
-    with TickerProviderStateMixin {
-  int _currentIndex = 3; // Onglet profil sélectionné
-  bool _isFabExpanded = false;
-  bool _isPasswordVisible = false;
-  late AnimationController _animationController;
-  late Animation<double> _animation;
+class _EditProfilePageState extends State<EditProfilePage> {
+  final _formKey = GlobalKey<FormState>();
 
-  // Controllers pour les champs de saisie
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  // controllers
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _surnameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
 
-  // Variables pour le téléphone international
+  // phone helper
   String _phone = '';
   PhoneNumber _initialPhone = PhoneNumber(isoCode: 'TG');
+  String _currentIso = 'TG';
+  String _currentDial = '228';
 
-  // Variables pour la gestion des erreurs
-  bool _phoneHasError = false;
-  bool _passwordHasError = false;
-  String? _phoneErrorText;
-  String? _passwordErrorText;
+  // UI state
+  bool _isPasswordVisible = false;
+  bool _loading = false;
+  File? _pickedImage;
+  String? _serverPhotoUrl;
+
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 300));
-    _animation =
-        CurvedAnimation(parent: _animationController, curve: Curves.easeInOut);
-    
-    // Initialiser le numéro de téléphone existant
-    _phone = '+22890909090';
-    _initialPhone = PhoneNumber(isoCode: 'TG', phoneNumber: '+22890909090');
+
+    _firstNameController.text = widget.user.firstName ?? '';
+    _lastNameController.text = widget.user.lastName ?? '';
+    _surnameController.text = widget.user.surname ?? '';
+    _emailController.text = widget.user.email ?? '';
+
+    final rawPhone = widget.user.telephone ?? '';
+    final iso = _getIsoFromRawPhone(rawPhone);
+    final local = rawPhone.isNotEmpty ? _stripCountryCode(rawPhone) : '';
+
+    _currentIso = iso;
+    _currentDial = _isoToDial[iso] ?? '228';
+    _initialPhone = PhoneNumber(isoCode: _currentIso, phoneNumber: local);
+    _phoneController.text = local;
+    _phone = local;
+
+    _serverPhotoUrl = widget.user.photoProfil;
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _surnameController.dispose();
+    _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  void _toggleFab() {
-    setState(() {
-      _isFabExpanded = !_isFabExpanded;
-      if (_isFabExpanded) {
-        _animationController.forward();
-      } else {
-        _animationController.reverse();
-      }
-    });
+  /// Formatte le numéro pour le backend (format '00' + dial + local)
+  String _formatPhoneForBackend() {
+    if (_phone.isNotEmpty) {
+      if (_phone.startsWith('+')) return _phone.replaceFirst('+', '00');
+      if (_phone.startsWith('00')) return _phone;
+      return '00$_currentDial${_phone.replaceAll(RegExp(r'[^0-9]'), '')}';
+    }
+
+    final local = _phoneController.text.trim().replaceAll(
+      RegExp(r'[^0-9]'),
+      '',
+    );
+    if (local.isEmpty) return local;
+    return '00$_currentDial$local';
   }
 
-  void _handleSecondaryFabPressed(String type) {
-    switch (type) {
-      case 'entry':
-        _toggleFab();
-        Navigator.pushNamed(context, '/entry');
-        break;
-      case 'exit':
-        _toggleFab();
-        Navigator.pushNamed(context, '/exit');
-        break;
-      case 'refresh':
-        _toggleFab();
-        Navigator.pushNamed(context, '/refresh');
-        break;
+  Future<void> _pickImage(bool fromCamera) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: fromCamera ? ImageSource.camera : ImageSource.gallery,
+      imageQuality: 75,
+    );
+
+    if (picked != null) {
+      setState(() {
+        _pickedImage = File(picked.path);
+      });
+
+      if (Navigator.canPop(context)) Navigator.pop(context);
     }
   }
 
-  void _handleNavigation(int index) {
-    setState(() => _currentIndex = index);
-    _navigateToPage(index);
-  }
+  Future<void> _saveProfile() async {
+    if (!_formKey.currentState!.validate()) return;
 
-  void _navigateToPage(int index) {
-    switch (index) {
-      case 0:
-        Navigator.pushReplacementNamed(context, '/home');
-        break;
-      case 1:
-        Navigator.pushReplacementNamed(context, '/stock');
-        break;
-      case 2:
-        Navigator.pushReplacementNamed(context, '/demande');
-        break;
-      case 3:
-        Navigator.pushReplacementNamed(context, '/profile');
-        break;
-    }
-  }
+    setState(() => _loading = true);
 
-  void _togglePasswordVisibility() {
-    setState(() {
-      _isPasswordVisible = !_isPasswordVisible;
-    });
-  }
-
-  void _validateAndSave() {
-    setState(() {
-      _phoneHasError = false;
-      _passwordHasError = false;
-      _phoneErrorText = null;
-      _passwordErrorText = null;
-    });
-
-    bool hasErrors = false;
+    final userService = UserService();
+    final formattedPhone = _formatPhoneForBackend();
 
     // Validation du numéro de téléphone
-    if (_phone.isEmpty) {
-      setState(() {
-        _phoneHasError = true;
-        _phoneErrorText = "Le numéro de téléphone est requis";
-      });
-      hasErrors = true;
-    } else if (_phone.length < 8) {
-      setState(() {
-        _phoneHasError = true;
-        _phoneErrorText = "Numéro de téléphone invalide";
-      });
-      hasErrors = true;
-    }
-
-    // Validation du mot de passe
-    if (_passwordController.text.isEmpty) {
-      setState(() {
-        _passwordHasError = true;
-        _passwordErrorText = "Le mot de passe est requis";
-      });
-      hasErrors = true;
-    } else if (_passwordController.text.length < 6) {
-      setState(() {
-        _passwordHasError = true;
-        _passwordErrorText = "Le mot de passe doit contenir au moins 6 caractères";
-      });
-      hasErrors = true;
-    }
-
-    if (!hasErrors) {
-      _showSuccessDialog();
-    }
-  }
-
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierColor: Colors.black.withOpacity(0.5),
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.w)),
-          title: Center(
-            child: Column(
-              children: [
-                Icon(Icons.check_circle, 
-                     color: Colors.green, size: 15.w),
-                SizedBox(height: 2.h),
-                Text("Succès",
-                    style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: "Montserrat")),
-              ],
-            ),
-          ),
-          content: Text("Votre profil a été mis à jour avec succès !",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14.sp, fontFamily: "Montserrat")),
-          actions: [
-            Center(
-              child: CustomElevatedButton(
-                text: "OK",
-                backgroundColor: const Color(0xFF007AFF),
-                textColor: Colors.white,
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pop(context); // Retour à la page profil
-                },
-                width: 60.w,
-              ),
-            ),
-          ],
+    if (formattedPhone.length < 10) {
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Numéro de téléphone invalide"),
+          backgroundColor: Colors.red,
         ),
-      ),
-    );
-  }
+      );
+      return;
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return NavContainer(
-     
-      body: Stack(
-        children: [
-          // ----------- Background bleu + blanc ----------
-          SizedBox(
-            height: 100.h,
-            width: 100.w,
-            child: Stack(
-              children: [
-                ClipPath(
-                  clipper: ProfileTopClipper(),
-                  child: Container(
-                    height: 40.h,
-                    width: 100.w,
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF007AFF), Color(0xFF0056CC)],
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  child: Container(
-                    height: 60.h,
-                    width: 100.w,
-                    color: const Color(0xFFF8F9FA),
-                  ),
-                ),
-              ],
-            ),
+    String? finalPhotoUrl = _serverPhotoUrl ?? widget.user.photoProfil;
+
+    // Upload de la photo si sélectionnée
+    if (_pickedImage != null) {
+      final uploadSuccess = await userService.updateProfilePicture(
+        widget.token,
+        _pickedImage!.path,
+      );
+
+      if (uploadSuccess) {
+        try {
+          final refreshed = await userService.getUserInfo(widget.token);
+          finalPhotoUrl = refreshed.photoProfil;
+          setState(() {
+            _serverPhotoUrl = finalPhotoUrl;
+          });
+        } catch (_) {
+          // Continuer même si le rechargement échoue
+        }
+      } else {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Échec de l'upload de la photo de profil"),
+            backgroundColor: Colors.red,
           ),
+        );
+        return;
+      }
+    }
 
-          // ----------- Contenu principal ----------
-          SafeArea(
-            child: Column(
-              children: [
-                // Header avec bouton retour
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          padding: EdgeInsets.all(2.w),
-                          decoration: const BoxDecoration(
-                              color: Colors.white, shape: BoxShape.circle),
-                          child: Icon(Icons.arrow_back_ios,
-                              size: 6.w, color: Color(0xFF007AFF)),
-                        ),
-                      ),
-                      SizedBox(width: 6.w),
-                      Text("Modification",
-                          style: GoogleFonts.montserrat(
-                              fontSize: 18.sp,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white)),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 10.h),
-
-                // Photo profil + bouton édit (positionnée dans le creux)
-                Transform.translate(
-                  offset: Offset(0, 4.h), // Descendre la photo dans le creux
-                  child: Stack(
-                    children: [
-                      Container(
-                        width: 35.w,
-                        height: 35.w,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                              color: const Color(0xFF007AFF), width: 3),
-                          boxShadow: [
-                            BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 10,
-                                offset: const Offset(0, 5))
-                          ],
-                        ),
-                        child: ClipOval(
-                          child:    Image.asset("assets/profile.png",
-                              height: 25.h, fit: BoxFit.cover),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: GestureDetector(
-                          onTap: () => _showImagePickerOptions(context),
-                          child: Container(
-                            padding: EdgeInsets.all(3.w),
-                            decoration: BoxDecoration(
-                                color: const Color(0xFF007AFF),
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2)),
-                            child: Icon(Icons.edit, size: 5.w, color: Colors.white),
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 4.h),
-
-                Text("John Doe",
-                    style: TextStyle(
-                        fontSize: 22.sp,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF007AFF),
-                        fontFamily: 'Montserrat')),
-                Text("Magasinier",
-                    style: TextStyle(
-                        fontSize: 16.sp,
-                        color: Color(0xFF8E8E93),
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'Montserrat')),
-
-                SizedBox(height: 6.h),
-
-                // Formulaire de modification
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 6.w),
-                    child: Column(
-                      children: [
-                        // Champ téléphone international
-                        Container(
-                          height: 7.h,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF5F5F5),
-                            borderRadius: BorderRadius.circular(25),
-                            border: Border.all(
-                              color: _phoneHasError ? Colors.red : Colors.transparent,
-                            ),
-                          ),
-                          child: InternationalPhoneNumberInput(
-                            onInputChanged: (PhoneNumber num) {
-                              setState(() {
-                                _phone = num.phoneNumber ?? '';
-                                _initialPhone = num;
-                                
-                                // Réinitialiser l'erreur si saisie correcte
-                                if (_phone.isNotEmpty && _phone.length > 7) {
-                                  _phoneHasError = false;
-                                  _phoneErrorText = null;
-                                }
-                              });
-                            },
-                            initialValue: _initialPhone,
-                            textFieldController: _phoneController,
-                            selectorConfig: const SelectorConfig(
-                              selectorType: PhoneInputSelectorType.DIALOG,
-                              showFlags: true,
-                              setSelectorButtonAsPrefixIcon: true,
-                            ),
-                            ignoreBlank: false,
-                            autoValidateMode: AutovalidateMode.disabled,
-                            selectorTextStyle: GoogleFonts.poppins(color: Colors.black),
-                            textStyle: GoogleFonts.poppins(),
-                            formatInput: false,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              signed: true,
-                              decimal: true,
-                            ),
-                            inputDecoration: InputDecoration(
-                              border: InputBorder.none,
-                              hintText: 'Numéro de téléphone',
-                              hintStyle: GoogleFonts.poppins(
-                                fontSize: 14.sp,
-                                color: Colors.grey[600],
-                              ),
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 4.w,
-                                vertical: 2.h,
-                              ),
-                            ),
-                            spaceBetweenSelectorAndTextField: 10,
-                          ),
-                        ),
-
-                        // Message d'erreur pour le téléphone
-                        if (_phoneHasError && _phoneErrorText != null) ...[
-                          SizedBox(height: 1.h),
-                          Row(
-                            children: [
-                              SizedBox(width: 4.w),
-                              const Icon(Icons.error_outline, 
-                                       color: Colors.red, size: 18),
-                              SizedBox(width: 2.w),
-                              Expanded(
-                                child: Text(
-                                  _phoneErrorText!,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 12.sp,
-                                    color: Colors.red,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-
-                        SizedBox(height: 4.h),
-
-                        // Champ mot de passe
-                        CustomInputField(
-                          controller: _passwordController,
-                          hintText: "****************",
-                          obscureText: !_isPasswordVisible,
-                          onToggleVisibility: _togglePasswordVisibility,
-                          hasError: _passwordHasError,
-                          errorText: _passwordErrorText,
-                        ),
-
-                        SizedBox(height: 8.h),
-
-                        // Bouton Enregistrer
-                        CustomElevatedButton(
-                          text: "Enregistrer",
-                          backgroundColor: const Color(0xFF007AFF),
-                          textColor: Colors.white,
-                          onPressed: _validateAndSave,
-                          width: double.infinity,
-                          height: 7.h,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ), initialIndex: 3,
-
-     
+    final updatedUser = widget.user.copyWith(
+      firstName: _firstNameController.text.trim(),
+      lastName: _lastNameController.text.trim(),
+      surname: _surnameController.text.trim(),
+      email: _emailController.text.trim(),
+      telephone: formattedPhone,
+      photoProfil: finalPhotoUrl,
     );
+
+    final success = await userService.updateUser(widget.user.id!, updatedUser);
+
+    setState(() => _loading = false);
+
+    if (success) {
+      _showSuccessDialog();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Erreur lors de la mise à jour du profil"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _showImagePickerOptions(BuildContext context) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+      builder: (_) => Container(
         padding: EdgeInsets.all(4.w),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(6.w), topRight: Radius.circular(6.w)),
+            topLeft: Radius.circular(6.w),
+            topRight: Radius.circular(6.w),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            ),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -474,23 +247,569 @@ class _EditProfilePageState extends State<EditProfilePage>
               ),
             ),
             SizedBox(height: 3.h),
-            Text("Modifier la photo de profil",
-                style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: "Montserrat")),
+            Text(
+              "Modifier la photo de profil",
+              style: GoogleFonts.montserrat(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             SizedBox(height: 3.h),
             ListTile(
-              leading: const Icon(Icons.camera_alt, color: Color(0xFF007AFF)),
-              title: const Text("Prendre une photo",
-                  style: TextStyle(fontFamily: "Montserrat")),
-              onTap: () => Navigator.pop(context),
+              leading: Icon(Icons.camera_alt, color: const Color(0xFF007AFF)),
+              title: Text("Prendre une photo", style: GoogleFonts.montserrat()),
+              onTap: () => _pickImage(true),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: Color(0xFF007AFF)),
-              title: const Text("Choisir depuis la galerie",
-                  style: TextStyle(fontFamily: "Montserrat")),
-              onTap: () => Navigator.pop(context),
+              leading: Icon(
+                Icons.photo_library,
+                color: const Color(0xFF007AFF),
+              ),
+              title: Text(
+                "Choisir depuis la galerie",
+                style: GoogleFonts.montserrat(),
+              ),
+              onTap: () => _pickImage(false),
+            ),
+            SizedBox(height: 2.h),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (ctx) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          backgroundColor: Colors.white,
+          shadowColor: Colors.black.withOpacity(0.3),
+          elevation: 10,
+          title: Center(
+            child: Column(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green, size: 15.w),
+                SizedBox(height: 2.h),
+                Text(
+                  "Succès",
+                  style: GoogleFonts.montserrat(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF2D3748),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          content: Text(
+            "Votre profil a été mis à jour avec succès !",
+            textAlign: TextAlign.center,
+            style: GoogleFonts.montserrat(
+              fontSize: 14.sp,
+              color: const Color(0xFF4A5568),
+            ),
+          ),
+          actions: [
+            Center(
+              child: CustomElevatedButton(
+                text: "OK",
+                backgroundColor: const Color(0xFF007AFF),
+                textColor: Colors.white,
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.pop(context, true);
+                },
+                width: 60.w,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Champ stylisé amélioré
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    bool isPassword = false,
+    String? Function(String?)? validator,
+    TextInputType? keyboardType,
+  }) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 2.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.montserrat(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w600,
+              color: const Color.fromARGB(255, 8, 8, 8),
+            ),
+          ),
+          SizedBox(height: 1.h),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Color(0xFF007AFF).withOpacity(0.6)),
+            ),
+            child: TextFormField(
+              controller: controller,
+              validator: validator,
+              obscureText: isPassword ? !_isPasswordVisible : false,
+              keyboardType: keyboardType,
+              style: GoogleFonts.montserrat(fontSize: 14.sp),
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 4.w,
+                  vertical: 2.h,
+                ),
+                border: InputBorder.none,
+                hintText: isPassword
+                    ? "Laisser vide si inchangé"
+                    : "Entrez votre $label",
+                hintStyle: GoogleFonts.montserrat(
+                  color: const Color.fromARGB(255, 0, 0, 0),
+                  fontSize: 12.sp,
+                ),
+                suffixIcon: isPassword
+                    ? IconButton(
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: const Color(0xFF007AFF),
+                        ),
+                        onPressed: () => setState(
+                          () => _isPasswordVisible = !_isPasswordVisible,
+                        ),
+                      )
+                    : null,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      body: NavContainer(
+        initialIndex: 3,
+        body: Stack(
+          children: [
+            // Background avec clipper amélioré
+            SizedBox(
+              height: 100.h,
+              width: 100.w,
+              child: Stack(
+                children: [
+                  // Partie bleue avec clipper
+                  ClipPath(
+                    clipper: ProfileTopClipper(),
+                    child: Container(
+                      height: 40.h,
+                      width: 100.w,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF007AFF), Color(0xFF0056CC)],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF007AFF).withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: _pickedImage != null || _serverPhotoUrl != null
+                          ? Opacity(
+                              opacity: 0.1,
+                              child: ImageFiltered(
+                                imageFilter: ImageFilter.blur(
+                                  sigmaX: 10,
+                                  sigmaY: 10,
+                                ),
+                                child: _pickedImage != null
+                                    ? Image.file(
+                                        _pickedImage!,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.network(
+                                        _serverPhotoUrl!,
+                                        fit: BoxFit.cover,
+                                      ),
+                              ),
+                            )
+                          : null,
+                    ),
+                  ),
+                  // Partie blanche en bas
+                  /*     Positioned(
+                    bottom: 0,
+                    child: Container(
+                      height: 60.h, 
+                      width: 100.w, 
+                      color: const Color(0xFFF8F9FA),
+                    ),
+                  ),
+                */
+                ],
+              ),
+            ),
+
+            // Header fixe
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: EdgeInsets.all(3.w),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.arrow_back_ios,
+                            size: 5.w,
+                            color: const Color(0xFF007AFF),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        "Modification",
+                        style: GoogleFonts.montserrat(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Contenu défilable
+            Padding(
+              padding: EdgeInsets.only(top: 12.h), // Espace pour le header fixe
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                child: Column(
+                  children: [
+                    // Photo card améliorée
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(5.w),
+                      margin: EdgeInsets.only(bottom: 4.h),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.15),
+                            blurRadius: 25,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Stack(
+                            children: [
+                              Container(
+                                width: 30.w,
+                                height: 30.w,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: const Color(0xFF007AFF),
+                                    width: 4,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFF007AFF,
+                                      ).withOpacity(0.3),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                child: ClipOval(
+                                  child: _pickedImage != null
+                                      ? Image.file(
+                                          _pickedImage!,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : (_serverPhotoUrl != null
+                                            ? Image.network(
+                                                _serverPhotoUrl!,
+                                                fit: BoxFit.cover,
+                                              )
+                                            : (widget.user.photoProfil != null
+                                                  ? Image.network(
+                                                      widget.user.photoProfil!,
+                                                      fit: BoxFit.cover,
+                                                    )
+                                                  : Image.asset(
+                                                      "assets/profile.png",
+                                                      fit: BoxFit.cover,
+                                                    ))),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: GestureDetector(
+                                  onTap: () => _showImagePickerOptions(context),
+                                  child: Container(
+                                    padding: EdgeInsets.all(3.w),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF007AFF),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 3,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.2),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Icon(
+                                      Icons.camera_alt,
+                                      size: 5.w,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 3.h),
+                          Text(
+                            "${widget.user.firstName ?? ""} ${widget.user.lastName ?? ""}",
+                            style: GoogleFonts.montserrat(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF007AFF),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: 0.5.h),
+                          Text(
+                            widget.user.poste ?? "Utilisateur",
+                            style: GoogleFonts.montserrat(
+                              fontSize: 12.sp,
+                              color: const Color(0xFF8E8E93),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Form card améliorée
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(5.w),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.15),
+                            blurRadius: 25,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Informations personnelles",
+                              style: GoogleFonts.montserrat(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF2D3748),
+                              ),
+                            ),
+                            SizedBox(height: 3.h),
+
+                            _buildTextField(
+                              controller: _firstNameController,
+                              label: "Prénom",
+                              validator: (v) =>
+                                  v!.isEmpty ? "Le prénom est requis" : null,
+                            ),
+                            _buildTextField(
+                              controller: _lastNameController,
+                              label: "Nom",
+                            ),
+                            _buildTextField(
+                              controller: _surnameController,
+                              label: "Surnom",
+                              validator: (v) =>
+                                  v!.isEmpty ? "Le surnom est requis" : null,
+                            ),
+                            _buildTextField(
+                              controller: _emailController,
+                              label: "Email",
+                              keyboardType: TextInputType.emailAddress,
+                            ),
+
+                            // Champ téléphone amélioré
+                            Container(
+                              margin: EdgeInsets.only(bottom: 2.h),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Téléphone",
+                                    style: GoogleFonts.montserrat(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF2D3748),
+                                    ),
+                                  ),
+                                  SizedBox(height: 1.h),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Color(
+                                          0xFF007AFF,
+                                        ).withOpacity(0.6),
+                                      ),
+                                    ),
+                                    child: InternationalPhoneNumberInput(
+                                      onInputChanged: (PhoneNumber num) {
+                                        setState(() {
+                                          _phone = num.phoneNumber ?? '';
+                                          _initialPhone = num;
+                                          if (num.isoCode != null) {
+                                            _currentIso = num.isoCode!;
+                                            _currentDial =
+                                                num.dialCode?.replaceFirst(
+                                                  '+',
+                                                  '',
+                                                ) ??
+                                                _isoToDial[_currentIso] ??
+                                                _currentDial;
+                                          }
+                                        });
+                                      },
+                                      onInputValidated: (bool isValid) {
+                                        // Validation supplémentaire si nécessaire
+                                      },
+                                      initialValue: _initialPhone,
+                                      textFieldController: _phoneController,
+                                      selectorConfig: SelectorConfig(
+                                        selectorType:
+                                            PhoneInputSelectorType.DIALOG,
+                                        useEmoji: true,
+                                        setSelectorButtonAsPrefixIcon: true,
+                                      ),
+                                      formatInput: true,
+                                      keyboardType: TextInputType.phone,
+                                      inputDecoration: InputDecoration(
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 4.w,
+                                          vertical: 2.h,
+                                        ),
+                                        border: InputBorder.none,
+                                        hintText: "Entrez votre numéro",
+                                        hintStyle: GoogleFonts.montserrat(
+                                          color: const Color(0xFFA0AEC0),
+                                          fontSize: 12.sp,
+                                        ),
+                                      ),
+                                      textStyle: GoogleFonts.montserrat(
+                                        fontSize: 13.sp,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            _buildTextField(
+                              controller: _passwordController,
+                              label: "Mot de passe",
+                              isPassword: true,
+                            ),
+
+                            SizedBox(height: 4.h),
+                            _loading
+                                ? Center(
+                                    child: CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        const Color(0xFF007AFF),
+                                      ),
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : CustomElevatedButton(
+                                    text: "Enregistrer les modifications",
+                                    backgroundColor: const Color(0xFF007AFF),
+                                    textColor: Colors.white,
+                                    onPressed: _saveProfile,
+                                    width: double.infinity,
+                                  ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: 4.h),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -499,20 +818,32 @@ class _EditProfilePageState extends State<EditProfilePage>
   }
 }
 
-// ----------- Clipper Top -----------
+/// Clipper amélioré avec effet plus fluide
 class ProfileTopClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
     path.moveTo(0, 0);
     path.lineTo(size.width, 0);
-    path.lineTo(size.width, size.height * 0.6);
+    path.lineTo(size.width, size.height * 0.7);
     path.quadraticBezierTo(
-        size.width * 0.85, size.height * 0.75, size.width * 0.7, size.height * 0.65);
+      size.width * 0.8,
+      size.height * 0.9,
+      size.width * 0.6,
+      size.height * 0.8,
+    );
     path.quadraticBezierTo(
-        size.width * 0.5, size.height * 0.45, size.width * 0.3, size.height * 0.65);
+      size.width * 0.4,
+      size.height * 0.7,
+      size.width * 0.2,
+      size.height * 0.8,
+    );
     path.quadraticBezierTo(
-        size.width * 0.15, size.height * 0.75, 0, size.height * 0.6);
+      size.width * 0.05,
+      size.height * 0.9,
+      0,
+      size.height * 0.7,
+    );
     path.close();
     return path;
   }

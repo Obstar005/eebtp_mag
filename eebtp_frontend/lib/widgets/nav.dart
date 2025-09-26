@@ -75,7 +75,8 @@ class _NavContainerState extends State<NavContainer>
         Navigator.pushReplacementNamed(context, '/demande');
         break;
       case 3:
-        Navigator.pushReplacementNamed(context, '/profile');
+        Navigator.pushReplacementNamed(   context,
+                      '/profile',);
         break;
     }
   }
@@ -170,17 +171,29 @@ class ImprovedFAB extends StatelessWidget {
               ),
             ),
           ),
-          FloatingActionButton(
-            heroTag: "main",
-            backgroundColor: const Color(0xFF007AFF),
-            onPressed: onToggle,
-            shape: const CircleBorder(),
-            child: AnimatedRotation(
-              turns: isExpanded ? 0.125 : 0,
-              duration: const Duration(milliseconds: 300),
-              child: const Icon(Icons.add, size: 50, color: Colors.white),
+               Positioned(
+            bottom: MediaQuery.of(context).size.height * 0.05, // légèrement au-dessus du creux
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.16, // responsive
+              height: MediaQuery.of(context).size.width * 0.16,
+              child: FloatingActionButton(
+                heroTag: "main",
+                backgroundColor: const Color(0xFF007AFF),
+                onPressed: onToggle,
+                shape: const CircleBorder(),
+                child: AnimatedRotation(
+                  turns: isExpanded ? 0.125 : 0,
+                  duration: const Duration(milliseconds: 300),
+                  child: Icon(
+                    Icons.add,
+                    size: MediaQuery.of(context).size.width * 0.12, // icône responsive
+                    color: Colors.white,
+                  ),
+                ),
+              ),
             ),
           ),
+
         ],
       ),
     );
@@ -280,34 +293,32 @@ class ImprovedBottomNavPainter extends CustomPainter {
       ..style = PaintingStyle.fill
       ..isAntiAlias = true;
 
-    final double fabRadius = size.width * 0.08;
-    final double notchRadius = fabRadius + 8;
+    final double fabRadius = size.width * 0.11; // plus large
+    final double notchRadius = fabRadius + 10;   // moins profond
     final double notchStartX = size.width / 2 - notchRadius;
     final double notchEndX = size.width / 2 + notchRadius;
-    final double smoothFactor = notchRadius * 0.4;
+    final double smoothFactor = notchRadius * 0.3;
 
     final path = Path();
 
-    path.moveTo(0, 20);
-    path.quadraticBezierTo(0, 0, 20, 0);
+    path.moveTo(0, 0); // bord gauche droit
     path.lineTo(notchStartX - smoothFactor, 0);
     path.cubicTo(
       notchStartX, 0,
-      notchStartX, notchRadius * 0.3,
-      size.width / 2 - fabRadius, notchRadius * 0.6,
+      notchStartX, notchRadius * 0.2,
+      size.width / 2 - fabRadius, notchRadius * 0.4,
     );
     path.arcToPoint(
-      Offset(size.width / 2 + fabRadius, notchRadius * 0.6),
+      Offset(size.width / 2 + fabRadius, notchRadius * 0.4),
       radius: Radius.circular(notchRadius),
       clockwise: false,
     );
     path.cubicTo(
-      notchEndX, notchRadius * 0.3,
+      notchEndX, notchRadius * 0.2,
       notchEndX, 0,
       notchEndX + smoothFactor, 0,
     );
-    path.lineTo(size.width - 20, 0);
-    path.quadraticBezierTo(size.width, 0, size.width, 20);
+    path.lineTo(size.width, 0); // bord droit droit
     path.lineTo(size.width, size.height);
     path.lineTo(0, size.height);
     path.close();
@@ -320,7 +331,7 @@ class ImprovedBottomNavPainter extends CustomPainter {
         ..color = Colors.white
         ..style = PaintingStyle.fill;
 
-      final indicatorY = notchRadius * 0.8;
+      final indicatorY = notchRadius * 0.6;
       const indicatorWidth = 30.0;
       const indicatorHeight = 3.0;
 

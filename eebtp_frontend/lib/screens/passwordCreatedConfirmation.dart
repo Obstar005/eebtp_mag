@@ -19,6 +19,7 @@ class _PasswordCreatedPageState extends State<PasswordCreatedPage> {
   final UserService _userService = UserService();
   bool _obscure = true;
   String? _errorMessage;
+  bool _remember = false;
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +135,7 @@ class _PasswordCreatedPageState extends State<PasswordCreatedPage> {
                   ),
                 ),
                 // Options
-          ),
+              ),
 
               if (_errorMessage != null) ...[
                 SizedBox(height: 1.h),
@@ -146,43 +147,37 @@ class _PasswordCreatedPageState extends State<PasswordCreatedPage> {
                   ),
                 ),
               ],
-      Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.check_circle,
-                          color: const Color(0xFF007AFF),
-                          size: 16.sp,
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => setState(() => _remember = !_remember),
+                    child: Container(
+                      width: 4.w,
+                      height: 4.w,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: _remember ? Colors.blue : Colors.grey,
+                          width: 0.2.w,
                         ),
-                        SizedBox(width: 2.w),
-                        Text(
-                          "Se souvenir de moi",
-                          style: GoogleFonts.poppins(
-                            fontSize: 12.sp,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ],
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/forgot_password');
-                      },
-                      child: Text(
-                        "Mots de pass oublié?",
-                        style: GoogleFonts.poppins(
-                          fontSize: 12.sp,
-                          color: const Color(0xFF007AFF),
-                        ),
+                        color: _remember ? Colors.blue : Colors.transparent,
                       ),
+                      child: _remember
+                          ? Icon(Icons.check, size: 2.w, color: Colors.white)
+                          : null,
                     ),
-                  ],
-                ),
-                SizedBox(height: 10.h), 
-                // Progression
-            
+                  ),
+                  SizedBox(width: 2.w),
+                  Text(
+                    'Se souvenir de moi',
+                    style: GoogleFonts.poppins(fontSize: 14.sp),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 10.h),
+
+              // Progression
               SizedBox(height: 10.h),
 
               // Bouton
@@ -200,13 +195,17 @@ class _PasswordCreatedPageState extends State<PasswordCreatedPage> {
                     return;
                   }
 
-                  final success = await _userService.loginByPhone(
-                    widget.phone, // ✅ récupéré depuis la page précédente
+                  final token = await _userService.loginByPhone(
+                    widget.phone,
                     password,
                   );
 
-                  if (success) {
-                    Navigator.pushNamed(context, '/profile');
+                  if (token != null) {
+                    Navigator.pushNamed(
+                      context,
+                      '/profile',
+                      arguments: token, // ✅ on envoie le token
+                    );
                   } else {
                     setState(() {
                       _errorMessage =
@@ -214,6 +213,10 @@ class _PasswordCreatedPageState extends State<PasswordCreatedPage> {
                     });
                   }
                 },
+
+                /*                 onPressed: () {
+                  Navigator.pushNamed(context, '/profile');
+                }, */
                 width: 80.w,
               ),
             ],

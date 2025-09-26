@@ -250,7 +250,8 @@ final UserService _userService = UserService();
                 text: 'Suivant',
                 backgroundColor: const Color(0xFF007AFF),
                 textColor: Colors.white,
-                onPressed: () async {
+            //    onPressed: () => _next(),
+           onPressed: () async {
                   setState(() {
                     
       if (_phone.isEmpty) {
@@ -278,6 +279,7 @@ final UserService _userService = UserService();
     });
   }
 },
+              
                 width: 70.w,
               ),
             ],
@@ -412,7 +414,7 @@ Widget _buildPasswordStep(BuildContext ctx) {
               text: 'Suivant',
               backgroundColor: const Color(0xFF007AFF),
               textColor: Colors.white,
-              onPressed: () async{
+  onPressed: () async{
                 final oldPass = oldPassController.text.trim();
                 final newPass = newPassController.text.trim();
                 final confirmPass = confirmPassController.text.trim();
@@ -438,7 +440,12 @@ Widget _buildPasswordStep(BuildContext ctx) {
                     _errorMessage = "Échec de la mise à jour du mot de passe";
                   });
                 }
-              },
+              }, 
+     
+      /*        
+       onPressed: () {
+                Navigator.pushNamed(context, '/mdp_page', arguments: _phone);
+              }, */
               width: 70.w,
             ),
 

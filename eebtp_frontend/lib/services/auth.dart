@@ -6,14 +6,25 @@ class UserService {
   final String baseUrl = 'http://185.197.195.209:8000';
 
   // 🔐 Authentification
-  Future<bool> loginByPhone(String phone, String password) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/Users/authentication/login-by-phone/'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'telephone': _formatPhone(phone),'password': password}),
-    );
-    return response.statusCode == 200;
+Future<String?> loginByPhone(String phone, String password) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/Users/authentication/login-by-phone/'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({
+      'telephone': _formatPhone(phone),
+      'password': password,
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    return data['access_token']; // ⚡ On récupère le token
+  } else {
+    print("Erreur login: ${response.statusCode} - ${response.body}");
+    return null;
   }
+}
+
 
   Future<bool> verifySms(String phone, String code) async {
     final response = await http.post(
@@ -24,14 +35,7 @@ class UserService {
     return response.statusCode == 200;
   }
 
-/*   Future<bool> setPassword(String phone, String password) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/Users/authentication/set-password/'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'telephone': _formatPhone(phone), 'password': password}),
-    );
-    return response.statusCode == 200;
-  } */
+
 Future<bool> setPassword({
   required String phone,
   required String oldPassword,
@@ -206,4 +210,21 @@ String _formatPhone(String phone) {
     );
     return response.statusCode == 204;
   }
+
+Future<bool> updateProfilePicture(String token, String filePath) async {
+  final url = Uri.parse('$baseUrl/Users/update-photo-profil/');
+  
+  var request = http.MultipartRequest('POST', url);
+  request.headers['Authorization'] = 'Bearer $token';
+  request.files.add(await http.MultipartFile.fromPath('photo_profil', filePath));
+
+  final response = await request.send();
+
+  if (response.statusCode == 200) {
+    return true;
+  } else {
+    print("Erreur upload photo: ${response.statusCode}");
+    return false;
+  }
+}
 }

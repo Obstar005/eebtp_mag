@@ -88,28 +88,28 @@ class _HomePageState extends State<HomePage> {
           "title": "ENTRÉE",
           "icon": Icons.login,
           "value": "55",
-          "color": Color(0xFF4A4458),
+          "color": Color.fromRGBO(67, 58, 75, 1),
         };
       case "Sortie":
         return {
           "title": "SORTIE",
           "icon": Icons.logout,
           "value": "40",
-          "color": Color(0xFF4A4458),
+          "color": Color.fromRGBO(67, 58, 75, 1),
         };
       case "Retour":
         return {
           "title": "RETOUR",
           "icon": Icons.undo,
           "value": "8",
-          "color": Color(0xFF4A4458),
+          "color": Color.fromRGBO(67, 58, 75, 1),
         };
       default:
         return {
           "title": "ENTRÉE",
           "icon": Icons.login,
           "value": "55",
-          "color": Color(0xFF4A4458),
+          "color": Color.fromRGBO(67, 58, 75, 1),
         };
     }
   }
@@ -122,7 +122,7 @@ class _HomePageState extends State<HomePage> {
       initialIndex: 0, // Index pour "Home"
       body: Scaffold(
         extendBody: true,
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         appBar: AppBar(
           backgroundColor: const Color(0xFF007AFF),
           elevation: 0,
@@ -135,10 +135,7 @@ class _HomePageState extends State<HomePage> {
                 radius: 29, // un peu plus grand
                 backgroundColor: Colors.white,
                 child: ClipOval(
-                  child: Image.asset(
-                    "assets/profile.png",
-                    fit: BoxFit.cover,
-                  ),
+                  child: Image.asset("assets/profile.png", fit: BoxFit.cover),
                 ),
               ),
               SizedBox(width: 3.w),
@@ -185,7 +182,8 @@ class _HomePageState extends State<HomePage> {
                       ),
                       child: Icon(
                         Icons.notifications_outlined,
-                        size: 6.5.w, // légèrement réduit pour être proportionnel
+                        size:
+                            6.5.w, // légèrement réduit pour être proportionnel
                         color: Color(0xFF007AFF),
                       ),
                     ),
@@ -232,6 +230,7 @@ class _HomePageState extends State<HomePage> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(25),
+                          border: Border.all(color: const Color.fromRGBO(214, 214, 214, 1)),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.05),
@@ -262,14 +261,14 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
 
-                      SizedBox(height: 4.h),
+                      SizedBox(height: 1.h),
 
                       // ----------- Cartes Entrée/Sortie/Retour et Stock -----------
                       Column(
                         children: [
                           // Carte Entrée/Sortie/Retour
                           Container(
-                            height: 16.h, // au lieu de plein
+                            height: 16.5.h, // au lieu de plein
                             decoration: BoxDecoration(
                               color: cardData["color"],
                               borderRadius: BorderRadius.circular(
@@ -279,7 +278,7 @@ class _HomePageState extends State<HomePage> {
                                 BoxShadow(color: Colors.black12, blurRadius: 8),
                               ],
                             ),
-                            padding: EdgeInsets.all(4.w),
+                            padding: EdgeInsets.all(6.w),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,7 +290,7 @@ class _HomePageState extends State<HomePage> {
                                     Text(
                                       cardData["title"],
                                       style: GoogleFonts.montserrat(
-                                        fontSize: 12.sp,
+                                        fontSize: 14.sp,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.white,
                                       ),
@@ -314,7 +313,7 @@ class _HomePageState extends State<HomePage> {
                                           color: Colors.white,
                                           size: 8.w,
                                         ),
-                                        
+
                                         GestureDetector(
                                           onTap: _showCardTypeDialog,
                                           child: Icon(
@@ -323,7 +322,7 @@ class _HomePageState extends State<HomePage> {
                                             size: 6.w,
                                           ),
                                         ),
-                                         SizedBox(width: 3.w),
+                                        SizedBox(width: 3.w),
                                         Text(
                                           cardData["value"],
                                           style: GoogleFonts.montserrat(
@@ -350,19 +349,21 @@ class _HomePageState extends State<HomePage> {
 
                           // Carte Stock
                           Container(
-                            height: 16.h, // réduit
+                            height: 16.5.h, // réduit
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [Color(0xFF3076FF),Color(0xFF957BFD)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                                colors: [ Color.fromRGBO(150, 124, 253, 1),Color.fromRGBO(49, 119, 255, 1),],
+                                /*    begin: Alignment.topLeft,
+                                end: Alignment.bottomRight, */
+                                begin: Alignment(1.00, 0.50),
+                                end: Alignment(-0.00, 0.50),
                               ),
                               borderRadius: BorderRadius.circular(8.w),
                               boxShadow: [
                                 BoxShadow(color: Colors.black12, blurRadius: 8),
                               ],
                             ),
-                            padding: EdgeInsets.all(4.w),
+                            padding: EdgeInsets.all(8.w),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
