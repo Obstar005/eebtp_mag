@@ -198,20 +198,22 @@ export function apiProjetToProjet(apiProjet: ApiProjet): Projet {
   return {
     id: apiProjet.id,
     name: apiProjet.nom,
-    description: apiProjet.description,
+    description: apiProjet.description || "",
     date_creation: new Date(apiProjet.date_creation),
     date_debut: new Date(apiProjet.date_debut),
-    date_fin: new Date(apiProjet.date_fin),
-    date_modif: new Date(apiProjet.date_modif),
-    date_mise_a_jour: new Date(apiProjet.date_mise_a_jour),
+    date_fin: apiProjet.date_fin
+      ? new Date(apiProjet.date_fin)
+      : new Date(apiProjet.date_debut), // Fallback si pas de date_fin
+    date_modif: new Date(apiProjet.date_modification),
+    date_mise_a_jour: new Date(apiProjet.date_modification), // Même que date_modif
     pays: apiProjet.pays,
-    chef_projet_user_id: apiProjet.chef_projet_user_id,
-    directeur_travaux_user_id: apiProjet.directeur_travaux_user_id,
-    chef_chantier_user_id: apiProjet.chef_chantier_user_id,
-    coordinateur_travaux_user_id: apiProjet.coordinateur_travaux_user_id,
-    chef_equipe_user_id: apiProjet.chef_equipe_user_id,
-    server_boolean: apiProjet.server_boolean,
-    images: apiProjet.images,
+    chef_projet_user_id: apiProjet.creator, // Utiliser le creator comme chef de projet par défaut
+    directeur_travaux_user_id: apiProjet.creator, // Valeur par défaut
+    chef_chantier_user_id: apiProjet.creator, // Valeur par défaut
+    coordinateur_travaux_user_id: apiProjet.creator, // Valeur par défaut
+    chef_equipe_user_id: apiProjet.creator, // Valeur par défaut
+    server_boolean: apiProjet.is_active,
+    images: [], // L'API simple ne gère pas les images
   };
 }
 
@@ -229,25 +231,29 @@ export function apiProjetToProjetWithDetails(
   return {
     id: apiProjet.id,
     name: apiProjet.nom,
-    description: apiProjet.description,
+    description: apiProjet.description || "",
     date_debut: apiProjet.date_debut,
-    date_fin: apiProjet.date_fin,
+    date_fin: apiProjet.date_fin || apiProjet.date_debut, // Fallback si pas de date_fin
     pays: apiProjet.pays,
-    status: getProjetStatus(apiProjet.date_debut, apiProjet.date_fin),
+    status: getProjetStatus(
+      apiProjet.date_debut,
+      apiProjet.date_fin || apiProjet.date_debut
+    ),
     chefProjet: options.chefProjet || {
-      id: apiProjet.chef_projet_user_id,
+      id: apiProjet.creator,
       name: "N/A",
     },
     directeurTravaux: options.directeurTravaux || {
-      id: apiProjet.directeur_travaux_user_id,
+      id: apiProjet.creator,
       name: "N/A",
     },
     chefChantier: options.chefChantier || {
-      id: apiProjet.chef_chantier_user_id,
+      id: apiProjet.creator,
       name: "N/A",
     },
     magasinsCount: options.magasinsCount || 0,
-    comptesAssociesCount: options.comptesAssociesCount || 0,
+    comptesAssociesCount:
+      options.comptesAssociesCount || apiProjet.comptes?.length || 0,
   };
 }
 
@@ -267,17 +273,14 @@ export function createProjetDataToApiCreateProjet(
   data: CreateProjetData
 ): ApiCreateProjetRequest {
   return {
+    creator: data.chef_projet_user_id, // Utiliser le chef de projet comme creator
     nom: data.name,
     description: data.description,
     date_debut: data.date_debut,
     date_fin: data.date_fin,
     pays: data.pays,
-    chef_projet_user_id: data.chef_projet_user_id,
-    directeur_travaux_user_id: data.directeur_travaux_user_id,
-    chef_chantier_user_id: data.chef_chantier_user_id,
-    coordinateur_travaux_user_id: data.coordinateur_travaux_user_id,
-    chef_equipe_user_id: data.chef_equipe_user_id,
-    images: data.images,
+    comptes: [], // À implémenter selon la logique métier
+    is_active: true,
   };
 }
 
@@ -287,17 +290,14 @@ export function updateProjetDataToApiUpdateProjet(
 ): ApiUpdateProjetRequest {
   return {
     id: data.id,
+    creator: data.chef_projet_user_id,
     nom: data.name,
     description: data.description,
     date_debut: data.date_debut,
     date_fin: data.date_fin,
     pays: data.pays,
-    chef_projet_user_id: data.chef_projet_user_id,
-    directeur_travaux_user_id: data.directeur_travaux_user_id,
-    chef_chantier_user_id: data.chef_chantier_user_id,
-    coordinateur_travaux_user_id: data.coordinateur_travaux_user_id,
-    chef_equipe_user_id: data.chef_equipe_user_id,
-    images: data.images,
+    comptes: [], // À implémenter selon la logique métier
+    is_active: true,
   };
 }
 

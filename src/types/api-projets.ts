@@ -1,22 +1,16 @@
 // Types API pour les projets - basés sur api-docs.json
 export interface ApiProjet {
   id: number;
-  nom: string;
-  description?: string;
-  date_creation: string;
-  date_debut: string;
-  date_fin: string;
-  date_modif: string;
-  date_mise_a_jour: string;
-  pays: string;
-  chef_projet_user_id: number;
-  directeur_travaux_user_id: number;
-  chef_chantier_user_id: number;
-  coordinateur_travaux_user_id: number;
-  chef_equipe_user_id: number;
-  server_boolean: boolean;
   creator: number;
-  images?: string[];
+  comptes?: number[];
+  pays: string;
+  nom: string;
+  date_creation: string;
+  date_modification: string;
+  description?: string;
+  date_debut: string; // Format: YYYY-MM-DD
+  date_fin?: string; // Format: YYYY-MM-DD
+  is_active: boolean;
 }
 
 export interface ApiMagasin {
@@ -41,22 +35,26 @@ export interface ApiProjetPhoto {
 
 // Requests pour création/mise à jour
 export interface ApiCreateProjetRequest {
+  creator: number;
   nom: string;
   description?: string;
   date_debut: string; // Format: YYYY-MM-DD
-  date_fin: string; // Format: YYYY-MM-DD
+  date_fin?: string; // Format: YYYY-MM-DD
   pays: string;
-  chef_projet_user_id: number;
-  directeur_travaux_user_id: number;
-  chef_chantier_user_id: number;
-  coordinateur_travaux_user_id: number;
-  chef_equipe_user_id: number;
-  images?: File[];
+  comptes?: number[];
+  is_active?: boolean;
 }
 
-export interface ApiUpdateProjetRequest
-  extends Partial<ApiCreateProjetRequest> {
+export interface ApiUpdateProjetRequest {
   id: number;
+  creator?: number;
+  nom?: string;
+  description?: string;
+  date_debut?: string; // Format: YYYY-MM-DD
+  date_fin?: string; // Format: YYYY-MM-DD
+  pays?: string;
+  comptes?: number[];
+  is_active?: boolean;
 }
 
 export interface ApiCreateMagasinRequest {

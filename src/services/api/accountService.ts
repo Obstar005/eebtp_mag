@@ -94,10 +94,15 @@ export const accountService = {
 export const profileService = {
   // Récupérer tous les profils
   async getProfiles(): Promise<Profile[]> {
-    if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
+    const enableVerification = import.meta.env.VITE_ENABLE_VERIFICATION;
+    console.log("🔧 ProfileService: VITE_ENABLE_VERIFICATION =", enableVerification);
+    
+    if (enableVerification === "false") {
+      console.log("📝 ProfileService: Utilisation du service MOCK");
       return mockProfileService.getProfiles();
     }
 
+    console.log("🌐 ProfileService: Utilisation de l'API RÉELLE");
     // Utiliser l'API Profils
     return await profileApiService.getProfiles();
   },

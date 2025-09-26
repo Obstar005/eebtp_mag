@@ -68,62 +68,22 @@ export class ProjetApiService {
 
   // Créer un nouveau projet
   async createProjet(data: CreateProjetData): Promise<Projet> {
-    const formData = new FormData();
     const apiData = createProjetDataToApiCreateProjet(data);
-
-    // Ajouter les données du projet
-    Object.entries(apiData).forEach(([key, value]) => {
-      if (value !== undefined && key !== "images") {
-        formData.append(key, value.toString());
-      }
-    });
-
-    // Ajouter les images
-    if (data.images && data.images.length > 0) {
-      data.images.forEach((file: File) => {
-        formData.append("images", file);
-      });
-    }
 
     const response = await client.post<ApiProjet>(
       `${this.basePath}/projet-create`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
+      apiData
     );
     return apiProjetToProjet(response.data);
   }
 
   // Mettre à jour un projet
   async updateProjet(data: UpdateProjetData): Promise<Projet> {
-    const { id, ...updateData } = data;
-    const formData = new FormData();
     const apiData = updateProjetDataToApiUpdateProjet(data);
 
-    Object.entries(apiData).forEach(([key, value]) => {
-      if (value !== undefined && key !== "id" && key !== "images") {
-        formData.append(key, value.toString());
-      }
-    });
-
-    // Ajouter les images
-    if (updateData.images && updateData.images.length > 0) {
-      updateData.images.forEach((file: File) => {
-        formData.append("images", file);
-      });
-    }
-
     const response = await client.put<ApiProjet>(
-      `${this.basePath}/projet-update/${id}`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
+      `${this.basePath}/projet-update/${data.id}`,
+      apiData
     );
     return apiProjetToProjet(response.data);
   }
@@ -156,7 +116,9 @@ export class ProjetApiService {
     projets.forEach((projet) => {
       const now = new Date();
       const debut = new Date(projet.date_debut);
-      const fin = new Date(projet.date_fin);
+      const fin = projet.date_fin
+        ? new Date(projet.date_fin)
+        : new Date(debut.getTime() + 30 * 24 * 60 * 60 * 1000); // +30 jours par défaut
 
       // Calculer le statut
       if (debut > now) stats.planifies++;

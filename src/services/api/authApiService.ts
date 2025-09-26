@@ -411,10 +411,16 @@ export class ProfileApiService {
   // Récupérer tous les profils
   async getProfiles(): Promise<Profile[]> {
     try {
+      console.log("🔍 ProfileApiService: Récupération des profils depuis l'API EEBTP...");
       const response = await apiClient.get<ApiProfil[]>("/Users/liste-profils");
-      return response.data.map(apiProfilToProfile);
+      console.log("✅ ProfileApiService: Réponse API profils:", response.data);
+      
+      const profiles = response.data.map(apiProfilToProfile);
+      console.log("🔄 ProfileApiService: Profils transformés:", profiles);
+      
+      return profiles;
     } catch (error) {
-      console.error("Erreur getProfiles:", error);
+      console.error("❌ Erreur getProfiles:", error);
       throw new Error("Impossible de récupérer la liste des profils");
     }
   }
