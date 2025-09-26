@@ -355,16 +355,16 @@ def login_by_phone(request):
             {"error": "Mot de passe incorrect."},status=status.HTTP_401_UNAUTHORIZED
         )
     #Verifions si l'utilisateur s'est connecté pour la première fois
-    if user.first_login:
-        return Response(
-            {"error": "Vous devez changer votre mot de passe car c'est votre première connexion."}, status=status.HTTP_403_FORBIDDEN
-        )
+    # if user.first_login:
+    #     return Response(
+    #         {"error": "Vous devez changer votre mot de passe car c'est votre première connexion."}, status=status.HTTP_200_OK
+    #     )
     first = user.first_login
     # Générer un token JWT
     refresh = RefreshToken.for_user(user)
 
     return Response(
-        {"message": "Connexion réussie.", 'access_token': str(refresh.access_token), "First_login": first}, status=status.HTTP_200_OK)
+        {"message": "Connexion réussie.", 'access_token': str(refresh.access_token), "first_login": first}, status=status.HTTP_200_OK)
 
 #^pour récuperer les informations de l'utilisateur connecté
 @swagger_auto_schema(
