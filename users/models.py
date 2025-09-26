@@ -29,6 +29,7 @@ class CustomUser(AbstractUser):
     is_active = models.BooleanField(default=True)
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modif = models.DateTimeField(auto_now=True)
+    first_login = models.BooleanField(default=True)
 
 
     def __str__(self):

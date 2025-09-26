@@ -261,6 +261,7 @@ def change_password(request):
     try:
         validate_password_strength(new_password, user=user)
         user.set_password(new_password)
+        user.first_login = False  # Marquer comme plus première connexion
         user.save()
     except ValidationError as e:
         return Response({"error": str(e)}, status=400)
@@ -306,7 +307,7 @@ def set_password(request):
         {"message": "Mot de passe créé avec succès."}, status=status.HTTP_200_OK
     )
 
-# Fonction pour authentifier un utilisateur
+# Fonction pour authentifier un utilisateur par son numero de telephone
 @swagger_auto_schema(
     method='post',
     operation_description="Authentifier un utilisateur par téléphone et mot de passe",
@@ -353,11 +354,17 @@ def login_by_phone(request):
         return Response(
             {"error": "Mot de passe incorrect."},status=status.HTTP_401_UNAUTHORIZED
         )
+    #Verifions si l'utilisateur s'est connecté pour la première fois
+    if user.first_login:
+        return Response(
+            {"error": "Vous devez changer votre mot de passe car c'est votre première connexion."}, status=status.HTTP_403_FORBIDDEN
+        )
+    first = user.first_login
     # Générer un token JWT
     refresh = RefreshToken.for_user(user)
 
     return Response(
-        {"message": "Connexion réussie.", 'access_token': str(refresh.access_token)}, status=status.HTTP_200_OK)
+        {"message": "Connexion réussie.", 'access_token': str(refresh.access_token), "First_login": first}, status=status.HTTP_200_OK)
 
 #^pour récuperer les informations de l'utilisateur connecté
 @swagger_auto_schema(
