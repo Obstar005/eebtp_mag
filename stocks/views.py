@@ -8,6 +8,8 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from projets.models import Magasin, StockItem
+from projets.serializers import MagasinSerializer, StockItemSerializer
 
 #Creation d'un produit dans le système
 @swagger_auto_schema(
@@ -96,3 +98,100 @@ def delete_article(request, pk):
         return Response({'message': 'Article désactivé avec succès.'}, status=status.HTTP_200_OK)
     except Produit.DoesNotExist:
         return Response({'error': 'Article introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+    
+#######Gestion des articles dans un magasin#######
+@swagger_auto_schema(
+    method='post',
+    operation_description="Ajouter un article au stock d'un magasin",
+    request_body=StockItemSerializer,
+    responses={201: 'Created', 400: 'Bad Request'}
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_stock_item(request):
+    user = request.user
+    serializer = StockItemSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save(add_by=user)
+        return Response({'message': 'Article ajouté au stock du magasin avec succès.'}, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#Liste des articles dans un magasin
+@swagger_auto_schema(
+    method='get',
+    operation_description="Récupérer la liste des articles dans un magasin",
+    responses={200: StockItemSerializer(many=True)}
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_stock_items(request, magasin_id):
+    try:
+        magasin = Magasin.objects.get(pk=magasin_id)
+    except Magasin.DoesNotExist:
+        return Response({'error': 'Magasin introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+    stock_items = StockItem.objects.filter(magasin=magasin, is_active=True).order_by('-date_ajout')
+    serializer = StockItemSerializer(stock_items, many=True)
+    return Response(serializer.data)
+
+#Mettre à jour un article dans le stock d'un magasin
+@swagger_auto_schema(
+    method='put',
+    operation_description='Mettre à jour les données sur un article dans un magasin',
+    request_body=StockItemSerializer,
+    responses={200: 'OK', 400:'Bad Request', 404: 'Item Not Found'}
+    )
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_stock_item(request, magasin_id):
+    try:
+        stock_item = StockItem.objects.get(pk=magasin_id)
+    except StockItem.DoesNotExist:
+        return Response({'error': 'Article introuvable'}, status=status.HTTP_404_NOT_FOUND)
+    
+    stock_item.updated_by = request.user
+
+    serializer = StockItemSerializer(stock_item, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#Recupérer les détails d'un article dans un magasin
+@swagger_auto_schema(
+    method='get',
+    operation_description='Récupérer les détails d\'un article dans un magasin',
+    responses={200: StockItemSerializer, 404: 'Item Not Found'}
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_stock_item(request, stock_item_id):
+    try:
+        stock_item = StockItem.objects.get(pk=stock_item_id)
+    except StockItem.DoesNotExist:
+        return Response({'error': 'Article introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+    if not stock_item.is_active:
+        return Response({'error': 'Cet article a été désactivé'}, status=status.HTTP_404_NOT_FOUND)
+    serializer = StockItemSerializer(stock_item)
+    return Response(serializer.data)
+
+#Supprimer(Desactiver) un article dans le stock d'un magasin 
+@swagger_auto_schema(
+    method='patch',
+    operation_description="Supprimer un article dans le stock d'un magasin (désactiver)",
+    responses={204: 'Supprimé avec succès', 404: 'Not Found'}
+)
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def delete_stock_item(request, stock_item_id):
+    try:
+        stock_item = StockItem.objects.get(pk=stock_item_id)
+        stock_item.is_active = False
+        stock_item.save()
+        return Response({'message': 'Article supprimé avec succès dans le magasin.'}, status=status.HTTP_200_OK)
+    except StockItem.DoesNotExist:
+        return Response({'error': 'Article introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+

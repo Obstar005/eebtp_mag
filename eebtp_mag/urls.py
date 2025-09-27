@@ -29,7 +29,7 @@ urlpatterns = [
     path('Stocks/', include('stocks.urls')),
     path('Users/', include('users.urls')),
     path('Projets/', include('projets.urls')),
-
+    path('Mouvements/', include('mouvements.urls')),
 ]
 
 if settings.DEBUG:

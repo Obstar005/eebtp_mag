@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'projets',
     'rest_framework',
     'corsheaders',
+    'mouvements',
 ]
 
 MIDDLEWARE = [
