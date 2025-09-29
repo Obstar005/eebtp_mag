@@ -11,6 +11,7 @@ class ProjetSerializer(serializers.ModelSerializer):
     creator = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     comptes = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True, required=False)
     pays = CountryField(name_only=True)
+    photos = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Projet
@@ -19,6 +20,7 @@ class ProjetSerializer(serializers.ModelSerializer):
 
 class MagasinSerializer(serializers.ModelSerializer):
     creator = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    projet_nom = serializers.ReadOnlyField(source='projet.nom')
     class Meta:
         model = Magasin
         fields = '__all__'

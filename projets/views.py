@@ -7,6 +7,8 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.decorators import parser_classes
 
 
 #Vue pour la création d'un projet
@@ -127,6 +129,14 @@ def delete_projet(request, pk):
 @swagger_auto_schema(
     method='post',
     operation_description="Cette API permet d'ajouter des photos pour un projet.",
+    manual_parameters=[
+        openapi.Parameter(
+            name="image",
+            in_=openapi.IN_FORM,
+            type=openapi.TYPE_FILE,
+            description="Image de la photo du projet"
+        ),
+    ],
     request_body=ProjetPhotoSerializer,
     responses={
         201: openapi.Response("Photo créée avec succès", ProjetPhotoSerializer),
@@ -136,6 +146,7 @@ def delete_projet(request, pk):
 )   
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser])
 def create_photo(request, pk):
     try:
         projet = Projet.objects.get(pk=pk)
@@ -155,6 +166,14 @@ def create_photo(request, pk):
 @swagger_auto_schema(
     method='put',
     operation_description="Cette API permet de mettre à jour une photo d'un projet.",
+    manual_parameters=[
+        openapi.Parameter(
+            name="photo_profil",
+            in_=openapi.IN_FORM,
+            type=openapi.TYPE_FILE,
+            description="Image de profil"
+        ),
+    ],
     request_body=ProjetPhotoSerializer,
     responses={
         200: openapi.Response("Photo mise à jour avec succès", ProjetPhotoSerializer),
@@ -164,6 +183,7 @@ def create_photo(request, pk):
 )
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser])
 def edit_photo(request, pk):
     try:
         photo = ProjetPhoto.objects.get(pk=pk)

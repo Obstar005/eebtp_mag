@@ -13,7 +13,8 @@ urlpatterns = [
     path('liste-users', views.list_users, name='list_users'),
     path('user-create', views.create_user, name='create_user'),
     path('user-detail<int:pk>', views.get_user, name='get_user'),   
-    path('user-update/<int:pk>', views.update_user, name='update_user'),
+    path('user-update/<int:pk>', views.update_user, name='update_user'), 
+    path('user-update-profile/<int:pk>', views.update_user_photo, name='update_user_profile'),
     path('user-delete/<int:pk>', views.delete_user, name='delete_user'),
     path('countries/', views.get_countries, name='get_countries'),
 

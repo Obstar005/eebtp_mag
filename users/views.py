@@ -14,6 +14,8 @@ from .validators import validate_password_strength
 from django.core.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
 from .send_sms_service import send_verification_sms
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.decorators import parser_classes
 
 
 #Pour recup la liste des pays:
@@ -134,12 +136,33 @@ def list_users(request):
 #Creation d'un utilisateur
 @swagger_auto_schema(
     method='post',
-    operation_description="Créer un nouvel utilisateur",
+    operation_description="Créer un nouvel utilisateur (avec ou sans photo de profil)",
+
+    # consumes=["multipart/form-data"],
+    # manual_parameters=[
+    #     openapi.Parameter("username", openapi.IN_FORM, type=openapi.TYPE_STRING, description="Nom d'utilisateur"),
+    #     openapi.Parameter("surname", openapi.IN_FORM, type=openapi.TYPE_STRING, description="Prénom"),
+    #     openapi.Parameter("birth_date", openapi.IN_FORM, type=openapi.TYPE_STRING, format="date", description="Date de naissance (YYYY-MM-DD)"),
+    #     openapi.Parameter("nationality", openapi.IN_FORM, type=openapi.TYPE_STRING, description="Nationalité (code pays ISO2 ex: FR, TG)"),
+    #     openapi.Parameter("type", openapi.IN_FORM, type=openapi.TYPE_STRING, description="Type d'utilisateur (Interne ou Consultant)"),
+    #     openapi.Parameter("titre", openapi.IN_FORM, type=openapi.TYPE_STRING, description="Titre"),
+    #     openapi.Parameter("poste", openapi.IN_FORM, type=openapi.TYPE_STRING, description="Poste"),
+    #     openapi.Parameter("telephone", openapi.IN_FORM, type=openapi.TYPE_STRING, description="Numéro de téléphone"),
+    #     openapi.Parameter("password", openapi.IN_FORM, type=openapi.TYPE_STRING, description="Mot de passe"),
+    #     openapi.Parameter("photo_profil", openapi.IN_FORM, type=openapi.TYPE_FILE, description="Photo de profil (optionnel)"),
+    #     openapi.Parameter("id_profil", openapi.IN_FORM, type=openapi.TYPE_INTEGER, description="ID du profil (clé étrangère vers Profil)"),
+    #     openapi.Parameter("email", openapi.IN_FORM, type=openapi.TYPE_STRING, description="Adresse email"),
+    #     openapi.Parameter("first_name", openapi.IN_FORM, type=openapi.TYPE_STRING, description="Nom de famille"),
+    #     openapi.Parameter("projets", openapi.IN_FORM, type=openapi.TYPE_INTEGER, description="Id du projet"),
+    #     openapi.Parameter("last_name", openapi.IN_FORM, type=openapi.TYPE_STRING, description="Prénom"),
+    #     openapi.Parameter("is_superuser", openapi.IN_FORM, type=openapi.TYPE_STRING, description="True or False"),
+    # ],
     request_body=CustomUserSerializer,
     responses={201: CustomUserSerializer, 400: 'Bad Request'}
 )
 @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
+# @parser_classes([MultiPartParser, FormParser])
 def create_user(request):
     serializer = CustomUserSerializer(data=request.data)
     if serializer.is_valid():
@@ -166,11 +189,20 @@ def get_user(request, pk):
 @swagger_auto_schema(
     method='put',
     operation_description="Modifier un utilisateur existant",
+    manual_parameters=[
+        openapi.Parameter(
+            name="photo_profil",
+            in_=openapi.IN_FORM,
+            type=openapi.TYPE_FILE,
+            description="Image de profil"
+        ),
+    ],
     request_body=CustomUserSerializer,
     responses={200: CustomUserSerializer}
 )
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
+# @parser_classes([MultiPartParser, FormParser])
 def update_user(request, pk):
     try:
         user = CustomUser.objects.get(pk=pk)
@@ -182,6 +214,35 @@ def update_user(request, pk):
         serializer.save()
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#Mettre à jour la photo de profil d'un user
+@swagger_auto_schema(
+    method='put',
+    operation_description="Mettre à jour la photo de profil d'un utilisateur",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['photo_profil'],
+        properties={
+            'photo_profil': openapi.Schema(type=openapi.TYPE_FILE, description='Fichier image de la photo de profil')
+        }
+    ),
+    responses={200: CustomUserSerializer, 400: 'Bad Request', 404: 'Utilisateur introuvable'}
+)
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated]) 
+def update_user_photo(request, pk):
+    try:
+        user = CustomUser.objects.get(pk=pk)
+    except CustomUser.DoesNotExist:
+        return Response({'error': 'Utilisateur introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+    if 'photo_profil' not in request.FILES:
+        return Response({'error': 'Aucune photo fournie'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.photo_profil = request.FILES['photo_profil']
+    user.save()
+    serializer = CustomUserSerializer(user)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 @swagger_auto_schema(
     method='delete',
