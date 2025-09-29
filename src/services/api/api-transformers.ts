@@ -17,6 +17,8 @@ import type {
   ProjetStatus,
   Magasin,
   CreateMagasinData,
+  CompteAssocie,
+  ProjetRole,
 } from "../../types/project";
 import type {
   ApiCustomUser,
@@ -37,7 +39,16 @@ import type {
 } from "../../types/api-projets";
 
 export function apiUserToAccount(apiUser: ApiCustomUser): Account {
-  return {
+  // Vérifier et tracer les données API
+  console.log("🔍 apiUserToAccount: Données API reçues:", {
+    id: apiUser.id,
+    username: apiUser.username,
+    first_name: apiUser.first_name,
+    last_name: apiUser.last_name,
+    id_profil: apiUser.id_profil,
+  });
+
+  const account = {
     id: apiUser.id.toString(),
     code: `CPT-${apiUser.id.toString().padStart(3, "0")}`, // Générer un code
     nom: apiUser.last_name,
@@ -53,8 +64,13 @@ export function apiUserToAccount(apiUser: ApiCustomUser): Account {
     date_creation: apiUser.date_creation,
     date_modification: apiUser.date_modif,
     derniere_connexion: apiUser.last_login,
-    profile_id: apiUser.id_profil?.toString() || "",
+    profile_id: apiUser.id_profil ? apiUser.id_profil.toString() : "",
   };
+
+  // Tracer l'objet compte résultant
+  console.log("🔄 apiUserToAccount: Compte transformé:", account);
+
+  return account;
 }
 
 export function apiUserToUser(apiUser: ApiCustomUser): User {
@@ -136,7 +152,33 @@ export function accountToApiUser(
 export function createAccountDataToApiUser(
   data: CreateAccountData
 ): ApiCreateUserRequest {
-  return {
+  console.log("🔄 Transformation des données de compte pour l'API:", {
+    nom_utilisateur: data.nom_utilisateur,
+    prenoms: data.prenoms,
+    nom: data.nom,
+    date_naissance: data.date_naissance,
+    nationalite: data.nationalite,
+    type: data.type,
+    telephone: data.telephone,
+    titre: data.titre,
+    profile_id: data.profile_id,
+    has_photo: !!data.photo_profil,
+  });
+
+  // Vérifier si profile_id est une chaîne ou un nombre et la convertir en nombre
+  let profileId: number | undefined;
+  if (data.profile_id) {
+    profileId = parseInt(data.profile_id);
+    if (isNaN(profileId)) {
+      console.error(
+        "🛑 Erreur: profile_id n'est pas un nombre valide:",
+        data.profile_id
+      );
+      profileId = undefined;
+    }
+  }
+
+  const apiUser = {
     username: data.nom_utilisateur,
     first_name: data.prenoms,
     last_name: data.nom,
@@ -149,8 +191,12 @@ export function createAccountDataToApiUser(
     titre: data.titre,
     poste: data.titre, // Utiliser titre comme poste
     password: data.mot_de_passe,
-    id_profil: parseInt(data.profile_id),
+    id_profil: profileId,
   };
+
+  console.log("✅ Données transformées pour l'API:", apiUser);
+
+  return apiUser;
 }
 
 export function updateAccountDataToApiUser(
@@ -195,6 +241,34 @@ function getProjetStatus(dateDebut: string, dateFin: string): ProjetStatus {
 
 // API → Frontend : Transformer ApiProjet vers Projet
 export function apiProjetToProjet(apiProjet: ApiProjet): Projet {
+  console.log("🔄 Transformation de ApiProjet vers Projet:", apiProjet);
+
+  // Créer un tableau de comptes associés basé sur les IDs d'utilisateurs
+  const comptesAssocies: CompteAssocie[] = [];
+
+  if (apiProjet.comptes && apiProjet.comptes.length > 0) {
+    console.log("👥 Comptes associés au projet (API):", apiProjet.comptes);
+
+    // Pour l'instant, ajouter des comptes associés simples basés sur les IDs
+    // Idéalement, il faudrait récupérer les détails des utilisateurs à partir de userApiService
+    apiProjet.comptes.forEach((userId) => {
+      // Déterminer le rôle en fonction de l'ID (logique simplifiée)
+      let role: ProjetRole = "magasinier"; // Rôle par défaut
+
+      if (userId === apiProjet.creator) {
+        role = "chef_projet";
+      }
+
+      comptesAssocies.push({
+        userId: userId,
+        userName: `Utilisateur ${userId}`, // Nom par défaut, à remplacer par le vrai nom
+        userProfile: "Profil non chargé", // Profil par défaut
+        role: role,
+        actions: ["view"], // Actions par défaut
+      });
+    });
+  }
+
   return {
     id: apiProjet.id,
     name: apiProjet.nom,
@@ -214,6 +288,7 @@ export function apiProjetToProjet(apiProjet: ApiProjet): Projet {
     chef_equipe_user_id: apiProjet.creator, // Valeur par défaut
     server_boolean: apiProjet.is_active,
     images: [], // L'API simple ne gère pas les images
+    comptesAssocies: comptesAssocies, // Ajouter les comptes associés
   };
 }
 
@@ -272,6 +347,57 @@ export function apiMagasinToMagasin(apiMagasin: ApiMagasin): Magasin {
 export function createProjetDataToApiCreateProjet(
   data: CreateProjetData
 ): ApiCreateProjetRequest {
+  console.log(
+    "🔄 Transformation de CreateProjetData vers ApiCreateProjetRequest:",
+    data
+  );
+
+  // Collecter tous les IDs d'utilisateurs associés au projet
+  const userIds: number[] = [];
+
+  // Ajouter l'ID du chef de projet s'il existe
+  if (data.chef_projet_user_id) {
+    userIds.push(data.chef_projet_user_id);
+  }
+
+  // Ajouter les autres rôles s'ils existent et sont différents
+  if (
+    data.directeur_travaux_user_id &&
+    !userIds.includes(data.directeur_travaux_user_id)
+  ) {
+    userIds.push(data.directeur_travaux_user_id);
+  }
+
+  if (
+    data.chef_chantier_user_id &&
+    !userIds.includes(data.chef_chantier_user_id)
+  ) {
+    userIds.push(data.chef_chantier_user_id);
+  }
+
+  if (
+    data.coordinateur_travaux_user_id &&
+    !userIds.includes(data.coordinateur_travaux_user_id)
+  ) {
+    userIds.push(data.coordinateur_travaux_user_id);
+  }
+
+  if (data.chef_equipe_user_id && !userIds.includes(data.chef_equipe_user_id)) {
+    userIds.push(data.chef_equipe_user_id);
+  }
+
+  // Ajouter les utilisateurs supplémentaires s'il y en a
+  if (data.comptes_associes?.length) {
+    data.comptes_associes.forEach((userId) => {
+      const id = parseInt(userId.toString());
+      if (!isNaN(id) && !userIds.includes(id)) {
+        userIds.push(id);
+      }
+    });
+  }
+
+  console.log("👥 Utilisateurs associés au projet:", userIds);
+
   return {
     creator: data.chef_projet_user_id, // Utiliser le chef de projet comme creator
     nom: data.name,
@@ -279,7 +405,7 @@ export function createProjetDataToApiCreateProjet(
     date_debut: data.date_debut,
     date_fin: data.date_fin,
     pays: data.pays,
-    comptes: [], // À implémenter selon la logique métier
+    comptes: userIds, // Liste de tous les IDs d'utilisateurs associés
     is_active: true,
   };
 }
@@ -288,6 +414,57 @@ export function createProjetDataToApiCreateProjet(
 export function updateProjetDataToApiUpdateProjet(
   data: UpdateProjetData
 ): ApiUpdateProjetRequest {
+  console.log(
+    "🔄 Transformation de UpdateProjetData vers ApiUpdateProjetRequest:",
+    data
+  );
+
+  // Collecter tous les IDs d'utilisateurs associés au projet
+  const userIds: number[] = [];
+
+  // Ajouter l'ID du chef de projet s'il existe
+  if (data.chef_projet_user_id) {
+    userIds.push(data.chef_projet_user_id);
+  }
+
+  // Ajouter les autres rôles s'ils existent et sont différents
+  if (
+    data.directeur_travaux_user_id &&
+    !userIds.includes(data.directeur_travaux_user_id)
+  ) {
+    userIds.push(data.directeur_travaux_user_id);
+  }
+
+  if (
+    data.chef_chantier_user_id &&
+    !userIds.includes(data.chef_chantier_user_id)
+  ) {
+    userIds.push(data.chef_chantier_user_id);
+  }
+
+  if (
+    data.coordinateur_travaux_user_id &&
+    !userIds.includes(data.coordinateur_travaux_user_id)
+  ) {
+    userIds.push(data.coordinateur_travaux_user_id);
+  }
+
+  if (data.chef_equipe_user_id && !userIds.includes(data.chef_equipe_user_id)) {
+    userIds.push(data.chef_equipe_user_id);
+  }
+
+  // Ajouter les utilisateurs supplémentaires s'il y en a
+  if (data.comptes_associes?.length) {
+    data.comptes_associes.forEach((userId) => {
+      const id = parseInt(userId.toString());
+      if (!isNaN(id) && !userIds.includes(id)) {
+        userIds.push(id);
+      }
+    });
+  }
+
+  console.log("👥 Utilisateurs associés au projet:", userIds);
+
   return {
     id: data.id,
     creator: data.chef_projet_user_id,
@@ -296,7 +473,7 @@ export function updateProjetDataToApiUpdateProjet(
     date_debut: data.date_debut,
     date_fin: data.date_fin,
     pays: data.pays,
-    comptes: [], // À implémenter selon la logique métier
+    comptes: userIds, // Liste de tous les IDs d'utilisateurs associés
     is_active: true,
   };
 }

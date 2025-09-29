@@ -16,6 +16,170 @@
   "securityDefinitions": { "Basic": { "type": "basic" } },
   "security": [{ "Basic": [] }],
   "paths": {
+    "/Mouvements/entree-create": {
+      "post": {
+        "operationId": "Mouvements_entree-create_create",
+        "description": "Créer une nouvelle entrée de stock",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Entree" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Entree" }
+          },
+          "400": { "description": "Bad Request" }
+        },
+        "tags": ["Mouvements"]
+      },
+      "parameters": []
+    },
+    "/Mouvements/entree-detail/{id}": {
+      "get": {
+        "operationId": "Mouvements_entree-detail_read",
+        "description": "Récupérer une entrée de stock par son ID",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Entree" }
+          },
+          "404": { "description": "Not Found" }
+        },
+        "tags": ["Mouvements"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Mouvements/liste-entree-magasin/{magasin_id}": {
+      "get": {
+        "operationId": "Mouvements_liste-entree-magasin_read",
+        "description": "Récupérer la liste des entrées de stock pour un magasin spécifique",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Entree" }
+          },
+          "404": { "description": "Not Found" }
+        },
+        "tags": ["Mouvements"]
+      },
+      "parameters": [
+        {
+          "name": "magasin_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/Mouvements/liste-entrees": {
+      "get": {
+        "operationId": "Mouvements_liste-entrees_list",
+        "description": "Récupérer la liste des entrées de stock",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/Entree" }
+            }
+          }
+        },
+        "tags": ["Mouvements"]
+      },
+      "parameters": []
+    },
+    "/Mouvements/liste-sortie-magasin/{magasin_id}": {
+      "get": {
+        "operationId": "Mouvements_liste-sortie-magasin_read",
+        "description": "Récupérer la liste des sorties de stock pour un magasin spécifique",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Sortie" }
+          },
+          "404": { "description": "Not Found" }
+        },
+        "tags": ["Mouvements"]
+      },
+      "parameters": [
+        {
+          "name": "magasin_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/Mouvements/liste-sorties": {
+      "get": {
+        "operationId": "Mouvements_liste-sorties_list",
+        "description": "Récupérer la liste des sorties de stock",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/Sortie" }
+            }
+          }
+        },
+        "tags": ["Mouvements"]
+      },
+      "parameters": []
+    },
+    "/Mouvements/sortie-create": {
+      "post": {
+        "operationId": "Mouvements_sortie-create_create",
+        "description": "Créer une nouvelle sortie de stock",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Sortie" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Sortie" }
+          },
+          "400": { "description": "Bad Request" }
+        },
+        "tags": ["Mouvements"]
+      },
+      "parameters": []
+    },
+    "/Mouvements/sortie-detail/{id}": {
+      "get": {
+        "operationId": "Mouvements_sortie-detail_read",
+        "description": "Récupérer une sortie de stock par son ID",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Sortie" }
+          },
+          "404": { "description": "Not Found" }
+        },
+        "tags": ["Mouvements"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
     "/Projets/liste-magasins": {
       "get": {
         "operationId": "Projets_liste-magasins_list",
@@ -401,6 +565,122 @@
       },
       "parameters": []
     },
+    "/Stocks/liste-stock-items/{magasin_id}": {
+      "get": {
+        "operationId": "Stocks_liste-stock-items_read",
+        "description": "Récupérer la liste des articles dans un magasin",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/StockItem" }
+            }
+          }
+        },
+        "tags": ["Stocks"]
+      },
+      "parameters": [
+        {
+          "name": "magasin_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/Stocks/stock-item-create": {
+      "post": {
+        "operationId": "Stocks_stock-item-create_create",
+        "description": "Ajouter un article au stock d'un magasin",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/StockItem" }
+          }
+        ],
+        "responses": {
+          "201": { "description": "Created" },
+          "400": { "description": "Bad Request" }
+        },
+        "tags": ["Stocks"]
+      },
+      "parameters": []
+    },
+    "/Stocks/stock-item-delete/{stock_item_id}": {
+      "patch": {
+        "operationId": "Stocks_stock-item-delete_partial_update",
+        "description": "Supprimer un article dans le stock d'un magasin (désactiver)",
+        "parameters": [],
+        "responses": {
+          "204": { "description": "Supprimé avec succès" },
+          "404": { "description": "Not Found" }
+        },
+        "tags": ["Stocks"]
+      },
+      "parameters": [
+        {
+          "name": "stock_item_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/Stocks/stock-item-detail/{stock_item_id}": {
+      "get": {
+        "operationId": "Stocks_stock-item-detail_read",
+        "description": "Récupérer les détails d'un article dans un magasin",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/StockItem" }
+          },
+          "404": { "description": "Item Not Found" }
+        },
+        "tags": ["Stocks"]
+      },
+      "parameters": [
+        {
+          "name": "stock_item_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/Stocks/stock-item-update/{magasin_id}": {
+      "put": {
+        "operationId": "Stocks_stock-item-update_update",
+        "description": "Mettre à jour les données sur un article dans un magasin",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/StockItem" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Bad Request" },
+          "404": { "description": "Item Not Found" }
+        },
+        "tags": ["Stocks"]
+      },
+      "parameters": [
+        {
+          "name": "magasin_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
     "/Users/authentication/check-user-exists/": {
       "post": {
         "operationId": "Users_authentication_check-user-exists_create",
@@ -744,6 +1024,184 @@
     }
   },
   "definitions": {
+    "Entree": {
+      "required": [
+        "magasin",
+        "stock_item",
+        "type",
+        "nom_deposant",
+        "tel_deposant",
+        "fonction_deposant",
+        "societe",
+        "tel_societe",
+        "nom_livreur",
+        "tel_livreur"
+      ],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "magasin": { "title": "Magasin", "type": "integer" },
+        "stock_item": { "title": "Stock item", "type": "integer" },
+        "source": { "title": "Source", "type": "integer", "x-nullable": true },
+        "stock_item_name": {
+          "title": "Stock item name",
+          "type": "string",
+          "readOnly": true
+        },
+        "stock_item_type": {
+          "title": "Stock item type",
+          "type": "string",
+          "readOnly": true
+        },
+        "type": {
+          "title": "Type",
+          "type": "string",
+          "enum": ["Livraison", "Retour"]
+        },
+        "quantite_m": {
+          "title": "Quantite m",
+          "type": "string",
+          "format": "decimal"
+        },
+        "nom_deposant": {
+          "title": "Nom deposant",
+          "type": "string",
+          "maxLength": 100,
+          "minLength": 1
+        },
+        "tel_deposant": {
+          "title": "Tel deposant",
+          "type": "string",
+          "maxLength": 20,
+          "minLength": 1
+        },
+        "fonction_deposant": {
+          "title": "Fonction deposant",
+          "type": "string",
+          "maxLength": 100,
+          "minLength": 1
+        },
+        "date_creation": {
+          "title": "Date creation",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "date_modif": {
+          "title": "Date modif",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "societe": {
+          "title": "Societe",
+          "type": "string",
+          "maxLength": 100,
+          "minLength": 1
+        },
+        "tel_societe": {
+          "title": "Tel societe",
+          "type": "string",
+          "maxLength": 20,
+          "minLength": 1
+        },
+        "nom_livreur": {
+          "title": "Nom livreur",
+          "type": "string",
+          "maxLength": 100,
+          "minLength": 1
+        },
+        "tel_livreur": {
+          "title": "Tel livreur",
+          "type": "string",
+          "maxLength": 20,
+          "minLength": 1
+        },
+        "signature_livreur": {
+          "title": "Signature livreur",
+          "type": "string",
+          "readOnly": true,
+          "x-nullable": true,
+          "format": "uri"
+        },
+        "is_active": { "title": "Is active", "type": "boolean" },
+        "make_by": {
+          "title": "Make by",
+          "type": "integer",
+          "readOnly": true,
+          "x-nullable": true
+        }
+      }
+    },
+    "Sortie": {
+      "required": [
+        "magasin",
+        "stock_item",
+        "objet",
+        "nom_receveur",
+        "tel_receveur",
+        "fonction_receveur"
+      ],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "magasin": { "title": "Magasin", "type": "integer" },
+        "stock_item": { "title": "Stock item", "type": "integer" },
+        "stock_item_name": {
+          "title": "Stock item name",
+          "type": "string",
+          "readOnly": true
+        },
+        "stock_item_type": {
+          "title": "Stock item type",
+          "type": "string",
+          "readOnly": true
+        },
+        "quantite_m": {
+          "title": "Quantite m",
+          "type": "string",
+          "format": "decimal"
+        },
+        "date_creation": {
+          "title": "Date creation",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "date_modif": {
+          "title": "Date modif",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "objet": { "title": "Objet", "type": "string", "minLength": 1 },
+        "nom_receveur": {
+          "title": "Nom receveur",
+          "type": "string",
+          "maxLength": 100,
+          "minLength": 1
+        },
+        "tel_receveur": {
+          "title": "Tel receveur",
+          "type": "string",
+          "maxLength": 20,
+          "minLength": 1
+        },
+        "fonction_receveur": {
+          "title": "Fonction receveur",
+          "type": "string",
+          "maxLength": 100,
+          "minLength": 1
+        },
+        "is_active": { "title": "Is active", "type": "boolean" },
+        "make_by": {
+          "title": "Make by",
+          "type": "integer",
+          "readOnly": true,
+          "x-nullable": true
+        }
+      }
+    },
     "Magasin": {
       "required": ["creator", "nom"],
       "type": "object",
@@ -1143,6 +1601,64 @@
         "is_active": { "title": "Is active", "type": "boolean" }
       }
     },
+    "StockItem": {
+      "required": ["produit", "magasin"],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "produit": { "title": "Produit", "type": "integer" },
+        "magasin": { "title": "Magasin", "type": "integer" },
+        "add_by_user": {
+          "title": "Add by user",
+          "type": "string",
+          "readOnly": true
+        },
+        "magasin_name": {
+          "title": "Magasin name",
+          "type": "string",
+          "readOnly": true
+        },
+        "produit_name": {
+          "title": "Produit name",
+          "type": "string",
+          "readOnly": true
+        },
+        "quantite": {
+          "title": "Quantite",
+          "type": "string",
+          "format": "decimal"
+        },
+        "quantite_seuil": {
+          "title": "Quantite seuil",
+          "type": "string",
+          "format": "decimal"
+        },
+        "etat": {
+          "title": "Etat",
+          "type": "string",
+          "enum": ["neuf", "usagé", "endommagé"]
+        },
+        "date_ajout": {
+          "title": "Date ajout",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "date_modification": {
+          "title": "Date modification",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "is_active": { "title": "Is active", "type": "boolean" },
+        "add_by": { "title": "Add by", "type": "integer", "x-nullable": true },
+        "updated_by": {
+          "title": "Updated by",
+          "type": "integer",
+          "x-nullable": true
+        }
+      }
+    },
     "CustomUser": {
       "required": [
         "nationality",
@@ -1518,6 +2034,7 @@
           "format": "date-time",
           "readOnly": true
         },
+        "first_login": { "title": "First login", "type": "boolean" },
         "id_profil": {
           "title": "Id profil",
           "type": "integer",

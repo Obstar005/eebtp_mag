@@ -23,12 +23,12 @@
 ### 4. **Service d'authentification unifié**
 
 - `AuthService.simpleLogin()` intègre maintenant le service réel
-- Mappe `requiresSetup` vers `isFirstLogin` pour le composant frontend
+- Mappe `requiresSetup` vers `first_login` pour le composant frontend
 - Fallback vers le service mock en développement
 
 ### 5. **Flux d'authentification**
 
-- `SimpleAuthFlow.tsx` utilise déjà `response.isFirstLogin` correctement
+- `SimpleAuthFlow.tsx` utilise déjà `response.first_login` correctement
 - Redirection automatique vers `change_password` si première connexion
 
 ## 🔄 Flux d'authentification
@@ -37,13 +37,13 @@
 1. Utilisateur saisit téléphone + mot de passe
 2. API retourne { is_firstlogin: true/false, ... }
 3. Transformateur : is_firstlogin → requiresSetup
-4. Service : requiresSetup → isFirstLogin
-5. Interface : if (isFirstLogin) → redirect "change_password"
+4. Service : requiresSetup → first_login
+5. Interface : if (first_login) → redirect "change_password"
 ```
 
 ## 🧪 Environnement
 
-- **Développement** : Utilise MockService (isFirstLogin déjà implémenté)
+- **Développement** : Utilise MockService (first_login déjà implémenté)
 - **Production** : Utilise RealAuthService avec support is_firstlogin
 - **Variable d'environnement** : `VITE_ENABLE_VERIFICATION` contrôle le mode
 

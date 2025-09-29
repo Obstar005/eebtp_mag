@@ -1,11 +1,31 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, Eye, EyeOff, Calendar, ChevronDown } from "lucide-react";
+import {
+  Upload,
+  Eye,
+  EyeOff,
+  Calendar,
+  ChevronDown,
+  AlertCircle,
+} from "lucide-react";
 import { useCreateAccount, useProfiles } from "../../hooks";
 import { CountrySelector } from "../../components/ui/CountrySelector";
 import { useCountries } from "../../hooks/useCountries";
 import type { CreateAccountData, AccountType } from "../../types/account";
 import type { Country } from "../../services/countriesService";
+
+// Fonctions de validation
+const validateUsername = (username: string): boolean => {
+  // Autorise uniquement des lettres, des chiffres et @/./+/-/_
+  const usernameRegex = /^[\w.@+-]+$/;
+  return usernameRegex.test(username);
+};
+
+const validatePassword = (password: string): boolean => {
+  // Minimum 8 caractères, au moins une lettre et un chiffre
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
+  return passwordRegex.test(password);
+};
 
 export function AddAccountPage() {
   const navigate = useNavigate();
@@ -20,6 +40,16 @@ export function AddAccountPage() {
     Country | undefined
   >(undefined);
   const [error, setError] = useState<string | null>(null);
+
+  // États de validation
+  const [validationErrors, setValidationErrors] = useState<{
+    nom_utilisateur?: string;
+    mot_de_passe?: string;
+  }>({});
+  const [fieldsTouched, setFieldsTouched] = useState<{
+    nom_utilisateur: boolean;
+    mot_de_passe: boolean;
+  }>({ nom_utilisateur: false, mot_de_passe: false });
 
   const { data: profiles } = useProfiles();
   const createAccountMutation = useCreateAccount();
@@ -65,11 +95,65 @@ export function AddAccountPage() {
     value: string | File
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+
+    // Marquer le champ comme touché
+    if (field === "nom_utilisateur" || field === "mot_de_passe") {
+      setFieldsTouched((prev) => ({
+        ...prev,
+        [field]: true,
+      }));
+
+      // Valider le champ
+      validateField(field, value as string);
+    }
+  };
+
+  // Fonction pour valider un champ spécifique
+  const validateField = (field: string, value: string) => {
+    const newErrors = { ...validationErrors };
+
+    if (field === "nom_utilisateur") {
+      if (!validateUsername(value)) {
+        newErrors.nom_utilisateur =
+          "Le nom d'utilisateur ne peut contenir que des lettres, des chiffres et @/./+/-/_";
+      } else {
+        delete newErrors.nom_utilisateur;
+      }
+    }
+
+    if (field === "mot_de_passe") {
+      if (!validatePassword(value)) {
+        newErrors.mot_de_passe =
+          "Le mot de passe doit contenir au moins 8 caractères, dont au moins une lettre et un chiffre";
+      } else {
+        delete newErrors.mot_de_passe;
+      }
+    }
+
+    setValidationErrors(newErrors);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Vérifier le type et la taille du fichier
+      if (!file.type.match("image.*")) {
+        setError("Le fichier doit être une image valide");
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        // 5MB max
+        setError("L'image est trop volumineuse. Taille maximum: 5MB");
+        return;
+      }
+
+      console.log(
+        "Image sélectionnée:",
+        file.name,
+        file.type,
+        `${(file.size / 1024).toFixed(2)}KB`
+      );
       setFormData((prev) => ({ ...prev, photo_profil: file }));
 
       // Créer une prévisualisation
@@ -83,12 +167,32 @@ export function AddAccountPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Soumission du formulaire avec les données:", formData);
+
+    // Marquer tous les champs comme touchés pour montrer toutes les erreurs
+    setFieldsTouched({
+      nom_utilisateur: true,
+      mot_de_passe: true,
+    });
+
+    // Valider tous les champs critiques
+    validateField("nom_utilisateur", formData.nom_utilisateur);
+    validateField("mot_de_passe", formData.mot_de_passe);
+
+    // Vérifier s'il y a des erreurs de validation
+    if (validationErrors.nom_utilisateur || validationErrors.mot_de_passe) {
+      setError(
+        "Veuillez corriger les erreurs de validation avant de soumettre le formulaire."
+      );
+      return;
+    }
 
     if (formData.mot_de_passe !== formData.confirm_mot_de_passe) {
       setError("Les mots de passe ne correspondent pas");
       return;
     }
 
+    // Vérification et formatage du numéro de téléphone
     if (selectedPhoneCountry && formData.telephone) {
       if (!validatePhoneNumber(formData.telephone, selectedPhoneCountry.code)) {
         setError("Format de numéro de téléphone invalide");
@@ -99,17 +203,56 @@ export function AddAccountPage() {
           selectedPhoneCountry.code
         );
         formData.telephone = fullPhoneNumber;
+        console.log("Numéro de téléphone formaté:", fullPhoneNumber);
       }
     } else {
       setError("Veuillez sélectionner un pays pour le téléphone");
       return;
     }
 
+    // Préparation des données pour l'API
+    const submissionData = {
+      ...formData,
+      // Assurer que la date est au format YYYY-MM-DD
+      date_naissance: formData.date_naissance
+        ? new Date(formData.date_naissance).toISOString().split("T")[0]
+        : "",
+    };
+
+    console.log("Données préparées pour l'API:", submissionData);
+
     try {
-      await createAccountMutation.mutateAsync(formData);
+      const result = await createAccountMutation.mutateAsync(submissionData);
+      console.log("Compte créé avec succès:", result);
       navigate("/accounts");
     } catch (error) {
       console.error("Erreur lors de la création du compte:", error);
+
+      // Extraction des messages d'erreur spécifiques de l'API
+      // Utiliser une approche sûre au niveau du typage
+      const err = error as { response?: { data?: Record<string, unknown> } };
+      if (err.response?.data) {
+        const apiErrors = err.response.data;
+        let errorMessage = "";
+
+        // Parcourir tous les champs d'erreur retournés par l'API
+        Object.entries(apiErrors).forEach(([field, messagesRaw]) => {
+          // Vérifier si messages est un tableau
+          const messages = Array.isArray(messagesRaw) ? messagesRaw : [];
+          if (messages.length > 0 && typeof messages[0] === "string") {
+            errorMessage += `${field}: ${messages[0]}\n`;
+          }
+        });
+
+        setError(
+          errorMessage ||
+            "Échec de la création du compte. Veuillez vérifier les informations et réessayer."
+        );
+      } else {
+        setError(
+          "Échec de la création du compte. Veuillez vérifier les informations et réessayer."
+        );
+      }
     }
   };
 
@@ -129,7 +272,7 @@ export function AddAccountPage() {
           role="alert"
         >
           <strong className="font-bold">Erreur ! </strong>
-          <span className="block sm:inline">{error}</span>
+          <div className="block sm:inline whitespace-pre-line">{error}</div>
           <span
             className="absolute top-0 bottom-0 right-0 px-4 py-3"
             onClick={() => setError(null)}
@@ -197,9 +340,30 @@ export function AddAccountPage() {
                   onChange={(e) =>
                     handleInputChange("nom_utilisateur", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border ${
+                    fieldsTouched.nom_utilisateur &&
+                    validationErrors.nom_utilisateur
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  } rounded-lg focus:outline-none focus:ring-1 ${
+                    fieldsTouched.nom_utilisateur &&
+                    validationErrors.nom_utilisateur
+                      ? "focus:ring-red-500"
+                      : "focus:ring-blue-500"
+                  }`}
                   placeholder="johndoe"
                 />
+                {fieldsTouched.nom_utilisateur &&
+                  validationErrors.nom_utilisateur && (
+                    <div className="flex items-center mt-1 text-sm text-red-600">
+                      <AlertCircle className="h-4 w-4 mr-1" />
+                      {validationErrors.nom_utilisateur}
+                    </div>
+                  )}
+                <p className="mt-1 text-xs text-gray-500">
+                  Peut contenir uniquement des lettres, des chiffres et
+                  @/./+/-/_
+                </p>
               </div>
 
               <div className="flex-1">
@@ -286,7 +450,17 @@ export function AddAccountPage() {
                     onChange={(e) =>
                       handleInputChange("mot_de_passe", e.target.value)
                     }
-                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className={`w-full px-3 py-2 pr-10 border ${
+                      fieldsTouched.mot_de_passe &&
+                      validationErrors.mot_de_passe
+                        ? "border-red-500"
+                        : "border-gray-300"
+                    } rounded-lg focus:outline-none focus:ring-1 ${
+                      fieldsTouched.mot_de_passe &&
+                      validationErrors.mot_de_passe
+                        ? "focus:ring-red-500"
+                        : "focus:ring-blue-500"
+                    }`}
                     placeholder="••••••••••"
                   />
                   <button
@@ -301,6 +475,16 @@ export function AddAccountPage() {
                     )}
                   </button>
                 </div>
+                {fieldsTouched.mot_de_passe &&
+                  validationErrors.mot_de_passe && (
+                    <div className="flex items-center mt-1 text-sm text-red-600">
+                      <AlertCircle className="h-4 w-4 mr-1" />
+                      {validationErrors.mot_de_passe}
+                    </div>
+                  )}
+                <p className="mt-1 text-xs text-gray-500">
+                  8 caractères minimum avec au moins une lettre et un chiffre
+                </p>
               </div>
 
               <div className="flex-1">

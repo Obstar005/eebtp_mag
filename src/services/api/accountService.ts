@@ -21,10 +21,22 @@ export const accountService = {
     limit: number = 10
   ): Promise<AccountListResponse> {
     // Utiliser l'API réelle si la vérification est activée
-    if (import.meta.env.VITE_ENABLE_VERIFICATION === "true") {
+    const enableVerification = import.meta.env.VITE_ENABLE_VERIFICATION;
+    console.log(
+      "🔧 AccountService: VITE_ENABLE_VERIFICATION =",
+      enableVerification
+    );
+
+    if (enableVerification === "true") {
+      console.log(
+        "🌐 AccountService: Utilisation de l'API RÉELLE pour getAccounts"
+      );
       return await userApiService.getAccounts(filters, page, limit);
     }
 
+    console.log(
+      "📝 AccountService: Utilisation du service MOCK pour getAccounts"
+    );
     // En mode développement, retourner des données mock
     return mockAccountService.getAccounts(filters, page, limit);
   },
@@ -75,8 +87,8 @@ export const accountService = {
       return mockAccountService.toggleAccountStatus(id);
     }
 
-    // L'API Users ne semble pas avoir d'endpoint toggle, utilisons le mock pour l'instant
-    return mockAccountService.toggleAccountStatus(id);
+    // Utiliser l'API Users pour basculer le statut actif/inactif
+    return await userApiService.toggleAccountStatus(id);
   },
 
   // Récupérer les statistiques des comptes
@@ -85,8 +97,8 @@ export const accountService = {
       return mockAccountService.getAccountStats();
     }
 
-    // L'API Users ne semble pas avoir d'endpoint stats, utilisons le mock pour l'instant
-    return mockAccountService.getAccountStats();
+    // Utiliser l'API Users pour calculer les statistiques
+    return await userApiService.getAccountStats();
   },
 };
 
@@ -95,8 +107,11 @@ export const profileService = {
   // Récupérer tous les profils
   async getProfiles(): Promise<Profile[]> {
     const enableVerification = import.meta.env.VITE_ENABLE_VERIFICATION;
-    console.log("🔧 ProfileService: VITE_ENABLE_VERIFICATION =", enableVerification);
-    
+    console.log(
+      "🔧 ProfileService: VITE_ENABLE_VERIFICATION =",
+      enableVerification
+    );
+
     if (enableVerification === "false") {
       console.log("📝 ProfileService: Utilisation du service MOCK");
       return mockProfileService.getProfiles();

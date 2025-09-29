@@ -112,7 +112,7 @@ export interface SimpleLoginResponse {
   user: User;
   token: string;
   refreshToken: string;
-  isFirstLogin: boolean; // Indique si c'est la première connexion de l'utilisateur
+  first_login: boolean; // Indique si c'est la première connexion de l'utilisateur
 }
 
 export interface ChangePasswordRequest {

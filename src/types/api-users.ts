@@ -96,6 +96,7 @@ export interface ApiCreateUserRequest {
 
 export interface ApiUpdateUserRequest extends Partial<ApiCreateUserRequest> {
   id: number;
+  is_active?: boolean;
 }
 
 // Types pour la gestion des profils

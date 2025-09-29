@@ -26,7 +26,7 @@ export class MockAuthService {
       lastName?: string;
       email?: string;
       isNewUser: boolean;
-      isFirstLogin?: boolean; // Nouveau champ pour détecter la première connexion
+      first_login?: boolean; // Nouveau champ pour détecter la première connexion
     }
   >();
 
@@ -39,7 +39,7 @@ export class MockAuthService {
       lastName: "Doe",
       email: "john.doe@example.com",
       isNewUser: false,
-      isFirstLogin: false, // Utilisateur existant
+      first_login: false, // Utilisateur existant
     });
 
     this.mockUsers.set("+22891234567", {
@@ -49,7 +49,7 @@ export class MockAuthService {
       lastName: "Dupont",
       email: "marie.dupont@example.com",
       isNewUser: false,
-      isFirstLogin: false, // Utilisateur existant
+      first_login: false, // Utilisateur existant
     });
 
     // Utilisateur qui doit changer son mot de passe (première connexion)
@@ -60,7 +60,7 @@ export class MockAuthService {
       lastName: "Martin",
       email: "pierre.martin@example.com",
       isNewUser: false,
-      isFirstLogin: true, // Première connexion obligatoire
+      first_login: true, // Première connexion obligatoire
     });
   }
 
@@ -324,14 +324,14 @@ export class MockAuthService {
       .substr(2, 9)}`;
 
     console.log("✅ Connexion réussie pour:", data.phone);
-    console.log("🔑 Première connexion:", existingUser.isFirstLogin || true);
+    console.log("🔑 Première connexion:", existingUser.first_login || true);
 
     return {
       success: true,
       user,
       token,
       refreshToken,
-      isFirstLogin: existingUser.isFirstLogin || true,
+      first_login: existingUser.first_login || true,
     };
   }
 
@@ -411,7 +411,7 @@ export class MockAuthService {
     this.mockUsers.set(data.phone, {
       ...existingUser,
       password: data.newPassword,
-      isFirstLogin: false,
+      first_login: false,
     });
 
     const user: User = {

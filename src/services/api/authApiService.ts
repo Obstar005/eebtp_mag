@@ -9,12 +9,16 @@ import {
   apiLoginResponseToAuthResponse,
 } from "./api-transformers";
 import type {
+  ApiCustomUser,
+  ApiProfil,
+  ApiCheckUserExistsRequest,
   ApiCheckUserExistsResponse,
+  ApiLoginByPhoneRequest,
   ApiLoginByPhoneResponse,
   ApiSetPasswordRequest,
   ApiSetPasswordResponse,
-  ApiCustomUser,
-  ApiProfil,
+  ApiUserInfoResponse,
+  ApiUpdateUserRequest,
   ApiUpdateProfilRequest,
 } from "../../types/api-users";
 import type {
@@ -253,12 +257,23 @@ export class UserApiService {
   // Récupérer tous les utilisateurs
   async getUsers(): Promise<Account[]> {
     try {
+      console.log(
+        "🔍 UserApiService: Récupération des utilisateurs depuis l'API EEBTP..."
+      );
       const response = await apiClient.get<ApiCustomUser[]>(
         "/Users/liste-users"
       );
-      return response.data.map(apiUserToAccount);
+      console.log(
+        "✅ UserApiService: Réponse API utilisateurs:",
+        response.data
+      );
+
+      const accounts = response.data.map(apiUserToAccount);
+      console.log("🔄 UserApiService: Utilisateurs transformés:", accounts);
+
+      return accounts;
     } catch (error) {
-      console.error("Erreur getUsers:", error);
+      console.error("❌ Erreur getUsers:", error);
       throw new Error("Impossible de récupérer la liste des utilisateurs");
     }
   }
@@ -279,16 +294,91 @@ export class UserApiService {
   // Créer un utilisateur
   async createUser(data: CreateAccountData): Promise<Account> {
     try {
+      console.log("🚀 Création d'un nouvel utilisateur:", {
+        nom: data.nom,
+        prenoms: data.prenoms,
+        nom_utilisateur: data.nom_utilisateur,
+        type: data.type,
+        telephone: data.telephone,
+        profile_id: data.profile_id,
+        has_photo: !!data.photo_profil,
+      });
+
       const apiData = createAccountDataToApiUser(data);
 
-      const response = await apiClient.post<ApiCustomUser>(
-        "/Users/user-create",
-        apiData
-      );
-      return apiUserToAccount(response.data);
+      // Utiliser FormData si une image est présente
+      if (data.photo_profil) {
+        console.log("📸 Image détectée, utilisation de FormData");
+
+        const formData = new FormData();
+
+        // Ajouter toutes les données utilisateur
+        Object.entries(apiData).forEach(([key, value]) => {
+          if (value !== undefined) {
+            formData.append(key, value.toString());
+          }
+        });
+
+        // Ajouter l'image
+        formData.append("photo_profil", data.photo_profil);
+
+        const response = await apiClient.post<ApiCustomUser>(
+          "/Users/user-create",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        console.log(
+          "✅ Utilisateur créé avec succès avec image:",
+          response.data
+        );
+        return apiUserToAccount(response.data);
+      } else {
+        // Si pas d'image, utiliser JSON standard
+        const response = await apiClient.post<ApiCustomUser>(
+          "/Users/user-create",
+          apiData
+        );
+
+        console.log("✅ Utilisateur créé avec succès:", response.data);
+        return apiUserToAccount(response.data);
+      }
     } catch (error) {
-      console.error("Erreur createUser:", error);
-      throw new Error("Impossible de créer l'utilisateur");
+      console.error("❌ Erreur lors de la création de l'utilisateur:", error);
+
+      // Informations détaillées sur l'erreur en utilisant une approche sûre au niveau du typage
+      const err = error as {
+        response?: {
+          status?: number;
+          statusText?: string;
+          data?: { message?: string; error?: string; [key: string]: unknown };
+        };
+      };
+
+      if (err.response) {
+        console.error("Détails de l'erreur API:", {
+          status: err.response.status,
+          statusText: err.response.statusText,
+          data: err.response.data,
+        });
+
+        // Extraire un message d'erreur spécifique si disponible
+        const errorMessage =
+          err.response.data?.message ||
+          err.response.data?.error ||
+          "Impossible de créer l'utilisateur";
+
+        throw new Error(`Erreur ${err.response.status}: ${errorMessage}`);
+      }
+
+      // Extraire le message d'erreur de façon sûre
+      const errorMessage =
+        error instanceof Error ? error.message : "Erreur inconnue";
+      throw new Error("Impossible de créer l'utilisateur: " + errorMessage);
     }
   }
 
@@ -316,6 +406,32 @@ export class UserApiService {
     } catch (error) {
       console.error("Erreur deleteUser:", error);
       throw new Error("Impossible de supprimer l'utilisateur");
+    }
+  }
+
+  // Activer/désactiver un utilisateur (toggle status)
+  async toggleAccountStatus(id: string): Promise<Account> {
+    try {
+      // 1. Récupérer l'utilisateur actuel
+      const user = await this.getUserById(id);
+
+      // 2. Préparer les données pour la mise à jour (inverser is_active)
+      const updateData: Partial<ApiUpdateUserRequest> = {
+        id: parseInt(id),
+        is_active: !user.is_active,
+      };
+
+      // 3. Mettre à jour l'utilisateur
+      const response = await apiClient.put<ApiCustomUser>(
+        `/Users/user-update/${id}`,
+        updateData
+      );
+
+      // 4. Retourner l'utilisateur mis à jour
+      return apiUserToAccount(response.data);
+    } catch (error) {
+      console.error("Erreur toggleAccountStatus:", error);
+      throw new Error("Impossible de modifier le statut du compte");
     }
   }
 
@@ -384,12 +500,39 @@ export class UserApiService {
 
   async getAccountStats(): Promise<AccountStats> {
     try {
+      // 1. Récupérer tous les comptes
       const accounts = await this.getUsers();
+
+      // 2. Récupérer tous les profils pour avoir les noms
+      const profiles = await profileApiService.getProfiles();
+
+      // 3. Calculer les statistiques de base
       const total = accounts.length;
       const interne = accounts.filter((a) => a.type === "Interne").length;
       const consultant = accounts.filter((a) => a.type === "Consultant").length;
       const active = accounts.filter((a) => a.is_active).length;
       const inactive = total - active;
+
+      // 4. Calculer les statistiques par profil
+      const profileCounts: Record<string, number> = {};
+      accounts.forEach((account) => {
+        if (account.profile_id) {
+          const profileId = account.profile_id;
+          profileCounts[profileId] = (profileCounts[profileId] || 0) + 1;
+        }
+      });
+
+      // 5. Formater les statistiques par profil
+      const byProfile = Object.entries(profileCounts).map(
+        ([profileId, count]) => {
+          const profile = profiles.find((p) => p.id === profileId);
+          return {
+            profile_id: profileId,
+            profile_name: profile?.nom || "Profil inconnu",
+            count,
+          };
+        }
+      );
 
       return {
         total,
@@ -397,7 +540,7 @@ export class UserApiService {
         consultant,
         active,
         inactive,
-        byProfile: [], // TODO: Calculer par profil
+        byProfile,
       };
     } catch (error) {
       console.error("Erreur getAccountStats:", error);
@@ -411,13 +554,15 @@ export class ProfileApiService {
   // Récupérer tous les profils
   async getProfiles(): Promise<Profile[]> {
     try {
-      console.log("🔍 ProfileApiService: Récupération des profils depuis l'API EEBTP...");
+      console.log(
+        "🔍 ProfileApiService: Récupération des profils depuis l'API EEBTP..."
+      );
       const response = await apiClient.get<ApiProfil[]>("/Users/liste-profils");
       console.log("✅ ProfileApiService: Réponse API profils:", response.data);
-      
+
       const profiles = response.data.map(apiProfilToProfile);
       console.log("🔄 ProfileApiService: Profils transformés:", profiles);
-      
+
       return profiles;
     } catch (error) {
       console.error("❌ Erreur getProfiles:", error);

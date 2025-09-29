@@ -99,8 +99,11 @@ export function ProfilesPage() {
                   profiles.map((profile) => (
                     <tr key={profile.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {profile.nom}
+                        <div className="text-sm font-medium text-gray-900 flex flex-col">
+                          <span>{profile.nom}</span>
+                          <span className="text-gray-500 text-sm">
+                            {profile.description}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

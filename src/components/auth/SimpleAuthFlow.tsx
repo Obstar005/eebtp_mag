@@ -64,8 +64,8 @@ export function SimpleAuthFlow({
       // Actualiser les informations utilisateur depuis l'API
       await refreshUserInfo();
 
-      // Vérifier si c'est la première connexion (isFirstLogin = is_firstlogin de l'API)
-      if (response.isFirstLogin) {
+      // Vérifier si c'est la première connexion (first_login = is_firstlogin de l'API)
+      if (response.first_login) {
         updateAuthState({
           currentStep: "change_password",
         });

@@ -5,6 +5,7 @@ import type {
   CreateProjetData,
   UpdateProjetData,
   CreateMagasinData,
+  ProjetRole,
 } from "../types/project";
 
 // Clés de cache pour React Query
@@ -17,6 +18,8 @@ export const projetKeys = {
   stats: () => [...projetKeys.all, "stats"] as const,
   magasins: (projetId: number) =>
     [...projetKeys.detail(projetId), "magasins"] as const,
+  comptes: (projetId: number) =>
+    [...projetKeys.detail(projetId), "comptes"] as const,
   countries: () => ["countries"] as const,
 };
 
@@ -195,5 +198,172 @@ export function useProjetSearch(searchTerm: string, enabled: boolean = true) {
     queryFn: () => projetService.getProjets({ search: searchTerm, limit: 100 }),
     staleTime: 30 * 1000, // 30 secondes pour la recherche
     enabled: enabled && searchTerm.length >= 2, // Chercher seulement si 2+ caractères
+  });
+}
+
+// Hook pour récupérer les comptes associés à un projet
+export function useProjetComptes(projetId: number) {
+  return useQuery({
+    queryKey: projetKeys.comptes(projetId),
+    queryFn: () => projetService.getProjetComptes(projetId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!projetId, // Ne pas exécuter si l'ID est falsy
+  });
+}
+
+// Hook pour ajouter un utilisateur à un projet
+export function useAddUserToProjet() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      projetId,
+      userId,
+      role,
+    }: {
+      projetId: number;
+      userId: number;
+      role: ProjetRole;
+    }) => {
+      // Pour l'instant, utiliser updateProjet pour ajouter l'utilisateur
+      // En récupérant d'abord le projet existant
+      console.log(
+        `👤 Ajout de l'utilisateur ${userId} au projet ${projetId} avec le rôle ${role}`
+      );
+
+      return projetService.getProjetById(projetId).then((projet) => {
+        // Récupérer les comptes actuels et ajouter le nouvel utilisateur
+        const comptesIds = projet.comptesAssocies?.map((c) => c.userId) || [];
+        if (!comptesIds.includes(userId)) {
+          comptesIds.push(userId);
+        }
+
+        // Mettre à jour le projet avec le nouvel utilisateur
+        // Dans une implémentation réelle, nous voudrions aussi associer le rôle
+        return projetService.updateProjet({
+          id: projetId,
+          comptes_associes: comptesIds,
+        });
+      });
+    },
+    onSuccess: (_, variables) => {
+      // Invalider les requêtes liées aux comptes du projet
+      queryClient.invalidateQueries({
+        queryKey: projetKeys.comptes(variables.projetId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: projetKeys.detail(variables.projetId),
+      });
+    },
+  });
+}
+
+// Hook pour supprimer un utilisateur d'un projet
+export function useRemoveUserFromProjet() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      projetId,
+      userId,
+    }: {
+      projetId: number;
+      userId: number;
+    }) => {
+      // Pour l'instant, utiliser updateProjet pour retirer l'utilisateur
+      // En récupérant d'abord le projet existant
+      return projetService.getProjetById(projetId).then((projet) => {
+        // Filtrer les comptes pour exclure l'utilisateur à supprimer
+        const comptesIds =
+          projet.comptesAssocies
+            ?.filter((c) => c.userId !== userId)
+            .map((c) => c.userId) || [];
+
+        // Mettre à jour le projet sans l'utilisateur supprimé
+        return projetService.updateProjet({
+          id: projetId,
+          comptes_associes: comptesIds,
+        });
+      });
+    },
+    onSuccess: (_, variables) => {
+      // Invalider les requêtes liées aux comptes du projet
+      queryClient.invalidateQueries({
+        queryKey: projetKeys.comptes(variables.projetId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: projetKeys.detail(variables.projetId),
+      });
+    },
+  });
+}
+
+// Hook pour mettre à jour le rôle d'un utilisateur dans un projet
+export function useUpdateUserRoleInProjet() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      projetId,
+      userId,
+      newRole,
+    }: {
+      projetId: number;
+      userId: number;
+      newRole: ProjetRole;
+    }) => {
+      console.log(
+        `🔄 Mise à jour du rôle de l'utilisateur ${userId} vers ${newRole} dans le projet ${projetId}`
+      );
+
+      // Dans l'implémentation actuelle, nous allons mettre à jour certains champs spécifiques du projet
+      // selon le rôle attribué. Dans une API plus complète, cela pourrait être géré différemment.
+      return projetService.getProjetById(projetId).then((projet) => {
+        const updateData: UpdateProjetData = {
+          id: projetId,
+        };
+
+        // Mettre à jour le champ approprié selon le rôle
+        switch (newRole) {
+          case "chef_projet":
+            updateData.chef_projet_user_id = userId;
+            break;
+          case "directeur_travaux":
+            updateData.directeur_travaux_user_id = userId;
+            break;
+          case "chef_chantier":
+            updateData.chef_chantier_user_id = userId;
+            break;
+          case "coordinateur_travaux":
+            updateData.coordinateur_travaux_user_id = userId;
+            break;
+          case "chef_equipe":
+            updateData.chef_equipe_user_id = userId;
+            break;
+          case "magasinier": {
+            // Pour les magasiniers, s'assurer qu'ils sont dans la liste des comptes associés
+            // mais ne pas leur attribuer un rôle spécifique dans les champs du projet
+            const comptesIds =
+              projet.comptesAssocies?.map((c) => c.userId) || [];
+            if (!comptesIds.includes(userId)) {
+              comptesIds.push(userId);
+            }
+            updateData.comptes_associes = comptesIds;
+            break;
+          }
+        }
+
+        return projetService.updateProjet(updateData);
+      });
+    },
+    onSuccess: (_, variables) => {
+      // Invalider les requêtes liées aux comptes du projet
+      queryClient.invalidateQueries({
+        queryKey: projetKeys.comptes(variables.projetId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: projetKeys.detail(variables.projetId),
+      });
+    },
   });
 }

@@ -5,9 +5,13 @@ class ApiClient {
   private axiosInstance: AxiosInstance;
 
   constructor() {
+    const baseURL =
+      import.meta.env.VITE_API_URL || "http://185.197.195.209:8000";
+    console.log("🌐 Configuration du client API avec baseURL:", baseURL);
+
     this.axiosInstance = axios.create({
-      baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
-      timeout: 10000,
+      baseURL,
+      timeout: 15000, // Augmenté à 15 secondes pour l'upload de fichiers
       headers: {
         "Content-Type": "application/json",
       },
@@ -20,6 +24,16 @@ class ApiClient {
     // Request interceptor pour authentification hybride Basic Auth → JWT
     this.axiosInstance.interceptors.request.use(
       (config) => {
+        // Gestion automatique du Content-Type
+        if (config.data instanceof FormData) {
+          // Ne pas définir Content-Type pour FormData, le navigateur gère automatiquement les boundaries
+          // Axios ajoutera automatiquement le bon Content-Type avec boundary
+          delete config.headers["Content-Type"];
+          console.log(
+            "📦 Détection de FormData: Content-Type sera géré automatiquement"
+          );
+        }
+
         // Permettre de désactiver l'authentification explicitement
         if (config.headers?.["X-No-Auth"] === "true") {
           delete config.headers.Authorization;
@@ -32,6 +46,7 @@ class ApiClient {
           localStorage.getItem("authToken") ||
           localStorage.getItem("auth_token");
         if (jwtToken) {
+          console.log("🔑 Authentification avec JWT Token");
           config.headers.Authorization = `Bearer ${jwtToken}`;
           return config;
         }
@@ -40,8 +55,11 @@ class ApiClient {
         const username = import.meta.env.VITE_API_USERNAME;
         const password = import.meta.env.VITE_API_PASSWORD;
         if (username && password && username !== "your_username") {
+          console.log("🔑 Authentification avec Basic Auth");
           const basicAuth = btoa(`${username}:${password}`);
           config.headers.Authorization = `Basic ${basicAuth}`;
+        } else {
+          console.warn("⚠️ Aucune méthode d'authentification disponible");
         }
 
         return config;

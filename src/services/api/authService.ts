@@ -131,7 +131,7 @@ export class AuthService {
         user: authResponse.user,
         token: authResponse.token,
         refreshToken: authResponse.refreshToken,
-        isFirstLogin: authResponse.requiresSetup ?? false, // Mapper requiresSetup vers isFirstLogin avec fallback
+        first_login: authResponse.requiresSetup ?? false, // Mapper requiresSetup vers first_login avec fallback
       };
     } catch (error) {
       console.error("Erreur lors de la connexion simple:", error);

@@ -16,12 +16,21 @@ import type {
   ProjetStats,
   Magasin,
   CreateMagasinData,
+  CompteAssocie,
+  ProjetRole,
 } from "../../types/project";
 import type { ApiProjet, ApiMagasin } from "../../types/api-projets";
 
 // Service API pour les projets - utilise les endpoints de l'API EEBTP
 export class ProjetApiService {
   private basePath = "/Projets";
+
+  // Référence à l'userApiService - devrait être injecté correctement dans une application réelle
+  private userApiService?: {
+    getUserById: (
+      id: number
+    ) => Promise<{ id: number; username: string; [key: string]: unknown }>;
+  }; // Type minimal pour satisfaire les usages de userApiService
 
   // Récupérer tous les projets avec filtres
   async getProjets(filters: ProjetFilters = {}): Promise<ProjetListResponse> {
@@ -165,6 +174,58 @@ export class ProjetApiService {
     magasinId: number
   ): Promise<void> {
     await client.delete(`${this.basePath}/magasin-delete/${magasinId}`);
+  }
+
+  // Récupérer les comptes associés à un projet
+  async getProjetComptes(projetId: number): Promise<CompteAssocie[]> {
+    try {
+      // 1. Récupérer les détails du projet pour avoir la liste des IDs de comptes
+      console.log(
+        `🔍 ProjetApiService: Récupération du projet ${projetId} pour obtenir les comptes associés...`
+      );
+      const projetResponse = await client.get<ApiProjet>(
+        `${this.basePath}/projet-detail/${projetId}`
+      );
+      const projet = projetResponse.data;
+
+      if (!projet.comptes || projet.comptes.length === 0) {
+        console.log(`⚠️ Aucun compte associé au projet ${projetId}`);
+        return [];
+      }
+
+      console.log(
+        `✅ Comptes associés au projet ${projetId} (IDs):`,
+        projet.comptes
+      );
+
+      // 2. Utiliser le service utilisateur pour récupérer les détails de chaque compte
+      // (Cette partie nécessite l'importation et l'injection du service utilisateur)
+      // Pour l'instant, retourner des données simplifiées
+      const comptesAssocies: CompteAssocie[] = projet.comptes.map((userId) => {
+        // Déterminer le rôle en fonction de l'ID (logique simplifiée)
+        let role: ProjetRole = "magasinier"; // Rôle par défaut
+
+        if (userId === projet.creator) {
+          role = "chef_projet";
+        }
+
+        return {
+          userId: userId,
+          userName: `Utilisateur ${userId}`, // À remplacer par le nom réel
+          userProfile: "Non disponible", // À remplacer par le profil réel
+          role: role,
+          actions: ["view", "edit"], // Actions par défaut
+        };
+      });
+
+      return comptesAssocies;
+    } catch (error) {
+      console.error(
+        "❌ Erreur lors de la récupération des comptes associés au projet:",
+        error
+      );
+      throw new Error("Impossible de récupérer les comptes associés au projet");
+    }
   }
 }
 

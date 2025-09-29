@@ -85,6 +85,7 @@ export interface CreateProjetData {
   chef_equipe_user_id: number;
   magasins?: CreateMagasinData[];
   images?: File[];
+  comptes_associes?: (number | string)[]; // IDs supplémentaires d'utilisateurs à associer au projet
 }
 
 export interface UpdateProjetData extends Partial<CreateProjetData> {
