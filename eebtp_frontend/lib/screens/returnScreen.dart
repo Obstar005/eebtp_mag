@@ -29,11 +29,17 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
 
   // Sample data pour les produits
   final List<Map<String, dynamic>> _products = [
-    {'name': 'Produit A', 'quantity': 150},
-    {'name': 'Produit B', 'quantity': 75},
-    {'name': 'Produit C', 'quantity': 200},
-    {'name': 'Ordinateur portable', 'quantity': 25},
-    {'name': 'Souris optique', 'quantity': 300},
+    {'name': 'ciment', 'quantity': 150,'unit': 't'},
+    {'name': 'Sable', 'quantity': 500,'unit': 'm3'},
+    {'name': 'Brique', 'quantity': 1000,'unit': 'piece'},
+    {'name': 'Granit', 'quantity': 400,'unit': 'm3'},
+    {'name': 'Fer à béton', 'quantity': 250,'unit': 't'},
+    {'name': 'Bois', 'quantity': 350,'unit': 'piece'},
+    {'name': 'Essence', 'quantity': 75 ,'unit': 'L'},
+    {'name': 'Peinture', 'quantity': 120,'unit': 'L'},
+    {'name': 'Pinceau', 'quantity': 200, 'unit': 'piece'},
+    {'name': 'Eau de chaux', 'quantity': 25, 'unit': 'L'},
+    {'name': 'Gravier', 'quantity': 300, 'unit': 'Kg'},
   ];
 
   List<Map<String, dynamic>> _filteredProducts = [];
@@ -76,9 +82,7 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
       padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
       decoration: const BoxDecoration(
         color: Color(0xFF007AFF),
-        borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(20),
-        ),
+      
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -91,7 +95,7 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
             ),
           ),
           Text(
-            "Déclarer un\nretour en stock",
+            "Déclarer un\n sortie en stock",
             style: GoogleFonts.poppins(
               fontSize: 16.sp,
               color: Colors.white,
@@ -128,31 +132,49 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
               ),
             ],
           ),
-        ],
+        ], 
       ),
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Row(
-      children: [
-        Container(
-          height: 2,
-          width: 15.w,
-          color: const Color(0xFF007AFF),
-        ),
-        SizedBox(width: 3.w),
-        Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-            fontSize: 14.sp,
-            color: Colors.black87,
-          ),
-        ),
-      ],
-    );
-  }
+  
+
+ Widget _buildSectionHeader(String title, {bool isLeftAligned = true}) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: isLeftAligned
+        ? [
+            Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                fontSize: 14.sp,
+                color: Colors.black87,
+              ),
+            ),
+            Container(
+              height: 2,
+              width: 72.w,
+              color: const Color(0xFF007AFF),
+            ),
+          ]
+        : [
+            Container(
+              height: 2,
+              width: 70.w,
+              color: const Color(0xFF007AFF),
+            ),
+            Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                fontSize: 14.sp,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+  );
+}
 
   Widget _buildBasicInputField({
     required TextEditingController controller,
@@ -161,9 +183,9 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
-        borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: Colors.grey.shade300),
+        color: const Color.fromARGB(255, 241, 240, 240),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Color(0xFF007AFF)),
       ),
       child: TextFormField(
         controller: controller,
@@ -238,7 +260,7 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
                   padding: EdgeInsets.all(3.w),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
+                      color: const Color.fromARGB(255, 250, 250, 250),
                       borderRadius: BorderRadius.circular(25),
                     ),
                     child: TextFormField(
@@ -246,7 +268,7 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
                       style: GoogleFonts.poppins(fontSize: 14.sp),
                       decoration: InputDecoration(
                         border: InputBorder.none,
-                        hintText: "Rechercher un produit...",
+                        hintText: "Rechercher ",
                         prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
                         hintStyle: GoogleFonts.poppins(
                           fontSize: 14.sp,
@@ -272,11 +294,11 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
                         trailing: Container(
                           padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF007AFF),
+                            color: const Color.fromARGB(255, 70, 158, 252),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            product['quantity'].toString(),
+                            product['quantity'].toString() + product['unit'].toString(),
                             style: GoogleFonts.poppins(
                               fontSize: 12.sp,
                               color: Colors.white,
@@ -320,7 +342,7 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSectionHeader("Produit"),
+                    _buildSectionHeader("Produit", isLeftAligned: false),
                     SizedBox(height: 2.h),
                     _buildProductDropdown(),
                     SizedBox(height: 2.h),
@@ -329,7 +351,7 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
                       hintText: "Définir la quantité",
                     ),
                     SizedBox(height: 3.h),
-                    _buildSectionHeader("Déposant"),
+                    _buildSectionHeader("Déposant", isLeftAligned: true),
                     SizedBox(height: 2.h),
                     _buildBasicInputField(
                       controller: _deposantNameController,

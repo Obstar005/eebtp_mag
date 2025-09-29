@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:sizer/sizer.dart';
+import 'package:eebtp_frontend/screens/entry_screen.dart'; // Importez votre NavContainer
 
 import '../widgets/button.dart';
 import '../widgets/nav.dart'; // <-- ton NavContainer + ImprovedFAB + ImprovedBottomNavigation
@@ -39,12 +40,18 @@ class _StockExitFormState extends State<_StockExitForm> {
   bool _isProductDropdownOpen = false;
 
   // Sample data produits
-  final List<Map<String, dynamic>> _products = [
-    {'name': 'Produit A', 'quantity': 150},
-    {'name': 'Produit B', 'quantity': 75},
-    {'name': 'Produit C', 'quantity': 200},
-    {'name': 'Ordinateur portable', 'quantity': 25},
-    {'name': 'Souris optique', 'quantity': 300},
+ final List<Map<String, dynamic>> _products = [
+    {'name': 'ciment', 'quantity': 150,'unit': 't'},
+    {'name': 'Sable', 'quantity': 500,'unit': 'm3'},
+    {'name': 'Brique', 'quantity': 1000,'unit': 'piece'},
+    {'name': 'Granit', 'quantity': 400,'unit': 'm3'},
+    {'name': 'Fer à béton', 'quantity': 250,'unit': 't'},
+    {'name': 'Bois', 'quantity': 350,'unit': 'piece'},
+    {'name': 'Essence', 'quantity': 75 ,'unit': 'L'},
+    {'name': 'Peinture', 'quantity': 120,'unit': 'L'},
+    {'name': 'Pinceau', 'quantity': 200, 'unit': 'piece'},
+    {'name': 'Eau de chaux', 'quantity': 25, 'unit': 'L'},
+    {'name': 'Gravier', 'quantity': 300, 'unit': 'Kg'},
   ];
 
   List<Map<String, dynamic>> _filteredProducts = [];
@@ -84,14 +91,14 @@ class _StockExitFormState extends State<_StockExitForm> {
       onTap: () => setState(() => _isProductDropdownOpen = false),
       child: Column(
         children: [
-          _buildAppBar(context),
+          _buildAppBar(),
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.all(5.w),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionHeader("Produit"),
+                  _buildSectionHeader("Produit",isLeftAligned: false),
                   SizedBox(height: 2.h),
                   _buildProductDropdown(),
                   SizedBox(height: 2.h),
@@ -103,10 +110,11 @@ class _StockExitFormState extends State<_StockExitForm> {
                   _buildBasicInputField(
                     controller: _motifController,
                     hintText: "Motif",
-                    maxLines: 4,
+                    labelText: "Motif",
+                    maxLines: 5,
                   ),
                   SizedBox(height: 3.h),
-                  _buildSectionHeader("Receveur"),
+                  _buildSectionHeader("Receveur",isLeftAligned: true),
                   SizedBox(height: 2.h),
                   _buildBasicInputField(
                     controller: _receiverNameController,
@@ -170,14 +178,12 @@ class _StockExitFormState extends State<_StockExitForm> {
   }
 
   // ------- Widgets -------
-  Widget _buildAppBar(BuildContext context) {
+   Widget _buildAppBar() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
       decoration: const BoxDecoration(
         color: Color(0xFF007AFF),
-        borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(20),
-        ),
+      
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -227,68 +233,92 @@ class _StockExitFormState extends State<_StockExitForm> {
               ),
             ],
           ),
-        ],
+        ], 
       ),
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Row(
-      children: [
-        Container(
-          height: 2,
-          width: 45.w,
-          color: const Color(0xFF007AFF),
-        ),
-        SizedBox(width: 3.w),
-        Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-            fontSize: 14.sp,
-            color: Colors.black87,
-          ),
-        ),
-      ],
-    );
-  }
 
-  Widget _buildBasicInputField({
-    required TextEditingController controller,
-    required String hintText,
-    int maxLines = 1,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
-        borderRadius: BorderRadius.circular(maxLines > 1 ? 12 : 50),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: TextFormField(
-        controller: controller,
-        maxLines: maxLines,
-        style: GoogleFonts.poppins(fontSize: 14.sp),
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          hintText: hintText,
-          hintStyle: GoogleFonts.poppins(
-            fontSize: 14.sp,
-            color: Colors.grey[600],
-          ),
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 4.w,
-            vertical: maxLines > 1 ? 2.h : 1.8.h,
-          ),
+
+ Widget _buildSectionHeader(String title, {bool isLeftAligned = true}) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: isLeftAligned
+        ? [
+            Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                fontSize: 14.sp,
+                color: Colors.black87,
+              ),
+            ),
+            Container(
+              height: 2,
+              width: 72.w,
+              color: const Color(0xFF007AFF),
+            ),
+          ]
+        : [
+            Container(
+              height: 2,
+              width: 70.w,
+              color: const Color(0xFF007AFF),
+            ),
+            Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                fontSize: 14.sp,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+  );
+}
+
+ Widget _buildBasicInputField({
+  required TextEditingController controller,
+  required String hintText,
+  String? labelText,
+  int maxLines = 1, // valeur par défaut
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      color: const Color.fromARGB(255, 241, 240, 240),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: Color(0xFF007AFF)),
+    ),
+    child: TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      style: GoogleFonts.poppins(fontSize: 14.sp),
+      decoration: InputDecoration(
+        border: InputBorder.none,
+        hintText: hintText,
+        labelText: labelText,
+        hintStyle: GoogleFonts.poppins(
+          fontSize: 14.sp,
+          color: Colors.grey[600],
+        ),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: 4.w,
+          vertical: maxLines > 1 ? 2.5.h : 1.8.h,
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildProductDropdown() {
     return Column(
       children: [
         GestureDetector(
-          onTap: () => setState(() => _isProductDropdownOpen = !_isProductDropdownOpen),
+          onTap: () {
+            setState(() {
+              _isProductDropdownOpen = !_isProductDropdownOpen;
+            });
+          },
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.8.h),
             decoration: BoxDecoration(
@@ -304,16 +334,12 @@ class _StockExitFormState extends State<_StockExitForm> {
                     _selectedProduct ?? "Sélectionner le produit",
                     style: GoogleFonts.poppins(
                       fontSize: 14.sp,
-                      color: _selectedProduct != null
-                          ? Colors.black87
-                          : Colors.grey[600],
+                      color: _selectedProduct != null ? Colors.black87 : Colors.grey[600],
                     ),
                   ),
                 ),
                 Icon(
-                  _isProductDropdownOpen
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
+                  _isProductDropdownOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                   color: Colors.grey[600],
                 ),
               ],
@@ -340,7 +366,7 @@ class _StockExitFormState extends State<_StockExitForm> {
                   padding: EdgeInsets.all(3.w),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
+                      color: const Color.fromARGB(255, 250, 250, 250),
                       borderRadius: BorderRadius.circular(25),
                     ),
                     child: TextFormField(
@@ -348,17 +374,13 @@ class _StockExitFormState extends State<_StockExitForm> {
                       style: GoogleFonts.poppins(fontSize: 14.sp),
                       decoration: InputDecoration(
                         border: InputBorder.none,
-                        hintText: "Rechercher un produit...",
-                        prefixIcon:
-                            Icon(Icons.search, color: Colors.grey[600]),
+                        hintText: "Rechercher ",
+                        prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
                         hintStyle: GoogleFonts.poppins(
                           fontSize: 14.sp,
                           color: Colors.grey[600],
                         ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 4.w,
-                          vertical: 1.5.h,
-                        ),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
                       ),
                     ),
                   ),
@@ -376,14 +398,13 @@ class _StockExitFormState extends State<_StockExitForm> {
                           style: GoogleFonts.poppins(fontSize: 14.sp),
                         ),
                         trailing: Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 2.w, vertical: 0.5.h),
+                          padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF007AFF),
+                            color: const Color.fromARGB(255, 70, 158, 252),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            product['quantity'].toString(),
+                            product['quantity'].toString() + product['unit'].toString(),
                             style: GoogleFonts.poppins(
                               fontSize: 12.sp,
                               color: Colors.white,
@@ -407,6 +428,7 @@ class _StockExitFormState extends State<_StockExitForm> {
       ],
     );
   }
+
 
   @override
   void dispose() {

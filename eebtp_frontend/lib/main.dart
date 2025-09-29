@@ -12,7 +12,7 @@ import 'package:eebtp_frontend/screens/modal_success.dart';
 import 'package:eebtp_frontend/screens/new_password_screen.dart';
 import 'package:eebtp_frontend/screens/notificationScreen.dart';
 import 'package:eebtp_frontend/screens/otp_confirmation_screen.dart';
-import 'package:eebtp_frontend/screens/outputDetail.dart';
+import 'package:eebtp_frontend/screens/exitDetail.dart';
 import 'package:eebtp_frontend/screens/passwordCreatedConfirmation.dart';
 import 'package:eebtp_frontend/screens/productDetail.dart';
 import 'package:eebtp_frontend/screens/profileScreen.dart';

@@ -29,9 +29,7 @@ class _SupplyRequestHomeScreenState extends State<SupplyRequestHomeScreen> {
       padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
       decoration: const BoxDecoration(
         color: Color(0xFF007AFF),
-        borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(20),
-        ),
+      
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

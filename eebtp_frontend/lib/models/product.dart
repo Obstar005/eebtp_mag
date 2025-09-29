@@ -1,6 +1,7 @@
 class Product {
   final String name;
   final String code;
+  final String unit;
   final String category;
   final int currentQuantity;
   final int threshold;
@@ -10,6 +11,7 @@ class Product {
   Product({
     required this.name,
     required this.code,
+    required this.unit,
     required this.category,
     required this.currentQuantity,
     required this.threshold,
@@ -21,6 +23,7 @@ class Product {
     return Product(
       name: json['name'],
       code: json['code'],
+      unit: json['unit'],
       category: json['category'],
       currentQuantity: json['currentQuantity'],
       threshold: json['threshold'],
@@ -33,6 +36,7 @@ class Product {
     return {
       'name': name,
       'code': code,
+      'unit': unit,
       'category': category,
       'currentQuantity': currentQuantity,
       'threshold': threshold,

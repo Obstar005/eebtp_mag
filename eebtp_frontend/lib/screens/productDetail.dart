@@ -24,14 +24,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
      
       body: Column(
         children: [
-          // Header avec dégradé bleu
+          // Header avec couleur bleu vif
           Container(
             decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF007AFF), Color(0xFF0056CC)],
-              ),
+              color: Color(0xFF0A84FF),
             ),
             child: SafeArea(
               bottom: false,
@@ -43,23 +39,23 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
                       child: Container(
-                        padding: EdgeInsets.all(2.w),
+                        padding: EdgeInsets.all(3.w),
                         decoration: const BoxDecoration(
                           color: Colors.white,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          Icons.arrow_back,
-                          size: 6.w,
-                          color: const Color(0xFF007AFF),
+                          Icons.arrow_back_ios_new,
+                          size: 5.w,
+                          color: const Color(0xFF0A84FF),
                         ),
                       ),
                     ),
                     Text(
                       "Détails produit",
                       style: GoogleFonts.montserrat(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
                     ),
@@ -68,7 +64,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         GestureDetector(
                           onTap: () => Navigator.pushNamed(context, '/notifications'),
                           child: Container(
-                            padding: EdgeInsets.all(2.w),
+                            padding: EdgeInsets.all(3.w),
                             decoration: const BoxDecoration(
                               color: Colors.white,
                               shape: BoxShape.circle,
@@ -76,7 +72,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             child: Icon(
                               Icons.notifications_outlined,
                               size: 6.w,
-                              color: const Color(0xFF007AFF),
+                              color: const Color(0xFF0A84FF),
                             ),
                           ),
                         ),
@@ -84,18 +80,21 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           right: 0,
                           top: 0,
                           child: Container(
-                            padding: EdgeInsets.all(1.w),
+                            padding: EdgeInsets.symmetric(horizontal: 1.5.w, vertical: 0.3.h),
+                            constraints: BoxConstraints(minWidth: 5.w, minHeight: 2.h),
                             decoration: const BoxDecoration(
-                              color: Colors.red,
+                              color: Color(0xFFFF3B30),
                               shape: BoxShape.circle,
                             ),
-                            child: Text(
-                              "3",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Montserrat',
+                            child: Center(
+                              child: Text(
+                                "3",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Montserrat',
+                                ),
                               ),
                             ),
                           ),
@@ -111,30 +110,30 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           // Contenu principal
           Expanded(
             child: Container(
-              color: const Color(0xFFF8F9FA),
+              color: Colors.white,
               child: SingleChildScrollView(
-                padding: EdgeInsets.all(6.w),
+                padding: EdgeInsets.all(5.w),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Image du produit
                     Container(
-                      height: 35.h,
+                      height: 30.h,
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: Colors.grey[300],
+                        color: const Color(0xFFF5F5F5),
                         borderRadius: BorderRadius.circular(4.w),
                       ),
                       child: Center(
                         child: Icon(
                           Icons.inventory_2,
                           size: 20.w,
-                          color: Colors.grey[600],
+                          color: Colors.grey[400],
                         ),
                       ),
                     ),
                     
-                    SizedBox(height: 4.h),
+                    SizedBox(height: 3.h),
                     
                     // Informations principales du produit
                     Row(
@@ -145,33 +144,33 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                widget.product.name,
+                                widget.product.name.toUpperCase(),
                                 style: GoogleFonts.montserrat(
-                                  fontSize: 20.sp,
+                                  fontSize: 22.sp,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.black,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                               SizedBox(height: 1.h),
                               Text(
                                 widget.product.code,
                                 style: GoogleFonts.montserrat(
-                                  fontSize: 14.sp,
-                                  color: Colors.grey[600],
+                                  fontSize: 15.sp,
+                                  color: Colors.grey[500],
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
                           ),
                         ),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.2.h),
                           decoration: BoxDecoration(
-                            color: isLowStock ? Colors.red[100] : Colors.green[100],
-                            borderRadius: BorderRadius.circular(5.w),
-                            border: Border.all(
-                              color: isLowStock ? Colors.red : Colors.green,
-                              width: 1,
-                            ),
+                            color: isLowStock 
+                              ? const Color(0xFFFFE5E5) 
+                              : const Color(0xFFE8F5E9),
+                            borderRadius: BorderRadius.circular(8.w),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -179,16 +178,18 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                               Text(
                                 "Seuil",
                                 style: GoogleFonts.montserrat(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: isLowStock ? Colors.red : Colors.green,
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: isLowStock 
+                                    ? Colors.red 
+                                    : const Color(0xFF34C759),
                                 ),
                               ),
                               SizedBox(width: 1.w),
                               Icon(
-                                isLowStock ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_up,
-                                color: isLowStock ? Colors.red : Colors.green,
-                                size: 4.w,
+                               isLowStock ? Icons.south_east : Icons.north_east,
+                                color:isLowStock ? Colors.red : const Color(0xFF34C759),
+                                size: 16.sp,
                               ),
                             ],
                           ),
@@ -203,23 +204,23 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       children: [
                         Expanded(
                           child: _buildInfoCard(
-                            icon: Icons.category,
+                            icon: Icons.grid_view,
                             title: "Catégorie",
                             value: widget.product.category,
                           ),
                         ),
-                        SizedBox(width: 4.w),
+                        SizedBox(width: 3.w),
                         Expanded(
                           child: _buildInfoCard(
-                            icon: Icons.calendar_today,
+                            icon: Icons.calendar_today_outlined,
                             title: "Ajouté le",
                             value: _formatDate(widget.product.addedDate),
                           ),
                         ),
-                        SizedBox(width: 4.w),
+                        SizedBox(width: 3.w),
                         Expanded(
                           child: _buildInfoCard(
-                            icon: Icons.shopping_cart,
+                            icon: Icons.shopping_cart_outlined,
                             title: "Qté actuelle",
                             value: "${widget.product.currentQuantity} t",
                           ),
@@ -227,35 +228,28 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       ],
                     ),
                     
-                    SizedBox(height: 3.h),
+                    SizedBox(height: 2.5.h),
                     
                     // Quantité seuil
                     Container(
                       width: double.infinity,
                       padding: EdgeInsets.all(4.w),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: const Color(0xFFF5F5F5),
                         borderRadius: BorderRadius.circular(3.w),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
-                            blurRadius: 5,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
                       ),
                       child: Row(
                         children: [
                           Container(
-                            padding: EdgeInsets.all(2.w),
-                            decoration: BoxDecoration(
-                              color: Colors.orange[50],
+                            padding: EdgeInsets.all(2.5.w),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
-                              Icons.warning_amber,
-                              color: Colors.orange,
-                              size: 5.w,
+                              Icons.warning_amber_outlined,
+                              color: Colors.grey[700],
+                              size: 6.w,
                             ),
                           ),
                           SizedBox(width: 3.w),
@@ -265,15 +259,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                               Text(
                                 "Qté seuil",
                                 style: GoogleFonts.montserrat(
-                                  fontSize: 14.sp,
-                                  color: Colors.grey[600],
+                                  fontSize: 13.sp,
+                                  color: const Color.fromARGB(255, 53, 53, 53),
                                 ),
                               ),
+                              SizedBox(height: 0.3.h),
                               Text(
                                 "${widget.product.threshold} t",
                                 style: GoogleFonts.montserrat(
                                   fontSize: 16.sp,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w700,
                                   color: Colors.black,
                                 ),
                               ),
@@ -289,12 +284,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     Text(
                       "Description",
                       style: GoogleFonts.montserrat(
-                        fontSize: 18.sp,
+                        fontSize: 20.sp,
                         fontWeight: FontWeight.w700,
                         color: Colors.black,
                       ),
                     ),
-                    SizedBox(height: 2.h),
+                    SizedBox(height: 1.5.h),
                     Text(
                       widget.product.description,
                       style: GoogleFonts.montserrat(
@@ -313,19 +308,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         child: ElevatedButton(
                           onPressed: () {
                             // Action pour signaler le seuil
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Seuil signalé avec succès"),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
+                     
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
+                            backgroundColor: const Color(0xFFFF3B30),
                             padding: EdgeInsets.symmetric(vertical: 2.h),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(3.w),
+                              borderRadius: BorderRadius.circular(6.w),
                             ),
+                            elevation: 0,
                           ),
                           child: Text(
                             "Signaler le seuil",
@@ -345,64 +336,72 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
           ),
         ],
-      ), initialIndex: 1,
-      
-
+      ), 
+      initialIndex: 1,
     );
   }
 
-  Widget _buildInfoCard({
-    required IconData icon,
-    required String title,
-    required String value,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(3.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(2.w),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            color: Colors.grey[600],
-            size: 5.w,
-          ),
-          SizedBox(height: 1.h),
-          Text(
-            title,
-            style: GoogleFonts.montserrat(
-              fontSize: 12.sp,
+Widget _buildInfoCard({
+  required IconData icon,
+  required String title,
+  required String value,
+}) {
+  return Container(
+    padding: EdgeInsets.all(3.5.w),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF5F5F5),
+      borderRadius: BorderRadius.circular(3.w),
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Ligne icône + titre
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
               color: Colors.grey[600],
+              size: 6.w,
             ),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: 0.5.h),
-          Text(
+            SizedBox(width: 2.w),
+            Flexible(
+              child: Text(
+                title,
+                style: GoogleFonts.montserrat(
+                  fontSize: 13.sp,
+                  color: const Color.fromARGB(255, 47, 47, 47),
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        
+        SizedBox(height: 1.h),
+        
+        // Valeur
+        Flexible(
+          child: Text(
             value,
             style: GoogleFonts.montserrat(
               fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
               color: Colors.black,
             ),
-            textAlign: TextAlign.center,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.left,
           ),
-        ],
-      ),
-    );
-  }
-
+        ),
+      ],
+    ),
+  );
+}
   String _formatDate(DateTime date) {
     return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
   }
 }
-
-

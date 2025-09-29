@@ -91,171 +91,175 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Widget _buildNormalAppBar() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
       decoration: const BoxDecoration(
-        color: Color(0xFF007AFF),
-        borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(20),
-        ),
+        color: Color(0xFF0A84FF),
       ),
-      child: Column(
-        children: [
-          SizedBox(height: 2.h),
-          Row(
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: Container(
-                  padding: EdgeInsets.all(2.w),
+                  padding: EdgeInsets.all(3.w),
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.arrow_back_ios_new,
-                    color: Color(0xFF007AFF),
                     size: 5.w,
+                    color: const Color(0xFF0A84FF),
                   ),
                 ),
               ),
-              Expanded(
-                child: Center(
-                  child: Text(
-                    "Notifications",
-                    style: GoogleFonts.poppins(
-                      fontSize: 18.sp,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.all(2.5.w),
-                decoration: const BoxDecoration(
+              Text(
+                "Notifications",
+                style: GoogleFonts.montserrat(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w600,
                   color: Colors.white,
-                  shape: BoxShape.circle,
                 ),
-                child: Stack(
-                  children: [
-                    Icon(
+              ),
+              Stack(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(3.w),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
                       Icons.notifications_outlined,
                       size: 6.w,
-                      color: Color(0xFF007AFF),
+                      color: const Color(0xFF0A84FF),
                     ),
-                    Positioned(
-                      right: -1,
-                      top: -1,
-                      child: Container(
-                        padding: EdgeInsets.all(0.8.w),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 1.5.w, vertical: 0.3.h),
+                      constraints: BoxConstraints(minWidth: 5.w, minHeight: 2.h),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFF3B30),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
                         child: Text(
                           "3",
-                          style: GoogleFonts.poppins(
-                            fontSize: 8.sp,
+                          style: TextStyle(
                             color: Colors.white,
+                            fontSize: 10.sp,
                             fontWeight: FontWeight.bold,
+                            fontFamily: 'Montserrat',
                           ),
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildSearchAppBar() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
       decoration: const BoxDecoration(
-        color: Color(0xFF007AFF),
-        borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(20),
-        ),
+        color: Color(0xFF0A84FF),
       ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: _toggleSearchMode,
-            child: Container(
-              padding: EdgeInsets.all(2.w),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.arrow_back,
-                color: Color(0xFF007AFF),
-                size: 5.w,
-              ),
-            ),
-          ),
-          SizedBox(width: 4.w),
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: TextField(
-                controller: _searchController,
-                focusNode: _searchFocusNode,
-                onChanged: (value) {
-                  setState(() {
-                    searchQuery = value;
-                  });
-                },
-                decoration: InputDecoration(
-                  hintText: "Rechercher",
-                  hintStyle: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 14.sp,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: _toggleSearchMode,
+                child: Container(
+                  padding: EdgeInsets.all(3.w),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
                   ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: Colors.grey[400],
-                    size: 6.w,
-                  ),
-                  suffixIcon: searchQuery.isNotEmpty
-                      ? GestureDetector(
-                          onTap: () {
-                            _searchController.clear();
-                            setState(() {
-                              searchQuery = '';
-                            });
-                          },
-                          child: Container(
-                            margin: EdgeInsets.all(2.w),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.close,
-                              color: Colors.grey[600],
-                              size: 4.w,
-                            ),
-                          ),
-                        )
-                      : null,
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 4.w,
-                    vertical: 1.5.h,
+                  child: Icon(
+                    Icons.arrow_back_ios_new,
+                    size: 5.w,
+                    color: const Color(0xFF0A84FF),
                   ),
                 ),
               ),
-            ),
+              SizedBox(width: 4.w),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    focusNode: _searchFocusNode,
+                    onChanged: (value) {
+                      setState(() {
+                        searchQuery = value;
+                      });
+                    },
+                    style: GoogleFonts.montserrat(
+                      fontSize: 14.sp,
+                      color: Colors.black,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: "Rechercher",
+                      hintStyle: GoogleFonts.montserrat(
+                        color: Colors.grey[400],
+                        fontSize: 14.sp,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: Colors.grey[400],
+                        size: 6.w,
+                      ),
+                      suffixIcon: searchQuery.isNotEmpty
+                          ? GestureDetector(
+                              onTap: () {
+                                _searchController.clear();
+                                setState(() {
+                                  searchQuery = '';
+                                });
+                              },
+                              child: Container(
+                                margin: EdgeInsets.all(2.w),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.close,
+                                  color: Colors.grey[600],
+                                  size: 4.w,
+                                ),
+                              ),
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 4.w,
+                        vertical: 1.8.h,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -267,8 +271,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
         onTap: _toggleSearchMode,
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(25),
+            color: const Color(0xFFF5F5F5),
+            borderRadius: BorderRadius.circular(30),
           ),
           child: Row(
             children: [
@@ -286,7 +290,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   padding: EdgeInsets.symmetric(vertical: 2.h),
                   child: Text(
                     "Rechercher",
-                    style: TextStyle(
+                    style: GoogleFonts.montserrat(
                       color: Colors.grey[400],
                       fontSize: 14.sp,
                     ),
@@ -302,96 +306,94 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Widget _buildNotificationItem(NotificationItem notification) {
     return Container(
-      margin: EdgeInsets.only(bottom: 1.h),
+      margin: EdgeInsets.only(bottom: 1.5.h),
+      padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: Offset(0, 2),
-          ),
-        ],
+        color: notification.isRead 
+          ? Colors.white 
+          : const Color(0xFFE3F2FD),
+        borderRadius: BorderRadius.circular(3.w),
       ),
-      child: ListTile(
-        contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-        leading: Stack(
-          children: [
-            CircleAvatar(
-              radius: 6.w,
-              backgroundColor: Colors.grey[300],
-              child: Icon(
-                Icons.person,
-                color: Colors.grey[600],
-                size: 6.w,
-              ),
-            ),
-            if (!notification.isRead)
-              Positioned(
-                left: 0,
-                top: 0,
-                child: Container(
-                  width: 3.w,
-                  height: 3.w,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF007AFF),
-                    shape: BoxShape.circle,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              Container(
+                width: 12.w,
+                height: 12.w,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.grey[300],
+                  image: const DecorationImage(
+                    image: NetworkImage('https://via.placeholder.com/150'),
+                    fit: BoxFit.cover,
                   ),
                 ),
               ),
-          ],
-        ),
-        title: RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: notification.userName,
-                style: GoogleFonts.poppins(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
+              if (!notification.isRead)
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  child: Container(
+                    width: 2.5.w,
+                    height: 2.5.w,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF0A84FF),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
                 ),
-              ),
-              TextSpan(
-                text: ' ${notification.message}',
-                style: GoogleFonts.poppins(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.black,
-                ),
-              ),
             ],
           ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 0.5.h),
-            Text(
-              'N° ${notification.id}',
-              style: GoogleFonts.poppins(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87,
-              ),
+          SizedBox(width: 3.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: notification.userName,
+                        style: GoogleFonts.montserrat(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                        ),
+                      ),
+                      TextSpan(
+                        text: ' ${notification.message}',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 0.5.h),
+                Text(
+                  'N° ${notification.id}',
+                  style: GoogleFonts.montserrat(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                SizedBox(height: 0.3.h),
+                Text(
+                  notification.timestamp,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 12.sp,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
             ),
-            SizedBox(height: 0.5.h),
-            Text(
-              notification.timestamp,
-              style: GoogleFonts.poppins(
-                fontSize: 11.sp,
-                color: Colors.grey[500],
-              ),
-            ),
-          ],
-        ),
-        onTap: () {
-          setState(() {
-            notification.isRead = true;
-          });
-        },
+          ),
+        ],
       ),
     );
   }
@@ -402,23 +404,23 @@ class _NotificationScreenState extends State<NotificationScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.notifications_off_outlined,
-            size: 20.w,
+            Icons.notifications_none_outlined,
+            size: 30.w,
             color: Colors.grey[400],
           ),
           SizedBox(height: 3.h),
           Text(
             "Vous n'avez aucune notification",
-            style: GoogleFonts.poppins(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
+            style: GoogleFonts.montserrat(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
             ),
           ),
           SizedBox(height: 1.h),
           Text(
             "Toutes vos notifications s'afficheront ici",
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.montserrat(
               fontSize: 14.sp,
               color: Colors.grey[600],
             ),
@@ -431,25 +433,27 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   Widget build(BuildContext context) {
     return NavContainer(
-      
-      body: Column(
-        children: [
-          isSearchMode ? _buildSearchAppBar() : _buildNormalAppBar(),
-          if (!isSearchMode) _buildSearchBarBelow(),
-          Expanded(
-            child: filteredNotifications.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    padding: EdgeInsets.all(4.w),
-                    itemCount: filteredNotifications.length,
-                    itemBuilder: (context, index) {
-                      return _buildNotificationItem(filteredNotifications[index]);
-                    },
-                  ),
-          ),
-        ],
-      ), initialIndex: 6,
- 
+      body: Container(
+        color: Colors.white,
+        child: Column(
+          children: [
+            isSearchMode ? _buildSearchAppBar() : _buildNormalAppBar(),
+            if (!isSearchMode) _buildSearchBarBelow(),
+            Expanded(
+              child: filteredNotifications.isEmpty
+                  ? _buildEmptyState()
+                  : ListView.builder(
+                      padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.h),
+                      itemCount: filteredNotifications.length,
+                      itemBuilder: (context, index) {
+                        return _buildNotificationItem(filteredNotifications[index]);
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+      initialIndex: 6,
     );
   }
 
@@ -461,7 +465,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 }
 
-// Modèles de données et autres classes restent inchangés
 class NotificationItem {
   final String id;
   final String userName;
@@ -487,4 +490,3 @@ enum NotificationType {
   refusal,
   info,
 }
-

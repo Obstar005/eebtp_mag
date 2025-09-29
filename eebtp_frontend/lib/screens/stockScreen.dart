@@ -25,6 +25,7 @@ class _StockPageState extends State<StockPage> {
     Product(
       name: "CIMENT",
       code: "PRD-502-25",
+      unit: "t",
       category: "Matériaux",
       currentQuantity: 100,
       threshold: 10,
@@ -34,10 +35,31 @@ class _StockPageState extends State<StockPage> {
     Product(
       name: "FER À BETON",
       code: "PRD-503-25",
+      unit: "unité",
       category: "Matériel",
       currentQuantity: 5,
       threshold: 10,
       description: "High quality construction steel for reinforcement.",
+      addedDate: DateTime(2024, 2, 3),
+    ),
+    Product(
+      name: "SABLE",
+      code: "PRD-504-25",
+      unit: "m3",
+      category: "Matériaux",
+      currentQuantity: 50,
+      threshold: 20,
+      description: "Fine construction sand for concrete and mortar.",
+      addedDate: DateTime(2024, 2, 3),
+    ),
+    Product(
+      name: "GRAVIER",
+      code: "PRD-505-25",
+      unit: "m3",
+      category: "Matériaux",
+      currentQuantity: 30,
+      threshold: 15,
+      description: "Durable gravel for construction and landscaping.",
       addedDate: DateTime(2024, 2, 3),
     ),
   ];
@@ -45,7 +67,7 @@ class _StockPageState extends State<StockPage> {
   // Données factices pour les entrées/livraisons
   final List<EntryItem> entries = [
     EntryItem(
-      product: Product(name: "CIMENT", code: "PRD-502-25", category: "Matériaux", currentQuantity: 10, threshold: 10, description: "", addedDate: DateTime.now()),
+      product: Product(name: "CIMENT", code: "PRD-502-25", unit: "t", category: "Matériaux", currentQuantity: 10, threshold: 10, description: "", addedDate: DateTime.now()),
       date: DateTime(2025, 5, 12, 13, 0),
       quantity: 10,
       deliveryPerson: Person(name: "Kasim Ahmad", role: "Livreur", phone: "90909090", signature: "Signature"),
@@ -53,7 +75,15 @@ class _StockPageState extends State<StockPage> {
       supplierPhone: "+228 90909090",
     ),
     EntryItem(
-      product: Product(name: "FER À BETON", code: "PRD-503-25", category: "Matériel", currentQuantity: 100, threshold: 10, description: "", addedDate: DateTime.now()),
+      product: Product(name: "FER À BETON", code: "PRD-503-25", unit: "unité", category: "Matériel", currentQuantity: 100, threshold: 10, description: "", addedDate: DateTime.now()),
+      date: DateTime(2025, 5, 12, 13, 0),
+      quantity: 100,
+      deliveryPerson: Person(name: "Kasim Ahmad", role: "Livreur", phone: "90909090", signature: "Signature"),
+      supplier: "CIMTOGO",
+      supplierPhone: "+228 90909090",
+    ),
+    EntryItem(
+      product: Product(name: "FER À BETON", code: "PRD-503-25", unit: "unité", category: "Matériel", currentQuantity: 100, threshold: 10, description: "", addedDate: DateTime.now()),
       date: DateTime(2025, 5, 12, 13, 0),
       quantity: 100,
       deliveryPerson: Person(name: "Kasim Ahmad", role: "Livreur", phone: "90909090", signature: "Signature"),
@@ -65,9 +95,21 @@ class _StockPageState extends State<StockPage> {
   // Données factices pour les retours
   final List<ReturnItem> returns = [
     ReturnItem(
-      product: Product(name: "CIMENT", code: "PRD-502-25", category: "Matériaux", currentQuantity: 10, threshold: 10, description: "", addedDate: DateTime.now()),
+      product: Product(name: "CIMENT", code: "PRD-502-25",  unit: "t", category: "Matériaux", currentQuantity: 10, threshold: 10, description: "", addedDate: DateTime.now()),
       date: DateTime(2025, 5, 12, 13, 0),
       quantity: 10,
+      depositor: Person(name: "Kasim Ahmad", role: "Déposant / Plombier", phone: "90909090"),
+    ),
+    ReturnItem(
+      product: Product(name: "FER À BETON", code: "PRD-503-25", unit: "unité", category: "Matériel", currentQuantity: 100, threshold: 10, description: "", addedDate: DateTime.now()),
+      date: DateTime(2025, 5, 12, 13, 0),
+      quantity: 100,
+      depositor: Person(name: "Kasim Ahmad", role: "Déposant / Plombier", phone: "90909090"),
+    ), 
+       ReturnItem(
+      product: Product(name: "FER À BETON", code: "PRD-503-25", unit: "unité", category: "Matériel", currentQuantity: 100, threshold: 10, description: "", addedDate: DateTime.now()),
+      date: DateTime(2025, 5, 12, 13, 0),
+      quantity: 100,
       depositor: Person(name: "Kasim Ahmad", role: "Déposant / Plombier", phone: "90909090"),
     ),
   ];
@@ -75,12 +117,27 @@ class _StockPageState extends State<StockPage> {
   // Données factices pour les sorties
   final List<ExitItem> exits = [
     ExitItem(
-      product: Product(name: "CIMENT", code: "PRD-502-25", category: "Matériaux", currentQuantity: 10, threshold: 10, description: "", addedDate: DateTime.now()),
+      product: Product(name: "CIMENT", code: "PRD-502-25", unit: "t", category: "Matériaux", currentQuantity: 10, threshold: 10, description: "", addedDate: DateTime.now()),
       date: DateTime(2025, 5, 12, 13, 0),
       quantity: 10,
       receiver: Person(name: "Kasim Ahmad", role: "Receveur / Plombier", phone: "90909090"),
       reason: "Meet Whiskers, the embodiment of joy and cuddles! With his mesmerizing green eyes and soft fur, this playful 3-",
     ),
+    ExitItem(
+      product: Product(name: "FER À BETON", code: "PRD-503-25", unit: "unité", category: "Matériel", currentQuantity: 100, threshold: 10, description: "", addedDate: DateTime.now()),
+      date: DateTime(2025, 5, 12, 13, 0),
+      quantity: 100,
+      receiver: Person(name: "Kasim Ahmad", role: "Receveur / Plombier", phone: "90909090"),
+      reason: "High quality construction steel for reinforcement.",
+    ),
+    ExitItem(
+      product: Product(name: "FER À BETON", code: "PRD-503-25", unit: "unité", category: "Matériel", currentQuantity: 100, threshold: 10, description: "", addedDate: DateTime.now()),
+      date: DateTime(2025, 5, 12, 13, 0),
+      quantity: 100,
+      receiver: Person(name: "Kasim Ahmad", role: "Receveur / Plombier", phone: "90909090"),
+      reason: "High quality construction steel for reinforcement.",
+    ),
+
   ];
 
   @override
@@ -354,297 +411,382 @@ class _StockPageState extends State<StockPage> {
     );
   }
 
-  Widget _buildProductCard(Product product) {
-    bool isLowStock = product.currentQuantity <= product.threshold;
-    
-    return GestureDetector(
-      onTap: () => _navigateToProductDetail(product),
-      child: Container(
-        margin: EdgeInsets.only(bottom: 3.h),
-        padding: EdgeInsets.all(4.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(3.w),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+Widget _buildProductCard(Product product) {
+  bool isLowStock = product.currentQuantity <= product.threshold;
+  
+  return GestureDetector(
+    onTap: () => _navigateToProductDetail(product),
+    child: Container(
+      margin: EdgeInsets.only(bottom: 2.h),
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4.w),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Left section - Product info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        product.name,
-                        style: GoogleFonts.montserrat(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black,
-                        ),
-                      ),
-                      Text(
-                        product.code,
-                        style: GoogleFonts.montserrat(
-                          fontSize: 14.sp,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      SizedBox(height: 1.h),
-                      Text(
-                        product.category,
-                        style: GoogleFonts.montserrat(
-                          fontSize: 14.sp,
-                          color: Colors.grey[500],
-                        ),
-                      ),
-                    ],
+                Text(
+                  product.name.toUpperCase(),
+                  style: GoogleFonts.montserrat(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                    letterSpacing: 0.3,
                   ),
                 ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                  decoration: BoxDecoration(
-                    color: isLowStock ? const Color(0xFFFF3B30) : const Color(0xFF34C759),
-                    borderRadius: BorderRadius.circular(5.w),
+                SizedBox(height: 0.5.h),
+                Text(
+                  product.code,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 14.sp,
+                    color: const Color.fromRGBO(147, 147, 147, 1),
+                    fontWeight: FontWeight.w500,
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        "Seuil",
-                        style: GoogleFonts.montserrat(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                        ),
-                      ),
-                      SizedBox(width: 1.w),
-                      Icon(
-                        isLowStock ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_up,
-                        color: Colors.white,
-                        size: 4.w,
-                      ),
-                    ],
+                ),
+                SizedBox(height: 1.5.h),
+                Text(
+                  product.category,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 14.sp,
+                    color: Color.fromRGBO(147, 147, 147, 1),
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 2.h),
-            Text(
-              "Quantité actuelle: ${product.currentQuantity} t",
-              style: GoogleFonts.montserrat(
-                fontSize: 14.sp,
-                color: Colors.grey[600],
+          ),
+          
+          SizedBox(width: 3.w),
+          
+          // Right section - Status and quantity
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 3.5.w,
+                  vertical: 0.8.h,
+                ),
+                decoration: BoxDecoration(
+                  color: isLowStock 
+                    ? const Color(0xFFFFE5E5) 
+                    : const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(5.w),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Seuil",
+                      style: GoogleFonts.montserrat(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: isLowStock 
+                          ? const Color(0xFFD32F2F) 
+                          : const Color(0xFF388E3C),
+                      ),
+                    ),
+                    SizedBox(width: 1.w),
+                    Icon(
+                      isLowStock 
+                        ? Icons.keyboard_arrow_down_rounded 
+                        : Icons.keyboard_arrow_up_rounded,
+                      color: isLowStock 
+                        ? const Color(0xFFD32F2F) 
+                        : const Color(0xFF388E3C),
+                      size: 18.sp,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
+              SizedBox(height: 2.h),
+              Text(
+                "Quantité actuelle: ${product.currentQuantity} ${product.unit}",
+                style: GoogleFonts.montserrat(
+                  fontSize: 14.sp,
+                  color: Color.fromRGBO(147, 147, 147, 1),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
-    );
-  }
-
+    ),
+  );
+}
+ 
   Widget _buildEntryCard(EntryItem entry) {
-    return GestureDetector(
-      onTap: () => _navigateToEntryDetail(entry),
-      child: Container(
-        margin: EdgeInsets.only(bottom: 3.h),
-        padding: EdgeInsets.all(4.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(3.w),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              entry.product.name,
-              style: GoogleFonts.montserrat(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.black,
-              ),
-            ),
-            Text(
-              entry.product.code,
-              style: GoogleFonts.montserrat(
-                fontSize: 14.sp,
-                color: Colors.grey[600],
-              ),
-            ),
-            SizedBox(height: 1.h),
-            Text(
-              entry.product.category,
-              style: GoogleFonts.montserrat(
-                fontSize: 14.sp,
-                color: Colors.grey[500],
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              "Entrée le: ${_formatDate(entry.date)}",
-              style: GoogleFonts.montserrat(
-                fontSize: 14.sp,
-                color: Colors.grey[600],
-              ),
-            ),
-            SizedBox(height: 1.h),
-            Text(
-              "Quantité: ${entry.quantity} t",
-              style: GoogleFonts.montserrat(
-                fontSize: 14.sp,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
+  return GestureDetector(
+    onTap: () => _navigateToEntryDetail(entry),
+    child: Container(
+      margin: EdgeInsets.only(bottom: 2.h),
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4.w),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-    );
-  }
+      child: Row(
+        children: [
+          // Left section - Product info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  entry.product.name.toUpperCase(),
+                  style: GoogleFonts.montserrat(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                SizedBox(height: 0.5.h),
+                Text(
+                  entry.product.code,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 14.sp,
+                    color: const Color.fromRGBO(147, 147, 147, 1),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 1.5.h),
+                Text(
+                  entry.product.category,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 14.sp,
+                    color: Color.fromRGBO(147, 147, 147, 1),
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          SizedBox(width: 3.w),
+          
+          // Right section 
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+           Text(
+                "Entrée le: ${_formatDate(entry.date)}",
+                style: GoogleFonts.montserrat(
+                   fontSize: 14.sp,
+                  color: Color.fromRGBO(147, 147, 147, 1),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                "Quantité: ${entry.quantity} ${entry.product.unit}",
+                style: GoogleFonts.montserrat(
+                  fontSize: 14.sp,
+                  color: Color.fromRGBO(147, 147, 147, 1),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+}
+ 
 
   Widget _buildReturnCard(ReturnItem returnItem) {
-    return GestureDetector(
-      onTap: () => _navigateToReturnDetail(returnItem),
-      child: Container(
-        margin: EdgeInsets.only(bottom: 3.h),
-        padding: EdgeInsets.all(4.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(3.w),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              returnItem.product.name,
-              style: GoogleFonts.montserrat(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.black,
-              ),
-            ),
-            Text(
-              returnItem.product.code,
-              style: GoogleFonts.montserrat(
-                fontSize: 14.sp,
-                color: Colors.grey[600],
-              ),
-            ),
-            SizedBox(height: 1.h),
-            Text(
-              returnItem.product.category,
-              style: GoogleFonts.montserrat(
-                fontSize: 14.sp,
-                color: Colors.grey[500],
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              "Retourner le: ${_formatDate(returnItem.date)}",
-              style: GoogleFonts.montserrat(
-                fontSize: 14.sp,
-                color: Colors.grey[600],
-              ),
-            ),
-            SizedBox(height: 1.h),
-            Text(
-              "Quantité: ${returnItem.quantity} t",
-              style: GoogleFonts.montserrat(
-                fontSize: 14.sp,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
+      return GestureDetector(
+    onTap: () => _navigateToReturnDetail(returnItem),
+    child: Container(
+      margin: EdgeInsets.only(bottom: 2.h),
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4.w),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-    );
-  }
+      child: Row(
+        children: [
+          // Left section - Product info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  returnItem.product.name.toUpperCase(),
+                  style: GoogleFonts.montserrat(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                SizedBox(height: 0.5.h),
+                Text(
+                  returnItem.product.code,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 14.sp,
+                    color: const Color.fromRGBO(147, 147, 147, 1),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 1.5.h),
+                Text(
+                  returnItem.product.category,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 14.sp,
+                    color: Color.fromRGBO(147, 147, 147, 1),
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          SizedBox(width: 3.w),
+          
+          // Right section 
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+           Text(
+                "Retournée le: ${_formatDate(returnItem.date)}",
+                style: GoogleFonts.montserrat(
+                   fontSize: 14.sp,
+                  color: Color.fromRGBO(147, 147, 147, 1),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                "Quantité: ${returnItem.quantity} ${returnItem.product.unit}",
+                style: GoogleFonts.montserrat(
+                  fontSize: 14.sp,
+                  color: Color.fromRGBO(147, 147, 147, 1),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+
+ }
 
   Widget _buildExitCard(ExitItem exit) {
-    return GestureDetector(
-      onTap: () => _navigateToExitDetail(exit),
-      child: Container(
-        margin: EdgeInsets.only(bottom: 3.h),
-        padding: EdgeInsets.all(4.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(3.w),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              exit.product.name,
-              style: GoogleFonts.montserrat(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.black,
-              ),
-            ),
-            Text(
-              exit.product.code,
-              style: GoogleFonts.montserrat(
-                fontSize: 14.sp,
-                color: Colors.grey[600],
-              ),
-            ),
-            SizedBox(height: 1.h),
-            Text(
-              exit.product.category,
-              style: GoogleFonts.montserrat(
-                fontSize: 14.sp,
-                color: Colors.grey[500],
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              "Sortie le: ${_formatDate(exit.date)}",
-              style: GoogleFonts.montserrat(
-                fontSize: 14.sp,
-                color: Colors.grey[600],
-              ),
-            ),
-            SizedBox(height: 1.h),
-            Text(
-              "Quantité: ${exit.quantity} t",
-              style: GoogleFonts.montserrat(
-                fontSize: 14.sp,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
+  return GestureDetector(
+    onTap: () => _navigateToExitDetail(exit),
+    child: Container(
+      margin: EdgeInsets.only(bottom: 2.h),
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4.w),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-    );
-  }
+      child: Row(
+        children: [
+          // Left section - Product info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  exit.product.name.toUpperCase(),
+                  style: GoogleFonts.montserrat(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                SizedBox(height: 0.5.h),
+                Text(
+                  exit.product.code,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 14.sp,
+                    color: const Color.fromRGBO(147, 147, 147, 1),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 1.5.h),
+                Text(
+                  exit.product.category,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 14.sp,
+                    color: Color.fromRGBO(147, 147, 147, 1),
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          SizedBox(width: 3.w),
+          
+          // Right section
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+           Text(
+                "Sortie le: ${_formatDate(exit.date)}",
+                style: GoogleFonts.montserrat(
+                   fontSize: 14.sp,
+                  color: Color.fromRGBO(147, 147, 147, 1),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                "Quantité: ${exit.quantity} ${exit.product.unit}",
+                style: GoogleFonts.montserrat(
+                  fontSize: 14.sp,
+                  color: Color.fromRGBO(147, 147, 147, 1),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+ }
 
   String _formatDate(DateTime date) {
     return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} à ${date.hour.toString().padLeft(2, '0')}h${date.minute.toString().padLeft(2, '0')}";

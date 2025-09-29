@@ -227,9 +227,9 @@ class ImprovedBottomNavigation extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(Icons.home_outlined, Icons.home, "Accueil", 0),
-              _buildNavItem(Icons.inventory_2_outlined, Icons.inventory_2, "Stock", 1),
+              _buildNavItem(Icons.view_in_ar_outlined , Icons.view_in_ar, "Stock", 1),
               const SizedBox(width: 60),
-              _buildNavItem(Icons.assignment_outlined, Icons.assignment, "Demande", 2),
+              _buildNavItem(Icons.description_outlined, Icons.description, "Demande", 2),
               _buildNavItem(Icons.person_outline, Icons.person, "Profil", 3),
             ],
           ),

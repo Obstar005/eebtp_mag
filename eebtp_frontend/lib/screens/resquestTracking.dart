@@ -113,11 +113,11 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'acceptée':
-        return Colors.green;
+        return const Color.fromRGBO(38, 161, 90, 1);
       case 'en cours':
-        return Colors.orange;
+        return const Color.fromRGBO(218, 164, 0, 1);
       case 'refusée':
-        return Colors.red;
+        return const Color.fromRGBO(206, 0, 0, 1);
       default:
         return Colors.grey;
     }
@@ -126,7 +126,7 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
   IconData _getStatusIcon(String status) {
     switch (status.toLowerCase()) {
       case 'acceptée':
-        return Icons.check;
+        return Icons.check_circle;
       case 'en cours':
         return Icons.info;
       case 'refusée':
@@ -150,9 +150,6 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
       padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
       decoration: const BoxDecoration(
         color: Color(0xFF007AFF),
-        borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(20),
-        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -213,10 +210,10 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: const Color.fromARGB(255, 180, 211, 247).withOpacity(0.8),
             blurRadius: 5,
             offset: Offset(0, 2),
           ),
@@ -224,7 +221,7 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
       ),
       child: InkWell(
         onTap: () => _navigateToRequestDetail(request),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(15),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -240,47 +237,50 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: const Color.fromRGBO(13, 13, 13,1),
                         ),
                       ),
-                      SizedBox(height: 0.5.h),
+                      SizedBox(height: 1.h),
                       Text(
                         "N° ${request.id}",
                         style: GoogleFonts.poppins(
-                          fontSize: 12.sp,
-                          color: Colors.grey[600],
+                          fontSize: 14.sp,
+                          color: const Color.fromRGBO(67, 69, 69, 1),
                         ),
                       ),
                     ],
                   ),
                 ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(request.status),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _getStatusIcon(request.status),
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                      SizedBox(width: 1.w),
-                      Text(
-                        request.status,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12.sp,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+           Container(
+  padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
+  decoration: BoxDecoration(
+    color: _getStatusColor(request.status),
+    borderRadius: BorderRadius.circular(10),
+  ),
+  child: Row(
+    mainAxisSize: MainAxisSize.min, // 👈 évite l'overflow
+    children: [
+      Icon(
+        _getStatusIcon(request.status),
+        color: Colors.white,
+        size: 14.sp, // 👈 un peu plus petit
+      ),
+      SizedBox(width: 1.w),
+      Flexible( // 👈 évite les coupures si le texte est trop long
+        child: Text(
+          request.status,
+          style: GoogleFonts.poppins(
+            fontSize: 12.sp, // 👈 texte un peu plus petit
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
+          overflow: TextOverflow.ellipsis, // 👈 coupe proprement si trop long
+        ),
+      ),
+    ],
+  ),
+)
+ ],
             ),
             SizedBox(height: 2.h),
             Row(
@@ -292,8 +292,8 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
                       Text(
                         "Émit le ${request.emissionDate.day.toString().padLeft(2, '0')}/${request.emissionDate.month.toString().padLeft(2, '0')}/${request.emissionDate.year}",
                         style: GoogleFonts.poppins(
-                          fontSize: 12.sp,
-                          color: Colors.grey[600],
+                          fontSize: 14.sp,
+                          color: const Color.fromRGBO(67, 69, 69, 1),
                         ),
                       ),
                     ],
@@ -305,10 +305,10 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
                       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
-          "Traiter le ${request.processDate!.day.toString().padLeft(2, '0')}/${request.processDate!.month.toString().padLeft(2, '0')}/${request.processDate!.year}",
+          "Traitée le ${request.processDate!.day.toString().padLeft(2, '0')}/${request.processDate!.month.toString().padLeft(2, '0')}/${request.processDate!.year}",
           style: GoogleFonts.poppins(
-            fontSize: 12.sp,
-            color: Colors.grey[600],
+            fontSize: 14.sp,
+            color: Color.fromRGBO(67, 69, 69, 1),
           ),
         ),
       ],
