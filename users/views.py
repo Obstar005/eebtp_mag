@@ -189,14 +189,14 @@ def get_user(request, pk):
 @swagger_auto_schema(
     method='put',
     operation_description="Modifier un utilisateur existant",
-    manual_parameters=[
-        openapi.Parameter(
-            name="photo_profil",
-            in_=openapi.IN_FORM,
-            type=openapi.TYPE_FILE,
-            description="Image de profil"
-        ),
-    ],
+    # manual_parameters=[
+    #     openapi.Parameter(
+    #         name="photo_profil",
+    #         in_=openapi.IN_FORM,
+    #         type=openapi.TYPE_FILE,
+    #         description="Image de profil"
+    #     ),
+    # ],
     request_body=CustomUserSerializer,
     responses={200: CustomUserSerializer}
 )
