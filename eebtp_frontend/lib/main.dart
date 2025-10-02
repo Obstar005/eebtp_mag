@@ -14,6 +14,7 @@ import 'package:eebtp_frontend/screens/notificationScreen.dart';
 import 'package:eebtp_frontend/screens/otp_confirmation_screen.dart';
 import 'package:eebtp_frontend/screens/exitDetail.dart';
 import 'package:eebtp_frontend/screens/passwordCreatedConfirmation.dart';
+import 'package:eebtp_frontend/screens/passwordLoginPage.dart';
 import 'package:eebtp_frontend/screens/productDetail.dart';
 import 'package:eebtp_frontend/screens/profileScreen.dart';
 import 'package:eebtp_frontend/screens/request_choice.dart';
@@ -99,9 +100,7 @@ class MyApp extends StatelessWidget {
 
               case '/mdp_page':
                 final phone = settings.arguments as String;
-                return MaterialPageRoute(
-                  builder: (_) => PasswordCreatedPage(phone: phone),
-                );
+                return MaterialPageRoute(builder: (_) => ChangePasswordPage());
 
               default:
                 return null;
@@ -115,7 +114,8 @@ class MyApp extends StatelessWidget {
             '/forgot_password': (context) => ForgotPasswordScreen(),
             '/new_password': (context) => NewPasswordScreen(),
             '/otp_confirmation': (context) => const OTPConfirmationScreen(),
-
+            '/password_login': (context) => const PasswordLoginPage(),
+            '/change_password': (context) => const ChangePasswordPage(),
             // Navigation principale
             '/home': (context) => HomePage(),
             '/stock': (context) => StockPage(),

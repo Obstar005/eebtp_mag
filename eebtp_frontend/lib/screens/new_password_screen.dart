@@ -111,7 +111,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                 onPressed: () {
                   if (_validatePasswords()) {
                     _saveNewPassword();
-           /*          showDialog(
+                    /*          showDialog(
                       context: context,
                       barrierDismissible: false,
                       builder: (context) => PasswordCreatedModal(),

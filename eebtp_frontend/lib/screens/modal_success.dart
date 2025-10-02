@@ -1,5 +1,4 @@
 import 'dart:ui';
-import 'package:eebtp_frontend/screens/passwordCreatedConfirmation.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:sizer/sizer.dart';
@@ -7,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:eebtp_frontend/widgets/button.dart';
 
 class PasswordVerifiedModal extends StatelessWidget {
-  final String phone; // ✅ récupéré depuis LoginTwoStepScreen
+  final String phone;
 
   const PasswordVerifiedModal({super.key, required this.phone});
 
@@ -21,9 +20,7 @@ class PasswordVerifiedModal extends StatelessWidget {
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-              child: Container(
-                color: Colors.black.withOpacity(0.4),
-              ),
+              child: Container(color: Colors.black.withOpacity(0.4)),
             ),
           ),
 
@@ -55,11 +52,8 @@ class PasswordVerifiedModal extends StatelessWidget {
 
                   SizedBox(height: 1.h),
 
-                  // ✅ Lottie success
-                  Lottie.asset(
-                    "assets/success.json",
-                    height: 23.5.h,
-                  ),
+                  // Lottie success
+                  Lottie.asset("assets/success.json", height: 23.5.h),
 
                   SizedBox(height: 2.h),
 
@@ -89,9 +83,12 @@ class PasswordVerifiedModal extends StatelessWidget {
 
                   const Spacer(),
 
-                  // ✅ Bouton
+                  // Bouton
                   Container(
-                    margin: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
+                    margin: EdgeInsets.symmetric(
+                      horizontal: 6.w,
+                      vertical: 3.h,
+                    ),
                     child: CustomElevatedButton(
                       text: "Connectez-vous",
                       backgroundColor: const Color(0xFF007AFF),
@@ -99,13 +96,12 @@ class PasswordVerifiedModal extends StatelessWidget {
                       width: double.infinity,
                       height: 7.h,
                       onPressed: () {
-                        // ✅ envoie le phone à PasswordCreatedPage
-                        Navigator.pushReplacement(
+                        // Redirection vers la page de connexion avec le numéro de téléphone
+                        Navigator.pushNamedAndRemoveUntil(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                PasswordCreatedPage(phone: phone),
-                          ),
+                          '/password_login',
+                          (route) => false, // Supprime tout l'historique
+                          arguments: phone,
                         );
                       },
                     ),
