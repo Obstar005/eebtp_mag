@@ -13,6 +13,7 @@ import {
   useCreateProjet,
   useUpdateProjet,
   useProjet,
+  useProjetMagasins,
 } from "../../hooks/useProjets";
 import { useAccounts } from "../../hooks/useAccounts";
 import { CountrySelector } from "../../components/ui/CountrySelector";
@@ -29,6 +30,8 @@ export function AddEditProjectPage() {
 
   // Hooks
   const { data: projet, isLoading: isLoadingProjet } = useProjet(projetId);
+  const { data: magasins, isLoading: isLoadingMagasins } =
+    useProjetMagasins(projetId);
   const { data: accounts } = useAccounts({});
   const createProjetMutation = useCreateProjet();
   const updateProjetMutation = useUpdateProjet();
@@ -42,8 +45,10 @@ export function AddEditProjectPage() {
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // États pour les comptes associés (utilisation de strings simples pour le prototype)
-  const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
+  // États pour les comptes associés
+  const [selectedAccounts, setSelectedAccounts] = useState<
+    { id: string; name: string }[]
+  >([]);
   const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
   const [accountSearchTerm, setAccountSearchTerm] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -54,11 +59,11 @@ export function AddEditProjectPage() {
     date_debut: "",
     date_fin: "",
     pays: "TG",
-    chef_projet_user_id: 0,
-    directeur_travaux_user_id: 0,
-    chef_chantier_user_id: 0,
-    coordinateur_travaux_user_id: 0,
-    chef_equipe_user_id: 0,
+    chef_projet_userid: 0,
+    directeur_travaux_userid: 0,
+    chef_chantier_userid: 0,
+    coordinateur_travaux_userid: 0,
+    chef_equipe_userid: 0,
     magasins: [],
     images: [],
   });
@@ -94,22 +99,33 @@ export function AddEditProjectPage() {
   // Charger les données du projet en mode édition
   useEffect(() => {
     if (isEditing && projet) {
-      setFormData({
+      // Accéder à la propriété comptes via l'accesseur direct (projet as any).comptes
+      const projetComptes = (projet as any).comptes || [];
+
+      // Définir les données du formulaire depuis le projet
+      const projectFormData = {
         name: projet.name,
         description: projet.description || "",
         date_debut: projet.date_debut.toISOString().split("T")[0],
         date_fin: projet.date_fin.toISOString().split("T")[0],
         pays: projet.pays,
-        chef_projet_user_id: projet.chef_projet_user_id,
-        directeur_travaux_user_id: projet.directeur_travaux_user_id,
-        chef_chantier_user_id: projet.chef_chantier_user_id,
-        coordinateur_travaux_user_id: projet.coordinateur_travaux_user_id,
-        chef_equipe_user_id: projet.chef_equipe_user_id,
+        chef_projet_userid: projet.chef_projet_userid,
+        directeur_travaux_userid: projet.directeur_travaux_userid,
+        chef_chantier_userid: projet.chef_chantier_userid,
+        coordinateur_travaux_userid: projet.coordinateur_travaux_userid,
+        chef_equipe_userid: projet.chef_equipe_userid,
+        // Si nous avons des magasins chargés, les inclure directement
         magasins:
-          projet.magasins?.map((m) => ({ name: m.name, adresse: m.adresse })) ||
-          [],
+          magasins?.map((m) => ({
+            name: m.name,
+            adresse: m.adresse || "",
+            id: m.id, // Stocker l'ID comme propriété supplémentaire
+          })) || [],
         images: [],
-      });
+        comptes_associes: projetComptes,
+      };
+
+      setFormData(projectFormData);
 
       // Initialiser le pays sélectionné
       if (countries && projet.pays) {
@@ -123,8 +139,31 @@ export function AddEditProjectPage() {
       if (projet.images) {
         setPreviewImages(projet.images);
       }
+
+      // Charger les comptes associés si disponibles
+      if (projetComptes.length > 0 && accounts?.data) {
+        const comptesAssocies = projetComptes
+          .map((compteId: number | string) => {
+            const account = accounts.data.find(
+              (acc) => acc.id === compteId.toString()
+            );
+            if (account) {
+              return {
+                id: account.id,
+                name: `${account.prenoms} ${account.nom}`,
+              };
+            }
+            return null;
+          })
+          .filter((item: any) => item !== null) as {
+          id: string;
+          name: string;
+        }[];
+
+        setSelectedAccounts(comptesAssocies);
+      }
     }
-  }, [isEditing, projet, countries]);
+  }, [isEditing, projet, countries, accounts?.data, magasins]);
 
   const handleInputChange = (
     field: keyof CreateProjetData,
@@ -161,6 +200,10 @@ export function AddEditProjectPage() {
   };
 
   const addMagasin = () => {
+    // Ne pas permettre l'ajout de magasins en mode édition
+    if (isEditing) {
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
       magasins: [...(prev.magasins || []), { name: "", adresse: "" }],
@@ -173,33 +216,73 @@ export function AddEditProjectPage() {
     value: string
   ) => {
     const newMagasins = [...(formData.magasins || [])];
-    newMagasins[index] = { ...newMagasins[index], [field]: value };
+    const currentMagasin = newMagasins[index] || {};
+
+    // Préserver l'ID du magasin s'il existe
+    const magasinId = "id" in currentMagasin ? currentMagasin.id : undefined;
+
+    newMagasins[index] = {
+      ...currentMagasin,
+      [field]: value,
+      id: magasinId, // Conserver l'ID
+    };
+
     setFormData((prev) => ({ ...prev, magasins: newMagasins }));
   };
 
   const removeMagasin = (index: number) => {
+    // Ne pas permettre la suppression de magasins en mode édition
+    if (isEditing) {
+      return;
+    }
     const newMagasins = [...(formData.magasins || [])];
     newMagasins.splice(index, 1);
     setFormData((prev) => ({ ...prev, magasins: newMagasins }));
   };
 
-  // Fonctions pour la gestion des comptes associés (mode string pour le prototype)
-  const toggleAccountSelection = (accountName: string) => {
-    const isSelected = selectedAccounts.includes(accountName);
+  // Fonctions pour la gestion des comptes associés
+  const toggleAccountSelection = (account: { id: string; name: string }) => {
+    const isSelected = selectedAccounts.some((item) => item.id === account.id);
 
     if (isSelected) {
       // Supprimer le compte
       setSelectedAccounts((prev) =>
-        prev.filter((name) => name !== accountName)
+        prev.filter((item) => item.id !== account.id)
       );
     } else {
       // Ajouter le compte
-      setSelectedAccounts((prev) => [...prev, accountName]);
+      setSelectedAccounts((prev) => [...prev, account]);
     }
+
+    // Mettre à jour formData avec les IDs des comptes sélectionnés
+    updateComptesAssocies(
+      isSelected
+        ? selectedAccounts.filter((item) => item.id !== account.id)
+        : [...selectedAccounts, account]
+    );
   };
 
-  const removeSelectedAccount = (accountName: string) => {
-    setSelectedAccounts((prev) => prev.filter((name) => name !== accountName));
+  // Fonction pour mettre à jour formData.comptes_associes
+  const updateComptesAssocies = (
+    accounts: { id: string; name: string }[] = selectedAccounts
+  ) => {
+    const compteIds = accounts.map((account) => account.id);
+    console.log("🔄 Mise à jour des comptes associés:", compteIds);
+    setFormData((prev) => ({
+      ...prev,
+      comptes_associes: compteIds,
+    }));
+  };
+
+  const removeSelectedAccount = (accountId: string) => {
+    // Mettre à jour le tableau des comptes sélectionnés
+    const updatedAccounts = selectedAccounts.filter(
+      (item) => item.id !== accountId
+    );
+    setSelectedAccounts(updatedAccounts);
+
+    // Mettre à jour formData avec les IDs des comptes sélectionnés après suppression
+    updateComptesAssocies(updatedAccounts);
   };
 
   // Filtrer les comptes selon le terme de recherche
@@ -232,12 +315,25 @@ export function AddEditProjectPage() {
       return;
     }
 
+    // S'assurer que les comptes associés sont inclus dans les données du formulaire
+    const compteIds = selectedAccounts.map((account) => account.id);
+    console.log("💾 Enregistrement des comptes associés:", compteIds);
+
+    // Créer une copie des données du formulaire avec les comptes associés
+    const formDataWithComptes = {
+      ...formData,
+      comptes_associes: compteIds,
+    };
+
     try {
       if (isEditing) {
-        const updateData: UpdateProjetData = { id: projetId, ...formData };
+        const updateData: UpdateProjetData = {
+          id: projetId,
+          ...formDataWithComptes,
+        };
         await updateProjetMutation.mutateAsync(updateData);
       } else {
-        await createProjetMutation.mutateAsync(formData);
+        await createProjetMutation.mutateAsync(formDataWithComptes);
       }
       navigate("/projects");
     } catch (error) {
@@ -412,91 +508,128 @@ export function AddEditProjectPage() {
                 <h3 className="text-lg font-semibold text-gray-900">
                   Magasins Associés
                 </h3>
-                <button
-                  type="button"
-                  onClick={addMagasin}
-                  className="flex items-center px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Ajouter un magasin
-                </button>
+                {isEditing && (
+                  <span className="text-sm italic text-gray-600">
+                    Seule la modification des magasins existants est autorisée
+                  </span>
+                )}
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nom du magasin
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Nom du magasin"
-                    title="Nom du magasin"
-                  />
-                </div>
+                {!isEditing && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nom du magasin
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Nom du magasin"
+                        title="Nom du magasin"
+                      />
+                    </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Adresse du magasin
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Adresse du magasin"
-                    title="Adresse du magasin"
-                  />
-                </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Adresse du magasin
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Adresse du magasin"
+                        title="Adresse du magasin"
+                      />
+                    </div>
+                  </>
+                )}
 
                 {/* Liste des magasins existants */}
-                {formData.magasins?.map((magasin, index) => (
-                  <div
-                    key={index}
-                    className="flex gap-4 items-start bg-gray-50 rounded-lg mt-6"
-                  >
-                    <div className="flex-1 space-y-3">
-                      <div className="">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Nom du magasin
-                        </label>
-                        <input
-                          type="text"
-                          value={magasin.name}
-                          onChange={(e) =>
-                            updateMagasin(index, "name", e.target.value)
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Nom du magasin"
-                          title={`Nom du magasin ${index + 1}`}
-                          aria-label={`Nom du magasin ${index + 1}`}
-                        />
-                      </div>
-                      <div className="">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Adresse du magasin
-                        </label>
-                        <input
-                          type="text"
-                          value={magasin.adresse}
-                          onChange={(e) =>
-                            updateMagasin(index, "adresse", e.target.value)
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Adresse du magasin"
-                          title={`Adresse du magasin ${index + 1}`}
-                          aria-label={`Adresse du magasin ${index + 1}`}
-                        />
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeMagasin(index)}
-                      className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Supprimer le magasin"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+
+                {isLoadingMagasins && isEditing ? (
+                  <div className="flex items-center justify-center h-20">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                   </div>
-                ))}
+                ) : (magasins && magasins.length > 0) ||
+                  (Array.isArray(formData.magasins) &&
+                    formData.magasins.length > 0) ? (
+                  // Utiliser les magasins du formData s'ils sont disponibles, sinon les magasins bruts
+                  (Array.isArray(formData.magasins) &&
+                  formData.magasins.length > 0
+                    ? formData.magasins
+                    : magasins?.map((m) => ({
+                        name: m.name,
+                        adresse: m.adresse || "",
+                        id: m.id,
+                      })) || []
+                  ).map(
+                    (
+                      magasin: { name: string; adresse?: string; id?: number },
+                      index
+                    ) => (
+                      <div
+                        key={index}
+                        className="flex gap-4 items-start bg-gray-50 rounded-lg p-4 mt-2"
+                      >
+                        <div className="flex-1 space-y-3">
+                          <div className="">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Nom du magasin{" "}
+                              {isEditing && magasin.id ? `#${magasin.id}` : ""}
+                            </label>
+                            <input
+                              type="text"
+                              value={magasin.name}
+                              onChange={(e) =>
+                                updateMagasin(index, "name", e.target.value)
+                              }
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Nom du magasin"
+                              title={`Nom du magasin ${index + 1}`}
+                              aria-label={`Nom du magasin ${index + 1}`}
+                            />
+                          </div>
+                          <div className="">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Adresse du magasin
+                            </label>
+                            <input
+                              type="text"
+                              value={magasin.adresse || ""}
+                              onChange={(e) =>
+                                updateMagasin(index, "adresse", e.target.value)
+                              }
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Adresse du magasin"
+                              title={`Adresse du magasin ${index + 1}`}
+                              aria-label={`Adresse du magasin ${index + 1}`}
+                            />
+                          </div>
+                        </div>
+                        {!isEditing && (
+                          <button
+                            type="button"
+                            onClick={() => removeMagasin(index)}
+                            className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Supprimer le magasin"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    )
+                  )
+                ) : (
+                  isEditing && (
+                    <div className="text-center p-4 border border-gray-200 rounded-md">
+                      <p className="text-sm text-gray-500">
+                        {isLoadingMagasins
+                          ? "Chargement des magasins..."
+                          : "Aucun magasin associé à ce projet."}
+                      </p>
+                    </div>
+                  )
+                )}
               </div>
             </div>
           </div>
@@ -600,20 +733,20 @@ export function AddEditProjectPage() {
                       >
                         <div className="flex items-center flex-wrap gap-2">
                           {/* Tags des comptes sélectionnés */}
-                          {selectedAccounts.map((accountName) => (
+                          {selectedAccounts.map((account) => (
                             <div
-                              key={accountName}
+                              key={account.id}
                               className="flex items-center bg-blue-100 text-blue-800 rounded-full px-3 py-1 text-sm"
                             >
-                              <span className="mr-1">{accountName}</span>
+                              <span className="mr-1">{account.name}</span>
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  removeSelectedAccount(accountName);
+                                  removeSelectedAccount(account.id);
                                 }}
                                 className="ml-1 text-blue-600 hover:text-blue-800"
-                                title={`Supprimer ${accountName}`}
+                                title={`Supprimer ${account.name}`}
                               >
                                 <X className="h-3 w-3" />
                               </button>
@@ -664,14 +797,18 @@ export function AddEditProjectPage() {
                               <div className="p-2">
                                 {filteredAccounts.map((account) => {
                                   const accountName = `${account.nom} ${account.prenoms}`;
-                                  const isSelected =
-                                    selectedAccounts.includes(accountName);
+                                  const isSelected = selectedAccounts.some(
+                                    (item) => item.id === account.id
+                                  );
 
                                   return (
                                     <div
                                       key={account.id}
                                       onClick={() => {
-                                        toggleAccountSelection(accountName);
+                                        toggleAccountSelection({
+                                          id: account.id,
+                                          name: accountName,
+                                        });
                                       }}
                                       className={`flex items-center justify-between px-3 py-2 rounded cursor-pointer hover:bg-gray-50 ${
                                         isSelected

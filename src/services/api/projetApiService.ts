@@ -7,6 +7,7 @@ import {
   createMagasinDataToApiCreateMagasin,
   apiProjetsArrayToProjetListResponse,
 } from "./api-transformers";
+import { userApiService } from "./authApiService";
 import type {
   Projet,
   CreateProjetData,
@@ -19,18 +20,15 @@ import type {
   CompteAssocie,
   ProjetRole,
 } from "../../types/project";
-import type { ApiProjet, ApiMagasin } from "../../types/api-projets";
+import type {
+  ApiProjet,
+  ApiMagasin,
+  ApiProjetPhoto,
+} from "../../types/api-projets";
 
 // Service API pour les projets - utilise les endpoints de l'API EEBTP
 export class ProjetApiService {
   private basePath = "/Projets";
-
-  // Référence à l'userApiService - devrait être injecté correctement dans une application réelle
-  private userApiService?: {
-    getUserById: (
-      id: number
-    ) => Promise<{ id: number; username: string; [key: string]: unknown }>;
-  }; // Type minimal pour satisfaire les usages de userApiService
 
   // Récupérer tous les projets avec filtres
   async getProjets(filters: ProjetFilters = {}): Promise<ProjetListResponse> {
@@ -149,10 +147,23 @@ export class ProjetApiService {
 
   // Récupérer les magasins d'un projet
   async getProjetMagasins(projetId: number): Promise<Magasin[]> {
+    // Récupérer tous les magasins puis filtrer côté client
     const response = await client.get<ApiMagasin[]>(
-      `${this.basePath}/liste-magasins?projet=${projetId}`
+      `${this.basePath}/liste-magasins`
     );
-    return response.data.map(apiMagasinToMagasin);
+    console.log(
+      `🔍 Magasins récupérés (total: ${response.data.length}):`,
+      response.data
+    );
+
+    // Filtrer pour ne garder que les magasins du projet spécifié
+    const magasinsFiltered = response.data.filter((m) => m.projet === projetId);
+    console.log(
+      `✅ Magasins filtrés pour le projet ${projetId} (${magasinsFiltered.length} résultats)`,
+      magasinsFiltered
+    );
+
+    return magasinsFiltered.map(apiMagasinToMagasin);
   }
 
   // Ajouter un magasin à un projet
@@ -188,6 +199,11 @@ export class ProjetApiService {
       );
       const projet = projetResponse.data;
 
+      // Log de la réponse complète pour déboguer
+      console.log(`📝 Projet détails complets:`, projet);
+      console.log(`📝 Type de projet.comptes:`, typeof projet.comptes);
+      console.log(`📝 Contenu de projet.comptes:`, projet.comptes);
+
       if (!projet.comptes || projet.comptes.length === 0) {
         console.log(`⚠️ Aucun compte associé au projet ${projetId}`);
         return [];
@@ -198,25 +214,43 @@ export class ProjetApiService {
         projet.comptes
       );
 
-      // 2. Utiliser le service utilisateur pour récupérer les détails de chaque compte
-      // (Cette partie nécessite l'importation et l'injection du service utilisateur)
-      // Pour l'instant, retourner des données simplifiées
-      const comptesAssocies: CompteAssocie[] = projet.comptes.map((userId) => {
-        // Déterminer le rôle en fonction de l'ID (logique simplifiée)
-        let role: ProjetRole = "magasinier"; // Rôle par défaut
+      // 2. Récupérer les détails de chaque utilisateur associé au projet
+      const comptesAssocies: CompteAssocie[] = [];
+      for (const userId of projet.comptes) {
+        try {
+          // Convertir l'ID en string pour le service utilisateur
+          const userIdStr = userId.toString();
+          const userAccount = await userApiService.getUserById(userIdStr);
 
-        if (userId === projet.creator) {
-          role = "chef_projet";
+          // Déterminer le rôle en fonction de l'ID
+          let role: ProjetRole = "magasinier"; // Rôle par défaut
+          if (userId === projet.creator) {
+            role = "chef_projet";
+          }
+
+          // Créer l'objet CompteAssocie avec les informations réelles
+          comptesAssocies.push({
+            userId: userId,
+            userName: `${userAccount.prenoms} ${userAccount.nom}`,
+            userProfile: userAccount.profile?.nom || "Non défini",
+            role: role,
+            actions: ["view", "edit"],
+          });
+        } catch (userError) {
+          console.warn(
+            `❗ Erreur lors de la récupération des détails de l'utilisateur ${userId}:`,
+            userError
+          );
+          // Ajouter une version simplifiée en cas d'erreur
+          comptesAssocies.push({
+            userId: userId,
+            userName: `Utilisateur ${userId}`,
+            userProfile: "Non disponible",
+            role: userId === projet.creator ? "chef_projet" : "magasinier",
+            actions: ["view"],
+          });
         }
-
-        return {
-          userId: userId,
-          userName: `Utilisateur ${userId}`, // À remplacer par le nom réel
-          userProfile: "Non disponible", // À remplacer par le profil réel
-          role: role,
-          actions: ["view", "edit"], // Actions par défaut
-        };
-      });
+      }
 
       return comptesAssocies;
     } catch (error) {
@@ -225,6 +259,66 @@ export class ProjetApiService {
         error
       );
       throw new Error("Impossible de récupérer les comptes associés au projet");
+    }
+  }
+
+  // Récupérer les photos d'un projet
+  async getProjetPhotos(projetId: number): Promise<ApiProjetPhoto[]> {
+    try {
+      console.log(`🔍 Récupération des photos du projet ${projetId}...`);
+      const response = await client.get<ApiProjetPhoto[]>(
+        `${this.basePath}/liste-photos-by-projet/${projetId}`
+      );
+      console.log(`✅ Photos du projet récupérées:`, response.data);
+      return response.data;
+    } catch (error) {
+      console.error(
+        "Erreur lors de la récupération des photos du projet:",
+        error
+      );
+      return [];
+    }
+  }
+
+  // Ajouter une photo à un projet
+  async addPhotoToProjet(
+    projetId: number,
+    photo: File,
+    description?: string
+  ): Promise<ApiProjetPhoto> {
+    const formData = new FormData();
+    formData.append("photo", photo);
+    formData.append("projet", projetId.toString());
+    if (description) {
+      formData.append("description", description);
+    }
+
+    try {
+      const response = await client.post<ApiProjetPhoto>(
+        `${this.basePath}/projet-photo-create/${projetId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log(`✅ Photo ajoutée au projet ${projetId}:`, response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Erreur lors de l'ajout de la photo au projet:", error);
+      throw new Error("Impossible d'ajouter la photo au projet");
+    }
+  }
+
+  // Supprimer une photo d'un projet
+  async deleteProjetPhoto(photoId: number): Promise<void> {
+    try {
+      await client.delete(`${this.basePath}/projet-photo-delete/${photoId}`);
+      console.log(`✅ Photo ${photoId} supprimée`);
+    } catch (error) {
+      console.error("Erreur lors de la suppression de la photo:", error);
+      throw new Error("Impossible de supprimer la photo du projet");
     }
   }
 }

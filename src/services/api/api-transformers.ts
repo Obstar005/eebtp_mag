@@ -18,7 +18,6 @@ import type {
   Magasin,
   CreateMagasinData,
   CompteAssocie,
-  ProjetRole,
 } from "../../types/project";
 import type {
   ApiCustomUser,
@@ -28,6 +27,32 @@ import type {
   ApiCreateProfilRequest,
   ApiLoginByPhoneResponse,
 } from "../../types/api-users";
+
+// Fonction utilitaire pour convertir les codes de pays en noms complets
+// Cette fonction devrait être améliorée pour utiliser une liste complète des pays
+function convertCountryCodeToName(countryCode: string | undefined): string {
+  if (!countryCode) return "";
+
+  const countryMap: Record<string, string> = {
+    TG: "Togo",
+    FR: "France",
+    US: "United States",
+    CI: "Côte d'Ivoire",
+    BJ: "Bénin",
+    GH: "Ghana",
+    NG: "Nigeria",
+    SN: "Sénégal",
+    CM: "Cameroun",
+    ML: "Mali",
+    BF: "Burkina Faso",
+    NE: "Niger",
+    CA: "Canada",
+    GB: "United Kingdom",
+    // Ajouter d'autres pays selon les besoins
+  };
+
+  return countryMap[countryCode] || countryCode;
+}
 import type {
   ApiProjet,
   ApiMagasin,
@@ -37,6 +62,32 @@ import type {
   ApiProjetListResponse,
   ApiProjetStatsResponse,
 } from "../../types/api-projets";
+
+// Fonction utilitaire pour convertir les noms de pays en codes
+function convertCountryNameToCode(countryName: string | undefined): string {
+  if (!countryName) return "TG"; // Par défaut Togo
+
+  // Table de conversion inverse de noms de pays vers codes
+  const reverseCountryMap: Record<string, string> = {
+    Togo: "TG",
+    France: "FR",
+    "United States": "US",
+    "Côte d'Ivoire": "CI",
+    Bénin: "BJ",
+    Ghana: "GH",
+    Nigeria: "NG",
+    Sénégal: "SN",
+    Cameroun: "CM",
+    Mali: "ML",
+    "Burkina Faso": "BF",
+    Niger: "NE",
+    Canada: "CA",
+    "United Kingdom": "GB",
+    // Ajouter d'autres pays selon les besoins
+  };
+
+  return reverseCountryMap[countryName] || "TG"; // Par défaut Togo si non trouvé
+}
 
 export function apiUserToAccount(apiUser: ApiCustomUser): Account {
   // Vérifier et tracer les données API
@@ -48,6 +99,9 @@ export function apiUserToAccount(apiUser: ApiCustomUser): Account {
     id_profil: apiUser.id_profil,
   });
 
+  // Convertir le nom de pays en code
+  const countryCode = convertCountryNameToCode(apiUser.nationality);
+
   const account = {
     id: apiUser.id.toString(),
     code: `CPT-${apiUser.id.toString().padStart(3, "0")}`, // Générer un code
@@ -55,7 +109,7 @@ export function apiUserToAccount(apiUser: ApiCustomUser): Account {
     prenoms: apiUser.first_name,
     nom_utilisateur: apiUser.username,
     date_naissance: apiUser.birth_date || "",
-    nationalite: apiUser.nationality, // TODO: Convertir nom pays → code pays
+    nationalite: countryCode, // Convertir le nom complet du pays en code
     mot_de_passe: "", // Ne pas exposer
     type: apiUser.type as AccountType,
     telephone: apiUser.telephone,
@@ -178,6 +232,9 @@ export function createAccountDataToApiUser(
     }
   }
 
+  // Convertir le code pays en nom complet pour l'API
+  const countryName = convertCountryCodeToName(data.nationalite || "TG");
+
   const apiUser = {
     username: data.nom_utilisateur,
     first_name: data.prenoms,
@@ -185,7 +242,7 @@ export function createAccountDataToApiUser(
     surname: data.nom,
     email: undefined, // CreateAccountData n'a pas d'email
     birth_date: data.date_naissance,
-    nationality: data.nationalite,
+    nationality: countryName, // Nom complet du pays au lieu du code
     type: data.type,
     telephone: data.telephone,
     titre: data.titre,
@@ -202,6 +259,9 @@ export function createAccountDataToApiUser(
 export function updateAccountDataToApiUser(
   data: UpdateAccountData & { id: string }
 ): Partial<ApiUpdateUserRequest> {
+  // Convertir le code pays en nom complet pour l'API
+  const countryName = convertCountryCodeToName(data.nationalite || "TG");
+
   return {
     id: parseInt(data.id),
     username: data.nom_utilisateur,
@@ -210,7 +270,7 @@ export function updateAccountDataToApiUser(
     surname: data.nom,
     email: undefined, // UpdateAccountData n'a pas d'email
     birth_date: data.date_naissance,
-    nationality: data.nationalite,
+    nationality: countryName, // Nom complet du pays au lieu du code
     type: data.type,
     telephone: data.telephone,
     titre: data.titre,
@@ -243,30 +303,14 @@ function getProjetStatus(dateDebut: string, dateFin: string): ProjetStatus {
 export function apiProjetToProjet(apiProjet: ApiProjet): Projet {
   console.log("🔄 Transformation de ApiProjet vers Projet:", apiProjet);
 
-  // Créer un tableau de comptes associés basé sur les IDs d'utilisateurs
+  // Les comptes associés sont maintenant gérés par getProjetComptes dans projetApiService
+  // qui utilise userApiService pour récupérer les informations détaillées des utilisateurs
+  // Nous ne générons plus de données simplifiées ici pour éviter la duplication
   const comptesAssocies: CompteAssocie[] = [];
 
   if (apiProjet.comptes && apiProjet.comptes.length > 0) {
-    console.log("👥 Comptes associés au projet (API):", apiProjet.comptes);
-
-    // Pour l'instant, ajouter des comptes associés simples basés sur les IDs
-    // Idéalement, il faudrait récupérer les détails des utilisateurs à partir de userApiService
-    apiProjet.comptes.forEach((userId) => {
-      // Déterminer le rôle en fonction de l'ID (logique simplifiée)
-      let role: ProjetRole = "magasinier"; // Rôle par défaut
-
-      if (userId === apiProjet.creator) {
-        role = "chef_projet";
-      }
-
-      comptesAssocies.push({
-        userId: userId,
-        userName: `Utilisateur ${userId}`, // Nom par défaut, à remplacer par le vrai nom
-        userProfile: "Profil non chargé", // Profil par défaut
-        role: role,
-        actions: ["view"], // Actions par défaut
-      });
-    });
+    console.log("👥 Comptes associés au projet (API IDs):", apiProjet.comptes);
+    // Les détails des comptes seront chargés séparément via getProjetComptes
   }
 
   return {

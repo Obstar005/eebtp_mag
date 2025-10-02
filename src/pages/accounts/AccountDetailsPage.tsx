@@ -9,6 +9,27 @@ import {
   Edit2Icon,
 } from "lucide-react";
 import { useAccount, useDeleteAccount } from "../../hooks";
+
+// Fonction utilitaire pour obtenir le chemin du drapeau à partir du code de pays
+const getFlagPath = (countryCode: string): string => {
+  return `/flags/${countryCode.toLowerCase()}.svg`;
+};
+
+// Fonction utilitaire pour formater les dates
+const formatDate = (dateString: string | undefined): string => {
+  if (!dateString) return "Non spécifiée";
+
+  try {
+    return new Date(dateString).toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  } catch (error) {
+    console.error("Erreur lors du formatage de la date:", error);
+    return "Date invalide";
+  }
+};
 import { ConfirmationModal, FormModal } from "../../components/layout";
 import { useModal } from "../../hooks/useModal";
 import { useState } from "react";
@@ -78,9 +99,9 @@ export function AccountDetailsPage() {
             <div className="bg-gradient-to-br from-blue-500 via-purple-500 to-green-400 rounded-xl absolute top-0 left-0 inset-0 inset-y-1/2 h-32 rounded-b-none z-10"></div>
             <div className="space-y-6 z-20">
               <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 p-1 relative">
-                {account.photo ? (
+                {account.photo_profil ? (
                   <img
-                    src={account.photo}
+                    src={account.photo_profil}
                     alt="Photo de profil"
                     className="w-full h-full object-cover rounded-full border border-blue-500"
                   />
@@ -120,21 +141,11 @@ export function AccountDetailsPage() {
                     <div className="flex gap-6 items-center">
                       {/* created at */}
                       <p className="text-sm text-gray-500">
-                        Créé le:{" "}
-                        {new Date().toLocaleDateString("fr-FR", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "2-digit",
-                        })}
+                        Créé le: {formatDate(account.date_creation)}
                       </p>
                       {/* updated at */}
                       <p className="text-sm text-gray-500">
-                        Mis à jour:{" "}
-                        {new Date().toLocaleDateString("fr-FR", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "2-digit",
-                        })}
+                        Mis à jour: {formatDate(account.date_modification)}
                       </p>
                     </div>
                   </div>
@@ -169,7 +180,7 @@ export function AccountDetailsPage() {
               </label>
               <div className="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50 flex items-center">
                 <span className="text-gray-900">
-                  {new Date(account.date_naissance).toLocaleDateString("fr-FR")}
+                  {formatDate(account.date_naissance)}
                 </span>
                 <Calendar className="h-4 w-4 ml-2 text-gray-400" />
               </div>
@@ -181,8 +192,8 @@ export function AccountDetailsPage() {
               </label>
               <div className="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50 flex items-center">
                 <img
-                  src="/flags/tg.svg"
-                  alt="TG"
+                  src={getFlagPath(account.nationalite)}
+                  alt={account.nationalite}
                   className="w-5 h-4 mr-2"
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
@@ -200,14 +211,17 @@ export function AccountDetailsPage() {
                 <span className="text-gray-900">{account.type}</span>
               </div>
             </div>
-            {/* Magasin */}
+            {/* Profil */}
             <div className="space-y-1">
               <label className="text-xs text-gray-500 uppercase tracking-wide">
-                Magasin
+                Profil
               </label>
               <div className="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50">
                 <span className="text-gray-900">
-                  {account.profile?.nom || "Consultant"}
+                  {account.profile?.nom ||
+                    (account.profile_id
+                      ? `Profil #${account.profile_id}`
+                      : "Non défini")}
                 </span>
               </div>
             </div>

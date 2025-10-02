@@ -1,7 +1,15 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Eye, Edit, Trash2, Upload } from "lucide-react";
-import { useProjet, useDeleteProjet } from "../../hooks/useProjets";
+import {
+  useProjet,
+  useDeleteProjet,
+  useProjetMagasins,
+  useProjetPhotos,
+  useAddPhotoToProjet,
+  useDeleteProjetPhoto,
+  useProjetComptes,
+} from "../../hooks/useProjets";
 import { useCountries } from "../../hooks/useCountries";
 import { useModal } from "../../hooks/useModal";
 import { ConfirmationModal } from "../../components/layout/ConfirmationModal";
@@ -14,10 +22,24 @@ export function ProjectDetailsPage() {
 
   // Hooks
   const { data: projet, isLoading } = useProjet(projetId);
+  const { data: magasins, isLoading: isLoadingMagasins } =
+    useProjetMagasins(projetId);
+  const { data: photos, isLoading: isLoadingPhotos } =
+    useProjetPhotos(projetId);
+  const { data: comptes, isLoading: isLoadingComptes } =
+    useProjetComptes(projetId);
+
+  // Log pour déboguer la récupération des comptes associés
+  console.log("🔍 Projet détails:", projet);
+  console.log("🔍 Comptes associés:", comptes);
   const { getCountryByAbbreviation, getTogoCountry } = useCountries();
   const deleteProjetMutation = useDeleteProjet();
   const confirmDeleteModal = useModal();
   const [showEditMagasinModal, setShowEditMagasinModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [photoDescription, setPhotoDescription] = useState("");
+  const addPhotoMutation = useAddPhotoToProjet();
+  const deletePhotoMutation = useDeleteProjetPhoto();
 
   // Fonction pour obtenir le pays du projet
   const getProjectCountry = () => {
@@ -47,6 +69,41 @@ export function ProjectDetailsPage() {
       navigate("/projects");
     } catch (error) {
       console.error("Erreur lors de la suppression:", error);
+    }
+  };
+
+  // Gestion des photos
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setSelectedFile(event.target.files[0]);
+    }
+  };
+
+  const handlePhotoUpload = async () => {
+    if (!selectedFile) return;
+
+    try {
+      await addPhotoMutation.mutateAsync({
+        projetId,
+        photo: selectedFile,
+        description: photoDescription,
+      });
+
+      // Réinitialiser le formulaire après succès
+      setSelectedFile(null);
+      setPhotoDescription("");
+    } catch (error) {
+      console.error("Erreur lors de l'ajout de la photo:", error);
+    }
+  };
+
+  const handleDeletePhoto = async (photoId: number) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cette photo?")) return;
+
+    try {
+      await deletePhotoMutation.mutateAsync({ photoId, projetId });
+    } catch (error) {
+      console.error("Erreur lors de la suppression de la photo:", error);
     }
   };
 
@@ -200,34 +257,57 @@ export function ProjectDetailsPage() {
             </h2>
 
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <span className="text-sm font-medium text-gray-900">
-                    Magasin1
-                  </span>
-                  <div className="text-xs text-gray-500">Atagamé</div>
+              {isLoadingMagasins ? (
+                <div className="flex items-center justify-center h-20">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => navigate(`/projects/magasins/1`)}
-                    className="bg-green-600 text-white p-1 rounded text-xs"
-                    title="Voir le magasin"
-                  >
-                    <Eye className="h-3 w-3" />
+              ) : magasins && magasins.length > 0 ? (
+                <>
+                  {magasins.map((magasin) => (
+                    <div
+                      key={magasin.id}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                    >
+                      <div>
+                        <span className="text-sm font-medium text-gray-900">
+                          {magasin.name}
+                        </span>
+                        <div className="text-xs text-gray-500">
+                          {magasin.adresse || "Adresse non définie"}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() =>
+                            navigate(`/projects/magasins/${magasin.id}`)
+                          }
+                          className="bg-green-600 text-white p-1 rounded text-xs"
+                          title="Voir le magasin"
+                        >
+                          <Eye className="h-3 w-3" />
+                        </button>
+                        <button
+                          onClick={() => setShowEditMagasinModal(true)}
+                          className="bg-yellow-500 text-white p-1 rounded text-xs"
+                          title="Modifier le magasin"
+                        >
+                          <Edit className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  <button className="w-max p-3 text-blue-600 hover:bg-blue-50 transition-colors">
+                    {magasins.length}{" "}
+                    {magasins.length > 1 ? "Magasins" : "Magasin"}
                   </button>
-                  <button
-                    onClick={() => setShowEditMagasinModal(true)}
-                    className="bg-yellow-500 text-white p-1 rounded text-xs"
-                    title="Modifier le magasin"
-                  >
-                    <Edit className="h-3 w-3" />
-                  </button>
+                </>
+              ) : (
+                <div className="text-center p-4 border border-gray-200 rounded-md">
+                  <p className="text-sm text-gray-500">
+                    Aucun magasin associé à ce projet.
+                  </p>
                 </div>
-              </div>
-
-              <button className="w-max p-3 text-blue-600 hover:bg-blue-50 transition-colors">
-                01 Magasin
-              </button>
+              )}
             </div>
           </div>
         </div>
@@ -240,12 +320,42 @@ export function ProjectDetailsPage() {
               Les images du projet
             </h2>
 
-            <div className="text-center border-2 border-dashed border-gray-300 rounded-lg p-8 bg-gray-50">
-              <div className="text-gray-400 mb-2">
-                <Upload className="h-8 w-8 mx-auto" />
+            {isLoadingPhotos ? (
+              <div className="flex items-center justify-center h-40">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
-              <p className="text-sm text-gray-500">Aucune image</p>
-            </div>
+            ) : photos && photos.length > 0 ? (
+              <div className="grid grid-cols-2 gap-4">
+                {photos.map((photo) => (
+                  <div key={photo.id} className="relative">
+                    <img
+                      src={photo.photo}
+                      alt={photo.description || "Photo du projet"}
+                      className="w-full h-40 object-cover rounded-lg"
+                    />
+                    <button
+                      onClick={() => handleDeletePhoto(photo.id)}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1"
+                      title="Supprimer cette photo"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                    {photo.description && (
+                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 rounded-b-lg">
+                        <p className="text-sm truncate">{photo.description}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center border-2 border-dashed border-gray-300 rounded-lg p-8 bg-gray-50">
+                <div className="text-gray-400 mb-2">
+                  <Upload className="h-8 w-8 mx-auto" />
+                </div>
+                <p className="text-sm text-gray-500">Aucune image</p>
+              </div>
+            )}
           </div>
 
           {/* Comptes Associés */}
@@ -261,45 +371,55 @@ export function ProjectDetailsPage() {
                 <div>Actions</div>
               </div>
 
-              {/* Exemple de comptes */}
-              {[
-                { nom: "Tellus.", profil: "Magasinier" },
-                { nom: "Tellus.", profil: "Chef Chantier" },
-                { nom: "Tellus.", profil: "Chef Projet" },
-                { nom: "Tellus.", profil: "Chef Appro" },
-              ].map((compte, index) => (
-                <div
-                  key={index}
-                  className="grid grid-cols-3 gap-4 p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="text-sm text-gray-700">{compte.nom}</div>
-                  <div className="text-sm text-gray-600">{compte.profil}</div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      className="bg-green-600 text-white p-1 rounded text-xs"
-                      title="Voir le compte"
-                    >
-                      <Eye className="h-3 w-3" />
-                    </button>
-                    <button
-                      className="bg-yellow-500 text-white p-1 rounded text-xs"
-                      title="Modifier le compte"
-                    >
-                      <Edit className="h-3 w-3" />
-                    </button>
-                    <button
-                      className="bg-red-600 text-white p-1 rounded text-xs"
-                      title="Supprimer le compte"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </div>
+              {isLoadingComptes ? (
+                <div className="flex items-center justify-center h-20">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                 </div>
-              ))}
+              ) : comptes && comptes.length > 0 ? (
+                comptes.map((compte) => (
+                  <div
+                    key={compte.userId}
+                    className="grid grid-cols-3 gap-4 p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="text-sm text-gray-700">
+                      {compte.userName}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {compte.userProfile}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => navigate(`/accounts/${compte.userId}`)}
+                        className="bg-green-600 text-white p-1 rounded text-xs"
+                        title="Voir le compte"
+                      >
+                        <Eye className="h-3 w-3" />
+                      </button>
+                      <button
+                        onClick={() =>
+                          navigate(`/accounts/${compte.userId}/edit`)
+                        }
+                        className="bg-yellow-500 text-white p-1 rounded text-xs"
+                        title="Modifier le compte"
+                      >
+                        <Edit className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center p-4 border rounded-md border-gray-200">
+                  <p className="text-sm text-gray-500">
+                    Aucun compte associé à ce projet.
+                  </p>
+                </div>
+              )}
 
-              <button className="w-max p-3 text-blue-600 hover:bg-blue-50 transition-colors">
-                04 Comptes
-              </button>
+              {comptes && comptes.length > 0 && (
+                <button className="w-max p-3 text-blue-600 hover:bg-blue-50 transition-colors">
+                  {comptes.length} {comptes.length > 1 ? "Comptes" : "Compte"}
+                </button>
+              )}
             </div>
           </div>
         </div>

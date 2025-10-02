@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { projetService } from "../services/api/projetService";
+import projetService from "../services/api/projetService";
 import type {
   ProjetFilters,
   CreateProjetData,
@@ -20,6 +20,8 @@ export const projetKeys = {
     [...projetKeys.detail(projetId), "magasins"] as const,
   comptes: (projetId: number) =>
     [...projetKeys.detail(projetId), "comptes"] as const,
+  photos: (projetId: number) =>
+    [...projetKeys.detail(projetId), "photos"] as const,
   countries: () => ["countries"] as const,
 };
 
@@ -361,6 +363,69 @@ export function useUpdateUserRoleInProjet() {
       queryClient.invalidateQueries({
         queryKey: projetKeys.comptes(variables.projetId),
       });
+      queryClient.invalidateQueries({
+        queryKey: projetKeys.detail(variables.projetId),
+      });
+    },
+  });
+}
+
+// Hook pour récupérer les photos d'un projet
+export function useProjetPhotos(projetId: number) {
+  return useQuery({
+    queryKey: projetKeys.photos(projetId),
+    queryFn: () => projetService.getProjetPhotos(projetId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    enabled: !!projetId, // Ne pas exécuter si l'ID est falsy
+  });
+}
+
+// Hook pour ajouter une photo à un projet
+export function useAddPhotoToProjet() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      projetId,
+      photo,
+      description,
+    }: {
+      projetId: number;
+      photo: File;
+      description?: string;
+    }) => projetService.addPhotoToProjet(projetId, photo, description),
+    onSuccess: (_, variables) => {
+      // Invalider le cache des photos pour ce projet
+      queryClient.invalidateQueries({
+        queryKey: projetKeys.photos(variables.projetId),
+      });
+      // Invalider le cache du projet pour refléter les changements
+      queryClient.invalidateQueries({
+        queryKey: projetKeys.detail(variables.projetId),
+      });
+    },
+  });
+}
+
+// Hook pour supprimer une photo d'un projet
+export function useDeleteProjetPhoto() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      photoId,
+      projetId,
+    }: {
+      photoId: number;
+      projetId: number;
+    }) => projetService.deleteProjetPhoto(photoId),
+    onSuccess: (_, variables) => {
+      // Invalider le cache des photos pour ce projet
+      queryClient.invalidateQueries({
+        queryKey: projetKeys.photos(variables.projetId),
+      });
+      // Invalider le cache du projet pour refléter les changements
       queryClient.invalidateQueries({
         queryKey: projetKeys.detail(variables.projetId),
       });

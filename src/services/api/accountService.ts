@@ -20,14 +20,15 @@ export const accountService = {
     page: number = 1,
     limit: number = 10
   ): Promise<AccountListResponse> {
-    // Utiliser l'API réelle si la vérification est activée
+    // Préférer l'API réelle sauf si explicitement désactivée
     const enableVerification = import.meta.env.VITE_ENABLE_VERIFICATION;
     console.log(
       "🔧 AccountService: VITE_ENABLE_VERIFICATION =",
       enableVerification
     );
 
-    if (enableVerification === "true") {
+    // Par défaut, utiliser l'API réelle (même si la variable n'est pas définie)
+    if (enableVerification !== "false") {
       console.log(
         "🌐 AccountService: Utilisation de l'API RÉELLE pour getAccounts"
       );
@@ -44,8 +45,14 @@ export const accountService = {
   // Récupérer un compte par ID
   async getAccountById(id: string): Promise<Account> {
     if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
+      console.log(
+        "📝 AccountService: Utilisation du service MOCK pour getAccountById"
+      );
       return mockAccountService.getAccountById(id);
     }
+    console.log(
+      "🌐 AccountService: Utilisation de l'API RÉELLE pour getAccountById"
+    );
 
     // Utiliser l'API Users pour récupérer un utilisateur
     return await userApiService.getUserById(id);
@@ -54,8 +61,14 @@ export const accountService = {
   // Créer un nouveau compte
   async createAccount(data: CreateAccountData): Promise<Account> {
     if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
+      console.log(
+        "📝 AccountService: Utilisation du service MOCK pour createAccount"
+      );
       return mockAccountService.createAccount(data);
     }
+    console.log(
+      "🌐 AccountService: Utilisation de l'API RÉELLE pour createAccount"
+    );
 
     // Utiliser l'API Users pour créer un utilisateur
     return await userApiService.createUser(data);
@@ -64,8 +77,14 @@ export const accountService = {
   // Mettre à jour un compte
   async updateAccount(id: string, data: UpdateAccountData): Promise<Account> {
     if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
+      console.log(
+        "📝 AccountService: Utilisation du service MOCK pour updateAccount"
+      );
       return mockAccountService.updateAccount(id, data);
     }
+    console.log(
+      "🌐 AccountService: Utilisation de l'API RÉELLE pour updateAccount"
+    );
 
     // Utiliser l'API Users pour mettre à jour un utilisateur
     return await userApiService.updateUser({ ...data, id });
@@ -74,8 +93,14 @@ export const accountService = {
   // Supprimer un compte
   async deleteAccount(id: string): Promise<void> {
     if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
+      console.log(
+        "📝 AccountService: Utilisation du service MOCK pour deleteAccount"
+      );
       return mockAccountService.deleteAccount(id);
     }
+    console.log(
+      "🌐 AccountService: Utilisation de l'API RÉELLE pour deleteAccount"
+    );
 
     // Utiliser l'API Users pour supprimer un utilisateur
     return await userApiService.deleteUser(id);
@@ -84,8 +109,14 @@ export const accountService = {
   // Activer/désactiver le statut d'un compte
   async toggleAccountStatus(id: string): Promise<Account> {
     if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
+      console.log(
+        "📝 AccountService: Utilisation du service MOCK pour toggleAccountStatus"
+      );
       return mockAccountService.toggleAccountStatus(id);
     }
+    console.log(
+      "🌐 AccountService: Utilisation de l'API RÉELLE pour toggleAccountStatus"
+    );
 
     // Utiliser l'API Users pour basculer le statut actif/inactif
     return await userApiService.toggleAccountStatus(id);
@@ -94,8 +125,14 @@ export const accountService = {
   // Récupérer les statistiques des comptes
   async getAccountStats(): Promise<AccountStats> {
     if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
+      console.log(
+        "📝 AccountService: Utilisation du service MOCK pour getAccountStats"
+      );
       return mockAccountService.getAccountStats();
     }
+    console.log(
+      "🌐 AccountService: Utilisation de l'API RÉELLE pour getAccountStats"
+    );
 
     // Utiliser l'API Users pour calculer les statistiques
     return await userApiService.getAccountStats();
@@ -112,6 +149,7 @@ export const profileService = {
       enableVerification
     );
 
+    // Par défaut, utiliser l'API réelle (même si la variable n'est pas définie)
     if (enableVerification === "false") {
       console.log("📝 ProfileService: Utilisation du service MOCK");
       return mockProfileService.getProfiles();
@@ -125,9 +163,15 @@ export const profileService = {
   // Créer un nouveau profil
   async createProfile(data: CreateProfileData): Promise<Profile> {
     if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
+      console.log(
+        "📝 ProfileService: Utilisation du service MOCK pour createProfile"
+      );
       return mockProfileService.createProfile(data);
     }
 
+    console.log(
+      "🌐 ProfileService: Utilisation de l'API RÉELLE pour createProfile"
+    );
     // Utiliser l'API Profils
     return await profileApiService.createProfile(data);
   },
@@ -135,9 +179,15 @@ export const profileService = {
   // Mettre à jour un profil
   async updateProfile(id: string, data: UpdateProfileData): Promise<Profile> {
     if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
+      console.log(
+        "📝 ProfileService: Utilisation du service MOCK pour updateProfile"
+      );
       return mockProfileService.updateProfile(id, data);
     }
 
+    console.log(
+      "🌐 ProfileService: Utilisation de l'API RÉELLE pour updateProfile"
+    );
     // Utiliser l'API Profils
     return await profileApiService.updateProfile(id, data);
   },
@@ -145,9 +195,15 @@ export const profileService = {
   // Supprimer un profil
   async deleteProfile(id: string): Promise<void> {
     if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
+      console.log(
+        "📝 ProfileService: Utilisation du service MOCK pour deleteProfile"
+      );
       return mockProfileService.deleteProfile(id);
     }
 
+    console.log(
+      "🌐 ProfileService: Utilisation de l'API RÉELLE pour deleteProfile"
+    );
     // Utiliser l'API Profils
     return await profileApiService.deleteProfile(id);
   },

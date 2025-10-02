@@ -11,13 +11,10 @@ import {
 import type {
   ApiCustomUser,
   ApiProfil,
-  ApiCheckUserExistsRequest,
   ApiCheckUserExistsResponse,
-  ApiLoginByPhoneRequest,
   ApiLoginByPhoneResponse,
   ApiSetPasswordRequest,
   ApiSetPasswordResponse,
-  ApiUserInfoResponse,
   ApiUpdateUserRequest,
   ApiUpdateProfilRequest,
 } from "../../types/api-users";
@@ -281,6 +278,9 @@ export class UserApiService {
   // Récupérer un utilisateur par ID
   async getUserById(id: string): Promise<Account> {
     try {
+      console.log(
+        `🔍 Récupération des détails de l'utilisateur avec ID: ${id}`
+      );
       const response = await apiClient.get<ApiCustomUser>(
         `/Users/user-detail${id}`
       );
