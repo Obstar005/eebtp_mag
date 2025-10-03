@@ -67,7 +67,7 @@ def list_projets(request):
     }
 )
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated]) 
 def get_projet(request, pk):
     try:
         projet = Projet.objects.get(pk=pk)
@@ -356,4 +356,35 @@ def delete_magasin(request, pk):
         magasin.save()
         return Response({'message': 'Magasin désactivé avec succès.'}, status=status.HTTP_200_OK)
     except Magasin.DoesNotExist:
+        return Response({'error': 'Magasin introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+    
+
+#Vue pour avoir la liste de tous les magasins d'un projet
+@swagger_auto_schema(
+    method='get',
+    operation_description="Cette API permet de récupérer tous les magasins d'un projet spécifique.",
+    responses={
+        200: openapi.Response("Liste des magasins du projet", MagasinSerializer(many=True)),
+        404: "Projet non trouvé"
+    }
+)
+@api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+def list_magasins_by_projet(request, pk):
+    try:
+        # Vérifier que le projet existe
+        projet = Projet.objects.get(id=pk)
+
+        # Récupérer uniquement les magasins lié à ce projet
+        magasins = Magasin.objects.filter(projet=projet)
+
+        # Sérialiser les données
+        serializer = MagasinSerializer(magasins, many=True)
+
+        return Response({
+            'projet': projet.nom,
+            'magasins': serializer.data
+        }, status=status.HTTP_200_OK)
+
+    except Projet.DoesNotExist:
         return Response({'error': 'Magasin introuvable.'}, status=status.HTTP_404_NOT_FOUND)

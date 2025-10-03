@@ -24,4 +24,5 @@ urlpatterns = [
     path('magasin-detail/<int:pk>', views.get_magasin, name='get_magasin'),
     path('magasin-update/<int:pk>', views.update_magasin, name='update_magasin'),
     path('magasin-delete/<int:pk>', views.delete_magasin, name='delete_magasin'),
+    path('liste-magasins-by-projet/<int:pk>', views.list_magasins_by_projet, name='list_magasins_by_projet'),
 ]
