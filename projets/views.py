@@ -369,7 +369,7 @@ def delete_magasin(request, pk):
     }
 )
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def list_magasins_by_projet(request, pk):
     try:
         # Vérifier que le projet existe

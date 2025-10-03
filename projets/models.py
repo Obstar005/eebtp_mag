@@ -18,6 +18,10 @@ class Projet(models.Model):
     is_active = models.BooleanField(default=True)
     # Association des utilisateurs
     comptes = models.ManyToManyField(CustomUser, related_name="comptes_associes", blank=True)
+    magasinier = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, related_name="magasinier_projet", null=True, blank=True)
+    chef_projet = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, related_name="chef_de_projet", null=True, blank=True)
+    chef_chantier = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, 
+                                      related_name="chef_chantier", null=True, blank=True)
 
     def __str__(self):
         return self.nom
