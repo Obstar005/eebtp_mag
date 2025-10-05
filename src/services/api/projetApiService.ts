@@ -25,6 +25,7 @@ import type {
   ApiMagasin,
   ApiProjetPhoto,
 } from "../../types/api-projets";
+import type { ApiCustomUser } from "../../types/api-users";
 
 // Service API pour les projets - utilise les endpoints de l'API EEBTP
 export class ProjetApiService {
@@ -54,8 +55,16 @@ export class ProjetApiService {
 
       console.log("Réponse API projets:", response.data);
 
+      // Récupérer la liste des utilisateurs pour résoudre les noms
+      const usersResponse = await client.get<ApiCustomUser[]>(
+        "/Users/liste-users"
+      );
+      const users = usersResponse.data;
+      console.log("Utilisateurs récupérés pour les projets:", users);
+
       return apiProjetsArrayToProjetListResponse(
         response.data,
+        users,
         filters.page || 1,
         filters.limit || 10
       );
@@ -77,11 +86,49 @@ export class ProjetApiService {
   async createProjet(data: CreateProjetData): Promise<Projet> {
     const apiData = createProjetDataToApiCreateProjet(data);
 
+    console.log("🚀 Création du projet avec les données:", data);
+
+    // 1. Créer le projet
     const response = await client.post<ApiProjet>(
       `${this.basePath}/projet-create`,
       apiData
     );
-    return apiProjetToProjet(response.data);
+
+    const nouveauProjet = apiProjetToProjet(response.data);
+    console.log("✅ Projet créé avec succès:", nouveauProjet);
+
+    // 2. Créer les magasins associés si spécifiés
+    if (data.magasins && data.magasins.length > 0) {
+      console.log(
+        `🏪 Création de ${data.magasins.length} magasin(s) pour le projet ${nouveauProjet.id}...`
+      );
+
+      for (const magasinData of data.magasins) {
+        try {
+          console.log("🏪 Création du magasin:", magasinData);
+
+          const magasinPayload: CreateMagasinData = {
+            name: magasinData.name,
+            adresse: magasinData.adresse || "",
+          };
+
+          await this.addMagasinToProjet(
+            nouveauProjet.id,
+            magasinPayload,
+            data.creator || 1
+          );
+          console.log(`✅ Magasin "${magasinData.name}" créé avec succès`);
+        } catch (magasinError) {
+          console.error(
+            `❌ Erreur lors de la création du magasin "${magasinData.name}":`,
+            magasinError
+          );
+          // On continue même si un magasin échoue
+        }
+      }
+    }
+
+    return nouveauProjet;
   }
 
   // Mettre à jour un projet
@@ -169,9 +216,14 @@ export class ProjetApiService {
   // Ajouter un magasin à un projet
   async addMagasinToProjet(
     projetId: number,
-    magasinData: CreateMagasinData
+    magasinData: CreateMagasinData,
+    creatorId?: number
   ): Promise<Magasin> {
-    const apiData = createMagasinDataToApiCreateMagasin(magasinData, projetId);
+    const apiData = createMagasinDataToApiCreateMagasin(
+      magasinData,
+      projetId,
+      creatorId
+    );
     const response = await client.post<ApiMagasin>(
       `${this.basePath}/magasin-create`,
       apiData

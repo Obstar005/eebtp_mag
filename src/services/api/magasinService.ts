@@ -1,271 +1,483 @@
+import { apiClient as client } from "./client";
+import { withApiErrorHandling } from "../../utils/apiErrorUtils";
+import type {
+  ApiMagasinResponse,
+  ApiStockItem,
+  ApiMagasinListResponse,
+  ApiStockItemListResponse,
+} from "../../types/api-magasins";
+
+import {
+  apiMagasinToMagasin,
+  createMagasinDataToApiRequest,
+  updateMagasinDataToApiRequest,
+  apiStockItemToStockArticle,
+  createStockArticleDataToApiRequest,
+  updateStockArticleDataToApiRequest,
+  extractPaginatedData,
+} from "../../types/api-transformers-magasins";
+
+import { projetApiService } from "./projetApiService";
+
 import type {
   Magasin,
   CreateMagasinData,
   UpdateMagasinData,
   MagasinFilter,
   StockArticle,
+  CreateStockArticleData,
+  UpdateStockArticleData,
   StockArticleFilter,
   MagasinStats,
 } from "../../types/magasin";
 import type { PaginatedResponse } from "../../types/api";
 
+/**
+ * Service API pour la gestion des magasins et articles de stock
+ * Utilise les endpoints /Projets/magasin-* et /Stocks/stock-item-* de l'API EEBTP_MAG v3.7
+ */
 class MagasinService {
-  // Gestion des magasins
+  private basePath = "/Projets";
+  private stockPath = "/Stocks";
+
+  // ==================== GESTION DES MAGASINS ====================
+
+  /**
+   * Récupérer tous les magasins avec filtres
+   * GET /Projets/liste-magasins
+   */
   async getMagasins(
-    filter?: MagasinFilter
+    filter: MagasinFilter = {}
   ): Promise<PaginatedResponse<Magasin>> {
-    // Mock data pour le développement
-    const mockMagasins: Magasin[] = [
-      {
-        id: 1,
-        name: "MAG-001",
-        adresse: "Accra, Ghana",
-        project_id: 1,
-        date_creation: new Date("2025-07-10"),
-        date_mise_a_jour: new Date("2025-07-10"),
-        projet: { id: 1, name: "Projet de construction de duplex" },
-        articlesCount: 18,
-      },
-    ];
+    return withApiErrorHandling(
+      async () => {
+        const params = new URLSearchParams();
 
-    // Filtrage simulé
-    let filteredMagasins = mockMagasins;
-    if (filter?.search) {
-      filteredMagasins = mockMagasins.filter(
-        (m) =>
-          m.name.toLowerCase().includes(filter.search!.toLowerCase()) ||
-          m.adresse?.toLowerCase().includes(filter.search!.toLowerCase())
-      );
-    }
-    if (filter?.project_id) {
-      filteredMagasins = filteredMagasins.filter(
-        (m) => m.project_id === filter.project_id
-      );
-    }
+        // Ajouter les filtres
+        if (filter.search) {
+          params.append("search", filter.search);
+        }
+        if (filter.project_id) {
+          params.append("project_id", filter.project_id.toString());
+        }
 
-    return {
-      data: filteredMagasins,
-      pagination: {
-        page: 1,
-        limit: 10,
-        total: filteredMagasins.length,
-        totalPages: Math.ceil(filteredMagasins.length / 10),
+        const queryString = params.toString();
+        const url = `${this.basePath}/liste-magasins${
+          queryString ? `?${queryString}` : ""
+        }`;
+
+        console.log("🏪 Récupération des magasins:", url);
+
+        const response = await client.get<
+          ApiMagasinResponse[] | ApiMagasinListResponse
+        >(url);
+
+        // Gérer différents formats de réponse API
+        let magasins: ApiMagasinResponse[];
+        let total: number;
+
+        if (Array.isArray(response.data)) {
+          magasins = response.data;
+          total = magasins.length;
+        } else {
+          const extracted = extractPaginatedData(response.data);
+          magasins = extracted.data;
+          total = extracted.total;
+        }
+
+        // Convertir vers le format frontend
+        const convertedMagasins = magasins.map(apiMagasinToMagasin);
+
+        // Enrichir avec le nombre d'articles (optionnel pour les performances)
+        for (const magasin of convertedMagasins) {
+          try {
+            const articlesResponse = await this.getStockArticles(
+              magasin.id,
+              {}
+            );
+            magasin.articlesCount = articlesResponse.data.length;
+          } catch (error) {
+            console.warn(
+              `Impossible de récupérer les articles pour le magasin ${magasin.id}:`,
+              error
+            );
+            magasin.articlesCount = 0;
+          }
+        }
+
+        return {
+          data: convertedMagasins,
+          pagination: {
+            page: 1,
+            limit: total,
+            total,
+            totalPages: 1,
+          },
+        };
       },
-    };
+      "Récupération des magasins",
+      { filter }
+    );
   }
 
+  /**
+   * Récupérer un magasin par ID
+   * GET /Projets/magasin-detail/{id}
+   */
   async getMagasin(id: number): Promise<Magasin> {
-    console.log("Récupération magasin:", id);
-    // Mock data pour le développement
-    return {
-      id: 1,
-      name: "MAG-001",
-      adresse: "Accra, Ghana",
-      project_id: 1,
-      date_creation: new Date("2025-07-10"),
-      date_mise_a_jour: new Date("2025-07-10"),
-      projet: { id: 1, name: "Projet de construction de duplex" },
-      articlesCount: 18,
-    };
+    try {
+      console.log("🏪 Récupération du magasin:", id);
+
+      const response = await client.get<ApiMagasinResponse>(
+        `${this.basePath}/magasin-detail/${id}`
+      );
+
+      const magasin = apiMagasinToMagasin(response.data);
+
+      // Si un projet est associé, récupérer ses détails complets
+      if (magasin.projet?.id) {
+        try {
+          console.log(
+            "📋 Récupération des détails du projet:",
+            magasin.projet.id
+          );
+          const projetComplet = await projetApiService.getProjetById(
+            magasin.projet.id
+          );
+          // Enrichir les informations du projet
+          magasin.projet = {
+            ...magasin.projet,
+            ...projetComplet,
+          };
+          console.log("✅ Détails du projet récupérés avec succès");
+        } catch (error) {
+          console.warn("Impossible de récupérer les détails du projet:", error);
+          // Garder les informations basiques du projet en cas d'erreur
+        }
+      }
+
+      // Enrichir avec le nombre d'articles
+      try {
+        const articlesResponse = await this.getStockArticles(id, {});
+        magasin.articlesCount = articlesResponse.data.length;
+      } catch (error) {
+        console.warn(
+          `Impossible de récupérer les articles pour le magasin ${id}:`,
+          error
+        );
+        magasin.articlesCount = 0;
+      }
+
+      return magasin;
+    } catch (error) {
+      console.error("❌ Erreur lors de la récupération du magasin:", error);
+      throw error;
+    }
   }
 
+  /**
+   * Créer un nouveau magasin
+   * POST /Projets/magasin-create
+   */
   async createMagasin(data: CreateMagasinData): Promise<Magasin> {
-    console.log("Création magasin:", data);
-    // Mock response
-    return {
-      id: Date.now(),
-      name: data.name,
-      adresse: data.adresse,
-      project_id: data.project_id,
-      date_creation: new Date(),
-      date_mise_a_jour: new Date(),
-      articlesCount: 0,
-    };
+    return withApiErrorHandling(
+      async () => {
+        console.log("🏪 Création du magasin:", data);
+
+        // Récupérer l'utilisateur actuel pour le creator
+        const currentUserId = this.getCurrentUserId();
+
+        const apiRequest = createMagasinDataToApiRequest(data, currentUserId);
+
+        const response = await client.post<ApiMagasinResponse>(
+          `${this.basePath}/magasin-create`,
+          apiRequest
+        );
+
+        return apiMagasinToMagasin(response.data);
+      },
+      "Création du magasin",
+      { data }
+    );
   }
 
+  /**
+   * Mettre à jour un magasin
+   * PUT /Projets/magasin-update/{id}
+   */
   async updateMagasin(data: UpdateMagasinData): Promise<Magasin> {
-    console.log("Mise à jour magasin:", data);
-    // Mock response
-    return {
-      id: data.id,
-      name: data.name || "MAG-001",
-      adresse: data.adresse || "Accra, Ghana",
-      project_id: 1,
-      date_creation: new Date("2025-07-10"),
-      date_mise_a_jour: new Date(),
-      articlesCount: 18,
-    };
+    try {
+      console.log("🏪 Mise à jour du magasin:", data);
+
+      const apiRequest = updateMagasinDataToApiRequest(data);
+
+      const response = await client.put<ApiMagasinResponse>(
+        `${this.basePath}/magasin-update/${data.id}`,
+        apiRequest
+      );
+
+      return apiMagasinToMagasin(response.data);
+    } catch (error) {
+      console.error("❌ Erreur lors de la mise à jour du magasin:", error);
+      throw error;
+    }
   }
 
+  /**
+   * Supprimer un magasin
+   * DELETE /Projets/magasin-delete/{id}
+   */
   async deleteMagasin(id: number): Promise<void> {
-    console.log("Suppression magasin:", id);
+    try {
+      console.log("🏪 Suppression du magasin:", id);
+
+      await client.delete(`${this.basePath}/magasin-delete/${id}`);
+    } catch (error) {
+      console.error("❌ Erreur lors de la suppression du magasin:", error);
+      throw error;
+    }
   }
 
-  // Gestion des articles de stock
+  // ==================== GESTION DES ARTICLES DE STOCK ====================
+
+  /**
+   * Récupérer les articles de stock d'un magasin
+   * GET /Stocks/liste-stock-items/{magasin_id}
+   */
   async getStockArticles(
     magasinId: number,
-    filter?: StockArticleFilter
+    filter: StockArticleFilter = {}
   ): Promise<PaginatedResponse<StockArticle>> {
-    // Mock data pour les articles
-    const mockArticles: StockArticle[] = Array.from({ length: 18 }, (_, i) => ({
-      id: i + 1,
-      name: "Ciment",
-      description: "Ciment Portland pour construction",
-      quantite: 100,
-      quantite_seuil: 20,
-      etat: i % 3 === 0 ? "Neuf" : i % 3 === 1 ? "Usagé" : "Abandonné",
-      date_creation: new Date("2025-07-10"),
-      date_modif: new Date("2025-07-10"),
-      user_id: 1,
-      magasin_id: magasinId,
-      prix_unitaire: 15000,
-      user: { id: 1, name: "John", surname: "Doe" },
-      magasin: { id: magasinId, name: "MAG-001" },
-    }));
+    try {
+      const params = new URLSearchParams();
 
-    // Filtrage simulé
-    let filteredArticles = mockArticles;
-    if (filter?.search) {
-      filteredArticles = mockArticles.filter((a) =>
-        a.name.toLowerCase().includes(filter.search!.toLowerCase())
-      );
-    }
-    if (filter?.etat) {
-      filteredArticles = filteredArticles.filter((a) => a.etat === filter.etat);
-    }
+      // Ajouter les filtres
+      if (filter.search) {
+        params.append("search", filter.search);
+      }
+      if (filter.etat) {
+        params.append("etat", filter.etat);
+      }
+      if (filter.type_enum) {
+        params.append("type_enum", filter.type_enum);
+      }
 
-    return {
-      data: filteredArticles,
-      pagination: {
-        page: 1,
-        limit: 20,
-        total: filteredArticles.length,
-        totalPages: Math.ceil(filteredArticles.length / 20),
-      },
-    };
+      const queryString = params.toString();
+      const url = `${this.stockPath}/liste-stock-items/${magasinId}${
+        queryString ? `?${queryString}` : ""
+      }`;
+
+      console.log("📦 Récupération des articles de stock:", url);
+
+      const response = await client.get<
+        ApiStockItem[] | ApiStockItemListResponse
+      >(url);
+
+      // Gérer différents formats de réponse API
+      let articles: ApiStockItem[];
+      let total: number;
+
+      if (Array.isArray(response.data)) {
+        articles = response.data;
+        total = articles.length;
+      } else {
+        const extracted = extractPaginatedData(response.data);
+        articles = extracted.data;
+        total = extracted.total;
+      }
+
+      // Convertir vers le format frontend
+      const convertedArticles = articles.map(apiStockItemToStockArticle);
+
+      return {
+        data: convertedArticles,
+        pagination: {
+          page: 1,
+          limit: total,
+          total,
+          totalPages: 1,
+        },
+      };
+    } catch (error) {
+      console.error("❌ Erreur lors de la récupération des articles:", error);
+      throw error;
+    }
   }
 
+  /**
+   * Récupérer un article de stock par ID
+   * GET /Stocks/stock-item-detail/{stock_item_id}
+   */
   async getStockArticle(id: number): Promise<StockArticle> {
-    // Mock data
-    return {
-      id,
-      name: "CIMENT",
-      description: "Ciment Portland pour construction",
-      quantite: 100,
-      quantite_seuil: 20,
-      etat: "Neuf",
-      date_creation: new Date("2025-07-10"),
-      date_modif: new Date("2025-07-10"),
-      user_id: 1,
-      magasin_id: 1,
-      prix_unitaire: 15000,
-      user: { id: 1, name: "John", surname: "Doe" },
-      magasin: { id: 1, name: "MAG-001" },
-    };
+    try {
+      console.log("📦 Récupération de l'article:", id);
+
+      const response = await client.get<ApiStockItem>(
+        `${this.stockPath}/stock-item-detail/${id}`
+      );
+
+      console.log("Article récupéré:", response.data);
+
+      return apiStockItemToStockArticle(response.data);
+    } catch (error) {
+      console.error("❌ Erreur lors de la récupération de l'article:", error);
+      throw error;
+    }
   }
 
+  /**
+   * Créer un nouvel article de stock
+   * POST /Stocks/stock-item-create
+   */
   async createStockArticle(
-    data: any
+    data: CreateStockArticleData
   ): Promise<StockArticle> {
-    console.log("Création article:", data);
-    // Si on reçoit un article_id, on va chercher le nom correspondant dans la liste mock
-    let name = data.name;
-    if (data.article_id) {
-      // Simuler la recherche dans la liste mock
-      const mockArticles: StockArticle[] = Array.from(
-        { length: 18 },
-        (_, i) => ({
-          id: i + 1,
-          name: "Ciment",
-          description: "Ciment Portland pour construction",
-          quantite: 100,
-          quantite_seuil: 20,
-          etat: i % 3 === 0 ? "Neuf" : i % 3 === 1 ? "Usagé" : "Abandonné",
-          date_creation: new Date("2025-07-10"),
-          date_modif: new Date("2025-07-10"),
-          user_id: 1,
-          magasin_id: data.magasin_id,
-          prix_unitaire: 15000,
-          user: { id: 1, name: "John", surname: "Doe" },
-          magasin: { id: data.magasin_id, name: "MAG-001" },
-        })
+    try {
+      console.log("📦 Création de l'article:", data);
+
+      // Récupérer l'utilisateur actuel pour le user_id
+      const currentUserId = this.getCurrentUserId();
+
+      const apiRequest = createStockArticleDataToApiRequest(
+        data,
+        currentUserId
       );
-      const found = mockArticles.find((a) => a.id === Number(data.article_id));
-      name = found ? found.name : "Article inconnu";
+
+      const response = await client.post<ApiStockItem>(
+        `${this.stockPath}/stock-item-create`,
+        apiRequest
+      );
+
+      return apiStockItemToStockArticle(response.data);
+    } catch (error) {
+      console.error("❌ Erreur lors de la création de l'article:", error);
+      throw error;
     }
-    return {
-      id: Date.now(),
-      name,
-      description: data.description,
-      quantite: data.quantite,
-      quantite_seuil: data.quantite_seuil,
-      etat: data.etat,
-      type_enum: data.type_enum,
-      date_creation: new Date(),
-      date_modif: new Date(),
-      user_id: 1,
-      magasin_id: data.magasin_id,
-      project_id: data.project_id,
-      prix_unitaire: data.prix_unitaire,
-    };
   }
 
+  /**
+   * Mettre à jour un article de stock
+   * PUT /Stocks/stock-item-update/{magasin_id}
+   * Note: L'API utilise magasin_id dans l'URL mais l'ID de l'article dans le body
+   */
   async updateStockArticle(
-    data: any // Accept both {name,...} and {article_id,...}
+    data: UpdateStockArticleData
   ): Promise<StockArticle> {
-    console.log("Mise à jour article:", data);
-    let name = data.name;
-    if (data.article_id) {
-      const mockArticles: StockArticle[] = Array.from(
-        { length: 18 },
-        (_, i) => ({
-          id: i + 1,
-          name: "Ciment",
-          description: "Ciment Portland pour construction",
-          quantite: 100,
-          quantite_seuil: 20,
-          etat: i % 3 === 0 ? "Neuf" : i % 3 === 1 ? "Usagé" : "Abandonné",
-          date_creation: new Date("2025-07-10"),
-          date_modif: new Date("2025-07-10"),
-          user_id: 1,
-          magasin_id: 1,
-          prix_unitaire: 15000,
-          user: { id: 1, name: "John", surname: "Doe" },
-          magasin: { id: 1, name: "MAG-001" },
-        })
+    try {
+      console.log("📦 Mise à jour de l'article:", data);
+
+      const apiRequest = updateStockArticleDataToApiRequest(data);
+
+      // L'API nécessite le magasin_id dans l'URL
+      const magasinId = data.magasin_id || apiRequest.magasin_id;
+      if (!magasinId) {
+        throw new Error("magasin_id est requis pour la mise à jour");
+      }
+
+      const response = await client.put<ApiStockItem>(
+        `${this.stockPath}/stock-item-update/${magasinId}`,
+        apiRequest
       );
-      const found = mockArticles.find((a) => a.id === Number(data.article_id));
-      name = found ? found.name : "Article inconnu";
+
+      return apiStockItemToStockArticle(response.data);
+    } catch (error) {
+      console.error("❌ Erreur lors de la mise à jour de l'article:", error);
+      throw error;
     }
-    return {
-      id: data.id,
-      name: name || "CIMENT",
-      description: data.description,
-      quantite: data.quantite || 100,
-      quantite_seuil: data.quantite_seuil || 20,
-      etat: data.etat || "Neuf",
-      type_enum: data.type_enum,
-      date_creation: new Date("2025-07-10"),
-      date_modif: new Date(),
-      user_id: 1,
-      magasin_id: 1,
-      prix_unitaire: data.prix_unitaire,
-    };
   }
 
+  /**
+   * Supprimer un article de stock
+   * DELETE /Stocks/stock-item-delete/{stock_item_id}
+   */
   async deleteStockArticle(id: number): Promise<void> {
-    console.log("Suppression article:", id);
+    try {
+      console.log("📦 Suppression de l'article:", id);
+
+      await client.delete(`${this.stockPath}/stock-item-delete/${id}`);
+    } catch (error) {
+      console.error("❌ Erreur lors de la suppression de l'article:", error);
+      throw error;
+    }
   }
 
-  // Statistiques
+  // ==================== STATISTIQUES ====================
+
+  /**
+   * Récupérer les statistiques des magasins
+   * Calculées côté client en l'absence d'endpoint dédié
+   */
   async getMagasinStats(): Promise<MagasinStats> {
-    return {
-      totalMagasins: 1,
-      totalArticles: 18,
-      articlesNeuf: 6,
-      articlesUsage: 6,
-      articlesAbandonne: 6,
-    };
+    try {
+      console.log("📊 Calcul des statistiques des magasins");
+
+      // Récupérer tous les magasins
+      const magasinsResponse = await this.getMagasins({});
+      const magasins = magasinsResponse.data;
+
+      // Récupérer tous les articles de tous les magasins
+      const allArticles: StockArticle[] = [];
+
+      for (const magasin of magasins) {
+        try {
+          const articlesResponse = await this.getStockArticles(magasin.id, {});
+          allArticles.push(...articlesResponse.data);
+        } catch (error) {
+          console.warn(
+            `Impossible de récupérer les articles du magasin ${magasin.id}`,
+            error
+          );
+        }
+      }
+
+      // Calculer les statistiques
+      const stats: MagasinStats = {
+        totalMagasins: magasins.length,
+        totalArticles: allArticles.length,
+        articlesNeuf: allArticles.filter((a) => a.etat === "neuf").length,
+        articlesUsage: allArticles.filter((a) => a.etat === "usagé").length,
+        articlesEndommage: allArticles.filter((a) => a.etat === "endommagé")
+          .length,
+      };
+
+      return stats;
+    } catch (error) {
+      console.error("❌ Erreur lors du calcul des statistiques:", error);
+      throw error;
+    }
+  }
+
+  // ==================== HELPERS ====================
+
+  /**
+   * Récupérer l'ID de l'utilisateur actuel
+   * À adapter selon le système d'authentification
+   */
+  private getCurrentUserId(): number {
+    try {
+      // Essayer de récupérer depuis le localStorage
+      const userData = localStorage.getItem("user_data");
+      if (userData) {
+        const user = JSON.parse(userData);
+        return user.id || user.user_id || 1;
+      }
+
+      // Ou depuis le token JWT
+      const token = localStorage.getItem("authToken");
+      if (token) {
+        // Décoder le JWT pour récupérer l'ID utilisateur
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        return payload.user_id || payload.sub || 1;
+      }
+
+      // Valeur par défaut
+      return 1;
+    } catch {
+      console.warn(
+        "⚠️ Impossible de récupérer l'ID utilisateur, utilisation de la valeur par défaut"
+      );
+      return 1;
+    }
   }
 }
 

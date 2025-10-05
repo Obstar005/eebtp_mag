@@ -3,7 +3,6 @@ import { productService } from "../services/api";
 import type {
   ProductCategory,
   Supplier,
-  CreateProductData,
   UpdateProductData,
   ProductFilter,
 } from "../types";
@@ -42,7 +41,12 @@ export function useCreateProduct() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateProductData) => productService.createProduct(data),
+    mutationFn: (data: {
+      name: string;
+      type: "materiel" | "materiau";
+      unit: string;
+      isActive?: boolean;
+    }) => productService.createProduct(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
     },

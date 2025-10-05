@@ -228,9 +228,9 @@ export default function ArticleDetailsPage() {
                   title="Sélectionner l'état de l'article"
                   aria-label="État de l'article"
                 >
-                  <option value="Neuf">Bon</option>
-                  <option value="Usagé">Mauvais</option>
-                  <option value="Abandonné">Abandonné</option>
+                  <option value="neuf">Bon</option>
+                  <option value="usagé">Mauvais</option>
+                  <option value="abandonné">Abandonné</option>
                 </select>
               </div>
 

@@ -66,11 +66,11 @@ export function ArticlesPage() {
 
   const getEtatColor = (etat: string) => {
     switch (etat) {
-      case "Neuf":
+      case "neuf":
         return "bg-green-100 text-green-800";
-      case "Usagé":
+      case "usagé":
         return "bg-yellow-100 text-yellow-800";
-      case "Abandonné":
+      case "abandonné":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -275,9 +275,9 @@ export function ArticlesPage() {
                           article.etat
                         )}`}
                       >
-                        {article.etat === "Neuf"
+                        {article.etat === "neuf"
                           ? "Bon"
-                          : article.etat === "Usagé"
+                          : article.etat === "usagé"
                           ? "Mauvais"
                           : article.etat}
                       </span>

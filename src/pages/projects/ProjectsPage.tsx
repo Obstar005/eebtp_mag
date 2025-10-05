@@ -340,13 +340,13 @@ export function ProjectsPage() {
                           `PRJT${String(projet.id).padStart(3, "0")}`}
                       </td>
                       <td className="px-6 py-3 text-sm text-gray-700">
-                        John Doe
+                        {projet.directeurTravaux?.name || "Non assigné"}
                       </td>
                       <td className="px-6 py-3 text-sm text-gray-700">
-                        John Doe
+                        {projet.chefProjet?.name || "Non assigné"}
                       </td>
                       <td className="px-6 py-3 text-sm text-gray-700">
-                        John Doe
+                        {projet.chefChantier?.name || "Non assigné"}
                       </td>
                       <td className="px-6 py-3 text-sm text-gray-700">
                         {formatDate(projet.date_debut)}
@@ -435,7 +435,9 @@ export function ProjectsPage() {
                         </span>
                       </div>
                       <div className="mt-2 text-xs text-gray-500">
-                        <div>Chef: {projet.chefProjet.name}</div>
+                        <div>
+                          Chef: {projet.chefProjet?.name || "Non assigné"}
+                        </div>
                         <div className="flex items-center mt-1">
                           <Calendar className="h-3 w-3 mr-1" />
                           {formatDate(projet.date_debut)} -{" "}

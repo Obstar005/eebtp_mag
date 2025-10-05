@@ -198,6 +198,27 @@
       },
       "parameters": []
     },
+    "/Projets/liste-magasins-by-projet/{id}": {
+      "get": {
+        "operationId": "Projets_liste-magasins-by-projet_read",
+        "description": "Cette API permet de récupérer tous les magasins d'un projet spécifique.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Liste des magasins du projet",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/Magasin" }
+            }
+          },
+          "404": { "description": "Projet non trouvé" }
+        },
+        "tags": ["Projets"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
     "/Projets/liste-photos-by-projet/{id}": {
       "get": {
         "operationId": "Projets_liste-photos-by-projet_read",
@@ -381,10 +402,22 @@
         "description": "Cette API permet d'ajouter des photos pour un projet.",
         "parameters": [
           {
-            "name": "data",
-            "in": "body",
+            "name": "projet",
+            "in": "formData",
             "required": true,
-            "schema": { "$ref": "#/definitions/ProjetPhoto" }
+            "type": "integer"
+          },
+          {
+            "name": "image",
+            "in": "formData",
+            "description": "Image de la photo du projet",
+            "type": "file"
+          },
+          {
+            "name": "is_active",
+            "in": "formData",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "responses": {
@@ -395,6 +428,10 @@
           "400": { "description": "Données invalides" },
           "404": { "description": "Projet non trouvé" }
         },
+        "consumes": [
+          "multipart/form-data",
+          "application/x-www-form-urlencoded"
+        ],
         "tags": ["Projets"]
       },
       "parameters": [
@@ -419,10 +456,28 @@
         "description": "Cette API permet de mettre à jour une photo d'un projet.",
         "parameters": [
           {
-            "name": "data",
-            "in": "body",
+            "name": "projet",
+            "in": "formData",
             "required": true,
-            "schema": { "$ref": "#/definitions/ProjetPhoto" }
+            "type": "integer"
+          },
+          {
+            "name": "image",
+            "in": "formData",
+            "required": true,
+            "type": "file"
+          },
+          {
+            "name": "is_active",
+            "in": "formData",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "photo_profil",
+            "in": "formData",
+            "description": "Image de profil",
+            "type": "file"
           }
         ],
         "responses": {
@@ -433,6 +488,10 @@
           "404": { "description": "Photo non trouvée" },
           "400": { "description": "Données invalides" }
         },
+        "consumes": [
+          "multipart/form-data",
+          "application/x-www-form-urlencoded"
+        ],
         "tags": ["Projets"]
       },
       "parameters": [
@@ -949,7 +1008,7 @@
     "/Users/user-create": {
       "post": {
         "operationId": "Users_user-create_create",
-        "description": "Créer un nouvel utilisateur",
+        "description": "Créer un nouvel utilisateur (avec ou sans photo de profil)",
         "parameters": [
           {
             "name": "data",
@@ -991,6 +1050,41 @@
             "description": "",
             "schema": { "$ref": "#/definitions/CustomUser" }
           }
+        },
+        "tags": ["Users"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Users/user-update-profile/{id}": {
+      "put": {
+        "operationId": "Users_user-update-profile_update",
+        "description": "Mettre à jour la photo de profil d'un utilisateur",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "required": ["photo_profil"],
+              "type": "object",
+              "properties": {
+                "photo_profil": {
+                  "description": "Fichier image de la photo de profil",
+                  "type": "file"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/CustomUser" }
+          },
+          "400": { "description": "Bad Request" },
+          "404": { "description": "Utilisateur introuvable" }
         },
         "tags": ["Users"]
       },
@@ -1208,6 +1302,11 @@
       "properties": {
         "id": { "title": "ID", "type": "integer", "readOnly": true },
         "creator": { "title": "Creator", "type": "integer" },
+        "projet_nom": {
+          "title": "Projet nom",
+          "type": "string",
+          "readOnly": true
+        },
         "nom": {
           "title": "Nom",
           "type": "string",
@@ -1523,6 +1622,12 @@
             "Zimbabwe"
           ]
         },
+        "photos": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "readOnly": true,
+          "uniqueItems": true
+        },
         "nom": {
           "title": "Nom",
           "type": "string",
@@ -1557,7 +1662,22 @@
           "format": "date",
           "x-nullable": true
         },
-        "is_active": { "title": "Is active", "type": "boolean" }
+        "is_active": { "title": "Is active", "type": "boolean" },
+        "magasinier": {
+          "title": "Magasinier",
+          "type": "integer",
+          "x-nullable": true
+        },
+        "chef_projet": {
+          "title": "Chef projet",
+          "type": "integer",
+          "x-nullable": true
+        },
+        "chef_chantier": {
+          "title": "Chef chantier",
+          "type": "integer",
+          "x-nullable": true
+        }
       }
     },
     "Produit": {
@@ -1662,7 +1782,6 @@
     "CustomUser": {
       "required": [
         "nationality",
-        "password",
         "username",
         "surname",
         "type",
@@ -1928,12 +2047,13 @@
             "Zimbabwe"
           ]
         },
-        "password": {
-          "title": "Password",
-          "type": "string",
-          "maxLength": 128,
-          "minLength": 1
+        "password": { "title": "Password", "type": "string", "minLength": 1 },
+        "projets": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "uniqueItems": true
         },
+        "magasin": { "title": "Magasin", "type": "string", "readOnly": true },
         "last_login": {
           "title": "Last login",
           "type": "string",

@@ -13,7 +13,6 @@ import { EditAccountPage } from "../pages/accounts/EditAccountPage";
 import { AccountDetailsPage } from "../pages/accounts/AccountDetailsPage";
 import { ProfilesPage } from "../pages/ProfilesPage";
 import { ProjectsPage } from "../pages/projects/ProjectsPage";
-import { AddEditProjetPage as AddEditProjectPage } from "../pages/projects/AddEditProjetPage";
 import { ProjectDetailsPage } from "../pages/projects/ProjectDetailsPage";
 import { MagasinDetailsPage } from "../pages/projects/MagasinDetailsPage";
 // Pages des articles

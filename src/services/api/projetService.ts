@@ -46,9 +46,14 @@ export const projetService = {
 
   addMagasinToProjet: (
     projetId: number,
-    magasinData: CreateMagasinData
+    magasinData: CreateMagasinData,
+    creatorId?: number
   ): Promise<Magasin> => {
-    return projetApiService.addMagasinToProjet(projetId, magasinData);
+    return projetApiService.addMagasinToProjet(
+      projetId,
+      magasinData,
+      creatorId
+    );
   },
 
   removeMagasinFromProjet: (

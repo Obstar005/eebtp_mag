@@ -118,11 +118,11 @@ export function MagasinDetailsPage() {
 
   const getEtatColor = (etat: ArticleEtat) => {
     switch (etat) {
-      case "Neuf":
+      case "neuf":
         return "bg-green-100 text-green-800";
-      case "Usagé":
+      case "usagé":
         return "bg-yellow-100 text-yellow-800";
-      case "Abandonné":
+      case "endommagé":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -236,9 +236,9 @@ export function MagasinDetailsPage() {
                     title="Filtrer par état"
                   >
                     <option value="">Tous les états</option>
-                    <option value="Neuf">Neuf</option>
-                    <option value="Usagé">Usagé</option>
-                    <option value="Abandonné">Abandonné</option>
+                    <option value="neuf">Neuf</option>
+                    <option value="usagé">Usagé</option>
+                    <option value="endommagé">Endommagé</option>
                   </select>
                   <button className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                     <Filter className="h-4 w-4" />
@@ -451,13 +451,55 @@ export function MagasinDetailsPage() {
                     <div className="font-medium text-gray-900">
                       {magasin.projet.name}
                     </div>
+                    {/* Description du projet si disponible */}
+                    {magasin.projet.description && (
+                      <div className="text-sm text-gray-600 mt-1">
+                        {magasin.projet.description}
+                      </div>
+                    )}
                     <div className="text-sm text-gray-500 mt-1">
                       Adresse: {magasin.adresse || "Non spécifiée"}
                     </div>
+                    {/* Dates du projet si disponibles */}
+                    <div className="flex flex-wrap gap-4 mt-2 text-xs text-gray-500">
+                      {magasin.projet.date_debut && (
+                        <span>
+                          Début:{" "}
+                          {new Date(
+                            magasin.projet.date_debut
+                          ).toLocaleDateString("fr-FR")}
+                        </span>
+                      )}
+                      {magasin.projet.date_fin && (
+                        <span>
+                          Fin prévue:{" "}
+                          {new Date(magasin.projet.date_fin).toLocaleDateString(
+                            "fr-FR"
+                          )}
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="inline-flex px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                        En cours
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                          magasin.projet.status === "En cours"
+                            ? "bg-green-100 text-green-800"
+                            : magasin.projet.status === "Terminé"
+                            ? "bg-blue-100 text-blue-800"
+                            : magasin.projet.status === "En attente"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {magasin.projet.status || "En cours"}
                       </span>
+                      {/* Budget si disponible */}
+                      {magasin.projet.budget && (
+                        <span className="text-xs text-gray-500">
+                          Budget:{" "}
+                          {magasin.projet.budget?.toLocaleString("fr-FR")} €
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

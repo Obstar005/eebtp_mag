@@ -58,6 +58,7 @@ export interface ApiUpdateProjetRequest {
 }
 
 export interface ApiCreateMagasinRequest {
+  creator: number;
   nom: string;
   adresse?: string;
   projet: number;

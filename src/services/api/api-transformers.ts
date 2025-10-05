@@ -315,24 +315,31 @@ export function apiProjetToProjet(apiProjet: ApiProjet): Projet {
 
   return {
     id: apiProjet.id,
-    name: apiProjet.nom,
+    nom: apiProjet.nom, // Nom principal selon l'API
+    name: apiProjet.nom, // Alias pour compatibilité
     description: apiProjet.description || "",
     date_creation: new Date(apiProjet.date_creation),
     date_debut: new Date(apiProjet.date_debut),
-    date_fin: apiProjet.date_fin
-      ? new Date(apiProjet.date_fin)
-      : new Date(apiProjet.date_debut), // Fallback si pas de date_fin
-    date_modif: new Date(apiProjet.date_modification),
-    date_mise_a_jour: new Date(apiProjet.date_modification), // Même que date_modif
+    date_fin: apiProjet.date_fin ? new Date(apiProjet.date_fin) : undefined, // Optionnel selon l'API
+    date_modification: new Date(apiProjet.date_modification), // Nom exact de l'API
     pays: apiProjet.pays,
+    creator: apiProjet.creator, // ID du créateur selon l'API
+    is_active: apiProjet.is_active,
+
+    // Rôles principaux selon l'API (peuvent être undefined)
+    chef_projet: undefined, // À définir si l'API les fournit
+    chef_chantier: undefined,
+    magasinier: undefined,
+
+    // Champs pour compatibilité avec l'ancien système
     chef_projet_user_id: apiProjet.creator, // Utiliser le creator comme chef de projet par défaut
     directeur_travaux_user_id: apiProjet.creator, // Valeur par défaut
-    chef_chantier_user_id: apiProjet.creator, // Valeur par défaut
     coordinateur_travaux_user_id: apiProjet.creator, // Valeur par défaut
     chef_equipe_user_id: apiProjet.creator, // Valeur par défaut
-    server_boolean: apiProjet.is_active,
+
     images: [], // L'API simple ne gère pas les images
-    comptesAssocies: comptesAssocies, // Ajouter les comptes associés
+    comptes: apiProjet.comptes, // IDs des comptes associés selon l'API
+    comptesAssocies: comptesAssocies, // Détails des comptes (chargés séparément)
   };
 }
 
@@ -399,24 +406,33 @@ export function createProjetDataToApiCreateProjet(
   // Collecter tous les IDs d'utilisateurs associés au projet
   const userIds: number[] = [];
 
-  // Ajouter l'ID du chef de projet s'il existe
-  if (data.chef_projet_user_id) {
-    userIds.push(data.chef_projet_user_id);
+  // Ajouter les rôles principaux selon la nouvelle structure API
+  if (data.chef_projet || data.chef_projet_user_id) {
+    const chefProjetId = data.chef_projet || data.chef_projet_user_id;
+    if (chefProjetId && !userIds.includes(chefProjetId)) {
+      userIds.push(chefProjetId);
+    }
   }
 
-  // Ajouter les autres rôles s'ils existent et sont différents
+  if (data.chef_chantier || data.chef_chantier_user_id) {
+    const chefChantierId = data.chef_chantier || data.chef_chantier_user_id;
+    if (chefChantierId && !userIds.includes(chefChantierId)) {
+      userIds.push(chefChantierId);
+    }
+  }
+
+  if (data.magasinier) {
+    if (!userIds.includes(data.magasinier)) {
+      userIds.push(data.magasinier);
+    }
+  }
+
+  // Ajouter les autres rôles pour compatibilité
   if (
     data.directeur_travaux_user_id &&
     !userIds.includes(data.directeur_travaux_user_id)
   ) {
     userIds.push(data.directeur_travaux_user_id);
-  }
-
-  if (
-    data.chef_chantier_user_id &&
-    !userIds.includes(data.chef_chantier_user_id)
-  ) {
-    userIds.push(data.chef_chantier_user_id);
   }
 
   if (
@@ -430,7 +446,15 @@ export function createProjetDataToApiCreateProjet(
     userIds.push(data.chef_equipe_user_id);
   }
 
-  // Ajouter les utilisateurs supplémentaires s'il y en a
+  // Ajouter les utilisateurs supplémentaires
+  if (data.comptes?.length) {
+    data.comptes.forEach((userId) => {
+      if (!userIds.includes(userId)) {
+        userIds.push(userId);
+      }
+    });
+  }
+
   if (data.comptes_associes?.length) {
     data.comptes_associes.forEach((userId) => {
       const id = parseInt(userId.toString());
@@ -442,16 +466,20 @@ export function createProjetDataToApiCreateProjet(
 
   console.log("👥 Utilisateurs associés au projet:", userIds);
 
-  return {
-    creator: data.chef_projet_user_id, // Utiliser le chef de projet comme creator
-    nom: data.name,
+  // Construire l'objet API avec tous les champs requis et optionnels
+  const apiData: ApiCreateProjetRequest = {
+    creator: data.creator || data.chef_projet_user_id || data.chef_projet || 1, // Créateur requis
+    nom: data.nom || data.name || "", // Nom requis
+    pays: data.pays || "", // Pays requis
+    date_debut: data.date_debut || "", // Date de début requise
     description: data.description,
-    date_debut: data.date_debut,
     date_fin: data.date_fin,
-    pays: data.pays,
-    comptes: userIds, // Liste de tous les IDs d'utilisateurs associés
-    is_active: true,
+    is_active: data.is_active !== undefined ? data.is_active : true,
+    comptes: userIds,
   };
+
+  console.log("✨ Données API transformées:", apiData);
+  return apiData;
 }
 
 // Frontend → API : Transformer UpdateProjetData vers ApiUpdateProjetRequest
@@ -525,9 +553,11 @@ export function updateProjetDataToApiUpdateProjet(
 // Frontend → API : Transformer CreateMagasinData vers ApiCreateMagasinRequest
 export function createMagasinDataToApiCreateMagasin(
   data: CreateMagasinData,
-  projetId: number
+  projetId: number,
+  creatorId?: number
 ): ApiCreateMagasinRequest {
   return {
+    creator: creatorId || 1, // Utiliser l'ID du créateur ou 1 par défaut
     nom: data.name,
     adresse: data.adresse,
     projet: projetId,
@@ -556,6 +586,7 @@ export function apiProjetListResponseToProjetListResponse(
 // API → Frontend : Transformer un tableau de ApiProjet vers ProjetListResponse
 export function apiProjetsArrayToProjetListResponse(
   apiProjets: ApiProjet[],
+  users: ApiCustomUser[],
   page: number = 1,
   limit: number = 10
 ): ProjetListResponse {
@@ -566,7 +597,50 @@ export function apiProjetsArrayToProjetListResponse(
   const totalPages = Math.ceil(apiProjets.length / limit);
 
   return {
-    data: paginatedData.map((projet) => apiProjetToProjetWithDetails(projet)),
+    data: paginatedData.map((projet) => {
+      // Créer un map des utilisateurs pour un accès rapide
+      const userMap = new Map(users.map((user) => [user.id, user]));
+
+      // Fonction pour obtenir le nom d'un utilisateur
+      const getUserName = (userId: number): string => {
+        const user = userMap.get(userId);
+        return user
+          ? `${user.first_name || ""} ${user.last_name || ""}`.trim()
+          : "N/A";
+      };
+
+      // Déterminer les rôles à partir des comptes du projet
+      // Pour simplifier, on va assigner le créateur comme chef de projet
+      const chefProjet = {
+        id: projet.creator,
+        name: getUserName(projet.creator),
+      };
+
+      // Pour les autres rôles, on utilise les premiers comptes associés
+      const comptes = projet.comptes || [];
+      const directeurTravaux =
+        comptes.length > 0
+          ? {
+              id: comptes[0],
+              name: getUserName(comptes[0]),
+            }
+          : { id: projet.creator, name: getUserName(projet.creator) };
+
+      const chefChantier =
+        comptes.length > 1
+          ? {
+              id: comptes[1],
+              name: getUserName(comptes[1]),
+            }
+          : { id: projet.creator, name: getUserName(projet.creator) };
+
+      return apiProjetToProjetWithDetails(projet, {
+        chefProjet,
+        directeurTravaux,
+        chefChantier,
+        comptesAssociesCount: comptes.length,
+      });
+    }),
     total: apiProjets.length,
     page,
     limit,

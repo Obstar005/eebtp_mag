@@ -101,7 +101,7 @@ export function AddEditArticleModal({
         ...prev,
         articleId: Number(idStr),
         description: selected.description || "",
-        prix_unitaire: selected.unitPrice || 0,
+        prix_unitaire: 0, // CatalogProduct n'a pas de prix unitaire, on garde 0
       }));
     } else {
       setFormData((prev) => ({ ...prev, articleId: 0 }));
@@ -203,6 +203,8 @@ export function AddEditArticleModal({
             productsList?.data.map((product) => ({
               value: String(product.id),
               label: product.name,
+              description: product.description,
+              unitPrice: 0, // CatalogProduct n'a pas de prix unitaire
             })) || []
           }
           value={formData.articleId}
@@ -213,9 +215,9 @@ export function AddEditArticleModal({
         <SelectWithSearch
           label="État"
           options={[
-            { value: "Neuf", label: "Neuf" },
-            { value: "Usagé", label: "Usagé" },
-            { value: "Abandonné", label: "Abandonné" },
+            { value: "neuf", label: "Neuf" },
+            { value: "usagé", label: "Usagé" },
+            { value: "endommagé", label: "Endommagé" },
           ]}
           value={formData.etat}
           onChange={(v) => handleInputChange("etat", v as ArticleEtat)}

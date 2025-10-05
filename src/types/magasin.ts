@@ -101,9 +101,9 @@ export interface UpdateStockArticleData {
 
 // Énumérations pour les états des articles
 export const ArticleEtat = {
-  NEUF: "Neuf",
-  USAGE: "Usagé",
-  ABANDONNE: "Abandonné",
+  NEUF: "neuf",
+  USAGE: "usagé",
+  ENDOMMAGE: "endommagé",
 } as const;
 
 export type ArticleEtat = (typeof ArticleEtat)[keyof typeof ArticleEtat];
@@ -144,5 +144,5 @@ export interface MagasinStats {
   totalArticles: number;
   articlesNeuf: number;
   articlesUsage: number;
-  articlesAbandonne: number;
+  articlesEndommage: number;
 }

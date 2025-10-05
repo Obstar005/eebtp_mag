@@ -100,7 +100,9 @@ export function SelectWithSearch({
       <div className="relative w-full">
         <button
           type="button"
-          className={`w-full px-3 py-2 border border-gray-300 rounded-md text-left bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+          className={`w-full px-3 py-2 border border-gray-300 ${
+            value ? "" : "text-gray-500"
+          } rounded-md text-left bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
             disabled ? "opacity-50 cursor-not-allowed" : ""
           }`}
           onClick={() => setIsOpen((v) => !v)}
@@ -109,7 +111,7 @@ export function SelectWithSearch({
           aria-expanded={isOpen}
         >
           {options.find((opt) => String(opt.value) === String(value))?.label ||
-            placeholder}
+            `-- ${placeholder} --`}
         </button>
         {isOpen && (
           <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
@@ -151,7 +153,7 @@ export function SelectWithSearch({
               <li>
                 <button
                   type="button"
-                  className={`w-full text-left px-3 py-2 hover:bg-gray-100 ${
+                  className={`w-full text-left px-3 py-2 text-gray-600 hover:bg-gray-100 ${
                     value === "" ? "bg-blue-50" : ""
                   }`}
                   onClick={() => {
@@ -161,7 +163,7 @@ export function SelectWithSearch({
                     setHighlighted(-1);
                   }}
                 >
-                  {placeholder}
+                  -- {placeholder} --
                 </button>
               </li>
               {filteredOptions.map((opt, idx) => (

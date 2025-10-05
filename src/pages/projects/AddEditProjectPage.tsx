@@ -1,14 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  ArrowLeft,
-  Upload,
-  X,
-  Plus,
-  Trash2,
-  ChevronDown,
-  Search,
-} from "lucide-react";
+import { ArrowLeft, Upload, X, ChevronDown, Search } from "lucide-react";
 import {
   useCreateProjet,
   useUpdateProjet,
@@ -17,6 +9,7 @@ import {
 } from "../../hooks/useProjets";
 import { useAccounts } from "../../hooks/useAccounts";
 import { CountrySelector } from "../../components/ui/CountrySelector";
+import { SelectWithSearch } from "../../components/ui/SelectWithSearch";
 import { ProjectImage } from "../../components/ui/CustomImage";
 import type { CreateProjetData, UpdateProjetData } from "../../types/project";
 import type { Country } from "../../services/countriesService";
@@ -53,19 +46,41 @@ export function AddEditProjectPage() {
   const [accountSearchTerm, setAccountSearchTerm] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const [formData, setFormData] = useState<CreateProjetData>({
+  // État pour le magasin en cours de saisie (sécurisé)
+  const [currentMagasin, setCurrentMagasin] = useState({
     name: "",
-    description: "",
+    adresse: "",
+  });
+
+  const [formData, setFormData] = useState<CreateProjetData>({
+    // Champs requis par l'API
+    creator: 0, // Sera défini dynamiquement
+    nom: "",
+    pays: "Togo", // Nom complet par défaut
     date_debut: "",
+
+    // Champs optionnels
+    name: "", // Pour compatibilité
+    description: "",
     date_fin: "",
-    pays: "TG",
-    chef_projet_userid: 0,
-    directeur_travaux_userid: 0,
-    chef_chantier_userid: 0,
-    coordinateur_travaux_userid: 0,
-    chef_equipe_userid: 0,
-    magasins: [],
+    is_active: true,
+
+    // Rôles principaux
+    chef_projet: 0,
+    chef_chantier: 0,
+    magasinier: 0,
+
+    // Champs pour compatibilité
+    chef_projet_user_id: 0,
+    directeur_travaux_user_id: 0,
+    coordinateur_travaux_user_id: 0,
+    chef_equipe_user_id: 0,
+
+    // Champs UI
+    magasins: [], // Liste vide au départ
     images: [],
+    comptes: [],
+    comptes_associes: [],
   });
 
   // Initialiser le pays par défaut
@@ -74,6 +89,8 @@ export function AddEditProjectPage() {
       const defaultCountry = countries.find((c) => c.abbreviation === "TG");
       if (defaultCountry) {
         setSelectedCountry(defaultCountry);
+        // Mettre à jour le formulaire avec le nom complet du pays
+        setFormData((prev) => ({ ...prev, pays: defaultCountry.name }));
       }
     }
   }, [countries, selectedCountry]);
@@ -96,32 +113,53 @@ export function AddEditProjectPage() {
     };
   }, []);
 
+  // Debug: Suivre les changements de formData.magasins
+  useEffect(() => {
+    console.log("🔄 formData.magasins mis à jour:", formData.magasins);
+  }, [formData.magasins]);
+
   // Charger les données du projet en mode édition
   useEffect(() => {
     if (isEditing && projet) {
-      // Accéder à la propriété comptes via l'accesseur direct (projet as any).comptes
-      const projetComptes = (projet as any).comptes || [];
+      // Accéder à la propriété comptes via les nouveaux types
+      const projetComptes = projet.comptes || [];
 
       // Définir les données du formulaire depuis le projet
-      const projectFormData = {
-        name: projet.name,
-        description: projet.description || "",
-        date_debut: projet.date_debut.toISOString().split("T")[0],
-        date_fin: projet.date_fin.toISOString().split("T")[0],
+      const projectFormData: CreateProjetData = {
+        // Champs requis par l'API
+        creator: projet.creator,
+        nom: projet.nom || projet.name || "",
         pays: projet.pays,
-        chef_projet_userid: projet.chef_projet_userid,
-        directeur_travaux_userid: projet.directeur_travaux_userid,
-        chef_chantier_userid: projet.chef_chantier_userid,
-        coordinateur_travaux_userid: projet.coordinateur_travaux_userid,
-        chef_equipe_userid: projet.chef_equipe_userid,
+        date_debut: projet.date_debut.toISOString().split("T")[0],
+
+        // Champs optionnels
+        name: projet.name || projet.nom, // Pour compatibilité
+        description: projet.description || "",
+        date_fin: projet.date_fin
+          ? projet.date_fin.toISOString().split("T")[0]
+          : "",
+        is_active: projet.is_active,
+
+        // Rôles principaux
+        chef_projet: projet.chef_projet,
+        chef_chantier: projet.chef_chantier,
+        magasinier: projet.magasinier,
+
+        // Champs pour compatibilité
+        chef_projet_user_id: projet.chef_projet_user_id,
+        directeur_travaux_user_id: projet.directeur_travaux_user_id,
+        coordinateur_travaux_user_id: projet.coordinateur_travaux_user_id,
+        chef_equipe_user_id: projet.chef_equipe_user_id,
+
         // Si nous avons des magasins chargés, les inclure directement
         magasins:
           magasins?.map((m) => ({
             name: m.name,
             adresse: m.adresse || "",
-            id: m.id, // Stocker l'ID comme propriété supplémentaire
+            _id: m.id, // Stocker l'ID comme propriété supplémentaire
           })) || [],
         images: [],
+        comptes: projetComptes,
         comptes_associes: projetComptes,
       };
 
@@ -129,7 +167,9 @@ export function AddEditProjectPage() {
 
       // Initialiser le pays sélectionné
       if (countries && projet.pays) {
-        const country = countries.find((c) => c.abbreviation === projet.pays);
+        const country = countries.find(
+          (c) => c.name === projet.pays || c.abbreviation === projet.pays
+        );
         if (country) {
           setSelectedCountry(country);
         }
@@ -155,7 +195,9 @@ export function AddEditProjectPage() {
             }
             return null;
           })
-          .filter((item: any) => item !== null) as {
+          .filter(
+            (item): item is { id: string; name: string } => item !== null
+          ) as {
           id: string;
           name: string;
         }[];
@@ -199,44 +241,29 @@ export function AddEditProjectPage() {
     setPreviewImages(newPreviews);
   };
 
-  const addMagasin = () => {
-    // Ne pas permettre l'ajout de magasins en mode édition
-    if (isEditing) {
-      return;
-    }
-    setFormData((prev) => ({
-      ...prev,
-      magasins: [...(prev.magasins || []), { name: "", adresse: "" }],
-    }));
-  };
-
+  // Fonction simplifiée pour modifier les magasins existants (mode édition uniquement)
   const updateMagasin = (
     index: number,
     field: "name" | "adresse",
     value: string
   ) => {
+    if (!isEditing) return; // Sécurité : seulement en mode édition
+
     const newMagasins = [...(formData.magasins || [])];
     const currentMagasin = newMagasins[index] || {};
 
     // Préserver l'ID du magasin s'il existe
-    const magasinId = "id" in currentMagasin ? currentMagasin.id : undefined;
+    const magasinId =
+      "_id" in currentMagasin && typeof currentMagasin._id === "number"
+        ? currentMagasin._id
+        : undefined;
 
     newMagasins[index] = {
       ...currentMagasin,
       [field]: value,
-      id: magasinId, // Conserver l'ID
+      _id: magasinId,
     };
 
-    setFormData((prev) => ({ ...prev, magasins: newMagasins }));
-  };
-
-  const removeMagasin = (index: number) => {
-    // Ne pas permettre la suppression de magasins en mode édition
-    if (isEditing) {
-      return;
-    }
-    const newMagasins = [...(formData.magasins || [])];
-    newMagasins.splice(index, 1);
     setFormData((prev) => ({ ...prev, magasins: newMagasins }));
   };
 
@@ -301,8 +328,32 @@ export function AddEditProjectPage() {
     e.preventDefault();
     setError(null);
 
+    // Ajouter automatiquement LE magasin saisi s'il n'est pas vide (mode création uniquement)
+    const finalMagasins = [];
+    if (
+      !isEditing &&
+      (currentMagasin.name.trim() || currentMagasin.adresse.trim())
+    ) {
+      if (!currentMagasin.name.trim()) {
+        setError("Le nom du magasin est requis si vous remplissez l'adresse");
+        return;
+      }
+      finalMagasins.push({ ...currentMagasin });
+    } else if (isEditing) {
+      // En mode édition, garder les magasins existants
+      finalMagasins.push(...(formData.magasins || []));
+    }
+
+    console.log("🚀 DÉBUT handleSubmit - État complet du formulaire:", {
+      formData,
+      currentMagasin,
+      finalMagasins,
+      magasinsCount: finalMagasins.length,
+    });
+
     // Validations
-    if (!formData.name.trim()) {
+    const nomValue = formData.nom || formData.name || "";
+    if (!nomValue.trim()) {
       setError("Le nom du projet est requis");
       return;
     }
@@ -319,9 +370,13 @@ export function AddEditProjectPage() {
     const compteIds = selectedAccounts.map((account) => account.id);
     console.log("💾 Enregistrement des comptes associés:", compteIds);
 
-    // Créer une copie des données du formulaire avec les comptes associés
+    // Créer une copie des données du formulaire avec tous les champs requis
     const formDataWithComptes = {
       ...formData,
+      creator: formData.creator || 1, // Utiliser un ID par défaut si non défini
+      nom: formData.nom || formData.name || "", // S'assurer que nom est défini
+      magasins: finalMagasins, // Utiliser les magasins finaux (avec le magasin saisi ajouté)
+      comptes: compteIds.map((id) => parseInt(id)),
       comptes_associes: compteIds,
     };
 
@@ -506,129 +561,120 @@ export function AddEditProjectPage() {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Magasins Associés
+                  Magasin du Projet
                 </h3>
                 {isEditing && (
                   <span className="text-sm italic text-gray-600">
-                    Seule la modification des magasins existants est autorisée
+                    Seule la modification du magasin existant est autorisée
                   </span>
                 )}
               </div>
 
               <div className="space-y-4">
+                {/* Champs fixes pour LE magasin (mode création uniquement) */}
                 {!isEditing && (
-                  <>
+                  <div className="space-y-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Nom du magasin
                       </label>
                       <input
                         type="text"
+                        value={currentMagasin.name}
+                        onChange={(e) =>
+                          setCurrentMagasin((prev) => ({
+                            ...prev,
+                            name: e.target.value,
+                          }))
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Nom du magasin"
-                        title="Nom du magasin"
                       />
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Adresse du magasin
                       </label>
                       <input
                         type="text"
+                        value={currentMagasin.adresse}
+                        onChange={(e) =>
+                          setCurrentMagasin((prev) => ({
+                            ...prev,
+                            adresse: e.target.value,
+                          }))
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Adresse du magasin"
-                        title="Adresse du magasin"
                       />
                     </div>
-                  </>
+                    {(currentMagasin.name.trim() ||
+                      currentMagasin.adresse.trim()) && (
+                      <div className="text-sm text-blue-600 italic">
+                        ✓ Ce magasin sera ajouté automatiquement lors de la
+                        soumission
+                      </div>
+                    )}
+                  </div>
                 )}
 
-                {/* Liste des magasins existants */}
-
-                {isLoadingMagasins && isEditing ? (
-                  <div className="flex items-center justify-center h-20">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                  </div>
-                ) : (magasins && magasins.length > 0) ||
-                  (Array.isArray(formData.magasins) &&
-                    formData.magasins.length > 0) ? (
-                  // Utiliser les magasins du formData s'ils sont disponibles, sinon les magasins bruts
-                  (Array.isArray(formData.magasins) &&
-                  formData.magasins.length > 0
-                    ? formData.magasins
-                    : magasins?.map((m) => ({
-                        name: m.name,
-                        adresse: m.adresse || "",
-                        id: m.id,
-                      })) || []
-                  ).map(
-                    (
-                      magasin: { name: string; adresse?: string; id?: number },
-                      index
-                    ) => (
-                      <div
-                        key={index}
-                        className="flex gap-4 items-start bg-gray-50 rounded-lg p-4 mt-2"
-                      >
-                        <div className="flex-1 space-y-3">
-                          <div className="">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Nom du magasin{" "}
-                              {isEditing && magasin.id ? `#${magasin.id}` : ""}
-                            </label>
-                            <input
-                              type="text"
-                              value={magasin.name}
-                              onChange={(e) =>
-                                updateMagasin(index, "name", e.target.value)
-                              }
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              placeholder="Nom du magasin"
-                              title={`Nom du magasin ${index + 1}`}
-                              aria-label={`Nom du magasin ${index + 1}`}
-                            />
-                          </div>
-                          <div className="">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Adresse du magasin
-                            </label>
-                            <input
-                              type="text"
-                              value={magasin.adresse || ""}
-                              onChange={(e) =>
-                                updateMagasin(index, "adresse", e.target.value)
-                              }
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              placeholder="Adresse du magasin"
-                              title={`Adresse du magasin ${index + 1}`}
-                              aria-label={`Adresse du magasin ${index + 1}`}
-                            />
+                {/* Liste des magasins existants - Mode édition uniquement */}
+                {isEditing && (
+                  <>
+                    {isLoadingMagasins ? (
+                      <div className="flex items-center justify-center h-20">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      </div>
+                    ) : magasins && magasins.length > 0 ? (
+                      magasins.map((magasin, index) => (
+                        <div
+                          key={magasin.id}
+                          className="bg-gray-50 rounded-lg p-4"
+                        >
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Nom du magasin #{magasin.id}
+                              </label>
+                              <input
+                                type="text"
+                                value={magasin.name}
+                                onChange={(e) =>
+                                  updateMagasin(index, "name", e.target.value)
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Nom du magasin"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Adresse du magasin
+                              </label>
+                              <input
+                                type="text"
+                                value={magasin.adresse || ""}
+                                onChange={(e) =>
+                                  updateMagasin(
+                                    index,
+                                    "adresse",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Adresse du magasin"
+                              />
+                            </div>
                           </div>
                         </div>
-                        {!isEditing && (
-                          <button
-                            type="button"
-                            onClick={() => removeMagasin(index)}
-                            className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Supprimer le magasin"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        )}
+                      ))
+                    ) : (
+                      <div className="text-center p-4 border border-gray-200 rounded-md">
+                        <p className="text-sm text-gray-500">
+                          Aucun magasin associé à ce projet.
+                        </p>
                       </div>
-                    )
-                  )
-                ) : (
-                  isEditing && (
-                    <div className="text-center p-4 border border-gray-200 rounded-md">
-                      <p className="text-sm text-gray-500">
-                        {isLoadingMagasins
-                          ? "Chargement des magasins..."
-                          : "Aucun magasin associé à ce projet."}
-                      </p>
-                    </div>
-                  )
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -702,11 +748,83 @@ export function AddEditProjectPage() {
               </div>
             </div>
 
+            {/* Section Rôles du Projet */}
+            <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Rôles du Projet
+              </h3>
+
+              <div className="space-y-4">
+                <div>
+                  <SelectWithSearch
+                    label="Chef de projet"
+                    options={
+                      accounts?.data?.map((account) => ({
+                        value: account.id,
+                        label: `${account.prenoms} ${account.nom} (${account.profile.nom})`,
+                      })) || []
+                    }
+                    value={formData.chef_projet || ""}
+                    onChange={(value) => {
+                      const numericValue = value
+                        ? parseInt(value.toString())
+                        : 0;
+                      handleInputChange("chef_projet", numericValue);
+                    }}
+                    placeholder="Sélectionner un chef de projet"
+                    searchable={true}
+                  />
+                </div>
+
+                <div>
+                  <SelectWithSearch
+                    label="Magasinier"
+                    options={
+                      accounts?.data?.map((account) => ({
+                        value: account.id,
+                        label: `${account.prenoms} ${account.nom} (${account.profile.nom})`,
+                      })) || []
+                    }
+                    value={formData.magasinier || ""}
+                    onChange={(value) => {
+                      const numericValue = value
+                        ? parseInt(value.toString())
+                        : 0;
+                      handleInputChange("magasinier", numericValue);
+                    }}
+                    placeholder="Sélectionner un magasinier"
+                    searchable={true}
+                  />
+                </div>
+
+                <div>
+                  <SelectWithSearch
+                    label="Chef de chantier"
+                    options={
+                      accounts?.data?.map((account) => ({
+                        value: account.id,
+                        label: `${account.prenoms} ${account.nom} (${account.profile.nom})`,
+                      })) || []
+                    }
+                    value={formData.chef_chantier || ""}
+                    onChange={(value) => {
+                      const numericValue = value
+                        ? parseInt(value.toString())
+                        : 0;
+                      handleInputChange("chef_chantier", numericValue);
+                    }}
+                    placeholder="Sélectionner un chef de chantier"
+                    searchable={true}
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Section Comptes Associés */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Comptes Associés
+                  Autres comptes associés
                 </h3>
               </div>
 
@@ -717,12 +835,6 @@ export function AddEditProjectPage() {
                   </label>
 
                   <div className="relative">
-                    <button
-                      type="button"
-                      className="flex items-center px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors absolute right-0 top-0 z-20 inset-y-1"
-                    >
-                      Ajouter <Plus className="h-4 w-4 ml-1" />
-                    </button>
                     {/* Champ de sélection avec tags des comptes sélectionnés */}
                     <div className="relative" ref={dropdownRef}>
                       <div
