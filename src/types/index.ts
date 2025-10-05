@@ -10,6 +10,8 @@ export * from "./api-users";
 export * from "./api-stocks";
 export * from "./api-magasins";
 export * from "./api-transformers-magasins";
+export * from "./api-declarations";
+export * from "./api-transformers-declarations";
 
 // Export explicite pour éviter les conflits de noms
 export type {

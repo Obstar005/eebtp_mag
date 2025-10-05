@@ -1,18 +1,77 @@
+import { declarationApiService } from "./declarationApiService";
 import type {
   Declaration,
   CreateDeclarationData,
   UpdateDeclarationData,
   DeclarationFilter,
   DeclarationStats,
-} from "../../types/declaration";
-import type { PaginatedResponse } from "../../types/api";
+  PaginatedResponse,
+} from "../../types";
 
+/**
+ * Service principal pour les déclarations
+ * Utilise soit l'API réelle soit des données mockées selon la configuration
+ */
 class DeclarationService {
   // Récupérer les déclarations d'un magasin
   async getDeclarations(
     magasinId: number,
     filter?: DeclarationFilter
   ): Promise<PaginatedResponse<Declaration>> {
+    if (import.meta.env.VITE_ENABLE_VERIFICATION === "true") {
+      return await declarationApiService.getDeclarations(magasinId, filter);
+    }
+    return mockDeclarationService.getDeclarations(magasinId, filter);
+  }
+
+  // Récupérer une déclaration par ID
+  async getDeclaration(id: number): Promise<Declaration> {
+    if (import.meta.env.VITE_ENABLE_VERIFICATION === "true") {
+      return await declarationApiService.getDeclaration(id);
+    }
+    return mockDeclarationService.getDeclaration(id);
+  }
+
+  // Créer une déclaration
+  async createDeclaration(data: CreateDeclarationData): Promise<Declaration> {
+    if (import.meta.env.VITE_ENABLE_VERIFICATION === "true") {
+      return await declarationApiService.createDeclaration(data);
+    }
+    return mockDeclarationService.createDeclaration(data);
+  }
+
+  // Mettre à jour une déclaration
+  async updateDeclaration(data: UpdateDeclarationData): Promise<Declaration> {
+    if (import.meta.env.VITE_ENABLE_VERIFICATION === "true") {
+      return await declarationApiService.updateDeclaration(data);
+    }
+    return mockDeclarationService.updateDeclaration(data);
+  }
+
+  // Supprimer une déclaration
+  async deleteDeclaration(id: number): Promise<void> {
+    if (import.meta.env.VITE_ENABLE_VERIFICATION === "true") {
+      return await declarationApiService.deleteDeclaration(id);
+    }
+    return mockDeclarationService.deleteDeclaration(id);
+  }
+
+  // Statistiques des déclarations
+  async getDeclarationStats(magasinId: number): Promise<DeclarationStats> {
+    if (import.meta.env.VITE_ENABLE_VERIFICATION === "true") {
+      return await declarationApiService.getDeclarationStats(magasinId);
+    }
+    return mockDeclarationService.getDeclarationStats(magasinId);
+  }
+}
+
+// Service mocké pour le développement
+const mockDeclarationService = {
+  // Récupérer les déclarations d'un magasin
+  getDeclarations: async (
+    magasinId: number,
+    filter?: DeclarationFilter
+  ): Promise<PaginatedResponse<Declaration>> => {
     // Mock data pour les déclarations
     const mockDeclarations: Declaration[] = Array.from(
       { length: 10 },
@@ -95,10 +154,10 @@ class DeclarationService {
         totalPages: 1,
       },
     };
-  }
+  },
 
   // Récupérer une déclaration par ID
-  async getDeclaration(id: number): Promise<Declaration> {
+  getDeclaration: async (id: number): Promise<Declaration> => {
     return {
       id,
       type_enum: "entree",
@@ -130,10 +189,12 @@ class DeclarationService {
         telephone: "+228 90909090",
       },
     };
-  }
+  },
 
   // Créer une déclaration
-  async createDeclaration(data: CreateDeclarationData): Promise<Declaration> {
+  createDeclaration: async (
+    data: CreateDeclarationData
+  ): Promise<Declaration> => {
     console.log("Création déclaration:", data);
     return {
       id: Date.now(),
@@ -152,10 +213,12 @@ class DeclarationService {
       deposant: data.deposant,
       motif: data.motif,
     };
-  }
+  },
 
   // Mettre à jour une déclaration
-  async updateDeclaration(data: UpdateDeclarationData): Promise<Declaration> {
+  updateDeclaration: async (
+    data: UpdateDeclarationData
+  ): Promise<Declaration> => {
     console.log("Mise à jour déclaration:", data);
     return {
       id: data.id,
@@ -175,15 +238,17 @@ class DeclarationService {
       deposant: data.deposant,
       motif: data.motif,
     };
-  }
+  },
 
   // Supprimer une déclaration
-  async deleteDeclaration(id: number): Promise<void> {
+  deleteDeclaration: async (id: number): Promise<void> => {
     console.log("Suppression déclaration:", id);
-  }
+  },
 
   // Statistiques des déclarations
-  async getDeclarationStats(_magasinId: number): Promise<DeclarationStats> {
+  getDeclarationStats: async (
+    _magasinId: number
+  ): Promise<DeclarationStats> => {
     return {
       totalEntrees: 2420,
       totalSorties: 2420,
@@ -194,7 +259,7 @@ class DeclarationService {
         retours: 20,
       },
     };
-  }
-}
+  },
+};
 
 export const declarationService = new DeclarationService();

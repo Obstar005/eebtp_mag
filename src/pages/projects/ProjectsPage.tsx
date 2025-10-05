@@ -7,12 +7,7 @@ import {
   Eye,
   Edit,
   Trash2,
-  MapPin,
-  Calendar,
-  Users,
-  Building2,
   ChevronDown,
-  MoreHorizontal,
 } from "lucide-react";
 import {
   useProjets,
@@ -82,16 +77,6 @@ export function ProjectsPage() {
   };
 
   // Couleurs et labels pour les statuts
-  const getStatusColor = (status: ProjetStatus) => {
-    const colors = {
-      planifie: "bg-blue-100 text-blue-800",
-      en_cours: "bg-green-100 text-green-800",
-      termine: "bg-gray-100 text-gray-800",
-      annule: "bg-red-100 text-red-800",
-    };
-    return colors[status] || "bg-gray-100 text-gray-800";
-  };
-
   const getStatusLabel = (status: ProjetStatus) => {
     const labels = {
       planifie: "Planifié",
@@ -160,7 +145,7 @@ export function ProjectsPage() {
       </div>
 
       {/* Filtres par statut sous forme d'onglets */}
-      <div className="flex items-center justify-between mt-4">
+      <div className="flex lg:items-center lg:justify-between max-lg:flex-col-reverse gap-4 mt-4">
         <div className="flex items-center gap-4">
           <button
             onClick={() => handleFilterChange("status", "")}
@@ -205,7 +190,7 @@ export function ProjectsPage() {
         </div>
 
         {/* Barre de recherche */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
@@ -300,30 +285,33 @@ export function ProjectsPage() {
           </div>
         ) : (
           <>
-            {/* Tableau desktop */}
-            <div className="hidden lg:block">
+            {/* Tableau avec scroll horizontal sur mobile */}
+            <div className="overflow-x-auto">
               <table className="min-w-full">
-                <thead className="bg-gray-100 border-b border-gray-200">
+                <thead className="bg-gray-200 border-b border-gray-200 text-nowrap fill-black">
                   <tr>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
-                      ID du projet
+                    <th className="px-4 sm:px-6 py-3 text-left text-sm text-gray-700 whitespace-nowrap">
+                      ID
                     </th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
+                    <th className="px-4 sm:px-6 py-3 text-left text-sm text-gray-700 whitespace-nowrap min-w-[200px]">
+                      Désignation du projet
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-sm text-gray-700 whitespace-nowrap min-w-[120px]">
                       Magasinier
                     </th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
+                    <th className="px-4 sm:px-6 py-3 text-left text-sm text-gray-700 whitespace-nowrap min-w-[120px]">
                       Chef projet
                     </th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
+                    <th className="px-4 sm:px-6 py-3 text-left text-sm text-gray-700 whitespace-nowrap min-w-[120px]">
                       Chef chantier
                     </th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
+                    <th className="px-4 sm:px-6 py-3 text-left text-sm text-gray-700 whitespace-nowrap min-w-[120px]">
                       Date du début
                     </th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
+                    <th className="px-4 sm:px-6 py-3 text-left text-sm text-gray-700 whitespace-nowrap min-w-[100px]">
                       État
                     </th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">
+                    <th className="px-4 sm:px-6 py-3 text-left text-sm text-gray-700 whitespace-nowrap min-w-[140px]">
                       Action
                     </th>
                   </tr>
@@ -334,24 +322,45 @@ export function ProjectsPage() {
                       key={projet.id}
                       className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
                     >
-                      <td className="px-6 py-3 text-sm font-medium text-gray-900">
-                        #
-                        {projet.name ||
-                          `PRJT${String(projet.id).padStart(3, "0")}`}
+                      <td className="px-4 sm:px-6 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">
+                        #{`PRJT${String(projet.id).padStart(3, "0")}`}
                       </td>
-                      <td className="px-6 py-3 text-sm text-gray-700">
-                        {projet.directeurTravaux?.name || "Non assigné"}
+                      <td className="px-4 sm:px-6 py-3 text-sm font-medium text-gray-900">
+                        <div
+                          className="max-w-[200px] truncate"
+                          title={projet.name}
+                        >
+                          {projet.name}
+                        </div>
                       </td>
-                      <td className="px-6 py-3 text-sm text-gray-700">
-                        {projet.chefProjet?.name || "Non assigné"}
+                      <td className="px-4 sm:px-6 py-3 text-sm text-gray-700 whitespace-nowrap">
+                        <div
+                          className="max-w-[120px] truncate"
+                          title={projet.directeurTravaux?.name || "Non assigné"}
+                        >
+                          {projet.directeurTravaux?.name || "Non assigné"}
+                        </div>
                       </td>
-                      <td className="px-6 py-3 text-sm text-gray-700">
-                        {projet.chefChantier?.name || "Non assigné"}
+                      <td className="px-4 sm:px-6 py-3 text-sm text-gray-700 whitespace-nowrap">
+                        <div
+                          className="max-w-[120px] truncate"
+                          title={projet.chefProjet?.name || "Non assigné"}
+                        >
+                          {projet.chefProjet?.name || "Non assigné"}
+                        </div>
                       </td>
-                      <td className="px-6 py-3 text-sm text-gray-700">
+                      <td className="px-4 sm:px-6 py-3 text-sm text-gray-700 whitespace-nowrap">
+                        <div
+                          className="max-w-[120px] truncate"
+                          title={projet.chefChantier?.name || "Non assigné"}
+                        >
+                          {projet.chefChantier?.name || "Non assigné"}
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 text-sm text-gray-700 whitespace-nowrap">
                         {formatDate(projet.date_debut)}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                         <span
                           className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                             projet.status === "termine"
@@ -377,13 +386,13 @@ export function ProjectsPage() {
                           {getStatusLabel(projet.status)}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() =>
                               navigate(`/projects/${projet.id}/details`)
                             }
-                            className="p-0.5 px-2  text-gray-50 bg-green-600 rounded hover:bg-green-700 transition-colors"
+                            className="p-0.5 px-2 text-gray-50 bg-green-600 rounded hover:bg-green-700 transition-colors"
                             title="Voir le projet"
                           >
                             <Eye className="h-4 w-4" />
@@ -392,14 +401,14 @@ export function ProjectsPage() {
                             onClick={() =>
                               navigate(`/projects/${projet.id}/edit`)
                             }
-                            className="p-0.5 px-2  text-gray-50 bg-yellow-500 rounded hover:bg-yellow-600 transition-colors"
+                            className="p-0.5 px-2 text-gray-50 bg-yellow-500 rounded hover:bg-yellow-600 transition-colors"
                             title="Modifier le projet"
                           >
                             <Edit className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteProjet(projet.id)}
-                            className="p-0.5 px-2  text-gray-50 bg-red-600 rounded hover:bg-red-700 transition-colors"
+                            className="p-0.5 px-2 text-gray-50 bg-red-600 rounded hover:bg-red-700 transition-colors"
                             title="Supprimer le projet"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -410,60 +419,6 @@ export function ProjectsPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
-
-            {/* Cartes mobile */}
-            <div className="lg:hidden">
-              {projets.map((projet) => (
-                <div key={projet.id} className="border-b border-gray-200 p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="text-sm font-medium text-gray-900">
-                        {projet.name}
-                      </h3>
-                      <div className="mt-1 flex items-center">
-                        <MapPin className="h-3 w-3 text-gray-400 mr-1" />
-                        <span className="text-xs text-gray-500">
-                          {projet.pays}
-                        </span>
-                        <span
-                          className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                            projet.status
-                          )}`}
-                        >
-                          {getStatusLabel(projet.status)}
-                        </span>
-                      </div>
-                      <div className="mt-2 text-xs text-gray-500">
-                        <div>
-                          Chef: {projet.chefProjet?.name || "Non assigné"}
-                        </div>
-                        <div className="flex items-center mt-1">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          {formatDate(projet.date_debut)} -{" "}
-                          {formatDate(projet.date_fin)}
-                        </div>
-                        <div className="flex items-center mt-1">
-                          <Users className="h-3 w-3 mr-1" />
-                          {projet.comptesAssociesCount} comptes
-                          <Building2 className="h-3 w-3 ml-3 mr-1" />
-                          {projet.magasinsCount} magasins
-                        </div>
-                      </div>
-                    </div>
-                    <div className="ml-4">
-                      <button
-                        className="p-2 text-gray-400 hover:text-gray-600"
-                        onClick={() => {
-                          /* TODO: Menu actions mobile */
-                        }}
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
             </div>
 
             {/* Pagination */}
