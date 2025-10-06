@@ -7,11 +7,12 @@ export * from "./request";
 export * from "./api";
 export * from "./account";
 export * from "./api-users";
-export * from "./api-stocks";
 export * from "./api-magasins";
 export * from "./api-transformers-magasins";
 export * from "./api-declarations";
 export * from "./api-transformers-declarations";
+export * from "./api-articles";
+export * from "./api-transformers-articles";
 
 // Export explicite pour éviter les conflits de noms
 export type {

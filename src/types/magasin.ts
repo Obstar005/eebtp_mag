@@ -53,6 +53,7 @@ export interface StockArticle {
   quantite_seuil: number; // Quantité seuil
   etat: ArticleEtat;
   type_enum?: ArticleType;
+  unite?: ArticleUnite; // Unité de mesure
   date_creation: Date;
   date_modif: Date;
   user_id: number; // Utilisateur responsable
@@ -80,6 +81,7 @@ export interface CreateStockArticleData {
   quantite_seuil: number;
   etat: ArticleEtat;
   type_enum?: ArticleType;
+  unite?: ArticleUnite;
   magasin_id: number;
   project_id?: number;
   prix_unitaire?: number;
@@ -94,6 +96,7 @@ export interface UpdateStockArticleData {
   quantite_seuil?: number;
   etat?: ArticleEtat;
   type_enum?: ArticleType;
+  unite?: ArticleUnite;
   prix_unitaire?: number;
   magasin_id?: number;
   article_id?: number;
@@ -108,14 +111,27 @@ export const ArticleEtat = {
 
 export type ArticleEtat = (typeof ArticleEtat)[keyof typeof ArticleEtat];
 
+// Types d'articles
 export const ArticleType = {
   MATIERE_PREMIERE: "matiere_premiere",
-  PRODUIT_FINI: "produit_fini",
-  CONSOMMABLE: "consommable",
   EQUIPEMENT: "equipement",
+  CONSOMMABLE: "consommable",
+  PRODUIT_FINI: "produit_fini",
 } as const;
 
 export type ArticleType = (typeof ArticleType)[keyof typeof ArticleType];
+
+// Unités de mesure pour les articles (correspond à l'API)
+export const ArticleUnite = {
+  LITRE: "litre",
+  KG: "kg",
+  M3: "m3",
+  UNITE: "unite",
+  M: "m",
+  AUTRE: "autre",
+} as const;
+
+export type ArticleUnite = (typeof ArticleUnite)[keyof typeof ArticleUnite];
 
 // Interface pour les actions sur les articles (modales)
 export interface ArticleAction {

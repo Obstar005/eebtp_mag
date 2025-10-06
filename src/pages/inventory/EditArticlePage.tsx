@@ -4,12 +4,9 @@ import { ArrowLeft, Upload, X } from "lucide-react";
 import {
   useStockArticle,
   useUpdateStockArticle,
-} from "../../hooks/useMagasins";
-import type {
-  UpdateStockArticleData,
-  ArticleEtat,
-  ArticleType,
-} from "../../types/magasin";
+} from "../../hooks/useArticles";
+import { ArticleEtat, ArticleType, ArticleUnite } from "../../types/magasin";
+import type { UpdateStockArticleData } from "../../types/magasin";
 import { CustomImage } from "../../components/ui/CustomImage";
 
 interface ArticleForm {
@@ -17,6 +14,7 @@ interface ArticleForm {
   description: string;
   etat: ArticleEtat;
   type_enum: ArticleType;
+  unite: ArticleUnite;
   quantite: number;
   quantite_seuil: number;
   prix_unitaire: number;
@@ -27,6 +25,7 @@ interface ArticleFormErrors {
   description?: string;
   etat?: string;
   type_enum?: string;
+  unite?: string;
   quantite?: string;
   quantite_seuil?: string;
   prix_unitaire?: string;
@@ -40,8 +39,9 @@ export default function EditArticlePage() {
   const [form, setForm] = useState<ArticleForm>({
     name: "",
     description: "",
-    etat: "Neuf",
+    etat: "neuf",
     type_enum: "matiere_premiere",
+    unite: "unite",
     quantite: 0,
     quantite_seuil: 0,
     prix_unitaire: 0,
@@ -63,6 +63,7 @@ export default function EditArticlePage() {
         description: article.description || "",
         etat: article.etat,
         type_enum: article.type_enum || "matiere_premiere",
+        unite: article.unite || "unite",
         quantite: article.quantite,
         quantite_seuil: article.quantite_seuil,
         prix_unitaire: article.prix_unitaire || 0,
@@ -96,6 +97,7 @@ export default function EditArticlePage() {
         description: form.description.trim(),
         etat: form.etat,
         type_enum: form.type_enum,
+        unite: form.unite,
         quantite: form.quantite,
         quantite_seuil: form.quantite_seuil,
         prix_unitaire: form.prix_unitaire,
@@ -239,15 +241,18 @@ export default function EditArticlePage() {
                   Unité
                 </label>
                 <select
+                  value={form.unite}
+                  onChange={(e) => handleChange("unite", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  defaultValue="kilogramme"
                   title="Sélectionner l'unité"
                   aria-label="Unité de mesure"
                 >
-                  <option value="kilogramme">Kilogramme</option>
                   <option value="litre">Litre</option>
-                  <option value="piece">Pièce</option>
-                  <option value="metre">Mètre</option>
+                  <option value="kg">Kilogramme</option>
+                  <option value="m3">Mètre cube</option>
+                  <option value="unite">Unité</option>
+                  <option value="m">Mètre</option>
+                  <option value="autre">Autre</option>
                 </select>
               </div>
               {/* État */}
@@ -262,9 +267,9 @@ export default function EditArticlePage() {
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="neuf">Bon</option>
-                  <option value="usagé">Mauvais</option>
-                  <option value="abandonné">Abandonné</option>
+                  <option value="neuf">Neuf</option>
+                  <option value="usagé">Usagé</option>
+                  <option value="endommagé">Endommagé</option>
                 </select>
               </div>
               {/* Quantité et seuil */}

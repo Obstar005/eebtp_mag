@@ -4,6 +4,7 @@ import { Plus, Eye, Edit, Trash2, MoreHorizontal } from "lucide-react";
 import { useMagasins, useDeleteMagasin } from "../../hooks/useMagasins";
 import { useModal } from "../../hooks/useModal";
 import { ConfirmationModal } from "../../components/layout/ConfirmationModal";
+import { EditMagasinModal } from "../../components/magasins/EditMagasinModal";
 import type { MagasinFilter } from "../../types/magasin";
 
 export default function MagasinsPage() {
@@ -12,6 +13,7 @@ export default function MagasinsPage() {
   const [selectedMagasinId, setSelectedMagasinId] = useState<number | null>(
     null
   );
+  const [editMagasinId, setEditMagasinId] = useState<number | null>(null);
 
   const filter: MagasinFilter = {
     // Filter logic can be added here when needed
@@ -21,6 +23,7 @@ export default function MagasinsPage() {
   const { data: magasinsResponse, isLoading } = useMagasins(filter);
   const deleteMagasinMutation = useDeleteMagasin();
   const confirmDeleteModal = useModal();
+  const editMagasinModal = useModal();
 
   const magasins = magasinsResponse?.data || [];
 
@@ -42,7 +45,12 @@ export default function MagasinsPage() {
   };
 
   const handleViewMagasin = (magasinId: number) => {
-    navigate(`/magasins/${magasinId}`);
+    navigate(`/projects/magasins/${magasinId}`);
+  };
+
+  const handleEditMagasin = (magasinId: number) => {
+    setEditMagasinId(magasinId);
+    editMagasinModal.open();
   };
 
   if (isLoading) {
@@ -63,14 +71,6 @@ export default function MagasinsPage() {
       {/* En-tête */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Liste des magasins</h1>
-        <button
-          onClick={() => navigate("/magasins/add")}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          title="Ajouter un magasin"
-        >
-          <Plus className="h-4 w-4" />
-          Ajouter un magasin
-        </button>
       </div>
 
       {/* Section principale */}
@@ -121,9 +121,7 @@ export default function MagasinsPage() {
                           Voir les détails
                         </button>
                         <button
-                          onClick={() =>
-                            navigate(`/magasins/${magasin.id}/edit`)
-                          }
+                          onClick={() => handleEditMagasin(magasin.id)}
                           className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                         >
                           <Edit className="h-4 w-4" />
@@ -182,7 +180,7 @@ export default function MagasinsPage() {
                       Voir détails
                     </button>
                     <button
-                      onClick={() => navigate(`/magasins/${magasin.id}/edit`)}
+                      onClick={() => handleEditMagasin(magasin.id)}
                       className="px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                     >
                       Modifier
@@ -207,6 +205,18 @@ export default function MagasinsPage() {
         cancelText="Annuler"
         loading={deleteMagasinMutation.isPending}
       />
+
+      {/* Modal d'édition de magasin */}
+      {editMagasinId && (
+        <EditMagasinModal
+          isOpen={editMagasinModal.isOpen}
+          onClose={() => {
+            editMagasinModal.close();
+            setEditMagasinId(null);
+          }}
+          magasinId={editMagasinId}
+        />
+      )}
     </div>
   );
 }

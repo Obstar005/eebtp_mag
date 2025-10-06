@@ -4,7 +4,7 @@ import { ArrowLeft, Save, Upload, X } from "lucide-react";
 import {
   useStockArticle,
   useUpdateStockArticle,
-} from "../../hooks/useMagasins";
+} from "../../hooks/useArticles";
 import type {
   UpdateStockArticleData,
   ArticleEtat,
@@ -40,7 +40,7 @@ export default function ArticleDetailsPage() {
   const [form, setForm] = useState<ArticleForm>({
     name: "",
     description: "",
-    etat: "Neuf",
+    etat: "neuf",
     type_enum: "matiere_premiere",
     quantite: 0,
     quantite_seuil: 0,

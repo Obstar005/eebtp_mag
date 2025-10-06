@@ -4,7 +4,7 @@ import { Plus, Search, Eye, Edit, Trash2, Filter } from "lucide-react";
 import {
   useStockArticles,
   useDeleteStockArticle,
-} from "../../hooks/useMagasins";
+} from "../../hooks/useArticles";
 import { useModal } from "../../hooks/useModal";
 import { ConfirmationModal } from "../../components/layout/ConfirmationModal";
 import type {
@@ -174,9 +174,9 @@ export function ArticlesPage() {
                 title="Filtrer par état"
               >
                 <option value="">État</option>
-                <option value="Neuf">Bon</option>
-                <option value="Usagé">Mauvais</option>
-                <option value="Abandonné">Abandonné</option>
+                <option value="neuf">Neuf</option>
+                <option value="usagé">Usagé</option>
+                <option value="endommagé">Endommagé</option>
               </select>
 
               {/* Filtre par type */}
