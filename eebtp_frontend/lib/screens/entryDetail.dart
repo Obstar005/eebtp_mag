@@ -3,151 +3,129 @@ import 'package:eebtp_frontend/models/entry_item.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
-
 import '../widgets/nav.dart';
 
 class EntryDetailPage extends StatelessWidget {
-  final EntryItem entry;
+  final Entree entry;
 
   const EntryDetailPage({super.key, required this.entry});
 
   @override
   Widget build(BuildContext context) {
     return NavContainer(
-      body: _EntryDetailContent(entry: entry), 
+      body: _EntryDetailContent(entry: entry),
       initialIndex: 1,
     );
   }
 }
 
 class _EntryDetailContent extends StatelessWidget {
-  final EntryItem entry;
-
+  final Entree entry;
   const _EntryDetailContent({required this.entry});
 
   @override
   Widget build(BuildContext context) {
-    final product = entry.product;
-    final deliveryPerson = entry.deliveryPerson;
+    // Affichage intelligent selon le type
+    final isRetour = entry.type == "retour";
+    final String pageTitle = isRetour ? "Détail retour" : "Détail entrée";
+    final String cardLabel = isRetour ? "Déposant" : "Livreur";
+    final String dateLabel = isRetour ? "Retour le" : "Entrée le";
 
     return Column(
       children: [
-        _buildHeader(context, "Détails entrée"),
+        _buildHeader(context, pageTitle),
         Expanded(
           child: Container(
             color: Colors.white,
             child: SingleChildScrollView(
-              padding: EdgeInsets.all(5.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildProductImage(),
-
-                  SizedBox(height: 3.h),
-
-                  // Nom produit en UPPERCASE
-                  Text(
-                    product.name.toUpperCase(),
-                    style: GoogleFonts.montserrat(
-                      fontSize: 22.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                      letterSpacing: 0.5,
+                padding: EdgeInsets.all(5.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildProductImage(),
+                    SizedBox(height: 3.h),
+                    // Désignation stock
+                    Text(
+                      (entry.stockItemName ?? "-").toUpperCase(),
+                      style: GoogleFonts.montserrat(
+                        fontSize: 22.sp,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                        letterSpacing: 0.5,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 1.h),
-                  Text(
-                    product.code,
-                    style: GoogleFonts.montserrat(
-                      fontSize: 15.sp,
-                      color: Colors.grey[500],
-                      fontWeight: FontWeight.w500,
+                    SizedBox(height: 1.h),
+                    Text(
+                      "StockID: ${entry.stockItem}",
+                      style: GoogleFonts.montserrat(
+                        fontSize: 15.sp,
+                        color: Colors.grey[500],
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-
-                  SizedBox(height: 3.h),
-
-                  // Infos principales - layout horizontal avec icône + titre, valeur en bas
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildInfoCard(
-                          icon: Icons.grid_view,
-                          title: "Catégorie",
-                          value: product.category,
+                    SizedBox(height: 3.h),
+                    // Informations principales
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildInfoCard(
+                            icon: Icons.grid_view,
+                            title: "Type",
+                            value: entry.stockItemType ?? "-",
+                          ),
+                        ),
+                        SizedBox(width: 3.w),
+                        Expanded(
+                          child: _buildInfoCard(
+                              icon: Icons.calendar_today_outlined,
+                              title: dateLabel,
+                              value: _formatDate(entry.dateCreation)),
+                        ),
+                        SizedBox(width: 3.w),
+                        Expanded(
+                          child: _buildInfoCard(
+                              icon: Icons.shopping_cart_outlined,
+                              title: "Qté entrée",
+                              value: "${entry.quantiteM}"),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 3.h),
+                    // Card Livreur ou déposant
+                    _buildPersonCard(
+                      label: cardLabel,
+                      name: entry.nomDeposant ?? "-",
+                      role: entry.fonctionDeposant ?? "-",
+                      phone: entry.telDeposant ?? "-",
+                    ),
+                    if (entry.societe?.isNotEmpty == true) ...[
+                      SizedBox(height: 2.h),
+                      _buildSupplierCard(entry.societe!, entry.telSociete ?? "-"),
+                    ],
+            /*         SizedBox(height: 3.h),
+                    // Description
+                    if (entry.remarques != null && entry.remarques!.isNotEmpty) ...[
+                      Text(
+                        "Remarques",
+                        style: GoogleFonts.montserrat(
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
                         ),
                       ),
-                      SizedBox(width: 3.w),
-                      Expanded(
-                        child: _buildInfoCard(
-                          icon: Icons.calendar_today_outlined,
-                          title: "Ajouté le",
-                          value: _formatDate(entry.date),
-                        ),
-                      ),
-                      SizedBox(width: 3.w),
-                      Expanded(
-                        child: _buildInfoCard(
-                          icon: Icons.shopping_cart_outlined,
-                          title: "Qté ajoutée",
-                          value: "${entry.quantity} t",
+                      SizedBox(height: 1.5.h),
+                      Text(
+                        entry.remarques!,
+                        style: GoogleFonts.montserrat(
+                          fontSize: 14.sp,
+                          color: Colors.grey[600],
+                          height: 1.5,
                         ),
                       ),
                     ],
-                  ),
-
-                  SizedBox(height: 3.h),
-
-                  // Livreur
-                  _buildPersonCard(
-                    personName: deliveryPerson.name,
-                    role: deliveryPerson.role,
-                    phone: deliveryPerson.phone,
-                    signature: deliveryPerson.signature,
-                  ),
-
-                  SizedBox(height: 3.h),
-
-                  // Description
-                  Text(
-                    "Description",
-                    style: GoogleFonts.montserrat(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                    ),
-                  ),
-                  SizedBox(height: 1.5.h),
-                  Text(
-                    "Meet Whiskers, the embodiment of joy and cuddles! With his mesmerizing green eyes and soft fur, this playful 3-",
-                    style: GoogleFonts.montserrat(
-                      fontSize: 14.sp,
-                      color: Colors.grey[600],
-                      height: 1.5,
-                    ),
-                  ),
-
-                  SizedBox(height: 3.h),
-
-                  // Fournisseur
-                  Text(
-                    "Fournisseur",
-                    style: GoogleFonts.montserrat(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                    ),
-                  ),
-                  SizedBox(height: 1.5.h),
-                  _buildSupplierCard(
-                    supplier: entry.supplier,
-                    phone: entry.supplierPhone,
-                  ),
-
-                  SizedBox(height: 10.h),
-                ],
-              ),
-            ),
+                    */ SizedBox(height: 10.h),
+                  ],
+                )),
           ),
         ),
       ],
@@ -189,48 +167,7 @@ class _EntryDetailContent extends StatelessWidget {
                   color: Colors.white,
                 ),
               ),
-              Stack(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pushNamed(context, '/notifications'),
-                    child: Container(
-                      padding: EdgeInsets.all(3.w),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.notifications_outlined,
-                        size: 6.w,
-                        color: const Color(0xFF0A84FF),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 1.5.w, vertical: 0.3.h),
-                      constraints: BoxConstraints(minWidth: 5.w, minHeight: 2.h),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFF3B30),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          "3",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Montserrat',
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              Container(width: 10.w),
             ],
           ),
         ),
@@ -268,14 +205,9 @@ class _EntryDetailContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Icône et titre en Row
           Row(
             children: [
-              Icon(
-                icon,
-                color: Colors.grey[600],
-                size: 5.w,
-              ),
+              Icon(icon, color: Colors.grey[600], size: 5.w),
               SizedBox(width: 2.w),
               Expanded(
                 child: Text(
@@ -289,7 +221,6 @@ class _EntryDetailContent extends StatelessWidget {
             ],
           ),
           SizedBox(height: 1.h),
-          // Valeur en bas
           Text(
             value,
             style: GoogleFonts.montserrat(
@@ -304,12 +235,13 @@ class _EntryDetailContent extends StatelessWidget {
   }
 
   Widget _buildPersonCard({
-    required String personName,
+    required String label,
+    required String name,
     required String role,
     required String phone,
-    String? signature,
   }) {
     return Container(
+      width: double.infinity,
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
         color: const Color(0xFFF5F5F5),
@@ -317,18 +249,15 @@ class _EntryDetailContent extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Avatar avec image
           Container(
             width: 16.w,
             height: 16.w,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.grey[300],
-              image: const DecorationImage(
-                image: NetworkImage('https://via.placeholder.com/150'),
-                fit: BoxFit.cover,
-              ),
+              // option image: DecorationImage(...)
             ),
+            child: Icon(Icons.person, size: 10.w, color: Colors.white),
           ),
           SizedBox(width: 4.w),
           Expanded(
@@ -336,7 +265,7 @@ class _EntryDetailContent extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  personName,
+                  name,
                   style: GoogleFonts.montserrat(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w700,
@@ -354,25 +283,6 @@ class _EntryDetailContent extends StatelessWidget {
               ],
             ),
           ),
-          // Signature button
-          if (signature != null)
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE3F2FD),
-                borderRadius: BorderRadius.circular(2.w),
-              ),
-              child: Text(
-                "Signature",
-                style: GoogleFonts.montserrat(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF0A84FF),
-                ),
-              ),
-            ),
-          SizedBox(width: 3.w),
-          // Téléphone
           Container(
             padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
             decoration: BoxDecoration(
@@ -393,7 +303,7 @@ class _EntryDetailContent extends StatelessWidget {
     );
   }
 
-  Widget _buildSupplierCard({required String supplier, required String phone}) {
+  Widget _buildSupplierCard(String supplier, String phone) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
@@ -425,8 +335,15 @@ class _EntryDetailContent extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) =>
-      "${date.day.toString().padLeft(2, '0')}/"
-      "${date.month.toString().padLeft(2, '0')}/"
-      "${date.year}";
+  String _formatDate(String? dateIso) {
+    if (dateIso == null || dateIso.isEmpty) return "-";
+    try {
+      final date = DateTime.parse(dateIso);
+      return "${date.day.toString().padLeft(2, '0')}/"
+          "${date.month.toString().padLeft(2, '0')}/"
+          "${date.year}";
+    } catch (e) {
+      return dateIso.split('T').first;
+    }
+  }
 }

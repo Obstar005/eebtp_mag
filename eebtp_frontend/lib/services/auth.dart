@@ -97,7 +97,7 @@ class UserService {
     return response.statusCode == 200;
   }
 
-  // 👥 Gestion des utilisateurs
+// 👥 Gestion des utilisateurs
   Future<List<Utilisateur>> getAllUsers() async {
     final response = await http.get(
       Uri.parse('$baseUrl/Users/liste-users/'),

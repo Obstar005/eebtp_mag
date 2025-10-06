@@ -1,42 +1,88 @@
-import 'package:eebtp_frontend/models/product.dart';
-import 'package:eebtp_frontend/models/person.dart';
+class Entree {
+  final int id;
+  final int magasin;
+  final int stockItem;
+  final int? source;
+  final String? stockItemName;
+  final String? stockItemType;
+  final String type;
+  final String quantiteM;
+  final String nomDeposant;
+  final String telDeposant;
+  final String fonctionDeposant;
+  final String? dateCreation;
+  final String? dateModif;
+  final String societe;
+  final String telSociete;
+  final String nomLivreur;
+  final String telLivreur;
+  final String? signatureLivreur;
+  final bool isActive;
+  final int? makeBy;
 
-class EntryItem {
-  final Product product;
-  final DateTime date;
-  final int quantity;
-  final Person deliveryPerson;
-  final String supplier;
-  final String supplierPhone;
-
-  EntryItem({
-    required this.product,
-    required this.date,
-    required this.quantity,
-    required this.deliveryPerson,
-    required this.supplier,
-    required this.supplierPhone,
+  Entree({
+    required this.id,
+    required this.magasin,
+    required this.stockItem,
+    this.source,
+    this.stockItemName,
+    this.stockItemType,
+    required this.type,
+    required this.quantiteM,
+    required this.nomDeposant,
+    required this.telDeposant,
+    required this.fonctionDeposant,
+    this.dateCreation,
+    this.dateModif,
+    required this.societe,
+    required this.telSociete,
+    required this.nomLivreur,
+    required this.telLivreur,
+    this.signatureLivreur,
+    required this.isActive,
+    this.makeBy,
   });
 
-  factory EntryItem.fromJson(Map<String, dynamic> json) {
-    return EntryItem(
-      product: Product.fromJson(json['product']),
-      date: DateTime.parse(json['date']),
-      quantity: json['quantity'],
-      deliveryPerson: Person.fromJson(json['deliveryPerson']),
-      supplier: json['supplier'],
-      supplierPhone: json['supplierPhone'],
+  factory Entree.fromJson(Map<String, dynamic> json) {
+    return Entree(
+      id: json['id'],
+      magasin: json['magasin'],
+      stockItem: json['stock_item'],
+      source: json['source'],
+      stockItemName: json['stock_item_name'],
+      stockItemType: json['stock_item_type'],
+      type: json['type'],
+      quantiteM: json['quantite_m'],
+      nomDeposant: json['nom_deposant'],
+      telDeposant: json['tel_deposant'],
+      fonctionDeposant: json['fonction_deposant'],
+      dateCreation: json['date_creation'],
+      dateModif: json['date_modif'],
+      societe: json['societe'],
+      telSociete: json['tel_societe'],
+      nomLivreur: json['nom_livreur'],
+      telLivreur: json['tel_livreur'],
+      signatureLivreur: json['signature_livreur'],
+      isActive: json['is_active'],
+      makeBy: json['make_by'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'product': product.toJson(),
-      'date': date.toIso8601String(),
-      'quantity': quantity,
-      'deliveryPerson': deliveryPerson.toJson(),
-      'supplier': supplier,
-      'supplierPhone': supplierPhone,
+      'magasin': magasin,
+      'stock_item': stockItem,
+      'source': source,
+      'type': type,
+      'quantite_m': quantiteM,
+      'nom_deposant': nomDeposant,
+      'tel_deposant': telDeposant,
+      'fonction_deposant': fonctionDeposant,
+      'societe': societe,
+      'tel_societe': telSociete,
+      'nom_livreur': nomLivreur,
+      'tel_livreur': telLivreur,
+      'is_active': isActive,
     };
   }
 }

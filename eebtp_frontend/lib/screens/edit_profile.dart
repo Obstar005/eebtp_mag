@@ -9,6 +9,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:sizer/sizer.dart';
+import 'package:provider/provider.dart';
+import 'package:eebtp_frontend/providers/auth_provider.dart';
 
 /// ----------------- Helpers pour indicatifs / ISO -----------------
 const Map<String, String> _prefixToIso = {
@@ -40,9 +42,8 @@ String _stripCountryCode(String phone) {
 /// ----------------- Page -----------------
 class EditProfilePage extends StatefulWidget {
   final Utilisateur user;
-  final String token;
-
-  const EditProfilePage({super.key, required this.user, required this.token});
+  // ✅ Plus besoin du paramètre token
+  const EditProfilePage({super.key, required this.user});
 
   @override
   _EditProfilePageState createState() => _EditProfilePageState();
@@ -147,6 +148,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final userService = UserService();
     final formattedPhone = _formatPhoneForBackend();
 
+    // ✅ Récupération du token via Provider
+    final token = context.read<AuthProvider>().token;
+
+    if (token == null) {
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Erreur: Token non disponible"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     // Validation du numéro de téléphone
     if (formattedPhone.length < 10) {
       setState(() => _loading = false);
@@ -164,17 +179,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
     // Upload de la photo si sélectionnée
     if (_pickedImage != null) {
       final uploadSuccess = await userService.updateProfilePicture(
-        widget.token,
+        token,
         _pickedImage!.path,
       );
 
       if (uploadSuccess) {
         try {
-          final refreshed = await userService.getUserInfo(widget.token);
+          final refreshed = await userService.getUserInfo(token);
           finalPhotoUrl = refreshed.photoProfil;
           setState(() {
             _serverPhotoUrl = finalPhotoUrl;
           });
+          // ✅ Mettre à jour l'utilisateur dans Provider
+          context.read<AuthProvider>().setUser(refreshed);
         } catch (_) {
           // Continuer même si le rechargement échoue
         }
@@ -204,6 +221,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
     setState(() => _loading = false);
 
     if (success) {
+      // ✅ Mettre à jour l'utilisateur dans Provider après succès
+      context.read<AuthProvider>().setUser(updatedUser);
       _showSuccessDialog();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -458,16 +477,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           : null,
                     ),
                   ),
-                  // Partie blanche en bas
-                  /*     Positioned(
-                    bottom: 0,
-                    child: Container(
-                      height: 60.h, 
-                      width: 100.w, 
-                      color: const Color(0xFFF8F9FA),
-                    ),
-                  ),
-                */
                 ],
               ),
             ),

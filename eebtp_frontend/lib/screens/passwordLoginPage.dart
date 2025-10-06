@@ -227,11 +227,13 @@ class _PasswordLoginPageState extends State<PasswordLoginPage> {
 
                     // Redirection vers la page de profil
                     Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/profile',
-                      (route) => false, // Supprime tout l'historique
-                      arguments: token,
-                    );
+  context,
+  '/store_selection',
+                        (route) => false, // Supprime tout l'historique
+
+  arguments: token,
+);
+                
                   } else {
                     setState(() {
                       _errorMessage =

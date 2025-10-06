@@ -15,12 +15,16 @@ class Utilisateur {
   final bool isActive;
   final bool isStaff;
   final bool isSuperuser;
+  final DateTime? lastLogin;
   final DateTime dateJoined;
   final DateTime dateCreation;
   final DateTime dateModif;
+  final bool firstLogin;
   final int? idProfil;
+  final List<int> projets;
   final List<int> groups;
   final List<int> userPermissions;
+  final String? password; // Attention, à ne jamais exposer côté client si api safe
 
   Utilisateur({
     required this.id,
@@ -39,38 +43,46 @@ class Utilisateur {
     required this.isActive,
     required this.isStaff,
     required this.isSuperuser,
+    this.lastLogin,
     required this.dateJoined,
     required this.dateCreation,
     required this.dateModif,
+    required this.firstLogin,
     this.idProfil,
+   required this.projets,
     required this.groups,
     required this.userPermissions,
+    this.password,
   });
 
-factory Utilisateur.fromJson(Map<String, dynamic> json) => Utilisateur(
-  id: json['id'],
-  username: json['username'] ?? '',
-  firstName: json['first_name'] ?? '',
-  lastName: json['last_name'] ?? '',
-  email: json['email'] ?? '',
-  telephone: json['telephone'] ?? '',
-  nationality: json['nationality'] ?? '',
-  surname: json['surname'] ?? '',
-  birthDate: json['birth_date'], // peut rester null
-  type: json['type'] ?? '',
-  titre: json['titre'] ?? '',
-  poste: json['poste'] ?? '',
-  photoProfil: json['photo_profil'], // null ou URL
-  isActive: json['is_active'] ?? false,
-  isStaff: json['is_staff'] ?? false,
-  isSuperuser: json['is_superuser'] ?? false,
-  dateJoined: DateTime.parse(json['date_joined']),
-  dateCreation: DateTime.parse(json['date_creation']),
-  dateModif: DateTime.parse(json['date_modif']),
-  idProfil: json['id_profil'],
-  groups: json['groups'] != null ? List<int>.from(json['groups']) : [],
-  userPermissions: json['user_permissions'] != null ? List<int>.from(json['user_permissions']) : [],
-);
+  factory Utilisateur.fromJson(Map<String, dynamic> json) => Utilisateur(
+    id: json['id'],
+    username: json['username'] ?? '',
+    firstName: json['first_name'] ?? '',
+    lastName: json['last_name'] ?? '',
+    email: json['email'] ?? '',
+    telephone: json['telephone'] ?? '',
+    nationality: json['nationality'] ?? '',
+    surname: json['surname'] ?? '',
+    birthDate: json['birth_date'],
+    type: json['type'] ?? '',
+    titre: json['titre'] ?? '',
+    poste: json['poste'] ?? '',
+    photoProfil: json['photo_profil'],
+    isActive: json['is_active'] ?? false,
+    isStaff: json['is_staff'] ?? false,
+    isSuperuser: json['is_superuser'] ?? false,
+    lastLogin: json['last_login'] != null ? DateTime.tryParse(json['last_login']) : null,
+    dateJoined: DateTime.parse(json['date_joined']),
+    dateCreation: DateTime.parse(json['date_creation']),
+    dateModif: DateTime.parse(json['date_modif']),
+    firstLogin: json['first_login'] ?? false,
+    idProfil: json['id_profil'],
+    projets: (json['projets'] as List<dynamic>).map((e) => int.parse(e.toString())).toList(),
+    groups: json['groups'] != null ? List<int>.from(json['groups']) : [],
+    userPermissions: json['user_permissions'] != null ? List<int>.from(json['user_permissions']) : [],
+    password: json['password'], // attention ici, généralement non envoyé côté client
+  );
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -89,13 +101,18 @@ factory Utilisateur.fromJson(Map<String, dynamic> json) => Utilisateur(
     'is_active': isActive,
     'is_staff': isStaff,
     'is_superuser': isSuperuser,
+    'last_login': lastLogin?.toIso8601String(),
     'date_joined': dateJoined.toIso8601String(),
     'date_creation': dateCreation.toIso8601String(),
     'date_modif': dateModif.toIso8601String(),
+    'first_login': firstLogin,
     'id_profil': idProfil,
+    'projets': projets,
     'groups': groups,
     'user_permissions': userPermissions,
+    'password': password,
   };
+
   Utilisateur copyWith({
     int? id,
     String? username,
@@ -113,12 +130,17 @@ factory Utilisateur.fromJson(Map<String, dynamic> json) => Utilisateur(
     bool? isActive,
     bool? isStaff,
     bool? isSuperuser,
+    DateTime? lastLogin,
     DateTime? dateJoined,
     DateTime? dateCreation,
     DateTime? dateModif,
+    bool? firstLogin,
     int? idProfil,
+    String? magasin,
+    List<int>? projets,
     List<int>? groups,
     List<int>? userPermissions,
+    String? password,
   }) {
     return Utilisateur(
       id: id ?? this.id,
@@ -137,12 +159,16 @@ factory Utilisateur.fromJson(Map<String, dynamic> json) => Utilisateur(
       isActive: isActive ?? this.isActive,
       isStaff: isStaff ?? this.isStaff,
       isSuperuser: isSuperuser ?? this.isSuperuser,
+      lastLogin: lastLogin ?? this.lastLogin,
       dateJoined: dateJoined ?? this.dateJoined,
       dateCreation: dateCreation ?? this.dateCreation,
       dateModif: dateModif ?? this.dateModif,
+      firstLogin: firstLogin ?? this.firstLogin,
       idProfil: idProfil ?? this.idProfil,
+      projets: projets ?? this.projets,
       groups: groups ?? this.groups,
       userPermissions: userPermissions ?? this.userPermissions,
+      password: password ?? this.password,
     );
   }
 }

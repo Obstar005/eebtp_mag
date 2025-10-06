@@ -1,38 +1,65 @@
-import 'package:eebtp_frontend/models/product.dart';
-import 'package:eebtp_frontend/models/person.dart';
+class Sortie {
+  final int id;
+  final int magasin;
+  final int stockItem;
+  final String? stockItemName;
+  final String? stockItemType;
+  final String quantiteM;
+  final String? dateCreation;
+  final String? dateModif;
+  final String objet;
+  final String nomReceveur;
+  final String telReceveur;
+  final String fonctionReceveur;
+  final bool isActive;
+  final int? makeBy;
 
-class ExitItem {
-  final Product product;
-  final DateTime date;
-  final int quantity;
-  final Person receiver;
-  final String reason;
-
-  ExitItem({
-    required this.product,
-    required this.date,
-    required this.quantity,
-    required this.receiver,
-    required this.reason,
+  Sortie({
+    required this.id,
+    required this.magasin,
+    required this.stockItem,
+    this.stockItemName,
+    this.stockItemType,
+    required this.quantiteM,
+    this.dateCreation,
+    this.dateModif,
+    required this.objet,
+    required this.nomReceveur,
+    required this.telReceveur,
+    required this.fonctionReceveur,
+    required this.isActive,
+    this.makeBy,
   });
 
-  factory ExitItem.fromJson(Map<String, dynamic> json) {
-    return ExitItem(
-      product: Product.fromJson(json['product']),
-      date: DateTime.parse(json['date']),
-      quantity: json['quantity'],
-      receiver: Person.fromJson(json['receiver']),
-      reason: json['reason'],
+  factory Sortie.fromJson(Map<String, dynamic> json) {
+    return Sortie(
+      id: json['id'],
+      magasin: json['magasin'],
+      stockItem: json['stock_item'],
+      stockItemName: json['stock_item_name'],
+      stockItemType: json['stock_item_type'],
+      quantiteM: json['quantite_m'],
+      dateCreation: json['date_creation'],
+      dateModif: json['date_modif'],
+      objet: json['objet'],
+      nomReceveur: json['nom_receveur'],
+      telReceveur: json['tel_receveur'],
+      fonctionReceveur: json['fonction_receveur'],
+      isActive: json['is_active'],
+      makeBy: json['make_by'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'product': product.toJson(),
-      'date': date.toIso8601String(),
-      'quantity': quantity,
-      'receiver': receiver.toJson(),
-      'reason': reason,
+      'magasin': magasin,
+      'stock_item': stockItem,
+      'quantite_m': quantiteM,
+      'objet': objet,
+      'nom_receveur': nomReceveur,
+      'tel_receveur': telReceveur,
+      'fonction_receveur': fonctionReceveur,
+      'is_active': isActive,
     };
   }
 }

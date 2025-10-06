@@ -1,36 +1,98 @@
 import 'dart:ui';
 import 'package:eebtp_frontend/models/exit_item.dart';
+import 'package:eebtp_frontend/models/article.dart';
+import 'package:eebtp_frontend/services/stockservice.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart'; // Pour le token
 import 'package:sizer/sizer.dart';
-
 import '../widgets/nav.dart';
+import '../providers/auth_provider.dart'; // Pour accéder au token
 
-class ExitDetailPage extends StatelessWidget {
-  final ExitItem exit;
+class ExitDetailPage extends StatefulWidget {
+  final Sortie sortie;
+  const ExitDetailPage({super.key, required this.sortie});
 
-  const ExitDetailPage({super.key, required this.exit});
+  @override
+  State<ExitDetailPage> createState() => _ExitDetailPageState();
+}
+
+class _ExitDetailPageState extends State<ExitDetailPage> {
+  ArticleStock? article;
+  bool isLoading = true;
+  bool isError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadArticle();
+  }
+
+  Future<void> _loadArticle() async {
+    setState(() {
+      isLoading = true;
+      isError = false;
+    });
+
+    try {
+      // On récupère le token depuis le Provider
+      final token = context.read<AuthProvider>().token;
+      final fetched =
+          await StockService(token: token).getArticleDetail(widget.sortie.stockItem);
+      setState(() {
+        article = fetched;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isError = true;
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return NavContainer(
-      body: _ExitDetailContent(exit: exit), 
       initialIndex: 1,
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : isError
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.warning_amber_rounded,
+                          color: Colors.red, size: 40),
+                      SizedBox(height: 2.h),
+                      Text('Erreur lors du chargement de l\'article.',
+                          style: GoogleFonts.montserrat(
+                              fontSize: 16, color: Colors.red)),
+                      SizedBox(height: 2.h),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue),
+                        onPressed: _loadArticle,
+                        child: Text('Réessayer'),
+                      ),
+                    ],
+                  ),
+                )
+              : _ExitDetailContent(sortie: widget.sortie, article: article),
     );
   }
 }
 
 class _ExitDetailContent extends StatelessWidget {
-  final ExitItem exit;
-
-  const _ExitDetailContent({required this.exit});
+  final Sortie sortie;
+  final ArticleStock? article;
+  const _ExitDetailContent({required this.sortie, required this.article});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         _buildHeader(context),
-
         Expanded(
           child: Container(
             color: Colors.white,
@@ -39,14 +101,11 @@ class _ExitDetailContent extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Image du produit
                   _buildProductImage(),
-
                   SizedBox(height: 3.h),
-
-                  // Nom du produit en UPPERCASE
+                  // INFO produit/article
                   Text(
-                    exit.product.name.toUpperCase(),
+                    (article?.designation ?? "Produit lié ID #${sortie.stockItem}").toUpperCase(),
                     style: GoogleFonts.montserrat(
                       fontSize: 22.sp,
                       fontWeight: FontWeight.w700,
@@ -56,24 +115,30 @@ class _ExitDetailContent extends StatelessWidget {
                   ),
                   SizedBox(height: 1.h),
                   Text(
-                    exit.product.code,
+                    article != null ? "Article ID : ${article!.id}" : "",
                     style: GoogleFonts.montserrat(
                       fontSize: 15.sp,
                       color: Colors.grey[500],
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-
+                  Text(
+                    "StockID: ${sortie.stockItem}",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 13.sp,
+                      color: Colors.blue[300],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   SizedBox(height: 3.h),
-
-                  // Informations détaillées
+                  // GRID informations
                   Row(
                     children: [
                       Expanded(
                         child: _buildInfoCard(
                           icon: Icons.grid_view,
-                          title: "Catégorie",
-                          value: exit.product.category,
+                          title: "Type",
+                          value: article?.type ?? "-",
                         ),
                       ),
                       SizedBox(width: 3.w),
@@ -81,7 +146,7 @@ class _ExitDetailContent extends StatelessWidget {
                         child: _buildInfoCard(
                           icon: Icons.calendar_today_outlined,
                           title: "Sortie le",
-                          value: _formatDate(exit.date),
+                          value: _formatDate(sortie.dateCreation),
                         ),
                       ),
                       SizedBox(width: 3.w),
@@ -89,22 +154,16 @@ class _ExitDetailContent extends StatelessWidget {
                         child: _buildInfoCard(
                           icon: Icons.shopping_cart_outlined,
                           title: "Qté sortie",
-                          value: "${exit.quantity} t",
+                          value: "${sortie.quantiteM} ${article?.unite ?? ''}",
                         ),
                       ),
                     ],
                   ),
-
                   SizedBox(height: 3.h),
-
-                  // Informations du receveur
                   _buildReceiverCard(),
-
                   SizedBox(height: 3.h),
-
-                  // Motif du sortie
                   Text(
-                    "Motif du sortie",
+                    "Objet de la sortie",
                     style: GoogleFonts.montserrat(
                       fontSize: 20.sp,
                       fontWeight: FontWeight.w700,
@@ -113,14 +172,13 @@ class _ExitDetailContent extends StatelessWidget {
                   ),
                   SizedBox(height: 1.5.h),
                   Text(
-                    exit.reason,
+                    sortie.objet ?? "-",
                     style: GoogleFonts.montserrat(
                       fontSize: 14.sp,
                       color: Colors.grey[600],
                       height: 1.5,
                     ),
                   ),
-
                   SizedBox(height: 10.h),
                 ],
               ),
@@ -151,63 +209,19 @@ class _ExitDetailContent extends StatelessWidget {
                     color: Colors.white,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.arrow_back_ios_new,
-                    size: 5.w,
-                    color: const Color(0xFF0A84FF),
-                  ),
+                  child: Icon(Icons.arrow_back_ios_new,
+                      size: 5.w, color: Color(0xFF0A84FF)),
                 ),
               ),
               Text(
-                "Détails sortie",
+                "Détail sortie",
                 style: GoogleFonts.montserrat(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
                 ),
               ),
-              Stack(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pushNamed(context, '/notifications'),
-                    child: Container(
-                      padding: EdgeInsets.all(3.w),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.notifications_outlined,
-                        size: 6.w,
-                        color: const Color(0xFF0A84FF),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 1.5.w, vertical: 0.3.h),
-                      constraints: BoxConstraints(minWidth: 5.w, minHeight: 2.h),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFF3B30),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          "3",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Montserrat',
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              Container(width: 10.w),
             ],
           ),
         ),
@@ -231,11 +245,7 @@ class _ExitDetailContent extends StatelessWidget {
         ),
       );
 
-  Widget _buildInfoCard({
-    required IconData icon,
-    required String title,
-    required String value,
-  }) {
+  Widget _buildInfoCard({required IconData icon, required String title, required String value}) {
     return Container(
       padding: EdgeInsets.all(3.5.w),
       decoration: BoxDecoration(
@@ -245,14 +255,9 @@ class _ExitDetailContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Icône et titre en Row
           Row(
             children: [
-              Icon(
-                icon,
-                color: Colors.grey[600],
-                size: 5.w,
-              ),
+              Icon(icon, color: Colors.grey[600], size: 5.w),
               SizedBox(width: 2.w),
               Expanded(
                 child: Text(
@@ -266,7 +271,6 @@ class _ExitDetailContent extends StatelessWidget {
             ],
           ),
           SizedBox(height: 1.h),
-          // Valeur en bas
           Text(
             value,
             style: GoogleFonts.montserrat(
@@ -290,18 +294,14 @@ class _ExitDetailContent extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Avatar avec image
           Container(
             width: 16.w,
             height: 16.w,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.grey[300],
-              image: const DecorationImage(
-                image: NetworkImage('https://via.placeholder.com/150'),
-                fit: BoxFit.cover,
-              ),
             ),
+            child: Icon(Icons.person, size: 10.w, color: Colors.white),
           ),
           SizedBox(width: 4.w),
           Expanded(
@@ -309,7 +309,7 @@ class _ExitDetailContent extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  exit.receiver.name,
+                  sortie.nomReceveur ?? "-",
                   style: GoogleFonts.montserrat(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w700,
@@ -318,7 +318,7 @@ class _ExitDetailContent extends StatelessWidget {
                 ),
                 SizedBox(height: 0.3.h),
                 Text(
-                  exit.receiver.role,
+                  sortie.fonctionReceveur ?? "-",
                   style: GoogleFonts.montserrat(
                     fontSize: 14.sp,
                     color: Colors.grey[600],
@@ -327,7 +327,6 @@ class _ExitDetailContent extends StatelessWidget {
               ],
             ),
           ),
-          // Téléphone
           Container(
             padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
             decoration: BoxDecoration(
@@ -335,7 +334,7 @@ class _ExitDetailContent extends StatelessWidget {
               borderRadius: BorderRadius.circular(2.w),
             ),
             child: Text(
-              exit.receiver.phone,
+              sortie.telReceveur ?? "-",
               style: GoogleFonts.montserrat(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w600,
@@ -348,9 +347,15 @@ class _ExitDetailContent extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
-    return "${date.day.toString().padLeft(2, '0')}/"
-        "${date.month.toString().padLeft(2, '0')}/"
-        "${date.year}";
+  String _formatDate(String? dateIso) {
+    if (dateIso == null || dateIso.isEmpty) return "-";
+    try {
+      final date = DateTime.parse(dateIso);
+      return "${date.day.toString().padLeft(2, '0')}/"
+          "${date.month.toString().padLeft(2, '0')}/"
+          "${date.year}";
+    } catch (e) {
+      return dateIso.split('T').first;
+    }
   }
 }

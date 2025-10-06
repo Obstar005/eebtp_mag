@@ -7,7 +7,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:sizer/sizer.dart';
+import 'package:provider/provider.dart';
 import 'package:eebtp_frontend/services/auth.dart';
+import 'package:eebtp_frontend/providers/auth_provider.dart';
 
 class LoginTwoStepScreen extends StatefulWidget {
   const LoginTwoStepScreen({super.key});
@@ -467,20 +469,23 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                     final String token = data['access_token'];
                     final bool firstLogin = data['first_login'];
 
+                    // 🔥 CHANGEMENT ICI : Stocker le token dans Provider
+                    await context.read<AuthProvider>().setToken(token);
+                    
+                    // Optionnel : stocker le numéro de téléphone si nécessaire
+                    // await context.read<AuthProvider>().setPhoneNumber(_phone);
+
                     if (firstLogin) {
                       // Premier login → Page de modification de mot de passe
                       Navigator.pushNamed(
                         context,
                         '/change_password',
-                        arguments: {'phone': _phone, 'token': token},
+                        arguments: {'phone': _phone}, // Garde seulement phone si nécessaire
                       );
                     } else {
-                      // Déjà connecté avant → Page de profil
-                      Navigator.pushNamed(
-                        context,
-                        '/profile',
-                        arguments: token,
-                      );
+                      // Déjà connecté avant → Page de sélection magasin
+                      // Plus besoin de passer le token en argument
+                      Navigator.pushNamed(context, '/store_selection');
                     }
                   } else {
                     setState(() {

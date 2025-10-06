@@ -1,6 +1,5 @@
 class ArticleStock {
   final int id;
-  final String nomMagasin;
   final String designation;
   final String type;
   final String unite;
@@ -10,7 +9,6 @@ class ArticleStock {
 
   ArticleStock({
     required this.id,
-    required this.nomMagasin,
     required this.designation,
     required this.type,
     required this.unite,
@@ -21,7 +19,6 @@ class ArticleStock {
 
   factory ArticleStock.fromJson(Map<String, dynamic> json) => ArticleStock(
     id: json['id'],
-    nomMagasin: json['nom_magasin'],
     designation: json['designation'],
     type: json['type'],
     unite: json['unite'],
@@ -32,7 +29,6 @@ class ArticleStock {
 
   Map<String, dynamic> toJson() => {
     'id': id,
-    'nom_magasin': nomMagasin,
     'designation': designation,
     'type': type,
     'unite': unite,

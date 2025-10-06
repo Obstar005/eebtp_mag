@@ -1,13 +1,17 @@
+import 'dart:convert';
 import 'dart:ui';
 import 'package:eebtp_frontend/models/entry_item.dart';
 import 'package:eebtp_frontend/models/exit_item.dart';
-import 'package:eebtp_frontend/models/person.dart';
-import 'package:eebtp_frontend/models/return_item.dart';
+import 'package:eebtp_frontend/models/stockitem.dart';
+import 'package:eebtp_frontend/models/article.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
-import 'package:eebtp_frontend/models/product.dart';
-import 'package:eebtp_frontend/widgets/nav.dart'; // Importez votre NavContainer
+import 'package:eebtp_frontend/widgets/nav.dart';
+import 'package:provider/provider.dart';
+import 'package:eebtp_frontend/providers/auth_provider.dart';
+import 'package:eebtp_frontend/services/stockservice.dart';
+import 'package:eebtp_frontend/services/mouvement_service.dart';
 
 class StockPage extends StatefulWidget {
   const StockPage({super.key});
@@ -20,257 +24,355 @@ class _StockPageState extends State<StockPage> {
   int _stockTabIndex = 0; // 0: Stock, 1: Entrée, 2: Sortie
   int _entreeSubTabIndex = 0; // 0: Livraison, 1: Retour
 
-  // Données factices pour les produits
-  final List<Product> products = [
-    Product(
-      name: "CIMENT",
-      code: "PRD-502-25",
-      unit: "t",
-      category: "Matériaux",
-      currentQuantity: 100,
-      threshold: 10,
-      description: "Meet Whiskers, the embodiment of joy and cuddles! With his mesmerizing green eyes and soft fur, this playful 3-year-old Domestic Shorthair is eagerly seeking a temporary foster home in the bustling city of Los Angeles, California.",
-      addedDate: DateTime(2024, 2, 3),
-    ),
-    Product(
-      name: "FER À BETON",
-      code: "PRD-503-25",
-      unit: "unité",
-      category: "Matériel",
-      currentQuantity: 5,
-      threshold: 10,
-      description: "High quality construction steel for reinforcement.",
-      addedDate: DateTime(2024, 2, 3),
-    ),
-    Product(
-      name: "SABLE",
-      code: "PRD-504-25",
-      unit: "m3",
-      category: "Matériaux",
-      currentQuantity: 50,
-      threshold: 20,
-      description: "Fine construction sand for concrete and mortar.",
-      addedDate: DateTime(2024, 2, 3),
-    ),
-    Product(
-      name: "GRAVIER",
-      code: "PRD-505-25",
-      unit: "m3",
-      category: "Matériaux",
-      currentQuantity: 30,
-      threshold: 15,
-      description: "Durable gravel for construction and landscaping.",
-      addedDate: DateTime(2024, 2, 3),
-    ),
-  ];
+  // Services
+  late StockService _stockService;
+  late MouvementsService _mouvementsService;
 
-  // Données factices pour les entrées/livraisons
-  final List<EntryItem> entries = [
-    EntryItem(
-      product: Product(name: "CIMENT", code: "PRD-502-25", unit: "t", category: "Matériaux", currentQuantity: 10, threshold: 10, description: "", addedDate: DateTime.now()),
-      date: DateTime(2025, 5, 12, 13, 0),
-      quantity: 10,
-      deliveryPerson: Person(name: "Kasim Ahmad", role: "Livreur", phone: "90909090", signature: "Signature"),
-      supplier: "CIMTOGO",
-      supplierPhone: "+228 90909090",
-    ),
-    EntryItem(
-      product: Product(name: "FER À BETON", code: "PRD-503-25", unit: "unité", category: "Matériel", currentQuantity: 100, threshold: 10, description: "", addedDate: DateTime.now()),
-      date: DateTime(2025, 5, 12, 13, 0),
-      quantity: 100,
-      deliveryPerson: Person(name: "Kasim Ahmad", role: "Livreur", phone: "90909090", signature: "Signature"),
-      supplier: "CIMTOGO",
-      supplierPhone: "+228 90909090",
-    ),
-    EntryItem(
-      product: Product(name: "FER À BETON", code: "PRD-503-25", unit: "unité", category: "Matériel", currentQuantity: 100, threshold: 10, description: "", addedDate: DateTime.now()),
-      date: DateTime(2025, 5, 12, 13, 0),
-      quantity: 100,
-      deliveryPerson: Person(name: "Kasim Ahmad", role: "Livreur", phone: "90909090", signature: "Signature"),
-      supplier: "CIMTOGO",
-      supplierPhone: "+228 90909090",
-    ),
-  ];
+  // Listes en cache
+  List<StockItem> _stockItems = [];
+  List<Entree> _entrees = [];
+  List<Sortie> _sorties = [];
 
-  // Données factices pour les retours
-  final List<ReturnItem> returns = [
-    ReturnItem(
-      product: Product(name: "CIMENT", code: "PRD-502-25",  unit: "t", category: "Matériaux", currentQuantity: 10, threshold: 10, description: "", addedDate: DateTime.now()),
-      date: DateTime(2025, 5, 12, 13, 0),
-      quantity: 10,
-      depositor: Person(name: "Kasim Ahmad", role: "Déposant / Plombier", phone: "90909090"),
-    ),
-    ReturnItem(
-      product: Product(name: "FER À BETON", code: "PRD-503-25", unit: "unité", category: "Matériel", currentQuantity: 100, threshold: 10, description: "", addedDate: DateTime.now()),
-      date: DateTime(2025, 5, 12, 13, 0),
-      quantity: 100,
-      depositor: Person(name: "Kasim Ahmad", role: "Déposant / Plombier", phone: "90909090"),
-    ), 
-       ReturnItem(
-      product: Product(name: "FER À BETON", code: "PRD-503-25", unit: "unité", category: "Matériel", currentQuantity: 100, threshold: 10, description: "", addedDate: DateTime.now()),
-      date: DateTime(2025, 5, 12, 13, 0),
-      quantity: 100,
-      depositor: Person(name: "Kasim Ahmad", role: "Déposant / Plombier", phone: "90909090"),
-    ),
-  ];
+  // Cache des articles pour éviter les appels répétés
+  Map<int, ArticleStock> _articlesCache = {};
 
-  // Données factices pour les sorties
-  final List<ExitItem> exits = [
-    ExitItem(
-      product: Product(name: "CIMENT", code: "PRD-502-25", unit: "t", category: "Matériaux", currentQuantity: 10, threshold: 10, description: "", addedDate: DateTime.now()),
-      date: DateTime(2025, 5, 12, 13, 0),
-      quantity: 10,
-      receiver: Person(name: "Kasim Ahmad", role: "Receveur / Plombier", phone: "90909090"),
-      reason: "Meet Whiskers, the embodiment of joy and cuddles! With his mesmerizing green eyes and soft fur, this playful 3-",
-    ),
-    ExitItem(
-      product: Product(name: "FER À BETON", code: "PRD-503-25", unit: "unité", category: "Matériel", currentQuantity: 100, threshold: 10, description: "", addedDate: DateTime.now()),
-      date: DateTime(2025, 5, 12, 13, 0),
-      quantity: 100,
-      receiver: Person(name: "Kasim Ahmad", role: "Receveur / Plombier", phone: "90909090"),
-      reason: "High quality construction steel for reinforcement.",
-    ),
-    ExitItem(
-      product: Product(name: "FER À BETON", code: "PRD-503-25", unit: "unité", category: "Matériel", currentQuantity: 100, threshold: 10, description: "", addedDate: DateTime.now()),
-      date: DateTime(2025, 5, 12, 13, 0),
-      quantity: 100,
-      receiver: Person(name: "Kasim Ahmad", role: "Receveur / Plombier", phone: "90909090"),
-      reason: "High quality construction steel for reinforcement.",
-    ),
+  bool _isLoading = false;
 
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeServices();
+    });
+  }
+
+  void _initializeServices() {
+    final token = context.read<AuthProvider>().token;
+    final storeId = context.read<AuthProvider>().storeId;
+
+    if (token != null) {
+      // ✅ Passe le token aux deux services
+      _stockService = StockService(token: token);
+      _mouvementsService = MouvementsService(token: token);
+      _loadAllData(storeId);
+    }
+  }
+
+  Future<void> _loadAllData(int? storeId) async {
+    if (storeId == null) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Chargement en parallèle
+      final futures = await Future.wait([
+        _loadStockItems(storeId),
+        _loadEntrees(storeId),
+        _loadSorties(storeId),
+      ]);
+
+      setState(() {
+        _stockItems = futures[0] as List<StockItem>;
+        _entrees = futures[1] as List<Entree>;
+        _sorties = futures[2] as List<Sortie>;
+        _isLoading = false;
+      });
+
+      // Charger les articles pour les stock items
+      await _loadArticlesForStockItems();
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showErrorSnackBar("Erreur lors du chargement des données: $e");
+    }
+  }
+
+  Future<List<StockItem>> _loadStockItems(int storeId) async {
+
+    try {
+      return await _stockService.getStockItemsByMagasin(storeId);
+    } catch (e) {
+      print("Erreur chargement stock items: $e");
+      return [];
+    }
+  }
+
+  Future<List<Entree>> _loadEntrees(int storeId) async {
+    try {
+      final response = await _mouvementsService.getEntreesByMagasin(storeId);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.body is String
+            ? jsonDecode(response.body)
+            : response.body;
+
+        return data.map((json) => Entree.fromJson(json)).toList();
+      }
+      return [];
+    } catch (e) {
+      print("Erreur chargement entrées: $e");
+      return [];
+    }
+  }
+
+  Future<List<Sortie>> _loadSorties(int storeId) async {
+    try {
+      final response = await _mouvementsService.getSortiesByMagasin(storeId);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.body is String
+            ? jsonDecode(response.body)
+            : response.body;
+
+        return data.map((json) => Sortie.fromJson(json)).toList();
+      }
+      return [];
+    } catch (e) {
+      print("Erreur chargement sorties: $e");
+      return [];
+    }
+  }
+
+  // Charge les informations des articles pour les stock items
+Future<void> _loadArticlesForStockItems() async {
+  for (final stockItem in _stockItems) {
+    if (!_articlesCache.containsKey(stockItem.produit)) {
+      try {
+        final article = await _stockService.getArticleDetail(stockItem.produit);
+        if (!mounted) return;   // <- AJOUT SECURITE monté/démonté
+        setState(() {
+          _articlesCache[stockItem.produit] = article;
+        });
+      } catch (e) {
+        if (!mounted) return;   // <- Pour être ultra-safe
+        print("Erreur chargement article ${stockItem.produit}: $e");
+      }
+    }
+  }
+}
+
+
+  // Récupère l'article associé à un stock item
+  ArticleStock? _getArticleForStockItem(StockItem stockItem) {
+    return _articlesCache[stockItem.produit];
+  }
+
+  Future<void> _refreshData() async {
+    final storeId = context.read<AuthProvider>().storeId;
+    // Vider le cache des articles
+    _articlesCache.clear();
+    await _loadAllData(storeId);
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        action: SnackBarAction(
+          label: 'Réessayer',
+          textColor: Colors.white,
+          onPressed: _refreshData,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return NavContainer(
-      initialIndex: 1, // Index pour "Stock"
-      body: Column(
-        children: [
-          // Header avec dégradé bleu
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF007AFF), Color(0xFF0056CC)],
+    final storeId = context.watch<AuthProvider>().storeId;
+    final token = context.watch<AuthProvider>().token;
+
+    if (token == null || storeId == null) {
+      return NavContainer(
+        initialIndex: 1,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 20.w, color: Colors.grey),
+              SizedBox(height: 2.h),
+              Text(
+                "Veuillez vous connecter et sélectionner un magasin",
+                style: GoogleFonts.montserrat(
+                  fontSize: 16.sp,
+                  color: Colors.grey,
+                ),
+                textAlign: TextAlign.center,
               ),
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: Column(
-                children: [
-                  // Header avec titre et notifications
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Stocks",
-                          style: GoogleFonts.montserrat(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Stack(
-                          children: [
-                            GestureDetector(
-                              onTap: () => Navigator.pushNamed(context, '/notifications'),
-                              child: Container(
-                                padding: EdgeInsets.all(2.w),
-                                decoration: const BoxDecoration(
+            ],
+          ),
+        ),
+      );
+    }
+
+    return NavContainer(
+      initialIndex: 1,
+      body: RefreshIndicator(
+        onRefresh: _refreshData,
+        child: Column(
+          children: [
+            // HEADER
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF007AFF), Color(0xFF0056CC)],
+                ),
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Stocks",
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w700,
                                   color: Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  Icons.notifications_outlined,
-                                  size: 10.w,
-                                  color: const Color(0xFF007AFF),
                                 ),
                               ),
-                            ),
-                            Positioned(
-                              right: 0,
-                              top: 0,
-                              child: Container(
-                                padding: EdgeInsets.all(1.w),
-                                decoration: const BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
+                              Text(
+                                "Magasin ID: $storeId",
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.white.withOpacity(0.8),
                                 ),
-                                child: Text(
-                                  "3",
-                                  style: TextStyle(
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              GestureDetector(
+                                onTap: _refreshData,
+                                child: Container(
+                                  padding: EdgeInsets.all(2.w),
+                                  decoration: const BoxDecoration(
                                     color: Colors.white,
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'Montserrat',
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.refresh,
+                                    size: 6.w,
+                                    color: const Color(0xFF007AFF),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                              SizedBox(width: 3.w),
+                              Stack(
+                                children: [
+                                  GestureDetector(
+                                    onTap: () => Navigator.pushNamed(context, '/notifications'),
+                                    child: Container(
+                                      padding: EdgeInsets.all(2.w),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.notifications_outlined,
+                                        size: 6.w,
+                                        color: const Color(0xFF007AFF),
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    right: 0,
+                                    top: 0,
+                                    child: Container(
+                                      padding: EdgeInsets.all(1.w),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Text(
+                                        "3",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10.sp,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  
-                  SizedBox(height: 2.h),
-                  
-                  // Barre de recherche
-                  Container(
-                    margin: EdgeInsets.symmetric(horizontal: 6.w),
-                    padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10.w),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.search,
-                          color: Colors.grey,
-                          size: 6.w,
-                        ),
-                        SizedBox(width: 3.w),
-                        Expanded(
-                          child: Text(
-                            "Recherche une entrée ou sortie...",
-                            style: GoogleFonts.montserrat(
-                              color: Colors.grey,
-                              fontSize: 14.sp,
+                    SizedBox(height: 2.h),
+                    Container(
+                      margin: EdgeInsets.symmetric(horizontal: 6.w),
+                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10.w),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.search, color: Colors.grey, size: 6.w),
+                          SizedBox(width: 3.w),
+                          Expanded(
+                            child: Text(
+                              "Recherche un produit, entrée ou sortie...",
+                              style: GoogleFonts.montserrat(
+                                color: Colors.grey,
+                                fontSize: 14.sp,
+                              ),
                             ),
                           ),
-                        ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 3.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildMainTab("Stock", 0),
+                        _buildMainTab("Entrée", 1),
+                        _buildMainTab("Sortie", 2),
                       ],
                     ),
-                  ),
-                  
-                  SizedBox(height: 3.h),
-                  
-                  // Tabs principaux
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildMainTab("Stock", 0),
-                      _buildMainTab("Entrée", 1),
-                      _buildMainTab("Sortie", 2),
-                    ],
-                  ),
-                  
-                  SizedBox(height: 2.h),
-                ],
+                    SizedBox(height: 2.h),
+                  ],
+                ),
               ),
             ),
-          ),
-          
-          // Contenu selon le tab sélectionné
-          Expanded(
-            child: Container(
-              color: const Color(0xFFF8F9FA),
-              child: _buildTabContent(),
+
+            // CONTENU
+            Expanded(
+              child: Container(
+                color: const Color(0xFFF8F9FA),
+                child: _isLoading ? _buildLoadingState() : _buildTabContent(storeId),
+              ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(color: const Color(0xFF007AFF)),
+          SizedBox(height: 2.h),
+          Text(
+            "Chargement des données...",
+            style: GoogleFonts.montserrat(fontSize: 16.sp, color: Colors.grey),
           ),
         ],
       ),
@@ -305,63 +407,52 @@ class _StockPageState extends State<StockPage> {
     );
   }
 
-  Widget _buildTabContent() {
+  Widget _buildTabContent(int storeId) {
     switch (_stockTabIndex) {
       case 0:
-        return _buildStockTab();
+        if (_stockItems.isEmpty) {
+          return _buildEmptyState("Aucun article en stock", Icons.inventory_2);
+        }
+        return ListView.builder(
+          padding: EdgeInsets.all(4.w),
+          itemCount: _stockItems.length,
+          itemBuilder: (context, index) {
+            return _buildStockItemCard(_stockItems[index]);
+          },
+        );
       case 1:
-        return _buildEntreeTab();
+        return Column(
+          children: [
+            Container(
+              color: const Color(0xFFF8F9FA),
+              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+              child: Row(
+                children: [
+                  _buildSubTab("Livraison", 0),
+                  SizedBox(width: 4.w),
+                  _buildSubTab("Retour", 1),
+                ],
+              ),
+            ),
+            Expanded(
+              child: _entreeSubTabIndex == 0 ? _buildEntreeList("Livraison") : _buildEntreeList("Retour"),
+            ),
+          ],
+        );
       case 2:
-        return _buildSortieTab();
+        if (_sorties.isEmpty) {
+          return _buildEmptyState("Aucune sortie enregistrée", Icons.exit_to_app);
+        }
+        return ListView.builder(
+          padding: EdgeInsets.all(4.w),
+          itemCount: _sorties.length,
+          itemBuilder: (context, index) {
+            return _buildExitCard(_sorties[index]);
+          },
+        );
       default:
-        return _buildStockTab();
+        return _buildTabContent(storeId);
     }
-  }
-
-  Widget _buildStockTab() {
-    return ListView.builder(
-      padding: EdgeInsets.all(4.w),
-      itemCount: products.length,
-      itemBuilder: (context, index) {
-        final product = products[index];
-        return _buildProductCard(product);
-      },
-    );
-  }
-
-  Widget _buildEntreeTab() {
-    return Column(
-      children: [
-        // Sub-tabs pour Livraison/Retour
-        Container(
-          color: const Color(0xFFF8F9FA),
-          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-          child: Row(
-            children: [
-              _buildSubTab("Livraison", 0),
-              SizedBox(width: 4.w),
-              _buildSubTab("Retour", 1),
-            ],
-          ),
-        ),
-        
-        // Contenu selon le sub-tab
-        Expanded(
-          child: _entreeSubTabIndex == 0 ? _buildLivraisonContent() : _buildRetourContent(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSortieTab() {
-    return ListView.builder(
-      padding: EdgeInsets.all(4.w),
-      itemCount: exits.length,
-      itemBuilder: (context, index) {
-        final exit = exits[index];
-        return _buildExitCard(exit);
-      },
-    );
   }
 
   Widget _buildSubTab(String title, int index) {
@@ -389,422 +480,395 @@ class _StockPageState extends State<StockPage> {
     );
   }
 
-  Widget _buildLivraisonContent() {
+  Widget _buildEntreeList(String type) {
+    final filteredEntrees = _entrees.where((entree) => entree.type == type).toList();
+
+    if (filteredEntrees.isEmpty) {
+      return _buildEmptyState(
+          "Aucune ${type == 'Livraison' ? 'Livraison' : 'Retour'} enregistrée",
+          type == 'Livraison' ? Icons.local_shipping : Icons.keyboard_return);
+    }
+
     return ListView.builder(
       padding: EdgeInsets.all(4.w),
-      itemCount: entries.length,
+      itemCount: filteredEntrees.length,
       itemBuilder: (context, index) {
-        final entry = entries[index];
-        return _buildEntryCard(entry);
+        return _buildEntryCard(filteredEntrees[index]);
       },
     );
   }
 
-  Widget _buildRetourContent() {
-    return ListView.builder(
-      padding: EdgeInsets.all(4.w),
-      itemCount: returns.length,
-      itemBuilder: (context, index) {
-        final returnItem = returns[index];
-        return _buildReturnCard(returnItem);
-      },
-    );
-  }
-
-Widget _buildProductCard(Product product) {
-  bool isLowStock = product.currentQuantity <= product.threshold;
-  
-  return GestureDetector(
-    onTap: () => _navigateToProductDetail(product),
-    child: Container(
-      margin: EdgeInsets.only(bottom: 2.h),
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(4.w),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+  Widget _buildEmptyState(String message, IconData icon) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 20.w, color: Colors.grey.withOpacity(0.5)),
+          SizedBox(height: 2.h),
+          Text(
+            message,
+            style: GoogleFonts.montserrat(
+              fontSize: 16.sp,
+              color: Colors.grey,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 2.h),
+          ElevatedButton(
+            onPressed: _refreshData,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF007AFF),
+            ),
+            child: Text(
+              "Actualiser",
+              style: GoogleFonts.montserrat(color: Colors.white),
+            ),
           ),
         ],
       ),
-      child: Row(
-        children: [
-          // Left section - Product info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.name.toUpperCase(),
-                  style: GoogleFonts.montserrat(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-                SizedBox(height: 0.5.h),
-                Text(
-                  product.code,
-                  style: GoogleFonts.montserrat(
-                    fontSize: 14.sp,
-                    color: const Color.fromRGBO(147, 147, 147, 1),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(height: 1.5.h),
-                Text(
-                  product.category,
-                  style: GoogleFonts.montserrat(
-                    fontSize: 14.sp,
-                    color: Color.fromRGBO(147, 147, 147, 1),
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
+    );
+  }
+
+  Widget _buildStockItemCard(StockItem stockItem) {
+    final quantiteActuelle = int.tryParse(stockItem.quantite) ?? 0;
+    final seuil = int.tryParse(stockItem.quantiteSeuil) ?? 0;
+    final isLowStock = quantiteActuelle <= seuil;
+
+    final article = _getArticleForStockItem(stockItem);
+
+    return GestureDetector(
+      onTap: () => _navigateToStockItemDetail(stockItem),
+      child: Container(
+        margin: EdgeInsets.only(bottom: 2.h),
+        padding: EdgeInsets.all(4.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(4.w),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-          ),
-          
-          SizedBox(width: 3.w),
-          
-          // Right section - Status and quantity
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 3.5.w,
-                  vertical: 0.8.h,
-                ),
-                decoration: BoxDecoration(
-                  color: isLowStock 
-                    ? const Color(0xFFFFE5E5) 
-                    : const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(5.w),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "${stockItem.produitName ?? article?.designation ?? 'Produit #${stockItem.produit}'}".toUpperCase(),
+                    style: GoogleFonts.montserrat(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  SizedBox(height: 0.5.h),
+                  Text(
+                    "Type: ${article?.type ?? '-'}",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 14.sp,
+                      color: const Color.fromRGBO(147, 147, 147, 1),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  SizedBox(height: 1.h),
+                  Text(
+                    "Magasin: ${stockItem.magasinName ?? '#${stockItem.magasin}'}",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 14.sp,
+                      color: const Color.fromRGBO(147, 147, 147, 1),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  Text(
+                    "Unité: ${article?.unite ?? '-'}",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 14.sp,
+                      color: const Color.fromRGBO(147, 147, 147, 1),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  if (stockItem.etat.isNotEmpty) ...[
+                    SizedBox(height: 0.5.h),
                     Text(
-                      "Seuil",
+                      "État: ${stockItem.etat}",
                       style: GoogleFonts.montserrat(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: isLowStock 
-                          ? const Color(0xFFD32F2F) 
-                          : const Color(0xFF388E3C),
+                        fontSize: 13.sp,
+                        color: const Color(0xFF388E3C),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    SizedBox(width: 1.w),
-                    Icon(
-                      isLowStock 
-                        ? Icons.keyboard_arrow_down_rounded 
-                        : Icons.keyboard_arrow_up_rounded,
-                      color: isLowStock 
-                        ? const Color(0xFFD32F2F) 
-                        : const Color(0xFF388E3C),
-                      size: 18.sp,
-                    ),
                   ],
-                ),
+                ],
               ),
-              SizedBox(height: 2.h),
-              Text(
-                "Quantité actuelle: ${product.currentQuantity} ${product.unit}",
-                style: GoogleFonts.montserrat(
-                  fontSize: 14.sp,
-                  color: Color.fromRGBO(147, 147, 147, 1),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ),
-  );
-}
- 
-  Widget _buildEntryCard(EntryItem entry) {
-  return GestureDetector(
-    onTap: () => _navigateToEntryDetail(entry),
-    child: Container(
-      margin: EdgeInsets.only(bottom: 2.h),
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(4.w),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Left section - Product info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+            SizedBox(width: 3.w),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  entry.product.name.toUpperCase(),
-                  style: GoogleFonts.montserrat(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                    letterSpacing: 0.3,
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 3.5.w, vertical: 0.8.h),
+                  decoration: BoxDecoration(
+                    color: isLowStock ? const Color(0xFFFFE5E5) : const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(5.w),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        isLowStock ? "Faible" : "OK",
+                        style: GoogleFonts.montserrat(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: isLowStock ? const Color(0xFFD32F2F) : const Color(0xFF388E3C),
+                        ),
+                      ),
+                      SizedBox(width: 1.w),
+                      Icon(
+                        isLowStock ? Icons.warning : Icons.check_circle,
+                        color: isLowStock ? const Color(0xFFD32F2F) : const Color(0xFF388E3C),
+                        size: 16.sp,
+                      ),
+                    ],
                   ),
                 ),
-                SizedBox(height: 0.5.h),
+                SizedBox(height: 2.h),
                 Text(
-                  entry.product.code,
+                  "Quantité: ${stockItem.quantite}",
                   style: GoogleFonts.montserrat(
                     fontSize: 14.sp,
                     color: const Color.fromRGBO(147, 147, 147, 1),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                SizedBox(height: 1.5.h),
                 Text(
-                  entry.product.category,
+                  "Seuil: ${stockItem.quantiteSeuil}",
                   style: GoogleFonts.montserrat(
-                    fontSize: 14.sp,
-                    color: Color.fromRGBO(147, 147, 147, 1),
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          SizedBox(width: 3.w),
-          
-          // Right section 
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-           Text(
-                "Entrée le: ${_formatDate(entry.date)}",
-                style: GoogleFonts.montserrat(
-                   fontSize: 14.sp,
-                  color: Color.fromRGBO(147, 147, 147, 1),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              SizedBox(height: 2.h),
-              Text(
-                "Quantité: ${entry.quantity} ${entry.product.unit}",
-                style: GoogleFonts.montserrat(
-                  fontSize: 14.sp,
-                  color: Color.fromRGBO(147, 147, 147, 1),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ),
-  );
-}
- 
-
-  Widget _buildReturnCard(ReturnItem returnItem) {
-      return GestureDetector(
-    onTap: () => _navigateToReturnDetail(returnItem),
-    child: Container(
-      margin: EdgeInsets.only(bottom: 2.h),
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(4.w),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Left section - Product info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  returnItem.product.name.toUpperCase(),
-                  style: GoogleFonts.montserrat(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-                SizedBox(height: 0.5.h),
-                Text(
-                  returnItem.product.code,
-                  style: GoogleFonts.montserrat(
-                    fontSize: 14.sp,
-                    color: const Color.fromRGBO(147, 147, 147, 1),
+                    fontSize: 13.sp,
+                    color: isLowStock ? const Color(0xFFD32F2F) : const Color.fromRGBO(147, 147, 147, 1),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                SizedBox(height: 1.5.h),
-                Text(
-                  returnItem.product.category,
-                  style: GoogleFonts.montserrat(
-                    fontSize: 14.sp,
-                    color: Color.fromRGBO(147, 147, 147, 1),
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
               ],
             ),
-          ),
-          
-          SizedBox(width: 3.w),
-          
-          // Right section 
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-           Text(
-                "Retournée le: ${_formatDate(returnItem.date)}",
-                style: GoogleFonts.montserrat(
-                   fontSize: 14.sp,
-                  color: Color.fromRGBO(147, 147, 147, 1),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              SizedBox(height: 2.h),
-              Text(
-                "Quantité: ${returnItem.quantity} ${returnItem.product.unit}",
-                style: GoogleFonts.montserrat(
-                  fontSize: 14.sp,
-                  color: Color.fromRGBO(147, 147, 147, 1),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-
- }
-
-  Widget _buildExitCard(ExitItem exit) {
-  return GestureDetector(
-    onTap: () => _navigateToExitDetail(exit),
-    child: Container(
-      margin: EdgeInsets.only(bottom: 2.h),
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(4.w),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Left section - Product info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  exit.product.name.toUpperCase(),
-                  style: GoogleFonts.montserrat(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-                SizedBox(height: 0.5.h),
-                Text(
-                  exit.product.code,
-                  style: GoogleFonts.montserrat(
-                    fontSize: 14.sp,
-                    color: const Color.fromRGBO(147, 147, 147, 1),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(height: 1.5.h),
-                Text(
-                  exit.product.category,
-                  style: GoogleFonts.montserrat(
-                    fontSize: 14.sp,
-                    color: Color.fromRGBO(147, 147, 147, 1),
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          SizedBox(width: 3.w),
-          
-          // Right section
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-           Text(
-                "Sortie le: ${_formatDate(exit.date)}",
-                style: GoogleFonts.montserrat(
-                   fontSize: 14.sp,
-                  color: Color.fromRGBO(147, 147, 147, 1),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              SizedBox(height: 2.h),
-              Text(
-                "Quantité: ${exit.quantity} ${exit.product.unit}",
-                style: GoogleFonts.montserrat(
-                  fontSize: 14.sp,
-                  color: Color.fromRGBO(147, 147, 147, 1),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ),
-  );
- }
-
-  String _formatDate(DateTime date) {
-    return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} à ${date.hour.toString().padLeft(2, '0')}h${date.minute.toString().padLeft(2, '0')}";
+    );
   }
 
-  void _navigateToProductDetail(Product product) {
-    Navigator.pushNamed(context, '/product-detail', arguments: product);
+  Widget _buildEntryCard(Entree entry) {
+    return GestureDetector(
+      onTap: () => _navigateToEntryDetail(entry),
+      child: Container(
+        margin: EdgeInsets.only(bottom: 2.h),
+        padding: EdgeInsets.all(4.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(4.w),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "${entry.stockItemName ?? 'StockItem #${entry.stockItem}'}".toUpperCase(),
+                    style: GoogleFonts.montserrat(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  SizedBox(height: 0.5.h),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
+                    decoration: BoxDecoration(
+                      color: entry.type == "Livraison" ? const Color(0xFFE3F2FD) : const Color(0xFFFFE0B2),
+                      borderRadius: BorderRadius.circular(3.w),
+                    ),
+                    child: Text(
+                      entry.type.toUpperCase(),
+                      style: GoogleFonts.montserrat(
+                        fontSize: 12.sp,
+                        color: entry.type == "Livraison" ? const Color(0xFF1976D2) : const Color(0xFFE65100),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 1.h),
+                  Text(
+                    "Déposant: ${entry.nomDeposant ?? '-'}",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 14.sp,
+                      color: const Color.fromRGBO(147, 147, 147, 1),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  Text(
+                    "Fonction: ${entry.fonctionDeposant ?? '-'}",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 13.sp,
+                      color: const Color.fromRGBO(147, 147, 147, 1),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 3.w),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  "Quantité: ${entry.quantiteM ?? '-'}",
+                  style: GoogleFonts.montserrat(
+                    fontSize: 14.sp,
+                    color: const Color(0xFF388E3C),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 1.h),
+                Text(
+                  "Le: ${_formatShortDate(entry.dateCreation)}",
+                  style: GoogleFonts.montserrat(
+                    fontSize: 12.sp,
+                    color: const Color.fromRGBO(147, 147, 147, 1),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  void _navigateToEntryDetail(EntryItem entry) {
+  Widget _buildExitCard(Sortie exit) {
+    return GestureDetector(
+      onTap: () => _navigateToExitDetail(exit),
+      child: Container(
+        margin: EdgeInsets.only(bottom: 2.h),
+        padding: EdgeInsets.all(4.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(4.w),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "${exit.stockItemName ?? 'StockItem #${exit.stockItem}'}".toUpperCase(),
+                    style: GoogleFonts.montserrat(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  SizedBox(height: 0.5.h),
+                  Text(
+                    "Objet: ${exit.objet ?? '-'}",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 14.sp,
+                      color: const Color.fromRGBO(147, 147, 147, 1),
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 1.h),
+                  Text(
+                    "Receveur: ${exit.nomReceveur ?? '-'}",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 14.sp,
+                      color: const Color.fromRGBO(147, 147, 147, 1),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  Text(
+                    "Fonction: ${exit.fonctionReceveur ?? '-'}",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 13.sp,
+                      color: const Color.fromRGBO(147, 147, 147, 1),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 3.w),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  "Quantité: ${exit.quantiteM ?? '-'}",
+                  style: GoogleFonts.montserrat(
+                    fontSize: 14.sp,
+                    color: const Color(0xFFD32F2F),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 1.h),
+                Text(
+                  "Le: ${_formatShortDate(exit.dateCreation)}",
+                  style: GoogleFonts.montserrat(
+                    fontSize: 12.sp,
+                    color: const Color.fromRGBO(147, 147, 147, 1),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatShortDate(String? dateString) {
+    if (dateString == null || dateString.isEmpty) return "-";
+    try {
+      final date = DateTime.parse(dateString);
+      return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year.toString().substring(2)}";
+    } catch (e) {
+      return dateString.split(' ').first;
+    }
+  }
+
+  void _navigateToStockItemDetail(StockItem stockItem) {
+    Navigator.pushNamed(context, '/product-detail', arguments: stockItem);
+  }
+
+  void _navigateToEntryDetail(Entree entry) {
     Navigator.pushNamed(context, '/entry-detail', arguments: entry);
   }
 
-  void _navigateToReturnDetail(ReturnItem returnItem) {
-    Navigator.pushNamed(context, '/return-detail', arguments: returnItem);
-  }
-
-  void _navigateToExitDetail(ExitItem exit) {
+  void _navigateToExitDetail(Sortie exit) {
     Navigator.pushNamed(context, '/exit-detail', arguments: exit);
   }
 }

@@ -7,11 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import 'package:eebtp_frontend/providers/auth_provider.dart';
 
 class ProfilePage extends StatefulWidget {
-  final String token;
-
-  const ProfilePage({super.key, required this.token});
+  // ✅ Plus besoin de paramètres token et storeId
+  const ProfilePage({super.key});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -23,10 +24,23 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    _futureUser = UserService().getUserInfo(widget.token);
+    // ✅ Récupération du token via Provider
+    final token = context.read<AuthProvider>().token;
+    
+    if (token != null) {
+      _futureUser = UserService().getUserInfo(token);
+    } else {
+      // Si pas de token, rediriger vers login
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, '/login');
+      });
+    }
   }
 
   Future<void> _pickImage(bool fromCamera) async {
+    final token = context.read<AuthProvider>().token;
+    if (token == null) return;
+
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(
       source: fromCamera ? ImageSource.camera : ImageSource.gallery,
@@ -34,11 +48,11 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (pickedFile != null) {
       final success = await UserService()
-          .updateProfilePicture(widget.token, pickedFile.path);
+          .updateProfilePicture(token, pickedFile.path);
       if (success && mounted) {
         setState(() {
           // On recharge les infos utilisateur après upload
-          _futureUser = UserService().getUserInfo(widget.token);
+          _futureUser = UserService().getUserInfo(token);
         });
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -50,10 +64,23 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Récupération des données via Provider
+    final token = context.watch<AuthProvider>().token;
+    final storeId = context.watch<AuthProvider>().storeId;
+    final currentUser = context.watch<AuthProvider>().user;
+
+    // Si pas de token, afficher écran de chargement
+    if (token == null) {
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return NavContainer(
       initialIndex: 3,
       body: FutureBuilder<Utilisateur>(
-       
         future: _futureUser,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -71,13 +98,19 @@ class _ProfilePageState extends State<ProfilePage> {
 
           final user = snapshot.data!;
 
+          // ✅ Mettre à jour l'utilisateur dans Provider si ce n'est pas déjà fait
+          if (currentUser == null || currentUser.id != user.id) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              context.read<AuthProvider>().setUser(user);
+            });
+          }
+
           return Stack(
             children: [
               // ----------- Background ----------
               SizedBox(
                 height: 100.h,
                 width: 100.w,
-                
                 child: Stack(
                   children: [
                     ClipPath(
@@ -94,21 +127,12 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
                     ),
-                  /*   Positioned(
-                      bottom: 0,
-                      child: Container(
-                        height: 60.h,
-                        width: 100.w,
-                        color: const Color(0xFFF8F9FA),
-                      ),
-                    ), */
                   ],
                 ),
               ),
 
               // ----------- Contenu principal ----------
               SafeArea(
-              
                 child: Column(
                   children: [
                     // Header
@@ -270,7 +294,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 context, 
                                 '/edit_profile',
                                 arguments: {
-                                  'token': widget.token,
+                                  // ✅ Plus besoin de passer le token
                                   'user': user,
                                 },
                               ),
@@ -395,6 +419,8 @@ class _ProfilePageState extends State<ProfilePage> {
               textColor: Colors.white,
               onPressed: () {
                 Navigator.pop(context);
+                // ✅ Vider le Provider lors de la déconnexion
+                context.read<AuthProvider>().clear();
                 Navigator.pushNamedAndRemoveUntil(
                   context,
                   '/login',
