@@ -1,66 +1,85 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:sizer/sizer.dart';
-import 'package:eebtp_frontend/screens/entry_screen.dart'; // Importez votre NavContainer
-
 import '../widgets/button.dart';
-import '../widgets/nav.dart'; // <-- ton NavContainer + ImprovedFAB + ImprovedBottomNavigation
+import '../widgets/nav.dart';
+import '../providers/auth_provider.dart';
+import '../services/stockservice.dart';
+import '../services/mouvement_service.dart';
 
-class StockExitScreen extends StatelessWidget {
+class StockExitScreen extends StatefulWidget {
   const StockExitScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return NavContainer(
-     
-      body: _StockExitForm(), initialIndex: 1,
-    );
-  }
+  State<StockExitScreen> createState() => _StockExitScreenState();
 }
 
-class _StockExitForm extends StatefulWidget {
-  @override
-  State<_StockExitForm> createState() => _StockExitFormState();
-}
-
-class _StockExitFormState extends State<_StockExitForm> {
-  // Controllers
+class _StockExitScreenState extends State<StockExitScreen> {
   final _quantityController = TextEditingController();
   final _motifController = TextEditingController();
   final _receiverNameController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _functionController = TextEditingController();
 
-  PhoneNumber _initialPhone = PhoneNumber(isoCode: 'TG');
-
-  // Dropdown
-  String? _selectedProduct;
+  String? _selectedProductName;
   bool _isProductDropdownOpen = false;
-
-  // Sample data produits
- final List<Map<String, dynamic>> _products = [
-    {'name': 'ciment', 'quantity': 150,'unit': 't'},
-    {'name': 'Sable', 'quantity': 500,'unit': 'm3'},
-    {'name': 'Brique', 'quantity': 1000,'unit': 'piece'},
-    {'name': 'Granit', 'quantity': 400,'unit': 'm3'},
-    {'name': 'Fer à béton', 'quantity': 250,'unit': 't'},
-    {'name': 'Bois', 'quantity': 350,'unit': 'piece'},
-    {'name': 'Essence', 'quantity': 75 ,'unit': 'L'},
-    {'name': 'Peinture', 'quantity': 120,'unit': 'L'},
-    {'name': 'Pinceau', 'quantity': 200, 'unit': 'piece'},
-    {'name': 'Eau de chaux', 'quantity': 25, 'unit': 'L'},
-    {'name': 'Gravier', 'quantity': 300, 'unit': 'Kg'},
-  ];
-
+  List<Map<String, dynamic>> _products = [];
   List<Map<String, dynamic>> _filteredProducts = [];
   String _productSearchQuery = '';
+  bool _isLoadingProducts = true;
+
+  String _phone = '';
+  String? _phoneError;
+  final TextEditingController _phoneController = TextEditingController();
+  PhoneNumber _initialPhone = PhoneNumber(isoCode: 'TG');
 
   @override
   void initState() {
     super.initState();
-    _filteredProducts = _products;
+    _fetchProductsWithUnits();
+  }
+
+  Future<void> _fetchProductsWithUnits() async {
+    final token = Provider.of<AuthProvider>(context, listen: false).token;
+    final storeId = Provider.of<AuthProvider>(context, listen: false).storeId;
+    if (token == null || storeId == null) {
+      setState(() { _isLoadingProducts = false; });
+      return;
+    }
+    try {
+      final service = StockService(token: token);
+      final items = await service.getStockItemsByMagasin(storeId);
+      List<Map<String, dynamic>> productsWithUnits = [];
+      for (final item in items) {
+        try {
+          final article = await service.getArticleDetail(item.produit);
+          productsWithUnits.add({
+            "id": item.id,
+            "produitName": item.produitName ?? "Produit #${item.produit}",
+            "quantite": item.quantite,
+            "unite": article.unite ?? "unité",
+            "stockItem": item.produit
+          });
+        } catch (e) {
+          productsWithUnits.add({
+            "id": item.id,
+            "produitName": item.produitName ?? "Produit #${item.produit}",
+            "quantite": item.quantite,
+            "unite": "unité", // Fallback
+            "stockItem": item.produit
+          });
+        }
+      }
+      setState(() {
+        _products = productsWithUnits;
+        _filteredProducts = _products;
+        _isLoadingProducts = false;
+      });
+    } catch (e) {
+      setState(() { _isLoadingProducts = false; });
+      print("❌ Erreur chargement stockItems : $e");
+    }
   }
 
   void _filterProducts(String query) {
@@ -70,120 +89,185 @@ class _StockExitFormState extends State<_StockExitForm> {
           ? _products
           : _products
               .where((p) =>
-                  p['name'].toString().toLowerCase().contains(query.toLowerCase()))
+                  p['produitName']
+                      .toString()
+                      .toLowerCase()
+                      .contains(query.toLowerCase()))
               .toList();
     });
   }
 
-  void _submitForm() {
-    debugPrint("Produit: $_selectedProduct");
-    debugPrint("Quantité: ${_quantityController.text}");
-    debugPrint("Motif: ${_motifController.text}");
-    debugPrint("Nom receveur: ${_receiverNameController.text}");
-    debugPrint("Téléphone: ${_phoneController.text}");
-    debugPrint("Fonction: ${_functionController.text}");
-    Navigator.pop(context);
+  String _formatPhone(String phone) {
+    if (phone.startsWith('+')) {
+      return phone.replaceFirst('+', '00');
+    }
+    return phone;
+  }
+
+  Future<void> _submitForm() async {
+    String? error;
+    if (_selectedProductName == null) {
+      error = "Sélectionne un produit";
+    } else if (_quantityController.text.trim().isEmpty) {
+      error = "La quantité est requise";
+    } else if (_motifController.text.trim().isEmpty) {
+      error = "Le motif est requis";
+    } else if (_receiverNameController.text.trim().isEmpty) {
+      error = "Le nom du receveur est requis";
+    } else if (_functionController.text.trim().isEmpty) {
+      error = "La fonction du receveur est requise";
+    } else if (_phone.isEmpty || _phone.length < 8) {
+      error = "Veuillez entrer un numéro de téléphone valide";
+    }
+
+    if (error != null) {
+      setState(() { 
+  if (error != null && error.contains("téléphone")) {
+    _phoneError = error;
+  } else {
+    _phoneError = null;
+  }
+});
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+    setState(() { _phoneError = null; });
+
+    final selectedIndex = _products.indexWhere((p) => p['produitName'] == _selectedProductName);
+    final selectedProduct = _products[selectedIndex];
+    final stockItemId = selectedProduct['id'];
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final magasinId = authProvider.storeId;
+    final token = authProvider.token;
+
+    if (token == null || token.isEmpty) {
+      print('❌ Token manquant !');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erreur : utilisateur non connecté (token manquant)")),
+      );
+      return;
+    }
+
+    final data = {
+      'magasin': magasinId,
+      'stock_item': stockItemId,
+      'quantite_m': _quantityController.text.trim(),
+      'objet': _motifController.text.trim(),
+      'nom_receveur': _receiverNameController.text.trim(),
+      'tel_receveur': _formatPhone(_phone),
+      'fonction_receveur': _functionController.text.trim(),
+      'is_active': true,
+    };
+
+    print("📦 Données createSortie envoyées (prêtes à POSTER) : $data");
+
+    try {
+      final mouvementsService = MouvementsService(token: token);
+      final response = await mouvementsService.createSortie(data);
+      print("⌛️ Réponse HTTP: status=${response.statusCode}, body=${response.body}");
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Sortie enregistrée avec succès!")),
+        );
+        Navigator.pop(context);
+      } else {
+        print("❌ Erreur HTTP: ${response.statusCode} - ${response.body}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Erreur: ${response.body}")),
+        );
+      }
+    } catch (e, stack) {
+      print("❌ Exception à l'envoi : $e\n$stack");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erreur lors de l'enregistrement: $e")),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => setState(() => _isProductDropdownOpen = false),
-      child: Column(
-        children: [
-          _buildAppBar(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(5.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionHeader("Produit",isLeftAligned: false),
-                  SizedBox(height: 2.h),
-                  _buildProductDropdown(),
-                  SizedBox(height: 2.h),
-                  _buildBasicInputField(
-                    controller: _quantityController,
-                    hintText: "Définir la quantité",
-                  ),
-                  SizedBox(height: 2.h),
-                  _buildBasicInputField(
-                    controller: _motifController,
-                    hintText: "Motif",
-                    labelText: "Motif",
-                    maxLines: 5,
-                  ),
-                  SizedBox(height: 3.h),
-                  _buildSectionHeader("Receveur",isLeftAligned: true),
-                  SizedBox(height: 2.h),
-                  _buildBasicInputField(
-                    controller: _receiverNameController,
-                    hintText: "Renseigner le nom du receveur",
-                  ),
-                  SizedBox(height: 2.h),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(50),
-                    ),
-                    child: InternationalPhoneNumberInput(
-                      onInputChanged: (PhoneNumber num) {
-                        _initialPhone = num;
-                      },
-                      initialValue: _initialPhone,
-                      textFieldController: _phoneController,
-                      selectorConfig: const SelectorConfig(
-                        selectorType: PhoneInputSelectorType.DROPDOWN,
-                        showFlags: true,
+    return NavContainer(
+      initialIndex: 1,
+      body: GestureDetector(
+        onTap: () => setState(() => _isProductDropdownOpen = false),
+        child: Column(
+          children: [
+            _buildAppBar(),
+            Expanded(
+              child: _isLoadingProducts
+                  ? Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                      padding: EdgeInsets.all(5.w),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionHeader("Produit", isLeftAligned: false),
+                          SizedBox(height: 2.h),
+                          _buildProductDropdown(),
+                          SizedBox(height: 2.h),
+                          _buildBasicInputField(
+                            controller: _quantityController,
+                            hintText: "Définir la quantité",
+                          ),
+                          SizedBox(height: 2.h),
+                          _buildBasicInputField(
+                            controller: _motifController,
+                            hintText: "Motif",
+                            labelText: "Motif",
+                            maxLines: 5,
+                          ),
+                          SizedBox(height: 3.h),
+                          _buildSectionHeader("Receveur", isLeftAligned: true),
+                          SizedBox(height: 2.h),
+                          _buildBasicInputField(
+                            controller: _receiverNameController,
+                            hintText: "Renseigner le nom du receveur",
+                          ),
+                          SizedBox(height: 2.h),
+                          _buildPhoneInputField(),
+                          if (_phoneError != null)
+                            Padding(
+                              padding: EdgeInsets.only(left: 2.w, top: 1.h),
+                              child: Text(
+                                _phoneError!,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12.sp,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ),
+                          SizedBox(height: 2.h),
+                          _buildBasicInputField(
+                            controller: _functionController,
+                            hintText: "Renseigner la fonction du receveur",
+                          ),
+                          SizedBox(height: 8.h),
+                          Center(
+                            child: CustomElevatedButton(
+                              text: 'Enregistrer',
+                              backgroundColor: const Color(0xFF007AFF),
+                              textColor: Colors.white,
+                              onPressed: _submitForm,
+                              width: 80.w,
+                            ),
+                          ),
+                          SizedBox(height: 3.h),
+                        ],
                       ),
-                      inputDecoration: InputDecoration(
-                        border: InputBorder.none,
-                        hintText: 'Numéro de téléphone',
-                        hintStyle: GoogleFonts.poppins(
-                          fontSize: 14.sp,
-                          color: Colors.grey[600],
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 4.w,
-                          vertical: 1.8.h,
-                        ),
-                      ),
-                      spaceBetweenSelectorAndTextField: 0,
-                      autoValidateMode: AutovalidateMode.onUserInteraction,
                     ),
-                  ),
-                  SizedBox(height: 2.h),
-                  _buildBasicInputField(
-                    controller: _functionController,
-                    hintText: "Renseigner la fonction du receveur",
-                  ),
-                  SizedBox(height: 8.h),
-                  Center(
-                    child: CustomElevatedButton(
-                      text: 'Enregistrer',
-                      backgroundColor: const Color(0xFF007AFF),
-                      textColor: Colors.white,
-                      onPressed: _submitForm,
-                      width: 80.w,
-                    ),
-                  ),
-                  SizedBox(height: 3.h),
-                ],
-              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  // ------- Widgets -------
-   Widget _buildAppBar() {
+  Widget _buildAppBar() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
       decoration: const BoxDecoration(
         color: Color(0xFF007AFF),
-      
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -203,112 +287,136 @@ class _StockExitFormState extends State<_StockExitForm> {
               fontWeight: FontWeight.w600,
             ),
           ),
-          Stack(
-            children: [
-              Container(
-                padding: EdgeInsets.all(2.5.w),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.notifications_outlined,
-                    size: 7.w, color: Color(0xFF007AFF)),
-              ),
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  padding: EdgeInsets.all(1.w),
-                  decoration: const BoxDecoration(
-                      color: Colors.red, shape: BoxShape.circle),
-                  child: Text(
-                    "3",
-                    style: GoogleFonts.poppins(
-                      fontSize: 9.sp,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ], 
+          SizedBox(width: 5.w + 2.h),
+        ],
       ),
     );
   }
 
-
-
- Widget _buildSectionHeader(String title, {bool isLeftAligned = true}) {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: isLeftAligned
-        ? [
-            Text(
-              title,
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: 14.sp,
-                color: Colors.black87,
+  Widget _buildSectionHeader(String title, {bool isLeftAligned = true}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: isLeftAligned
+          ? [
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14.sp,
+                  color: Colors.black87,
+                ),
               ),
-            ),
-            Container(
-              height: 2,
-              width: 72.w,
-              color: const Color(0xFF007AFF),
-            ),
-          ]
-        : [
-            Container(
-              height: 2,
-              width: 70.w,
-              color: const Color(0xFF007AFF),
-            ),
-            Text(
-              title,
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: 14.sp,
-                color: Colors.black87,
+              Container(
+                height: 2,
+                width: 72.w,
+                color: const Color(0xFF007AFF),
               ),
-            ),
-          ],
-  );
-}
+            ]
+          : [
+              Container(
+                height: 2,
+                width: 70.w,
+                color: const Color(0xFF007AFF),
+              ),
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14.sp,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+    );
+  }
 
- Widget _buildBasicInputField({
-  required TextEditingController controller,
-  required String hintText,
-  String? labelText,
-  int maxLines = 1, // valeur par défaut
-}) {
-  return Container(
-    decoration: BoxDecoration(
-      color: const Color.fromARGB(255, 241, 240, 240),
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: Color(0xFF007AFF)),
-    ),
-    child: TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      style: GoogleFonts.poppins(fontSize: 14.sp),
-      decoration: InputDecoration(
-        border: InputBorder.none,
-        hintText: hintText,
-        labelText: labelText,
-        hintStyle: GoogleFonts.poppins(
-          fontSize: 14.sp,
-          color: Colors.grey[600],
-        ),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: 4.w,
-          vertical: maxLines > 1 ? 2.5.h : 1.8.h,
+  Widget _buildBasicInputField({
+    required TextEditingController controller,
+    required String hintText,
+    String? labelText,
+    int maxLines = 1,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 241, 240, 240),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Color(0xFF007AFF)),
+      ),
+      child: TextFormField(
+        controller: controller,
+        maxLines: maxLines,
+        style: GoogleFonts.poppins(fontSize: 14.sp),
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          hintText: hintText,
+          labelText: labelText,
+          hintStyle: GoogleFonts.poppins(
+            fontSize: 14.sp,
+            color: Colors.grey[600],
+          ),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 4.w,
+            vertical: maxLines > 1 ? 2.5.h : 1.8.h,
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
+  Widget _buildPhoneInputField() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.5.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: _phoneError != null
+              ? Colors.red
+              : const Color.fromRGBO(226, 232, 240, 1),
+          width: 1.2,
+        ),
+      ),
+      child: InternationalPhoneNumberInput(
+        onInputChanged: (PhoneNumber num) {
+          setState(() {
+            _phone = num.phoneNumber ?? '';
+            _initialPhone = num;
+          });
+        },
+        onInputValidated: (_) {},
+        initialValue: _initialPhone,
+        textFieldController: _phoneController,
+        selectorConfig: const SelectorConfig(
+          selectorType: PhoneInputSelectorType.DROPDOWN,
+          showFlags: true,
+          setSelectorButtonAsPrefixIcon: true,
+        ),
+        ignoreBlank: false,
+        autoValidateMode: AutovalidateMode.disabled,
+        selectorTextStyle: GoogleFonts.poppins(color: Colors.black),
+        textStyle: GoogleFonts.poppins(fontSize: 14.sp),
+        formatInput: true,
+        keyboardType: const TextInputType.numberWithOptions(
+          signed: false,
+          decimal: false,
+        ),
+        inputDecoration: InputDecoration(
+          isDense: true,
+          border: InputBorder.none,
+          hintText: 'Numéro de téléphone',
+          hintStyle: GoogleFonts.poppins(
+            fontSize: 14.sp,
+            color: Colors.grey[600],
+          ),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 2.w,
+            vertical: 1.5.h,
+          ),
+        ),
+        spaceBetweenSelectorAndTextField: 10,
+      ),
+    );
+  }
 
   Widget _buildProductDropdown() {
     return Column(
@@ -331,15 +439,19 @@ class _StockExitFormState extends State<_StockExitForm> {
               children: [
                 Expanded(
                   child: Text(
-                    _selectedProduct ?? "Sélectionner le produit",
+                    _selectedProductName ?? "Sélectionner le produit",
                     style: GoogleFonts.poppins(
                       fontSize: 14.sp,
-                      color: _selectedProduct != null ? Colors.black87 : Colors.grey[600],
+                      color: _selectedProductName != null
+                          ? Colors.black87
+                          : Colors.grey[600],
                     ),
                   ),
                 ),
                 Icon(
-                  _isProductDropdownOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  _isProductDropdownOpen
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
                   color: Colors.grey[600],
                 ),
               ],
@@ -380,7 +492,8 @@ class _StockExitFormState extends State<_StockExitForm> {
                           fontSize: 14.sp,
                           color: Colors.grey[600],
                         ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
                       ),
                     ),
                   ),
@@ -394,7 +507,7 @@ class _StockExitFormState extends State<_StockExitForm> {
                       final product = _filteredProducts[index];
                       return ListTile(
                         title: Text(
-                          product['name'],
+                          product['produitName'],
                           style: GoogleFonts.poppins(fontSize: 14.sp),
                         ),
                         trailing: Container(
@@ -404,7 +517,7 @@ class _StockExitFormState extends State<_StockExitForm> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            product['quantity'].toString() + product['unit'].toString(),
+                            '${product['quantite']} ${product['unite']}',
                             style: GoogleFonts.poppins(
                               fontSize: 12.sp,
                               color: Colors.white,
@@ -414,7 +527,7 @@ class _StockExitFormState extends State<_StockExitForm> {
                         ),
                         onTap: () {
                           setState(() {
-                            _selectedProduct = product['name'];
+                            _selectedProductName = product['produitName'];
                             _isProductDropdownOpen = false;
                           });
                         },
@@ -429,14 +542,13 @@ class _StockExitFormState extends State<_StockExitForm> {
     );
   }
 
-
   @override
   void dispose() {
     _quantityController.dispose();
     _motifController.dispose();
     _receiverNameController.dispose();
-    _phoneController.dispose();
     _functionController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 }

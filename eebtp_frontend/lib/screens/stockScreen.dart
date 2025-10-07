@@ -21,19 +21,16 @@ class StockPage extends StatefulWidget {
 }
 
 class _StockPageState extends State<StockPage> {
-  int _stockTabIndex = 0; // 0: Stock, 1: Entrée, 2: Sortie
-  int _entreeSubTabIndex = 0; // 0: Livraison, 1: Retour
+  int _stockTabIndex = 0;
+  int _entreeSubTabIndex = 0;
 
-  // Services
   late StockService _stockService;
   late MouvementsService _mouvementsService;
 
-  // Listes en cache
   List<StockItem> _stockItems = [];
   List<Entree> _entrees = [];
   List<Sortie> _sorties = [];
 
-  // Cache des articles pour éviter les appels répétés
   Map<int, ArticleStock> _articlesCache = {};
 
   bool _isLoading = false;
@@ -51,7 +48,6 @@ class _StockPageState extends State<StockPage> {
     final storeId = context.read<AuthProvider>().storeId;
 
     if (token != null) {
-      // ✅ Passe le token aux deux services
       _stockService = StockService(token: token);
       _mouvementsService = MouvementsService(token: token);
       _loadAllData(storeId);
@@ -64,7 +60,6 @@ class _StockPageState extends State<StockPage> {
     setState(() => _isLoading = true);
 
     try {
-      // Chargement en parallèle
       final futures = await Future.wait([
         _loadStockItems(storeId),
         _loadEntrees(storeId),
@@ -78,7 +73,6 @@ class _StockPageState extends State<StockPage> {
         _isLoading = false;
       });
 
-      // Charger les articles pour les stock items
       await _loadArticlesForStockItems();
     } catch (e) {
       setState(() => _isLoading = false);
@@ -87,7 +81,6 @@ class _StockPageState extends State<StockPage> {
   }
 
   Future<List<StockItem>> _loadStockItems(int storeId) async {
-
     try {
       return await _stockService.getStockItemsByMagasin(storeId);
     } catch (e) {
@@ -132,33 +125,29 @@ class _StockPageState extends State<StockPage> {
     }
   }
 
-  // Charge les informations des articles pour les stock items
-Future<void> _loadArticlesForStockItems() async {
-  for (final stockItem in _stockItems) {
-    if (!_articlesCache.containsKey(stockItem.produit)) {
-      try {
-        final article = await _stockService.getArticleDetail(stockItem.produit);
-        if (!mounted) return;   // <- AJOUT SECURITE monté/démonté
-        setState(() {
-          _articlesCache[stockItem.produit] = article;
-        });
-      } catch (e) {
-        if (!mounted) return;   // <- Pour être ultra-safe
-        print("Erreur chargement article ${stockItem.produit}: $e");
+  Future<void> _loadArticlesForStockItems() async {
+    for (final stockItem in _stockItems) {
+      if (!_articlesCache.containsKey(stockItem.produit)) {
+        try {
+          final article = await _stockService.getArticleDetail(stockItem.produit);
+          if (!mounted) return;
+          setState(() {
+            _articlesCache[stockItem.produit] = article;
+          });
+        } catch (e) {
+          if (!mounted) return;
+          print("Erreur chargement article ${stockItem.produit}: $e");
+        }
       }
     }
   }
-}
 
-
-  // Récupère l'article associé à un stock item
-  ArticleStock? _getArticleForStockItem(StockItem stockItem) {
-    return _articlesCache[stockItem.produit];
+  ArticleStock? _getArticleForStockItem(int produitId) {
+    return _articlesCache[produitId];
   }
 
   Future<void> _refreshData() async {
     final storeId = context.read<AuthProvider>().storeId;
-    // Vider le cache des articles
     _articlesCache.clear();
     await _loadAllData(storeId);
   }
@@ -181,6 +170,8 @@ Future<void> _loadArticlesForStockItems() async {
   Widget build(BuildContext context) {
     final storeId = context.watch<AuthProvider>().storeId;
     final token = context.watch<AuthProvider>().token;
+    final magasinName = _stockItems.isNotEmpty ? _stockItems[0].magasinName : null;
+
 
     if (token == null || storeId == null) {
       return NavContainer(
@@ -211,7 +202,6 @@ Future<void> _loadArticlesForStockItems() async {
         onRefresh: _refreshData,
         child: Column(
           children: [
-            // HEADER
             Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
@@ -240,14 +230,16 @@ Future<void> _loadArticlesForStockItems() async {
                                   color: Colors.white,
                                 ),
                               ),
-                              Text(
-                                "Magasin ID: $storeId",
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w400,
-                                  color: Colors.white.withOpacity(0.8),
-                                ),
-                              ),
+
+                            Text(
+  magasinName != null ? magasinName : "Magasin",
+  style: GoogleFonts.montserrat(
+    fontSize: 12.sp,
+    fontWeight: FontWeight.w400,
+    color: Colors.white.withOpacity(0.8),
+  ),
+),
+
                             ],
                           ),
                           Row(
@@ -349,8 +341,6 @@ Future<void> _loadArticlesForStockItems() async {
                 ),
               ),
             ),
-
-            // CONTENU
             Expanded(
               child: Container(
                 color: const Color(0xFFF8F9FA),
@@ -531,29 +521,31 @@ Future<void> _loadArticlesForStockItems() async {
   }
 
   Widget _buildStockItemCard(StockItem stockItem) {
-    final quantiteActuelle = int.tryParse(stockItem.quantite) ?? 0;
-    final seuil = int.tryParse(stockItem.quantiteSeuil) ?? 0;
-    final isLowStock = quantiteActuelle <= seuil;
+    final quantiteActuelle = double.tryParse(stockItem.quantite) ?? 0.0;
+    final seuil = double.tryParse(stockItem.quantiteSeuil) ?? 0.0;
+    final isLowStock = quantiteActuelle <= seuil && seuil > 0;
 
-    final article = _getArticleForStockItem(stockItem);
+    final article = _getArticleForStockItem(stockItem.produit);
 
     return GestureDetector(
       onTap: () => _navigateToStockItemDetail(stockItem),
       child: Container(
         margin: EdgeInsets.only(bottom: 2.h),
         padding: EdgeInsets.all(4.w),
+        width: double.infinity,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(4.w),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 8,
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
               offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
               child: Column(
@@ -570,7 +562,7 @@ Future<void> _loadArticlesForStockItems() async {
                   ),
                   SizedBox(height: 0.5.h),
                   Text(
-                    "Type: ${article?.type ?? '-'}",
+                    "PRD-${stockItem.produit.toString().padLeft(3, '0')}-${stockItem.id.toString().padLeft(2, '0')}",
                     style: GoogleFonts.montserrat(
                       fontSize: 14.sp,
                       color: const Color.fromRGBO(147, 147, 147, 1),
@@ -579,37 +571,19 @@ Future<void> _loadArticlesForStockItems() async {
                   ),
                   SizedBox(height: 1.h),
                   Text(
-                    "Magasin: ${stockItem.magasinName ?? '#${stockItem.magasin}'}",
+                    article?.type ?? 'Matériel',
                     style: GoogleFonts.montserrat(
                       fontSize: 14.sp,
                       color: const Color.fromRGBO(147, 147, 147, 1),
-                      fontWeight: FontWeight.w400,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  Text(
-                    "Unité: ${article?.unite ?? '-'}",
-                    style: GoogleFonts.montserrat(
-                      fontSize: 14.sp,
-                      color: const Color.fromRGBO(147, 147, 147, 1),
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  if (stockItem.etat.isNotEmpty) ...[
-                    SizedBox(height: 0.5.h),
-                    Text(
-                      "État: ${stockItem.etat}",
-                      style: GoogleFonts.montserrat(
-                        fontSize: 13.sp,
-                        color: const Color(0xFF388E3C),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
             SizedBox(width: 3.w),
             Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Container(
@@ -622,7 +596,7 @@ Future<void> _loadArticlesForStockItems() async {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        isLowStock ? "Faible" : "OK",
+                        "Seuil",
                         style: GoogleFonts.montserrat(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
@@ -631,7 +605,7 @@ Future<void> _loadArticlesForStockItems() async {
                       ),
                       SizedBox(width: 1.w),
                       Icon(
-                        isLowStock ? Icons.warning : Icons.check_circle,
+                        isLowStock ? Icons.south_east : Icons.north_east,
                         color: isLowStock ? const Color(0xFFD32F2F) : const Color(0xFF388E3C),
                         size: 16.sp,
                       ),
@@ -639,207 +613,16 @@ Future<void> _loadArticlesForStockItems() async {
                   ),
                 ),
                 SizedBox(height: 2.h),
-                Text(
-                  "Quantité: ${stockItem.quantite}",
-                  style: GoogleFonts.montserrat(
-                    fontSize: 14.sp,
-                    color: const Color.fromRGBO(147, 147, 147, 1),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  "Seuil: ${stockItem.quantiteSeuil}",
-                  style: GoogleFonts.montserrat(
-                    fontSize: 13.sp,
-                    color: isLowStock ? const Color(0xFFD32F2F) : const Color.fromRGBO(147, 147, 147, 1),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEntryCard(Entree entry) {
-    return GestureDetector(
-      onTap: () => _navigateToEntryDetail(entry),
-      child: Container(
-        margin: EdgeInsets.only(bottom: 2.h),
-        padding: EdgeInsets.all(4.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(4.w),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "${entry.stockItemName ?? 'StockItem #${entry.stockItem}'}".toUpperCase(),
+                SizedBox(
+                  width: 120,
+                  child: Text(
+                    "Quantité actuelle: ${quantiteActuelle.toStringAsFixed(2)} ${article?.unite ?? 't'}",
+                    textAlign: TextAlign.right,
                     style: GoogleFonts.montserrat(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                  SizedBox(height: 0.5.h),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
-                    decoration: BoxDecoration(
-                      color: entry.type == "Livraison" ? const Color(0xFFE3F2FD) : const Color(0xFFFFE0B2),
-                      borderRadius: BorderRadius.circular(3.w),
-                    ),
-                    child: Text(
-                      entry.type.toUpperCase(),
-                      style: GoogleFonts.montserrat(
-                        fontSize: 12.sp,
-                        color: entry.type == "Livraison" ? const Color(0xFF1976D2) : const Color(0xFFE65100),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 1.h),
-                  Text(
-                    "Déposant: ${entry.nomDeposant ?? '-'}",
-                    style: GoogleFonts.montserrat(
-                      fontSize: 14.sp,
-                      color: const Color.fromRGBO(147, 147, 147, 1),
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  Text(
-                    "Fonction: ${entry.fonctionDeposant ?? '-'}",
-                    style: GoogleFonts.montserrat(
-                      fontSize: 13.sp,
-                      color: const Color.fromRGBO(147, 147, 147, 1),
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(width: 3.w),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  "Quantité: ${entry.quantiteM ?? '-'}",
-                  style: GoogleFonts.montserrat(
-                    fontSize: 14.sp,
-                    color: const Color(0xFF388E3C),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 1.h),
-                Text(
-                  "Le: ${_formatShortDate(entry.dateCreation)}",
-                  style: GoogleFonts.montserrat(
-                    fontSize: 12.sp,
-                    color: const Color.fromRGBO(147, 147, 147, 1),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildExitCard(Sortie exit) {
-    return GestureDetector(
-      onTap: () => _navigateToExitDetail(exit),
-      child: Container(
-        margin: EdgeInsets.only(bottom: 2.h),
-        padding: EdgeInsets.all(4.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(4.w),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "${exit.stockItemName ?? 'StockItem #${exit.stockItem}'}".toUpperCase(),
-                    style: GoogleFonts.montserrat(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                  SizedBox(height: 0.5.h),
-                  Text(
-                    "Objet: ${exit.objet ?? '-'}",
-                    style: GoogleFonts.montserrat(
-                      fontSize: 14.sp,
+                      fontSize: 12.sp,
                       color: const Color.fromRGBO(147, 147, 147, 1),
                       fontWeight: FontWeight.w500,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 1.h),
-                  Text(
-                    "Receveur: ${exit.nomReceveur ?? '-'}",
-                    style: GoogleFonts.montserrat(
-                      fontSize: 14.sp,
-                      color: const Color.fromRGBO(147, 147, 147, 1),
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  Text(
-                    "Fonction: ${exit.fonctionReceveur ?? '-'}",
-                    style: GoogleFonts.montserrat(
-                      fontSize: 13.sp,
-                      color: const Color.fromRGBO(147, 147, 147, 1),
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(width: 3.w),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  "Quantité: ${exit.quantiteM ?? '-'}",
-                  style: GoogleFonts.montserrat(
-                    fontSize: 14.sp,
-                    color: const Color(0xFFD32F2F),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 1.h),
-                Text(
-                  "Le: ${_formatShortDate(exit.dateCreation)}",
-                  style: GoogleFonts.montserrat(
-                    fontSize: 12.sp,
-                    color: const Color.fromRGBO(147, 147, 147, 1),
                   ),
                 ),
               ],
@@ -849,6 +632,191 @@ Future<void> _loadArticlesForStockItems() async {
       ),
     );
   }
+
+ Widget _buildEntryCard(Entree entry) {
+  final article = _getArticleForStockItem(entry.stockItem);
+  String typeArticle = article?.type ?? "";
+  String uniteArticle = article?.unite ?? "";
+
+  String typeLabel = entry.type.toLowerCase() == "livraison"
+      ? "Livré le"
+      : (entry.type.toLowerCase() == "retour" ? "Retourné le" : "Entrée le");
+  String dateAffiche = _formatShortDateHeure(entry.dateCreation);
+
+  return GestureDetector(
+    onTap: () => _navigateToEntryDetail(entry),
+    child: Container(
+      margin: EdgeInsets.only(bottom: 2.5.h),
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 3.h),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4.w),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "${entry.stockItemName ?? 'StockItem #${entry.stockItem}'}".toUpperCase(),
+                  style: GoogleFonts.montserrat(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                SizedBox(height: 0.5.h),
+                Text(
+                  typeArticle,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 13.sp,
+                    color: Colors.grey[500],
+                  ),
+                ),
+                SizedBox(height: 2.2.h),
+                Text(
+                  "PRD-${entry.stockItem.toString().padLeft(3, '0')}", // remplace par id concat? selon ton besoin
+                  style: GoogleFonts.montserrat(
+                    fontSize: 13.sp,
+                    color: const Color.fromRGBO(147, 147, 147, 1),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: 3.w),
+          // Nouvelle disposition: date en haut, quantité en bas
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                "$typeLabel : $dateAffiche",
+                style: GoogleFonts.montserrat(
+                  fontSize: 13.sp,
+                  color: const Color.fromRGBO(147, 147, 147, 1),
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.right,
+              ),
+              SizedBox(height: 1.5.h),
+              Text(
+                "Quantité : ${entry.quantiteM ?? '-'} $uniteArticle",
+                style: GoogleFonts.montserrat(
+                  fontSize: 15.sp,
+                  color: const Color.fromARGB(255, 18, 18, 18),
+                  fontWeight: FontWeight.w700,
+                ),
+                textAlign: TextAlign.right,
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+ Widget _buildExitCard(Sortie exit) {
+  final article = _getArticleForStockItem(exit.stockItem);
+  String typeArticle = article?.type ?? "";
+  String uniteArticle = article?.unite ?? "";
+  String dateAffiche = _formatShortDateHeure(exit.dateCreation);
+
+  return GestureDetector(
+    onTap: () => _navigateToExitDetail(exit),
+    child: Container(
+      margin: EdgeInsets.only(bottom: 2.5.h),
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 3.h),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4.w),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "${exit.stockItemName ?? 'StockItem #${exit.stockItem}'}".toUpperCase(),
+                  style: GoogleFonts.montserrat(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                SizedBox(height: 0.5.h),
+                Text(
+                  typeArticle,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 13.sp,
+                    color: Colors.grey[500],
+                  ),
+                ),
+                SizedBox(height: 2.2.h),
+                Text(
+                  "PRD-${exit.stockItem.toString().padLeft(3, '0')}",
+                  style: GoogleFonts.montserrat(
+                    fontSize: 13.sp,
+                    color: const Color.fromRGBO(147, 147, 147, 1),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: 3.w),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                "Sortie le : $dateAffiche",
+                style: GoogleFonts.montserrat(
+                  fontSize: 13.sp,
+                  color: const Color.fromRGBO(147, 147, 147, 1),
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.right,
+              ),
+              SizedBox(height: 1.5.h),
+              Text(
+                "Quantité : ${exit.quantiteM ?? '-'} $uniteArticle",
+                style: GoogleFonts.montserrat(
+                  fontSize: 15.sp,
+                  color: const Color.fromARGB(255, 18, 18, 18),
+                  fontWeight: FontWeight.w700,
+                ),
+                textAlign: TextAlign.right,
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
   String _formatShortDate(String? dateString) {
     if (dateString == null || dateString.isEmpty) return "-";
@@ -857,6 +825,18 @@ Future<void> _loadArticlesForStockItems() async {
       return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year.toString().substring(2)}";
     } catch (e) {
       return dateString.split(' ').first;
+    }
+  }
+
+  String _formatShortDateHeure(String? dateString) {
+    if (dateString == null || dateString.isEmpty) return "-";
+    try {
+      final date = DateTime.parse(dateString);
+      final h = date.hour.toString().padLeft(2, '0');
+      final min = date.minute.toString().padLeft(2, '0');
+      return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year.toString()} à $h:$min";
+    } catch (e) {
+      return dateString;
     }
   }
 

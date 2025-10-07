@@ -23,6 +23,12 @@ class MouvementsService {
       throw Exception('createEntree error: status ${response.statusCode} - ${response.body}');
     }
   }
+  String _formatPhone(String phone) {
+    if (phone.startsWith('+')) {
+      return phone.replaceFirst('+', '00');
+    }
+    return phone;
+  }
 
   // 2. GET /Mouvements/entree-detail/{id}
   Future<http.Response> getEntreeDetail(String id) async {

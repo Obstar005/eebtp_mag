@@ -6,7 +6,7 @@ import 'package:eebtp_frontend/widgets/nav.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
-import 'package:provider/provider.dart'; // Pour accès au token
+import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 
 class ProductDetailPage extends StatefulWidget {
@@ -34,15 +34,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       isError = false;
     });
     try {
-      // Récupère le token depuis le Provider
       final token = context.read<AuthProvider>().token;
-      final fetched =
-          await StockService(token: token).getArticleDetail(widget.stockItem.produit);
+      final fetched = await StockService(token: token)
+          .getArticleDetail(widget.stockItem.produit);
+      if (!mounted) return;
       setState(() {
         article = fetched;
         isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         isError = true;
         isLoading = false;
@@ -52,9 +53,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final quantiteActuelle = int.tryParse(widget.stockItem.quantite) ?? 0;
-    final seuil = int.tryParse(widget.stockItem.quantiteSeuil) ?? 0;
-    final isLowStock = quantiteActuelle <= seuil;
+    // Utilise des doubles pour gérer "40.00" etc.
+    final quantiteActuelle = double.tryParse(widget.stockItem.quantite) ?? 0.0;
+    final seuil = double.tryParse(widget.stockItem.quantiteSeuil) ?? 0.0;
+    final isLowStock = (quantiteActuelle <= seuil) && seuil > 0;
 
     return NavContainer(
       initialIndex: 1,
@@ -68,30 +70,41 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       Icon(Icons.warning_amber_rounded,
                           color: Colors.red, size: 40),
                       SizedBox(height: 2.h),
-                      Text('Erreur lors du chargement de l\'article.',
-                          style: GoogleFonts.montserrat(
-                              fontSize: 16, color: Colors.red)),
+                      Text(
+                        'Erreur lors du chargement de l\'article.',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 16,
+                          color: Colors.red,
+                        ),
+                      ),
                       SizedBox(height: 2.h),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue),
+                          backgroundColor: Colors.blue,
+                        ),
                         onPressed: _loadArticle,
                         child: Text('Réessayer'),
                       ),
                     ],
                   ),
                 )
-              : _buildContent(context, isLowStock),
+              : _buildContent(context, quantiteActuelle, seuil, isLowStock),
     );
   }
 
-  Widget _buildContent(BuildContext context, bool isLowStock) {
+  Widget _buildContent(
+    BuildContext context,
+    double quantiteActuelle,
+    double seuil,
+    bool isLowStock,
+  ) {
     final String designation =
         article?.designation ?? widget.stockItem.produitName ?? "Produit #${widget.stockItem.produit}";
     final String type = article?.type ?? "-";
     final String unite = article?.unite ?? "-";
     final String code = "ID Article : ${article?.id ?? widget.stockItem.produit}";
-    final String magasin = widget.stockItem.magasinName ?? "Magasin #${widget.stockItem.magasin}";
+    final String magasin =
+        widget.stockItem.magasinName ?? "Magasin #${widget.stockItem.magasin}";
 
     return Column(
       children: [
@@ -115,8 +128,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         color: Colors.white,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.arrow_back_ios_new,
-                          size: 5.w, color: Color(0xFF0A84FF)),
+                      child: Icon(
+                        Icons.arrow_back_ios_new,
+                        size: 5.w,
+                        color: Color(0xFF0A84FF),
+                      ),
                     ),
                   ),
                   Text(
@@ -127,7 +143,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       color: Colors.white,
                     ),
                   ),
-                  Container(width: 10.w), // pour alignement
+                  Container(width: 10.w),
                 ],
               ),
             ),
@@ -143,7 +159,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Image générique ou vignette produit
+                  // Image/vignette
                   Container(
                     height: 30.h,
                     width: double.infinity,
@@ -152,12 +168,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       borderRadius: BorderRadius.circular(4.w),
                     ),
                     child: Center(
-                      child: Icon(Icons.inventory_2,
-                          size: 20.w, color: Colors.grey[400]),
+                      child: Icon(
+                        Icons.inventory_2,
+                        size: 20.w,
+                        color: Colors.grey[400],
+                      ),
                     ),
                   ),
                   SizedBox(height: 3.h),
-                  // Ligne nom + code + badge stock
+
+                  // Ligne nom + code + badge "Seuil"
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -165,32 +185,59 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(designation,
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 22.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.black,
-                                  letterSpacing: 0.5,
-                                )),
+                            Text(
+                              designation,
+                              style: GoogleFonts.montserrat(
+                                fontSize: 22.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.black,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
                             SizedBox(height: 1.h),
-                            Text(code,
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 15.sp,
-                                  color: Colors.grey[600],
-                                  fontWeight: FontWeight.w500,
-                                )),
-                            Text(magasin,
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 13.sp,
-                                  color: Colors.blue[300],
-                                  fontWeight: FontWeight.w500,
-                                )),
+                            // Code format PRD-xxx-xx + type + ID + magasin
+                            Text(
+                              "PRD-${widget.stockItem.produit.toString().padLeft(3, '0')}-${widget.stockItem.id.toString().padLeft(2, '0')}",
+                              style: GoogleFonts.montserrat(
+                                fontSize: 14.sp,
+                                color: const Color.fromRGBO(147, 147, 147, 1),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            SizedBox(height: 1.h),
+                            Text(
+                              type,
+                              style: GoogleFonts.montserrat(
+                                fontSize: 14.sp,
+                                color: Colors.grey[600],
+                                height: 1.5,
+                              ),
+                            ),
+                            SizedBox(height: 0.5.h),
+                         /*    Text(
+                              code,
+                              style: GoogleFonts.montserrat(
+                                fontSize: 15.sp,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ), */
+                            Text(
+                              magasin,
+                              style: GoogleFonts.montserrat(
+                                fontSize: 13.sp,
+                                color: Colors.blue[300],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ],
                         ),
                       ),
                       Container(
                         padding: EdgeInsets.symmetric(
-                            horizontal: 4.w, vertical: 1.2.h),
+                          horizontal: 4.w,
+                          vertical: 1.2.h,
+                        ),
                         decoration: BoxDecoration(
                           color: isLowStock
                               ? const Color(0xFFFFE5E5)
@@ -201,7 +248,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              isLowStock ? "Faible" : "OK",
+                              "Seuil",
                               style: GoogleFonts.montserrat(
                                 fontSize: 13.sp,
                                 fontWeight: FontWeight.w600,
@@ -212,9 +259,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             ),
                             SizedBox(width: 1.w),
                             Icon(
-                              isLowStock
-                                  ? Icons.warning_amber
-                                  : Icons.check_circle,
+                              isLowStock ? Icons.south_east : Icons.north_east,
                               color: isLowStock
                                   ? Colors.red
                                   : const Color(0xFF34C759),
@@ -226,21 +271,24 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     ],
                   ),
                   SizedBox(height: 3.h),
+
                   // Infos principales
                   Row(
                     children: [
                       Expanded(
                         child: _buildInfoCard(
-                            icon: Icons.label_outline,
-                            title: "Type",
-                            value: type),
+                          icon: Icons.label_outline,
+                          title: "Type",
+                          value: type,
+                        ),
                       ),
                       SizedBox(width: 3.w),
                       Expanded(
                         child: _buildInfoCard(
-                            icon: Icons.shopping_cart_outlined,
-                            title: "Unité",
-                            value: unite),
+                          icon: Icons.shopping_cart_outlined,
+                          title: "Unité",
+                          value: unite,
+                        ),
                       ),
                       SizedBox(width: 3.w),
                       Expanded(
@@ -253,6 +301,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     ],
                   ),
                   SizedBox(height: 2.5.h),
+
                   // Quantité et seuil
                   Container(
                     width: double.infinity,
@@ -269,82 +318,72 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             color: Colors.white,
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.layers_outlined,
-                              color: Colors.grey[700], size: 6.w),
+                          child: Icon(
+                            Icons.layers_outlined,
+                            color: Colors.grey[700],
+                            size: 6.w,
+                          ),
                         ),
                         SizedBox(width: 3.w),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Quantité actuelle",
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 13.sp,
-                                  color: const Color.fromARGB(255, 53, 53, 53),
-                                )),
+                            Text(
+                              "Quantité actuelle",
+                              style: GoogleFonts.montserrat(
+                                fontSize: 13.sp,
+                                color:
+                                    const Color.fromARGB(255, 53, 53, 53),
+                              ),
+                            ),
                             SizedBox(height: 0.3.h),
-                            Text("${widget.stockItem.quantite} $unite",
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.black,
-                                )),
-                            Text("Seuil : ${widget.stockItem.quantiteSeuil} $unite",
-                                style: GoogleFonts.montserrat(
-                                    fontSize: 12.sp,
-                                    color: Colors.deepOrange,
-                                    fontWeight: FontWeight.w500)),
+                            Text(
+                              "${quantiteActuelle.toStringAsFixed(2)} $unite",
+                              style: GoogleFonts.montserrat(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.black,
+                              ),
+                            ),
+                            Text(
+                              "Seuil : ${seuil.toStringAsFixed(2)} $unite",
+                              style: GoogleFonts.montserrat(
+                                fontSize: 12.sp,
+                                color: Colors.deepOrange,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ],
                         ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 3.h),
-                  // Description / Etat
-                  Text("Description",
-                      style: GoogleFonts.montserrat(
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      )),
-                  SizedBox(height: 1.5.h),
-                  Text(article?.type ?? '-',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 14.sp,
-                        color: Colors.grey[600],
-                        height: 1.5,
-                      )),
-                  if (widget.stockItem.etat.isNotEmpty) ...[
-                    SizedBox(height: 1.h),
-                    Text("État : ${widget.stockItem.etat}",
-                        style: GoogleFonts.montserrat(
-                            fontSize: 14.sp,
-                            color: Colors.blue,
-                            fontWeight: FontWeight.w500)),
-                  ],
                   SizedBox(height: 4.h),
+
                   if (isLowStock)
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                          onPressed: () {
-                            // signale seuil
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFF3B30),
-                            padding: EdgeInsets.symmetric(vertical: 2.h),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6.w),
-                            ),
-                            elevation: 0,
+                        onPressed: () {
+                          // signale seuil
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF3B30),
+                          padding: EdgeInsets.symmetric(vertical: 2.h),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6.w),
                           ),
-                          child: Text(
-                            "Signaler le seuil",
-                            style: GoogleFonts.montserrat(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          )),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          "Signaler le seuil",
+                          style: GoogleFonts.montserrat(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
                     ),
                   SizedBox(height: 10.h),
                 ],
@@ -356,7 +395,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
   }
 
-  Widget _buildInfoCard({required IconData icon, required String title, required String value}) {
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
     return Container(
       padding: EdgeInsets.all(3.5.w),
       decoration: BoxDecoration(

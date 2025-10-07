@@ -1,3 +1,4 @@
+import 'package:eebtp_frontend/screens/returnScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:provider/provider.dart';
@@ -128,7 +129,7 @@ class MyApp extends StatelessWidget {
             '/suivi_demande': (context) => RequestsTrackingScreen(),
             '/entry': (context) => const StockEntryScreen(),
             '/exit': (context) => const StockExitScreen(),
-            '/refresh': (context) => const StockEntryScreen(),
+            '/refresh': (context) => const StockReturnScreen(),
             '/store_selection': (context) => StoreSelectionPage(),
             '/notifications': (context) => const NotificationScreen(),
           },
