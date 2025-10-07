@@ -46,6 +46,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'mouvements',
+    'demandes',
+    'notifications',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -143,7 +146,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 APPEND_SLASH=False
 
-# Rest framework settings
+# Rest framework settings 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
@@ -157,4 +160,14 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+}
+# Channels
+ASGI_APPLICATION = 'eebtp_mag.asgi.application'
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
 }

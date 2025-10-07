@@ -106,11 +106,28 @@ def create_entree(request):
     user = request.user
     data = request.data.copy()
     quantity = data.get('quantite_m', 0)
+    type = data.get('type', '')
 
     try:
         stock_item = StockItem.objects.get(pk=data.get('stock_item'))
     except StockItem.DoesNotExist:
         return Response({'error': 'Article introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+    if type == 'Retour' and not data.get('source') and not data.get('fonction_deposant') and not data.get('tel_deposant') and not data.get('nom_deposant'):
+        return Response({'error': 'Ces champs sont obligatoires pour déclarer un retour de stock'}, status=status.HTTP_400_BAD_REQUEST)
+    if type == 'Retour':
+        try:
+            sortie = Sortie.objects.get(pk=data.get('source'))
+        except Sortie.DoesNotExist:
+            return Response({'error': 'Sortie source introuvable'}, status=status.HTTP_404_NOT_FOUND)
+        #Verifions si le produit de la sortie source correspond à celui de l'entrée
+        if sortie.stock_item != stock_item:
+            return Response({'error': 'L\'article de la sortie source ne correspond pas à celui de l\'entrée'}, status=status.HTTP_400_BAD_REQUEST) 
+        if sortie.quantite_m < int(quantity):
+            return Response({'error': f'Quantité de retour dépasse la quantité de la sortie source pour l\'article {sortie.stock_item}'}, status=status.HTTP_400_BAD_REQUEST)
+        
+    if type  == 'Livraison' and (not data.get('societe') or not data.get('tel_societe') or not data.get('nom_livreur') or not data.get('tel_livreur')):
+        return Response({'error': 'Ces champs sont obligatoires pour déclarer une livraison de stock'}, status=status.HTTP_400_BAD_REQUEST)
     
     stock_item.quantite += int(quantity)
     stock_item.save()

@@ -24,6 +24,7 @@ class Entree(models.Model):
     type = models.CharField(max_length=50, choices=[('Livraison', 'Livraison'), ('Retour', 'Retour')])
     stock_item = models.ForeignKey(StockItem, on_delete=models.CASCADE)
     quantite_m = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
     source = models.ForeignKey(Sortie, on_delete=models.SET_NULL, null=True, blank=True)
     nom_deposant = models.CharField(max_length=100, null=True, blank=True)
     tel_deposant = models.CharField(max_length=20, null=True, blank=True)
