@@ -8,9 +8,7 @@ class GetStartedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Hauteur de la bosse (20% de la hauteur du conteneur)
     final double bumpHeight = 11.h;
-    // Hauteur totale du conteneur bleu
     final double containerHeight = 33.h;
 
     return Scaffold(
@@ -23,35 +21,33 @@ class GetStartedScreen extends StatelessWidget {
             child: Image.asset('assets/background.jpg', fit: BoxFit.cover),
           ),
 
-          // Bannière blanche avec logo en haut à droite
+          // Bannière blanche arrondie en haut à droite avec logo centré
           Positioned(
-            top: -6
-                .h, // Converti à partir de -50 pixels (environ 6% de la hauteur d'écran)
-            right: -6.h, // Converti à partir de -50 pixels
+            top: -6.h,
+            right: -6.h,
             child: Container(
               height: 20.h,
               width: 60.w,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30.h), // Responsive courbure
+                  bottomLeft: Radius.circular(30.h),
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black12,
                     blurRadius: 6.0,
-                    offset: Offset(0, 3),
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
               padding: EdgeInsets.only(
                 left: 8.w,
-                right: 17.w,
+                right: 6.w,
                 bottom: 1.5.h,
                 top: 5.h,
               ),
-              child: Align(
-                alignment: Alignment.centerRight,
+              child: Center(
                 child: Image.asset(
                   'assets/logo_eebtp.png',
                   fit: BoxFit.contain,
@@ -62,84 +58,94 @@ class GetStartedScreen extends StatelessWidget {
             ),
           ),
 
-          // Container bas avec la parabole
+          // Conteneur bas bleu avec parabole
           Positioned(
             bottom: 0,
             left: 0,
             child: SizedBox(
-              height:
-                  containerHeight + bumpHeight, // Ajoute la hauteur de la bosse
+              height: containerHeight + bumpHeight,
               width: 100.w,
               child: Stack(
                 children: [
-                  // Partie bleue avec la parabole
                   ClipPath(
                     clipper: TopParabolaClipper(bump: bumpHeight),
                     child: Container(
                       width: 100.w,
                       height: containerHeight + bumpHeight,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [
-                            Color(0xFF0649AD), // #0649AD,
-                            Color(0xFF7197FB),
-                          ],
+                          colors: [Color(0xFF0649AD), Color(0xFF7197FB)],
                         ),
                       ),
                     ),
                   ),
-
-                  // Contenu positionné sous la parabole
                   Positioned(
-                    top: bumpHeight*0.3,
+                    top: bumpHeight * 0.3,
                     left: 0,
                     right: 0,
                     bottom: 0,
                     child: Padding(
                       padding: EdgeInsets.only(
-                        top: 5.h,
-                        left: 14.w,
+                        top: 3.h,
+                        left: 10.w,
                         right: 6.w,
-                        bottom: 5.h,
+                        bottom: 3.h,
                       ),
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'BIENVENUE SUR\nEEBTP_MAG',
-                              style: GoogleFonts.inter(
-                                fontSize: 22.sp,
-                                fontWeight: FontWeight.w900,
-                                color: const Color.fromRGBO(255, 255, 255, 1),
-                                fontStyle: FontStyle.italic,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final titleFont = constraints.maxHeight < 220 ? 14.sp : 22.sp;
+                          final descFont  = constraints.maxHeight < 220 ? 10.sp : 16.sp;
+                          final space1 = constraints.maxHeight < 220 ? 0.2.h : 1.h;
+                          final space2 = constraints.maxHeight < 220 ? 3.h : 8.h;
+                          
+                          return Column(
+                            mainAxisSize: MainAxisSize.max,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'BIENVENUE SUR\nEEBTP_MAG',
+                                style: GoogleFonts.inter(
+                                  fontSize: titleFont,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                            SizedBox(height: 1.h),
-                            Text(
-                              'Votre plateforme de suivi en temps réel des stocks.',
-                              style: GoogleFonts.inter(
-                                fontSize: 16.sp,
-                                color: Colors.white70,
+                              SizedBox(height: space1),
+                              Text(
+                                'Votre plateforme de suivi en temps réel des stocks.',
+                                style: GoogleFonts.inter(
+                                  fontSize: descFont,
+                                  color: Colors.white70,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                            //Spacer(),
-                            SizedBox(height: 8.h),
-                            Center(
-                              child: CustomElevatedButton(
-                                text: 'Commencer ici',
-                                backgroundColor: Colors.white,
-                                textColor: const Color(0xFF007AFF),
-                                onPressed: () =>
-                                    Navigator.pushNamed(context, '/login'),
-                                width: 80.w, // Largeur augmentée (80% de l'écran)
+                              Spacer(),
+                              Spacer(),
+                              Center(
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    minWidth: 40.0,
+                                    maxWidth: constraints.maxWidth,
+                                  ),
+                                  child: CustomElevatedButton(
+                                    text: 'Commencer ici',
+                                    backgroundColor: Colors.white,
+                                    textColor: const Color(0xFF007AFF),
+                                    onPressed: () => Navigator.pushNamed(context, '/login'),
+                                    width: constraints.maxWidth > 400 ? 80.w : constraints.maxWidth,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
+                              SizedBox(height: space2),
+                            ],
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -153,7 +159,6 @@ class GetStartedScreen extends StatelessWidget {
   }
 }
 
-/// Clipper qui dessine le bump (parabole) au-dessus du container
 class TopParabolaClipper extends CustomClipper<Path> {
   final double bump;
   TopParabolaClipper({required this.bump});
@@ -162,25 +167,15 @@ class TopParabolaClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     final path = Path();
 
-    // 1) on commence à x=0, y=bump
     path.moveTo(0, bump);
-
-    // 2) on dessine la parabole vers -bump (crête) avant de redescendre à y=bump
     path.quadraticBezierTo(
-      size.width * 0.4, // contrôle x (milieu)
-      -bump *
-          0.8, // contrôle y (crête au-dessus - réduit pour un effet plus doux)
-      size.width, // fin à droite
+      size.width * 0.4,
+      -bump * 0.8,
+      size.width,
       bump,
     );
-
-    // 3) on descend au bas du container
     path.lineTo(size.width, size.height);
-
-    // 4) on revient à gauche
     path.lineTo(0, size.height);
-
-    // 5) fermeture
     path.close();
 
     return path;

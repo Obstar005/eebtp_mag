@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:async';
 
 class SplashScreen extends StatefulWidget {
@@ -46,18 +47,30 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    // Taille responsive selon l'écran, maximum 30% de la hauteur
+    final double logoSize = (20.h < 30.w) ? 20.h : 30.w; 
+
     return Scaffold(
-      backgroundColor: const Color.fromRGBO(255, 255, 255, 1),
+      backgroundColor: Colors.white,
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: Center(
           child: ScaleTransition(
             scale: _scaleAnimation,
-            child: Image.asset(
-              'assets/logo_eebtp.png',
-              width: 20.h,
-              height: 20.h,
-              filterQuality: FilterQuality.high,
+            child: Container(
+              constraints: BoxConstraints(
+                maxWidth: 40.w,
+                maxHeight: 40.h,
+                minWidth: 12.w,
+                minHeight: 12.h,
+              ),
+              child: SvgPicture.asset(
+                'assets/logo_eebtp.svg',
+                width: logoSize,
+                height: logoSize,
+                fit: BoxFit.contain,
+                semanticsLabel: "Logo EEBTP",
+              ),
             ),
           ),
         ),
@@ -65,4 +78,3 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
   }
 }
-

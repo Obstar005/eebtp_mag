@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
-/// Container qui gère le FAB + la BottomNavigation
 class NavContainer extends StatefulWidget {
   final int initialIndex;
   final Widget body;
@@ -25,9 +25,8 @@ class _NavContainerState extends State<NavContainer>
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
-
-    _animationController =
-        AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+    _animationController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 300));
   }
 
   @override
@@ -75,8 +74,7 @@ class _NavContainerState extends State<NavContainer>
         Navigator.pushReplacementNamed(context, '/demande');
         break;
       case 3:
-        Navigator.pushReplacementNamed(   context,
-                      '/profile',);
+        Navigator.pushReplacementNamed(context, '/profile');
         break;
     }
   }
@@ -100,7 +98,7 @@ class _NavContainerState extends State<NavContainer>
   }
 }
 
-/// ---------------- FAB Amélioré ----------------
+/// ---------------- FAB Amélioré SVG ----------------
 class ImprovedFAB extends StatelessWidget {
   final bool isExpanded;
   final VoidCallback onToggle;
@@ -115,6 +113,8 @@ class ImprovedFAB extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double fabSize = MediaQuery.of(context).size.width * 0.16;
+    final double iconSize = MediaQuery.of(context).size.width * 0.12;
     return SizedBox(
       width: 300,
       height: 170,
@@ -134,7 +134,12 @@ class ImprovedFAB extends StatelessWidget {
                 heroTag: "entry",
                 backgroundColor: const Color(0xFF007AFF),
                 onPressed: () => onSecondaryPressed('entry'),
-                child: const Icon(Icons.arrow_downward, color: Colors.white),
+                child: SvgPicture.asset(
+                  'assets/icons/entry.svg',  // remplace par l'icône désirée
+                  width: iconSize *0.5,
+                  height: iconSize *0.5,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
@@ -150,7 +155,12 @@ class ImprovedFAB extends StatelessWidget {
                 heroTag: "refresh",
                 backgroundColor: const Color(0xFF007AFF),
                 onPressed: () => onSecondaryPressed('refresh'),
-                child: const Icon(Icons.refresh, color: Colors.white),
+                child: SvgPicture.asset(
+                  'assets/icons/refresh.svg',
+                  width: iconSize *0.5,
+                  height: iconSize *0.5,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
@@ -167,40 +177,41 @@ class ImprovedFAB extends StatelessWidget {
                 heroTag: "exit",
                 backgroundColor: const Color(0xFF007AFF),
                 onPressed: () => onSecondaryPressed('exit'),
-                child: const Icon(Icons.arrow_upward, color: Colors.white),
+                child: SvgPicture.asset(
+                  'assets/icons/exit.svg',
+                  width: iconSize *0.5,
+                  height: iconSize *0.5,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
-               Positioned(
-            bottom: MediaQuery.of(context).size.height * 0.05, // légèrement au-dessus du creux
+          Positioned(
+            bottom: MediaQuery.of(context).size.height * 0.05,
             child: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.16, // responsive
-              height: MediaQuery.of(context).size.width * 0.16,
+              width: fabSize,
+              height: fabSize,
               child: FloatingActionButton(
                 heroTag: "main",
                 backgroundColor: const Color(0xFF007AFF),
                 onPressed: onToggle,
                 shape: const CircleBorder(),
-                child: AnimatedRotation(
-                  turns: isExpanded ? 0.125 : 0,
-                  duration: const Duration(milliseconds: 300),
-                  child: Icon(
-                    Icons.add,
-                    size: MediaQuery.of(context).size.width * 0.12, // icône responsive
-                    color: Colors.white,
-                  ),
+                child: SvgPicture.asset(
+                  'assets/icons/add.svg',
+                  width: iconSize,
+                  height: iconSize,
+                  color: Colors.white,
                 ),
               ),
             ),
           ),
-
         ],
       ),
     );
   }
 }
 
-/// ---------------- Bottom Nav Amélioré ----------------
+/// ---------------- Bottom Nav SVG ----------------
 class ImprovedBottomNavigation extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
@@ -215,22 +226,44 @@ class ImprovedBottomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double navHeight = MediaQuery.of(context).size.height * 0.085; // Responsive
+    final double iconSize = navHeight * 0.33;
     return SizedBox(
-      height: 70,
+      height: navHeight,
       child: Stack(
         children: [
           CustomPaint(
-            size: Size(MediaQuery.of(context).size.width, 70),
+            size: Size(MediaQuery.of(context).size.width, navHeight),
             painter: ImprovedBottomNavPainter(showFabIndicator: showFabIndicator),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(Icons.home_outlined, Icons.home, "Accueil", 0),
-              _buildNavItem(Icons.view_in_ar_outlined , Icons.view_in_ar, "Stock", 1),
+              _buildNavItem(
+                  'assets/icons/home.svg',
+                  'assets/icons/home-selected.svg',
+                  "Accueil",
+                  0,
+                  iconSize),
+              _buildNavItem(
+                  'assets/icons/box.svg',
+                  'assets/icons/box-selected.svg',
+                  "Stock",
+                  1,
+                  iconSize),
               const SizedBox(width: 60),
-              _buildNavItem(Icons.description_outlined, Icons.description, "Demande", 2),
-              _buildNavItem(Icons.person_outline, Icons.person, "Profil", 3),
+              _buildNavItem(
+                  'assets/icons/edit.svg',
+                  'assets/icons/edit-selected.svg',
+                  "Demande",
+                  2,
+                  iconSize),
+              _buildNavItem(
+                  'assets/icons/profile.svg',
+                  'assets/icons/profile-selected.svg',
+                  "Profil",
+                  3,
+                  iconSize),
             ],
           ),
         ],
@@ -238,17 +271,23 @@ class ImprovedBottomNavigation extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(IconData outlinedIcon, IconData filledIcon, String label, int index) {
+  Widget _buildNavItem(
+    String outlinedIconPath,
+    String filledIconPath,
+    String label,
+    int index,
+    double iconSize,
+  ) {
     bool isSelected = currentIndex == index;
-
     return GestureDetector(
       onTap: () => onTap(index),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            isSelected ? filledIcon : outlinedIcon,
-            size: 22,
+          SvgPicture.asset(
+            isSelected ? filledIconPath : outlinedIconPath,
+            width: iconSize,
+            height: iconSize,
             color: Colors.white,
           ),
           const SizedBox(height: 2),
@@ -293,15 +332,15 @@ class ImprovedBottomNavPainter extends CustomPainter {
       ..style = PaintingStyle.fill
       ..isAntiAlias = true;
 
-    final double fabRadius = size.width * 0.11; // plus large
-    final double notchRadius = fabRadius + 10;   // moins profond
+    final double fabRadius = size.width * 0.11;
+    final double notchRadius = fabRadius + 10;
     final double notchStartX = size.width / 2 - notchRadius;
     final double notchEndX = size.width / 2 + notchRadius;
     final double smoothFactor = notchRadius * 0.3;
 
     final path = Path();
 
-    path.moveTo(0, 0); // bord gauche droit
+    path.moveTo(0, 0);
     path.lineTo(notchStartX - smoothFactor, 0);
     path.cubicTo(
       notchStartX, 0,
@@ -318,7 +357,7 @@ class ImprovedBottomNavPainter extends CustomPainter {
       notchEndX, 0,
       notchEndX + smoothFactor, 0,
     );
-    path.lineTo(size.width, 0); // bord droit droit
+    path.lineTo(size.width, 0);
     path.lineTo(size.width, size.height);
     path.lineTo(0, size.height);
     path.close();

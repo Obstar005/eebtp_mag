@@ -9,6 +9,7 @@ class CustomInputField extends StatelessWidget {
   final VoidCallback? onToggleVisibility;
   final bool hasError;
   final String? errorText;
+  final double? fontSize; // change : accepte un double
 
   const CustomInputField({
     super.key,
@@ -18,10 +19,12 @@ class CustomInputField extends StatelessWidget {
     this.onToggleVisibility,
     this.hasError = false,
     this.errorText,
+    this.fontSize, // modif ici
   });
 
   @override
   Widget build(BuildContext context) {
+    final textFontSize = fontSize ?? 14.sp; // valeur par défaut si non fournie
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -33,7 +36,7 @@ class CustomInputField extends StatelessWidget {
             fillColor: const Color.fromARGB(255, 255, 255, 255),
             hintText: hintText,
             hintStyle: GoogleFonts.poppins(
-              fontSize: 14.sp,
+              fontSize: textFontSize,
               color: Colors.grey[600],
             ),
             border: OutlineInputBorder(
@@ -45,13 +48,13 @@ class CustomInputField extends StatelessWidget {
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(50),
               borderSide: BorderSide(
-                color: hasError ? Colors.red : Color.fromRGBO(226, 232, 240, 1),
+                color: hasError ? Colors.red : const Color.fromRGBO(226, 232, 240, 1),
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(50),
               borderSide: BorderSide(
-                color: hasError ? Colors.red :  Color.fromRGBO(226, 232, 240, 1),
+                color: hasError ? Colors.red : const Color.fromRGBO(226, 232, 240, 1),
                 width: 1.5,
               ),
             ),
