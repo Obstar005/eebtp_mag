@@ -25,9 +25,14 @@ class CustomUserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Pour gérer un mot de passe
         password = validated_data.pop("password", None)
-        user = CustomUser(**validated_data)
+        projets_data = validated_data.pop('projets', None)
+
+        user = CustomUser.objects.create(**validated_data)
         if password:
             user.set_password(password)
+        if projets_data:
+            user.projets.set(projets_data)
+
         user.save()
         return user
 
