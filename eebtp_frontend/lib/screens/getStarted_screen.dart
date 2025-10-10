@@ -12,148 +12,171 @@ class GetStartedScreen extends StatelessWidget {
     final double containerHeight = 33.h;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // Image de fond
-          SizedBox(
-            height: 100.h,
-            width: 100.w,
-            child: Image.asset('assets/background.jpg', fit: BoxFit.cover),
-          ),
+      body: SafeArea(
+        top: false,
+        child: Stack(
+          children: [
+            // Image de fond
+            SizedBox(
+              height: 100.h,
+              width: 100.w,
+              child: Image.asset(
+                'assets/background.jpg',
+                fit: BoxFit.cover,
+              ),
+            ),
 
-          // Bannière blanche arrondie en haut à droite avec logo centré
-          Positioned(
-            top: -6.h,
-            right: -6.h,
-            child: Container(
-              height: 20.h,
-              width: 60.w,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30.h),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 6.0,
-                    offset: const Offset(0, 3),
+            // Bannière blanche arrondie en haut à droite avec logo centré
+            Positioned(
+              top: -6.h,
+              right: -6.h,
+              child: Container(
+                height: 20.h,
+                width: 60.w,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(30.h),
                   ),
-                ],
-              ),
-              padding: EdgeInsets.only(
-                left: 8.w,
-                right: 6.w,
-                bottom: 1.5.h,
-                top: 5.h,
-              ),
-              child: Center(
-                child: Image.asset(
-                  'assets/logo_eebtp.png',
-                  fit: BoxFit.contain,
-                  height: 11.h,
-                  width: 11.h,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 6.0,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                padding: EdgeInsets.only(
+                  left: 8.w,
+                  right: 6.w,
+                  bottom: 1.5.h,
+                  top: 5.h,
+                ),
+                child: Center(
+                  child: Image.asset(
+                    'assets/logo_eebtp.png',
+                    fit: BoxFit.contain,
+                    height: 11.h,
+                    width: 11.h,
+                  ),
                 ),
               ),
             ),
-          ),
 
-          // Conteneur bas bleu avec parabole
-          Positioned(
-            bottom: 0,
-            left: 0,
-            child: SizedBox(
-              height: containerHeight + bumpHeight,
-              width: 100.w,
-              child: Stack(
-                children: [
-                  ClipPath(
-                    clipper: TopParabolaClipper(bump: bumpHeight),
-                    child: Container(
-                      width: 100.w,
-                      height: containerHeight + bumpHeight,
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Color(0xFF0649AD), Color(0xFF7197FB)],
+            // Conteneur bas bleu avec parabole
+            Positioned(
+              bottom: 0,
+              left: 0,
+              child: SizedBox(
+                height: containerHeight + bumpHeight,
+                width: 100.w,
+                child: Stack(
+                  children: [
+                    ClipPath(
+                      clipper: TopParabolaClipper(bump: bumpHeight),
+                      child: Container(
+                        width: 100.w,
+                        height: containerHeight + bumpHeight,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Color(0xFF0649AD), Color(0xFF7197FB)],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    top: bumpHeight * 0.3,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        top: 3.h,
-                        left: 10.w,
-                        right: 6.w,
-                        bottom: 3.h,
-                      ),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final titleFont = constraints.maxHeight < 220 ? 14.sp : 22.sp;
-                          final descFont  = constraints.maxHeight < 220 ? 10.sp : 16.sp;
-                          final space1 = constraints.maxHeight < 220 ? 0.2.h : 1.h;
-                          final space2 = constraints.maxHeight < 220 ? 3.h : 8.h;
-                          
-                          return Column(
-                            mainAxisSize: MainAxisSize.max,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'BIENVENUE SUR\nEEBTP_MAG',
-                                style: GoogleFonts.inter(
-                                  fontSize: titleFont,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.white,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              SizedBox(height: space1),
-                              Text(
-                                'Votre plateforme de suivi en temps réel des stocks.',
-                                style: GoogleFonts.inter(
-                                  fontSize: descFont,
-                                  color: Colors.white70,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Spacer(),
-                              Spacer(),
-                              Center(
-                                child: ConstrainedBox(
-                                  constraints: BoxConstraints(
-                                    minWidth: 40.0,
-                                    maxWidth: constraints.maxWidth,
+                    Positioned(
+                      top: bumpHeight * 0.55, // 👈 Décalage vers le bas augmenté
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 3.h,
+                        ),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final availableHeight = constraints.maxHeight;
+
+                            final titleFont =
+                                (availableHeight * 0.08).clamp(18.0, 28.0);
+                            final descFont =
+                                (availableHeight * 0.045).clamp(12.0, 18.0);
+
+                            final space1 =
+                                (availableHeight * 0.015).clamp(6.0, 14.0);
+                            final space2 =
+                                (availableHeight * 0.1).clamp(20.0, 40.0);
+
+                            return Column(
+                              mainAxisSize: MainAxisSize.max,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Titre principal
+                                Text(
+                                  'BIENVENUE SUR\nEEBTP_MAG',
+                                  style: GoogleFonts.inter(
+                                    fontSize: titleFont,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                    fontStyle: FontStyle.italic,
+                                    height: 1.2,
+                                    letterSpacing: 0.5,
                                   ),
-                                  child: CustomElevatedButton(
-                                    text: 'Commencer ici',
-                                    backgroundColor: Colors.white,
-                                    textColor: const Color(0xFF007AFF),
-                                    onPressed: () => Navigator.pushNamed(context, '/login'),
-                                    width: constraints.maxWidth > 400 ? 80.w : constraints.maxWidth,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                SizedBox(height: space1),
+
+                                // Description
+                                Text(
+                                  'Votre plateforme de suivi en temps réel des stocks.',
+                                  style: GoogleFonts.inter(
+                                    fontSize: descFont,
+                                    color: Colors.white.withOpacity(0.9),
+                                    height: 1.4,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+
+                                const Spacer(),
+
+                                // Bouton centré
+                                Center(
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      minWidth: 200,
+                                      maxWidth: constraints.maxWidth * 0.85,
+                                    ),
+                                    child: CustomElevatedButton(
+                                      text: 'Commencer ici',
+                                      backgroundColor: Colors.white,
+                                      textColor: const Color(0xFF007AFF),
+                                      onPressed: () =>
+                                          Navigator.pushNamed(context, '/login'),
+                                      width: constraints.maxWidth > 400
+                                          ? 70.w
+                                          : constraints.maxWidth * 0.8,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              SizedBox(height: space2),
-                            ],
-                          );
-                        },
+                                SizedBox(height: space2),
+                              ],
+                            );
+                          },
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

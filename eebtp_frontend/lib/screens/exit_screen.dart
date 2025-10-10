@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:sizer/sizer.dart';
+import 'package:toastification/toastification.dart';
 import '../widgets/button.dart';
 import '../widgets/nav.dart';
 import '../providers/auth_provider.dart';
@@ -40,11 +41,55 @@ class _StockExitScreenState extends State<StockExitScreen> {
     _fetchProductsWithUnits();
   }
 
+  void _showToast({
+    required String message,
+    required ToastificationType type,
+  }) {
+    toastification.show(
+      context: context,
+      type: type,
+      style: ToastificationStyle.flatColored,
+      title: Text(
+        message,
+        style: GoogleFonts.poppins(
+          fontSize: 13.sp,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      autoCloseDuration: const Duration(seconds: 4),
+      alignment: Alignment.topCenter,
+      animationDuration: const Duration(milliseconds: 300),
+      animationBuilder: (context, animation, alignment, child) {
+        return ScaleTransition(
+          scale: animation,
+          child: child,
+        );
+      },
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x07000000),
+          blurRadius: 16,
+          offset: Offset(0, 16),
+          spreadRadius: 0,
+        )
+      ],
+      showProgressBar: true,
+      closeButtonShowType: CloseButtonShowType.onHover,
+      closeOnClick: false,
+      pauseOnHover: true,
+      dragToClose: true,
+      applyBlurEffect: true,
+    );
+  }
+
   Future<void> _fetchProductsWithUnits() async {
     final token = Provider.of<AuthProvider>(context, listen: false).token;
     final storeId = Provider.of<AuthProvider>(context, listen: false).storeId;
     if (token == null || storeId == null) {
-      setState(() { _isLoadingProducts = false; });
+      setState(() {
+        _isLoadingProducts = false;
+      });
       return;
     }
     try {
@@ -66,7 +111,7 @@ class _StockExitScreenState extends State<StockExitScreen> {
             "id": item.id,
             "produitName": item.produitName ?? "Produit #${item.produit}",
             "quantite": item.quantite,
-            "unite": "unité", // Fallback
+            "unite": "unité",
             "stockItem": item.produit
           });
         }
@@ -77,8 +122,13 @@ class _StockExitScreenState extends State<StockExitScreen> {
         _isLoadingProducts = false;
       });
     } catch (e) {
-      setState(() { _isLoadingProducts = false; });
-      print("❌ Erreur chargement stockItems : $e");
+      setState(() {
+        _isLoadingProducts = false;
+      });
+      _showToast(
+        message: "Erreur lors du chargement des produits",
+        type: ToastificationType.error,
+      );
     }
   }
 
@@ -121,20 +171,26 @@ class _StockExitScreenState extends State<StockExitScreen> {
     }
 
     if (error != null) {
-      setState(() { 
-  if (error != null && error.contains("téléphone")) {
-    _phoneError = error;
-  } else {
-    _phoneError = null;
-  }
-});
+      setState(() {
+        if (error != null && error.contains("téléphone")) {
+          _phoneError = error;
+        } else {
+          _phoneError = null;
+        }
+      });
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      _showToast(
+        message: error,
+        type: ToastificationType.warning,
+      );
       return;
     }
-    setState(() { _phoneError = null; });
+    setState(() {
+      _phoneError = null;
+    });
 
-    final selectedIndex = _products.indexWhere((p) => p['produitName'] == _selectedProductName);
+    final selectedIndex =
+        _products.indexWhere((p) => p['produitName'] == _selectedProductName);
     final selectedProduct = _products[selectedIndex];
     final stockItemId = selectedProduct['id'];
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -142,9 +198,9 @@ class _StockExitScreenState extends State<StockExitScreen> {
     final token = authProvider.token;
 
     if (token == null || token.isEmpty) {
-      print('❌ Token manquant !');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erreur : utilisateur non connecté (token manquant)")),
+      _showToast(
+        message: "Erreur : utilisateur non connecté",
+        type: ToastificationType.error,
       );
       return;
     }
@@ -160,27 +216,26 @@ class _StockExitScreenState extends State<StockExitScreen> {
       'is_active': true,
     };
 
-    print("📦 Données createSortie envoyées (prêtes à POSTER) : $data");
-
     try {
       final mouvementsService = MouvementsService(token: token);
       final response = await mouvementsService.createSortie(data);
-      print("⌛️ Réponse HTTP: status=${response.statusCode}, body=${response.body}");
+
       if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Sortie enregistrée avec succès!")),
+        _showToast(
+          message: "Sortie enregistrée avec succès!",
+          type: ToastificationType.success,
         );
         Navigator.pop(context);
       } else {
-        print("❌ Erreur HTTP: ${response.statusCode} - ${response.body}");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erreur: ${response.body}")),
+        _showToast(
+          message: "Erreur lors de l'enregistrement",
+          type: ToastificationType.error,
         );
       }
-    } catch (e, stack) {
-      print("❌ Exception à l'envoi : $e\n$stack");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erreur lors de l'enregistrement: $e")),
+    } catch (e) {
+      _showToast(
+        message: "Erreur lors de l'enregistrement",
+        type: ToastificationType.error,
       );
     }
   }
@@ -189,75 +244,80 @@ class _StockExitScreenState extends State<StockExitScreen> {
   Widget build(BuildContext context) {
     return NavContainer(
       initialIndex: 1,
-      body: GestureDetector(
-        onTap: () => setState(() => _isProductDropdownOpen = false),
-        child: Column(
-          children: [
-            _buildAppBar(),
-            Expanded(
-              child: _isLoadingProducts
-                  ? Center(child: CircularProgressIndicator())
-                  : SingleChildScrollView(
-                      padding: EdgeInsets.all(5.w),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildSectionHeader("Produit", isLeftAligned: false),
-                          SizedBox(height: 2.h),
-                          _buildProductDropdown(),
-                          SizedBox(height: 2.h),
-                          _buildBasicInputField(
-                            controller: _quantityController,
-                            hintText: "Définir la quantité",
-                          ),
-                          SizedBox(height: 2.h),
-                          _buildBasicInputField(
-                            controller: _motifController,
-                            hintText: "Motif",
-                            labelText: "Motif",
-                            maxLines: 5,
-                          ),
-                          SizedBox(height: 3.h),
-                          _buildSectionHeader("Receveur", isLeftAligned: true),
-                          SizedBox(height: 2.h),
-                          _buildBasicInputField(
-                            controller: _receiverNameController,
-                            hintText: "Renseigner le nom du receveur",
-                          ),
-                          SizedBox(height: 2.h),
-                          _buildPhoneInputField(),
-                          if (_phoneError != null)
-                            Padding(
-                              padding: EdgeInsets.only(left: 2.w, top: 1.h),
-                              child: Text(
-                                _phoneError!,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12.sp,
-                                  color: Colors.red,
+      body: SafeArea(
+        child: GestureDetector(
+          onTap: () => setState(() => _isProductDropdownOpen = false),
+          child: Column(
+            children: [
+              _buildAppBar(),
+              Expanded(
+                child: _isLoadingProducts
+                    ? Center(child: CircularProgressIndicator())
+                    : SingleChildScrollView(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 5.w,
+                          vertical: 2.h,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildSectionHeader("Produit", isLeftAligned: false),
+                            SizedBox(height: 2.h),
+                            _buildProductDropdown(),
+                            SizedBox(height: 2.h),
+                            _buildBasicInputField(
+                              controller: _quantityController,
+                              hintText: "Définir la quantité",
+                            ),
+                            SizedBox(height: 2.h),
+                            _buildBasicInputField(
+                              controller: _motifController,
+                              hintText: "Motif",
+                              labelText: "Motif",
+                              maxLines: 5,
+                            ),
+                            SizedBox(height: 3.h),
+                            _buildSectionHeader("Receveur", isLeftAligned: true),
+                            SizedBox(height: 2.h),
+                            _buildBasicInputField(
+                              controller: _receiverNameController,
+                              hintText: "Renseigner le nom du receveur",
+                            ),
+                            SizedBox(height: 2.h),
+                            _buildPhoneInputField(),
+                            if (_phoneError != null)
+                              Padding(
+                                padding: EdgeInsets.only(left: 2.w, top: 1.h),
+                                child: Text(
+                                  _phoneError!,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12.sp.clamp(10, 14),
+                                    color: Colors.red,
+                                  ),
                                 ),
                               ),
+                            SizedBox(height: 2.h),
+                            _buildBasicInputField(
+                              controller: _functionController,
+                              hintText: "Renseigner la fonction du receveur",
                             ),
-                          SizedBox(height: 2.h),
-                          _buildBasicInputField(
-                            controller: _functionController,
-                            hintText: "Renseigner la fonction du receveur",
-                          ),
-                          SizedBox(height: 8.h),
-                          Center(
-                            child: CustomElevatedButton(
-                              text: 'Enregistrer',
-                              backgroundColor: const Color(0xFF007AFF),
-                              textColor: Colors.white,
-                              onPressed: _submitForm,
-                              width: 80.w,
+                            SizedBox(height: 4.h),
+                            Center(
+                              child: CustomElevatedButton(
+                                text: 'Enregistrer',
+                                backgroundColor: const Color(0xFF007AFF),
+                                textColor: Colors.white,
+                                onPressed: _submitForm,
+                                width: 80.w,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 3.h),
-                        ],
+                            SizedBox(height: 3.h),
+                          ],
+                        ),
                       ),
-                    ),
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -265,7 +325,10 @@ class _StockExitScreenState extends State<StockExitScreen> {
 
   Widget _buildAppBar() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: 5.w,
+        vertical: 2.h,
+      ),
       decoration: const BoxDecoration(
         color: Color(0xFF007AFF),
       ),
@@ -274,31 +337,45 @@ class _StockExitScreenState extends State<StockExitScreen> {
         children: [
           GestureDetector(
             onTap: () => Navigator.pop(context),
-            child: const CircleAvatar(
+            child: CircleAvatar(
               backgroundColor: Colors.white,
-              child: Icon(Icons.arrow_back_ios_new, color: Color(0xFF007AFF)),
+              radius: 20,
+              child: Icon(
+                Icons.arrow_back_ios_new,
+                color: Color(0xFF007AFF),
+                size: 18,
+              ),
             ),
           ),
-          Text(
-            "Déclarer une\nsortie en stock",
-            style: GoogleFonts.poppins(
-              fontSize: 16.sp,
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
+          Expanded(
+            child: Center(
+              child: Text(
+                "Déclarer une\nsortie en stock",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 16.sp.clamp(14, 20),
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
+                ),
+              ),
             ),
           ),
-          SizedBox(width: 5.w + 2.h),
+          SizedBox(width: 40),
         ],
       ),
     );
   }
 
-  Widget _buildSectionHeader(String title, {bool isLeftAligned = true}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: isLeftAligned
-          ? [
-              Text(
+ Widget _buildSectionHeader(String title, {bool isLeftAligned = true}) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: isLeftAligned
+        ? [
+            // Texte aligné à gauche
+            Flexible(
+              flex: 0,
+              child: Text(
                 title,
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.w600,
@@ -306,19 +383,27 @@ class _StockExitScreenState extends State<StockExitScreen> {
                   color: Colors.black87,
                 ),
               ),
-              Container(
+            ),
+            SizedBox(width: 2.w), // petit espace entre le texte et la ligne
+            Expanded(
+              child: Container(
                 height: 2,
-                width: 72.w,
                 color: const Color(0xFF007AFF),
               ),
-            ]
-          : [
-              Container(
+            ),
+          ]
+        : [
+            // Ligne alignée à gauche
+            Expanded(
+              child: Container(
                 height: 2,
-                width: 70.w,
                 color: const Color(0xFF007AFF),
               ),
-              Text(
+            ),
+            SizedBox(width: 2.w), // petit espace entre la ligne et le texte
+            Flexible(
+              flex: 0,
+              child: Text(
                 title,
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.w600,
@@ -326,9 +411,10 @@ class _StockExitScreenState extends State<StockExitScreen> {
                   color: Colors.black87,
                 ),
               ),
-            ],
-    );
-  }
+            ),
+          ],
+  );
+}
 
   Widget _buildBasicInputField({
     required TextEditingController controller,
@@ -345,13 +431,13 @@ class _StockExitScreenState extends State<StockExitScreen> {
       child: TextFormField(
         controller: controller,
         maxLines: maxLines,
-        style: GoogleFonts.poppins(fontSize: 14.sp),
+        style: GoogleFonts.poppins(fontSize: 14.sp.clamp(12, 16)),
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hintText,
           labelText: labelText,
           hintStyle: GoogleFonts.poppins(
-            fontSize: 14.sp,
+            fontSize: 14.sp.clamp(12, 16),
             color: Colors.grey[600],
           ),
           contentPadding: EdgeInsets.symmetric(
@@ -393,8 +479,11 @@ class _StockExitScreenState extends State<StockExitScreen> {
         ),
         ignoreBlank: false,
         autoValidateMode: AutovalidateMode.disabled,
-        selectorTextStyle: GoogleFonts.poppins(color: Colors.black),
-        textStyle: GoogleFonts.poppins(fontSize: 14.sp),
+        selectorTextStyle: GoogleFonts.poppins(
+          color: Colors.black,
+          fontSize: 14.sp.clamp(12, 16),
+        ),
+        textStyle: GoogleFonts.poppins(fontSize: 14.sp.clamp(12, 16)),
         formatInput: true,
         keyboardType: const TextInputType.numberWithOptions(
           signed: false,
@@ -405,7 +494,7 @@ class _StockExitScreenState extends State<StockExitScreen> {
           border: InputBorder.none,
           hintText: 'Numéro de téléphone',
           hintStyle: GoogleFonts.poppins(
-            fontSize: 14.sp,
+            fontSize: 14.sp.clamp(12, 16),
             color: Colors.grey[600],
           ),
           contentPadding: EdgeInsets.symmetric(
@@ -441,11 +530,12 @@ class _StockExitScreenState extends State<StockExitScreen> {
                   child: Text(
                     _selectedProductName ?? "Sélectionner le produit",
                     style: GoogleFonts.poppins(
-                      fontSize: 14.sp,
+                      fontSize: 14.sp.clamp(12, 16),
                       color: _selectedProductName != null
                           ? Colors.black87
                           : Colors.grey[600],
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Icon(
@@ -483,13 +573,13 @@ class _StockExitScreenState extends State<StockExitScreen> {
                     ),
                     child: TextFormField(
                       onChanged: _filterProducts,
-                      style: GoogleFonts.poppins(fontSize: 14.sp),
+                      style: GoogleFonts.poppins(fontSize: 14.sp.clamp(12, 16)),
                       decoration: InputDecoration(
                         border: InputBorder.none,
-                        hintText: "Rechercher ",
+                        hintText: "Rechercher",
                         prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
                         hintStyle: GoogleFonts.poppins(
-                          fontSize: 14.sp,
+                          fontSize: 14.sp.clamp(12, 16),
                           color: Colors.grey[600],
                         ),
                         contentPadding:
@@ -499,41 +589,63 @@ class _StockExitScreenState extends State<StockExitScreen> {
                   ),
                 ),
                 Container(
-                  constraints: BoxConstraints(maxHeight: 200),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: _filteredProducts.length,
-                    itemBuilder: (context, index) {
-                      final product = _filteredProducts[index];
-                      return ListTile(
-                        title: Text(
-                          product['produitName'],
-                          style: GoogleFonts.poppins(fontSize: 14.sp),
-                        ),
-                        trailing: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
-                          decoration: BoxDecoration(
-                            color: const Color.fromARGB(255, 70, 158, 252),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '${product['quantite']} ${product['unite']}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12.sp,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
+                  constraints: BoxConstraints(
+                    maxHeight: 30.h,
+                  ),
+                  child: _filteredProducts.isEmpty
+                      ? Padding(
+                          padding: EdgeInsets.all(4.w),
+                          child: Center(
+                            child: Text(
+                              "Aucun produit trouvé",
+                              style: GoogleFonts.poppins(
+                                fontSize: 13.sp,
+                                color: Colors.grey[600],
+                              ),
                             ),
                           ),
+                        )
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: _filteredProducts.length,
+                          itemBuilder: (context, index) {
+                            final product = _filteredProducts[index];
+                            return ListTile(
+                              title: Text(
+                                product['produitName'],
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14.sp.clamp(12, 16),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 2,
+                              ),
+                              trailing: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 2.w,
+                                  vertical: 0.5.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color.fromARGB(255, 70, 158, 252),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '${product['quantite']} ${product['unite']}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12.sp.clamp(10, 14),
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              onTap: () {
+                                setState(() {
+                                  _selectedProductName = product['produitName'];
+                                  _isProductDropdownOpen = false;
+                                });
+                              },
+                            );
+                          },
                         ),
-                        onTap: () {
-                          setState(() {
-                            _selectedProductName = product['produitName'];
-                            _isProductDropdownOpen = false;
-                          });
-                        },
-                      );
-                    },
-                  ),
                 ),
               ],
             ),

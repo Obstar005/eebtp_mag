@@ -11,7 +11,6 @@ import 'package:provider/provider.dart';
 import 'package:eebtp_frontend/providers/auth_provider.dart';
 
 class ProfilePage extends StatefulWidget {
-  // ✅ Plus besoin de paramètres token et storeId
   const ProfilePage({super.key});
 
   @override
@@ -24,13 +23,11 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    // ✅ Récupération du token via Provider
     final token = context.read<AuthProvider>().token;
-    
+
     if (token != null) {
       _futureUser = UserService().getUserInfo(token);
     } else {
-      // Si pas de token, rediriger vers login
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushReplacementNamed(context, '/login');
       });
@@ -47,11 +44,10 @@ class _ProfilePageState extends State<ProfilePage> {
     );
 
     if (pickedFile != null) {
-      final success = await UserService()
-          .updateProfilePicture(token, pickedFile.path);
+      final success =
+          await UserService().updateProfilePicture(token, pickedFile.path);
       if (success && mounted) {
         setState(() {
-          // On recharge les infos utilisateur après upload
           _futureUser = UserService().getUserInfo(token);
         });
         Navigator.pop(context);
@@ -64,12 +60,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Récupération des données via Provider
     final token = context.watch<AuthProvider>().token;
     final storeId = context.watch<AuthProvider>().storeId;
     final currentUser = context.watch<AuthProvider>().user;
 
-    // Si pas de token, afficher écran de chargement
     if (token == null) {
       return Scaffold(
         body: Center(
@@ -77,6 +71,21 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       );
     }
+
+    // --------------- Correction: Utilise MediaQuery pour la responsivité ---------------
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    double avatarSize = 35.w;
+    double topSpace = 12.h;
+    double bottomSpace = 15.h;
+    double btnSpace = 3.h;
+    if (screenHeight < 550) {
+      topSpace = 2.h;
+      avatarSize = 28.w;
+      bottomSpace = 3.h;
+      btnSpace = 2.h;
+    }
+    // ----------------
 
     return NavContainer(
       initialIndex: 3,
@@ -98,7 +107,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
           final user = snapshot.data!;
 
-          // ✅ Mettre à jour l'utilisateur dans Provider si ce n'est pas déjà fait
           if (currentUser == null || currentUser.id != user.id) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               context.read<AuthProvider>().setUser(user);
@@ -134,6 +142,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // ----------- Contenu principal ----------
               SafeArea(
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     // Header
                     Padding(
@@ -156,14 +165,14 @@ class _ProfilePageState extends State<ProfilePage> {
                                 onTap: () =>
                                     Navigator.pushNamed(context, '/notifications'),
                                 child: Container(
-                                  padding: EdgeInsets.all(2.w),
+                                  padding: EdgeInsets.all(2.3.w),
                                   decoration: const BoxDecoration(
                                     color: Colors.white,
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
                                     Icons.notifications_outlined,
-                                    size: 10.w,
+                                    size: 8.w,
                                     color: Color(0xFF007AFF),
                                   ),
                                 ),
@@ -177,14 +186,19 @@ class _ProfilePageState extends State<ProfilePage> {
                                     color: Colors.red,
                                     shape: BoxShape.circle,
                                   ),
+                                  constraints: BoxConstraints(
+                                    minWidth: 14,
+                                    minHeight: 14,
+                                  ),
                                   child: Text(
                                     "3",
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: 14.sp,
+                                      fontSize: 10.sp,
                                       fontWeight: FontWeight.bold,
                                       fontFamily: 'Montserrat',
                                     ),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ),
                               ),
@@ -194,65 +208,67 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
 
-                    SizedBox(height: 12.h),
+                    SizedBox(height: topSpace),
 
                     // Photo profil
-                    Stack(
-                      children: [
-                        Container(
-                          width: 35.w,
-                          height: 35.w,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: const Color(0xFF007AFF),
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 10,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          child: ClipOval(
-                            child: user.photoProfil == null
-                                ? Image.asset(
-                                    "assets/profile.png",
-                                    fit: BoxFit.cover,
-                                  )
-                                : Image.network(
-                                    user.photoProfil!,
-                                    fit: BoxFit.cover,
-                                  ),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: GestureDetector(
-                            onTap: () => _showImagePickerOptions(context),
-                            child: Container(
-                              padding: EdgeInsets.all(2.w),
-                              decoration: BoxDecoration(
+                    Center(
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: avatarSize,
+                            height: avatarSize,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
                                 color: const Color(0xFF007AFF),
-                                shape: BoxShape.circle,
-                                border:
-                                    Border.all(color: Colors.white, width: 2),
+                                width: 2,
                               ),
-                              child: Icon(
-                                Icons.edit,
-                                size: 4.w,
-                                color: Colors.white,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.11),
+                                  blurRadius: 9,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: ClipOval(
+                              child: user.photoProfil == null
+                                  ? Image.asset(
+                                      "assets/profile.png",
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Image.network(
+                                      user.photoProfil!,
+                                      fit: BoxFit.cover,
+                                    ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 2,
+                            right: 2,
+                            child: GestureDetector(
+                              onTap: () => _showImagePickerOptions(context),
+                              child: Container(
+                                padding: EdgeInsets.all(2.w),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF007AFF),
+                                  shape: BoxShape.circle,
+                                  border:
+                                      Border.all(color: Colors.white, width: 2),
+                                ),
+                                child: Icon(
+                                  Icons.edit,
+                                  size: 4.5.w,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
 
-                    SizedBox(height: 1.5.h),
+                    SizedBox(height: 2.h),
 
                     // Nom complet
                     Text(
@@ -262,19 +278,21 @@ class _ProfilePageState extends State<ProfilePage> {
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF007AFF),
                       ),
+                      textAlign: TextAlign.center,
                     ),
 
                     // Poste
                     Text(
                       user.poste,
                       style: GoogleFonts.montserrat(
-                        fontSize: 16.sp,
+                        fontSize: 15.sp,
                         color: const Color(0xFF8E8E93),
                         fontWeight: FontWeight.w500,
                       ),
+                      textAlign: TextAlign.center,
                     ),
 
-                    SizedBox(height: 15.h),
+                    SizedBox(height: bottomSpace),
 
                     // Boutons
                     Padding(
@@ -283,18 +301,16 @@ class _ProfilePageState extends State<ProfilePage> {
                         children: [
                           Container(
                             width: double.infinity,
-                            height: 6.5.h,
-                            margin: EdgeInsets.only(bottom: 3.h),
+                            height: 6.2.h,
+                            margin: EdgeInsets.only(bottom: btnSpace),
                             child: CustomElevatedButton(
                               text: "Modifier votre profil",
                               backgroundColor: Colors.white,
                               textColor: const Color(0xFF007AFF),
-                              onPressed: () =>
-                                 Navigator.pushNamed(
-                                context, 
+                              onPressed: () => Navigator.pushNamed(
+                                context,
                                 '/edit_profile',
                                 arguments: {
-                                  // ✅ Plus besoin de passer le token
                                   'user': user,
                                 },
                               ),
@@ -305,7 +321,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                           SizedBox(
                             width: double.infinity,
-                            height: 6.5.h,
+                            height: 6.2.h,
                             child: CustomElevatedButton(
                               text: "Déconnecter",
                               backgroundColor: Colors.white,
@@ -419,7 +435,6 @@ class _ProfilePageState extends State<ProfilePage> {
               textColor: Colors.white,
               onPressed: () {
                 Navigator.pop(context);
-                // ✅ Vider le Provider lors de la déconnexion
                 context.read<AuthProvider>().clear();
                 Navigator.pushNamedAndRemoveUntil(
                   context,

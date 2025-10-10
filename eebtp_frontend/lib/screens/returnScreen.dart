@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:sizer/sizer.dart';
 import 'package:provider/provider.dart';
+import 'package:toastification/toastification.dart';
 import '../widgets/button.dart';
 import '../widgets/nav.dart';
 import '../providers/auth_provider.dart';
@@ -35,7 +36,6 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
   String _productSearchQuery = '';
   bool _isLoadingProducts = true;
 
-  // Sortie concernée
   List<Sortie> _sorties = [];
   List<Sortie> _filteredSorties = [];
   String _sortieSearchQuery = '';
@@ -46,6 +46,48 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
   void initState() {
     super.initState();
     _fetchProductsAndSorties();
+  }
+
+  void _showToast({
+    required String message,
+    required ToastificationType type,
+  }) {
+    toastification.show(
+      context: context,
+      type: type,
+      style: ToastificationStyle.flatColored,
+      title: Text(
+        message,
+        style: GoogleFonts.poppins(
+          fontSize: 13.sp,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      autoCloseDuration: const Duration(seconds: 4),
+      alignment: Alignment.topCenter,
+      animationDuration: const Duration(milliseconds: 300),
+      animationBuilder: (context, animation, alignment, child) {
+        return ScaleTransition(
+          scale: animation,
+          child: child,
+        );
+      },
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x07000000),
+          blurRadius: 16,
+          offset: Offset(0, 16),
+          spreadRadius: 0,
+        )
+      ],
+      showProgressBar: true,
+      closeButtonShowType: CloseButtonShowType.onHover,
+      closeOnClick: false,
+      pauseOnHover: true,
+      dragToClose: true,
+      applyBlurEffect: true,
+    );
   }
 
   Future<void> _fetchProductsAndSorties() async {
@@ -61,7 +103,6 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
       final stockService = StockService(token: token);
       final mouvementService = MouvementsService(token: token);
 
-      // 1. Charge produits (stock items + unité depuis article)
       final items = await stockService.getStockItemsByMagasin(storeId);
       List<Map<String, dynamic>> productsWithUnits = [];
       for (final item in items) {
@@ -85,7 +126,6 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
         }
       }
 
-      // 2. Charge sorties en utilisant le bon modèle
       final sortiesResp = await mouvementService.getSortiesByMagasin(storeId);
       List<Sortie> sorties = [];
       if (sortiesResp.statusCode == 200) {
@@ -106,7 +146,10 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
       setState(() {
         _isLoadingProducts = false;
       });
-      print("❌ Erreur chargement stockItems/sorties : $e");
+      _showToast(
+        message: "Erreur lors du chargement des données",
+        type: ToastificationType.error,
+      );
     }
   }
 
@@ -131,7 +174,9 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
           ? _sorties
           : _sorties
               .where((s) =>
-                  ((s.stockItemName ?? '') + (s.quantiteM) + (s.dateCreation ?? ''))
+                  ((s.stockItemName ?? '') +
+                          (s.quantiteM) +
+                          (s.dateCreation ?? ''))
                       .toLowerCase()
                       .contains(query.toLowerCase()))
               .toList();
@@ -173,16 +218,21 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
 
     if (error != null) {
       setState(() {
-        _phoneError = (error != null && error.contains("téléphone")) ? error : null;
+        _phoneError =
+            (error != null && error.contains("téléphone")) ? error : null;
       });
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      _showToast(
+        message: error,
+        type: ToastificationType.warning,
+      );
       return;
     }
     setState(() {
       _phoneError = null;
     });
 
-    final selectedIndex = _products.indexWhere((p) => p['produitName'] == _selectedProductName);
+    final selectedIndex = _products
+        .indexWhere((p) => p['produitName'] == _selectedProductName);
     final selectedProduct = _products[selectedIndex];
     final stockItemId = selectedProduct['id'];
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -190,9 +240,9 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
     final token = authProvider.token;
 
     if (token == null || token.isEmpty) {
-      print('❌ Token manquant !');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erreur : utilisateur non connecté (token manquant)")),
+      _showToast(
+        message: "Erreur : utilisateur non connecté",
+        type: ToastificationType.error,
       );
       return;
     }
@@ -213,28 +263,26 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
       'is_active': true,
     };
 
-    print("📦 Données createEntree (retour) envoyées : $data");
-
     try {
       final mouvementsService = MouvementsService(token: token);
       final response = await mouvementsService.createEntree(data);
-      print("⌛️ Réponse HTTP: status=${response.statusCode}, body=${response.body}");
 
       if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Retour enregistré avec succès!")),
+        _showToast(
+          message: "Retour enregistré avec succès!",
+          type: ToastificationType.success,
         );
         Navigator.pop(context);
       } else {
-        print("❌ Erreur HTTP: ${response.statusCode} - ${response.body}");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erreur: ${response.body}")),
+        _showToast(
+          message: "Erreur lors de l'enregistrement",
+          type: ToastificationType.error,
         );
       }
-    } catch (e, stack) {
-      print("❌ Exception à l'envoi : $e\n$stack");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erreur lors de l'enregistrement: $e")),
+    } catch (e) {
+      _showToast(
+        message: "Erreur lors de l'enregistrement",
+        type: ToastificationType.error,
       );
     }
   }
@@ -243,74 +291,81 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
   Widget build(BuildContext context) {
     return NavContainer(
       initialIndex: 1,
-      body: GestureDetector(
-        onTap: () {
-          setState(() {
-            _isProductDropdownOpen = false;
-            _isSortieDropdownOpen = false;
-          });
-        },
-        child: Column(
-          children: [
-            _buildAppBar(),
-            Expanded(
-              child: _isLoadingProducts
-                  ? Center(child: CircularProgressIndicator())
-                  : SingleChildScrollView(
-                      padding: EdgeInsets.all(5.w),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildSectionHeader("Produit", isLeftAligned: false),
-                          SizedBox(height: 2.h),
-                          _buildProductDropdown(),
-                          SizedBox(height: 2.h),
-                          _buildSortieDropdown(),
-                          _buildBasicInputField(
-                            controller: _quantityController,
-                            hintText: "Définir la quantité",
-                          ),
-                          SizedBox(height: 3.h),
-                          _buildSectionHeader("Déposant", isLeftAligned: true),
-                          SizedBox(height: 2.h),
-                          _buildBasicInputField(
-                            controller: _deposantNameController,
-                            hintText: "Renseigner le nom du déposant",
-                          ),
-                          SizedBox(height: 2.h),
-                          _buildPhoneInputField(),
-                          if (_phoneError != null)
-                            Padding(
-                              padding: EdgeInsets.only(left: 2.w, top: 1.h),
-                              child: Text(
-                                _phoneError!,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12.sp,
-                                  color: Colors.red,
+      body: SafeArea(
+        child: GestureDetector(
+          onTap: () {
+            setState(() {
+              _isProductDropdownOpen = false;
+              _isSortieDropdownOpen = false;
+            });
+          },
+          child: Column(
+            children: [
+              _buildAppBar(),
+              Expanded(
+                child: _isLoadingProducts
+                    ? const Center(child: CircularProgressIndicator())
+                    : SingleChildScrollView(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 5.w,
+                          vertical: 2.h,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildSectionHeader("Produit",
+                                isLeftAligned: false),
+                            SizedBox(height: 2.h),
+                            _buildProductDropdown(),
+                            _buildSortieDropdown(),
+                            _buildBasicInputField(
+                              controller: _quantityController,
+                              hintText: "Définir la quantité",
+                            ),
+                            SizedBox(height: 3.h),
+                            _buildSectionHeader("Déposant",
+                                isLeftAligned: true),
+                            SizedBox(height: 2.h),
+                            _buildBasicInputField(
+                              controller: _deposantNameController,
+                              hintText: "Renseigner le nom du déposant",
+                            ),
+                            SizedBox(height: 2.h),
+                            _buildPhoneInputField(),
+                            if (_phoneError != null)
+                              Padding(
+                                padding: EdgeInsets.only(left: 2.w, top: 1.h),
+                                child: Text(
+                                  _phoneError!,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12.sp,
+                                    color: Colors.red,
+                                  ),
                                 ),
                               ),
+                            SizedBox(height: 2.h),
+                            _buildBasicInputField(
+                              controller: _functionController,
+                              hintText:
+                                  "Renseigner la fonction du déposant",
                             ),
-                          SizedBox(height: 2.h),
-                          _buildBasicInputField(
-                            controller: _functionController,
-                            hintText: "Renseigner la fonction du déposant",
-                          ),
-                          SizedBox(height: 10.h),
-                          Center(
-                            child: CustomElevatedButton(
-                              text: 'Enregistrer',
-                              backgroundColor: const Color(0xFF007AFF),
-                              textColor: Colors.white,
-                              onPressed: _submitForm,
-                              width: 80.w,
+                            SizedBox(height: 4.h),
+                            Center(
+                              child: CustomElevatedButton(
+                                text: 'Enregistrer',
+                                backgroundColor: const Color(0xFF007AFF),
+                                textColor: Colors.white,
+                                onPressed: _submitForm,
+                                width: 80.w,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 3.h),
-                        ],
+                            SizedBox(height: 3.h),
+                          ],
+                        ),
                       ),
-                    ),
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -318,7 +373,10 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
 
   Widget _buildAppBar() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: 5.w,
+        vertical: 2.h,
+      ),
       decoration: const BoxDecoration(
         color: Color(0xFF007AFF),
       ),
@@ -329,29 +387,43 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
             onTap: () => Navigator.pop(context),
             child: const CircleAvatar(
               backgroundColor: Colors.white,
-              child: Icon(Icons.arrow_back_ios_new, color: Color(0xFF007AFF)),
+              radius: 20,
+              child: Icon(
+                Icons.arrow_back_ios_new,
+                color: Color(0xFF007AFF),
+                size: 18,
+              ),
             ),
           ),
-          Text(
-            "Déclarer un retour",
-            style: GoogleFonts.poppins(
-              fontSize: 16.sp,
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
+          Expanded(
+            child: Center(
+              child: Text(
+                "Déclarer un retour",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 16.sp.clamp(14, 20),
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ),
-          SizedBox(width: 7.w),
+          const SizedBox(width: 40),
         ],
       ),
     );
   }
 
-  Widget _buildSectionHeader(String title, {bool isLeftAligned = true}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: isLeftAligned
-          ? [
-              Text(
+ 
+ Widget _buildSectionHeader(String title, {bool isLeftAligned = true}) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: isLeftAligned
+        ? [
+            // Texte aligné à gauche
+            Flexible(
+              flex: 0,
+              child: Text(
                 title,
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.w600,
@@ -359,19 +431,27 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
                   color: Colors.black87,
                 ),
               ),
-              Container(
+            ),
+            SizedBox(width: 2.w), // petit espace entre le texte et la ligne
+            Expanded(
+              child: Container(
                 height: 2,
-                width: 72.w,
                 color: const Color(0xFF007AFF),
               ),
-            ]
-          : [
-              Container(
+            ),
+          ]
+        : [
+            // Ligne alignée à gauche
+            Expanded(
+              child: Container(
                 height: 2,
-                width: 70.w,
                 color: const Color(0xFF007AFF),
               ),
-              Text(
+            ),
+            SizedBox(width: 2.w), // petit espace entre la ligne et le texte
+            Flexible(
+              flex: 0,
+              child: Text(
                 title,
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.w600,
@@ -379,9 +459,10 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
                   color: Colors.black87,
                 ),
               ),
-            ],
-    );
-  }
+            ),
+          ],
+  );
+}
 
   Widget _buildSortieDropdown() {
     return Column(
@@ -389,7 +470,10 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
       children: [
         Text(
           "Sortie concernée",
-          style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.w600),
+          style: GoogleFonts.poppins(
+            fontSize: 14.sp.clamp(12, 16),
+            fontWeight: FontWeight.w600,
+          ),
         ),
         SizedBox(height: 1.h),
         GestureDetector(
@@ -431,19 +515,28 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
                                   ? "${sortie.stockItemName ?? 'Produit #${sortie.stockItem}'} - ${sortie.quantiteM} - ${_formatDate(sortie.dateCreation)}"
                                   : "Sélectionner la sortie concernée",
                               style: GoogleFonts.poppins(
-                                fontSize: 14.sp,
-                                color: sortie.id != 0 ? Colors.black87 : Colors.grey[600],
+                                fontSize: 14.sp.clamp(12, 16),
+                                color: sortie.id != 0
+                                    ? Colors.black87
+                                    : Colors.grey[600],
                               ),
+                              overflow: TextOverflow.ellipsis,
                             );
                           },
                         )
                       : Text(
                           "Sélectionner la sortie concernée",
-                          style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey[600]),
+                          style: GoogleFonts.poppins(
+                            fontSize: 14.sp.clamp(12, 16),
+                            color: Colors.grey[600],
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                 ),
                 Icon(
-                  _isSortieDropdownOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  _isSortieDropdownOpen
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
                   color: Colors.grey[600],
                 ),
               ],
@@ -456,7 +549,7 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              boxShadow: [
+              boxShadow: const [
                 BoxShadow(
                   color: Colors.black12,
                   blurRadius: 8,
@@ -475,41 +568,61 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
                     ),
                     child: TextFormField(
                       onChanged: _filterSorties,
-                      style: GoogleFonts.poppins(fontSize: 14.sp),
+                      style: GoogleFonts.poppins(
+                        fontSize: 14.sp.clamp(12, 16),
+                      ),
                       decoration: InputDecoration(
                         border: InputBorder.none,
                         hintText: "Rechercher une sortie...",
                         prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
                         hintStyle: GoogleFonts.poppins(
-                          fontSize: 14.sp,
+                          fontSize: 14.sp.clamp(12, 16),
                           color: Colors.grey[600],
                         ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: 4.w, vertical: 1.5.h),
                       ),
                     ),
                   ),
                 ),
                 Container(
-                  constraints: BoxConstraints(maxHeight: 200),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: _filteredSorties.length,
-                    itemBuilder: (context, index) {
-                      final sortie = _filteredSorties[index];
-                      return ListTile(
-                        title: Text(
-                          "${sortie.stockItemName ?? 'Produit #${sortie.stockItem}'} - ${sortie.quantiteM} - ${_formatDate(sortie.dateCreation)}",
-                          style: GoogleFonts.poppins(fontSize: 14.sp),
+                  constraints: BoxConstraints(maxHeight: 30.h),
+                  child: _filteredSorties.isEmpty
+                      ? Padding(
+                          padding: EdgeInsets.all(4.w),
+                          child: Center(
+                            child: Text(
+                              "Aucune sortie trouvée",
+                              style: GoogleFonts.poppins(
+                                fontSize: 13.sp,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: _filteredSorties.length,
+                          itemBuilder: (context, index) {
+                            final sortie = _filteredSorties[index];
+                            return ListTile(
+                              title: Text(
+                                "${sortie.stockItemName ?? 'Produit #${sortie.stockItem}'} - ${sortie.quantiteM} - ${_formatDate(sortie.dateCreation)}",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14.sp.clamp(12, 16),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 2,
+                              ),
+                              onTap: () {
+                                setState(() {
+                                  _selectedSortieId = sortie.id;
+                                  _isSortieDropdownOpen = false;
+                                });
+                              },
+                            );
+                          },
                         ),
-                        onTap: () {
-                          setState(() {
-                            _selectedSortieId = sortie.id;
-                            _isSortieDropdownOpen = false;
-                          });
-                        },
-                      );
-                    },
-                  ),
                 ),
               ],
             ),
@@ -528,20 +641,21 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
       decoration: BoxDecoration(
         color: const Color.fromARGB(255, 241, 240, 240),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Color(0xFF007AFF)),
+        border: Border.all(color: const Color(0xFF007AFF)),
       ),
       child: TextFormField(
         controller: controller,
-        style: GoogleFonts.poppins(fontSize: 14.sp),
+        style: GoogleFonts.poppins(fontSize: 14.sp.clamp(12, 16)),
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hintText,
           labelText: labelText,
           hintStyle: GoogleFonts.poppins(
-            fontSize: 14.sp,
+            fontSize: 14.sp.clamp(12, 16),
             color: Colors.grey[600],
           ),
-          contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.8.h),
+          contentPadding:
+              EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.8.h),
         ),
       ),
     );
@@ -577,8 +691,11 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
         ),
         ignoreBlank: false,
         autoValidateMode: AutovalidateMode.disabled,
-        selectorTextStyle: GoogleFonts.poppins(color: Colors.black),
-        textStyle: GoogleFonts.poppins(fontSize: 14.sp),
+        selectorTextStyle: GoogleFonts.poppins(
+          color: Colors.black,
+          fontSize: 14.sp.clamp(12, 16),
+        ),
+        textStyle: GoogleFonts.poppins(fontSize: 14.sp.clamp(12, 16)),
         formatInput: true,
         keyboardType: const TextInputType.numberWithOptions(
           signed: false,
@@ -589,7 +706,7 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
           border: InputBorder.none,
           hintText: 'Numéro de téléphone',
           hintStyle: GoogleFonts.poppins(
-            fontSize: 14.sp,
+            fontSize: 14.sp.clamp(12, 16),
             color: Colors.grey[600],
           ),
           contentPadding: EdgeInsets.symmetric(
@@ -625,13 +742,18 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
                   child: Text(
                     _selectedProductName ?? "Sélectionner le produit",
                     style: GoogleFonts.poppins(
-                      fontSize: 14.sp,
-                      color: _selectedProductName != null ? Colors.black87 : Colors.grey[600],
+                      fontSize: 14.sp.clamp(12, 16),
+                      color: _selectedProductName != null
+                          ? Colors.black87
+                          : Colors.grey[600],
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Icon(
-                  _isProductDropdownOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  _isProductDropdownOpen
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
                   color: Colors.grey[600],
                 ),
               ],
@@ -644,7 +766,7 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              boxShadow: [
+              boxShadow: const [
                 BoxShadow(
                   color: Colors.black12,
                   blurRadius: 8,
@@ -663,56 +785,79 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
                     ),
                     child: TextFormField(
                       onChanged: _filterProducts,
-                      style: GoogleFonts.poppins(fontSize: 14.sp),
+                      style: GoogleFonts.poppins(
+                        fontSize: 14.sp.clamp(12, 16),
+                      ),
                       decoration: InputDecoration(
                         border: InputBorder.none,
-                        hintText: "Rechercher ",
+                        hintText: "Rechercher",
                         prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
                         hintStyle: GoogleFonts.poppins(
-                          fontSize: 14.sp,
+                          fontSize: 14.sp.clamp(12, 16),
                           color: Colors.grey[600],
                         ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: 4.w, vertical: 1.5.h),
                       ),
                     ),
                   ),
                 ),
                 Container(
-                  constraints: BoxConstraints(maxHeight: 200),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: _filteredProducts.length,
-                    itemBuilder: (context, index) {
-                      final product = _filteredProducts[index];
-                      return ListTile(
-                        title: Text(
-                          product['produitName'] ?? "",
-                          style: GoogleFonts.poppins(fontSize: 14.sp),
-                        ),
-                        trailing: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
-                          decoration: BoxDecoration(
-                            color: const Color.fromARGB(255, 70, 158, 252),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '${product['quantite'] ?? ''} ${product['unite'] ?? ''}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12.sp,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
+                  constraints: BoxConstraints(maxHeight: 30.h),
+                  child: _filteredProducts.isEmpty
+                      ? Padding(
+                          padding: EdgeInsets.all(4.w),
+                          child: Center(
+                            child: Text(
+                              "Aucun produit trouvé",
+                              style: GoogleFonts.poppins(
+                                fontSize: 13.sp,
+                                color: Colors.grey[600],
+                              ),
                             ),
                           ),
+                        )
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: _filteredProducts.length,
+                          itemBuilder: (context, index) {
+                            final product = _filteredProducts[index];
+                            return ListTile(
+                              title: Text(
+                                product['produitName'] ?? "",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14.sp.clamp(12, 16),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 2,
+                              ),
+                              trailing: Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 2.w, vertical: 0.5.h),
+                                decoration: BoxDecoration(
+                                  color:
+                                      const Color.fromARGB(255, 70, 158, 252),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '${product['quantite'] ?? ''} ${product['unite'] ?? ''}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12.sp.clamp(10, 14),
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              onTap: () {
+                                setState(() {
+                                  _selectedProductName =
+                                      product['produitName'];
+                                  _isProductDropdownOpen = false;
+                                });
+                              },
+                            );
+                          },
                         ),
-                        onTap: () {
-                          setState(() {
-                            _selectedProductName = product['produitName'];
-                            _isProductDropdownOpen = false;
-                          });
-                        },
-                      );
-                    },
-                  ),
                 ),
               ],
             ),

@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:sizer/sizer.dart';
 import 'package:provider/provider.dart';
+import 'package:toastification/toastification.dart';
 import 'package:eebtp_frontend/services/auth.dart';
 import 'package:eebtp_frontend/providers/auth_provider.dart';
 
@@ -28,7 +29,48 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
   String? _phoneError;
   final UserService _userService = UserService();
 
-  // Efface les champs mot de passe (appelé après navigation)
+  void _showToast({
+    required String message,
+    required ToastificationType type,
+  }) {
+    toastification.show(
+      context: context,
+      type: type,
+      style: ToastificationStyle.flatColored,
+      title: Text(
+        message,
+        style: GoogleFonts.poppins(
+          fontSize: 13.sp,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      autoCloseDuration: const Duration(seconds: 3),
+      alignment: Alignment.topCenter,
+      animationDuration: const Duration(milliseconds: 300),
+      animationBuilder: (context, animation, alignment, child) {
+        return ScaleTransition(
+          scale: animation,
+          child: child,
+        );
+      },
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x07000000),
+          blurRadius: 16,
+          offset: Offset(0, 16),
+          spreadRadius: 0,
+        )
+      ],
+      showProgressBar: true,
+      closeButtonShowType: CloseButtonShowType.onHover,
+      closeOnClick: false,
+      pauseOnHover: true,
+      dragToClose: true,
+      applyBlurEffect: true,
+    );
+  }
+
   void _clearControllers() {
     _phoneController.clear();
     _passController.clear();
@@ -37,7 +79,7 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
   void _next() {
     if (_pc.page == 0) {
       if (_phone.isNotEmpty && _phoneError == null) {
-        _passController.clear(); // efface le mot de passe à chaque étape
+        _passController.clear();
         _pc.nextPage(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
@@ -46,6 +88,10 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
         setState(() {
           _phoneError = "Veuillez entrer un numéro valide";
         });
+        _showToast(
+          message: "Veuillez entrer un numéro valide",
+          type: ToastificationType.warning,
+        );
       }
     }
   }
@@ -54,7 +100,7 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: PageView(
           controller: _pc,
@@ -65,7 +111,12 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(double availableHeight) {
+    final illustrationHeight = (availableHeight * 0.25).clamp(120.0, 200.0);
+    final titleSize = (availableHeight * 0.032).clamp(16.0, 22.0);
+    final subtitleSize = (availableHeight * 0.025).clamp(13.0, 18.0);
+    final descSize = (availableHeight * 0.022).clamp(11.0, 16.0);
+
     return Column(
       children: [
         Align(
@@ -76,44 +127,53 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                 color: Color(0xFF007AFF),
                 shape: BoxShape.circle,
               ),
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               child: Icon(
                 Icons.arrow_back_ios_new,
                 color: Colors.white,
-                size: 15.sp,
+                size: 16,
               ),
             ),
             onPressed: () {
-              _clearControllers(); // Efface tout en cas de retour accueil
+              _clearControllers();
               Navigator.pop(context);
             },
           ),
         ),
-        SvgPicture.asset('assets/illustration.svg', height: 23.h),
+        SvgPicture.asset(
+          'assets/illustration.svg',
+          height: illustrationHeight,
+        ),
+        SizedBox(height: availableHeight * 0.015),
         Text(
           'Bienvenue',
           style: GoogleFonts.poppins(
-            fontSize: 18.sp,
+            fontSize: titleSize,
             color: const Color.fromRGBO(37, 37, 37, 1),
             fontWeight: FontWeight.bold,
           ),
         ),
-        SizedBox(height: 1.h),
+        SizedBox(height: availableHeight * 0.008),
         Text(
           'Connectez-vous à votre compte',
           style: GoogleFonts.poppins(
-            fontSize: 15.sp,
+            fontSize: subtitleSize,
             color: const Color.fromRGBO(37, 37, 37, 1),
           ),
         ),
-        SizedBox(height: 2.h),
-        Text(
-          'Veuillez saisir votre numéro de téléphone pour vous connecter',
-          style: GoogleFonts.poppins(
-            fontSize: 14.sp,
-            color: const Color.fromRGBO(37, 37, 37, 1),
+        SizedBox(height: availableHeight * 0.015),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 5.w),
+          child: Text(
+            'Veuillez saisir votre numéro de téléphone pour vous connecter',
+            style: GoogleFonts.poppins(
+              fontSize: descSize,
+              color: const Color.fromRGBO(37, 37, 37, 1),
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-          textAlign: TextAlign.center,
         ),
       ],
     );
@@ -122,16 +182,19 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
   Widget _buildPhoneStep(BuildContext ctx) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double fieldFont = constraints.maxHeight < 600 ? 11.sp : 14.sp;
+        final availableHeight = constraints.maxHeight;
+        final fieldFont = (availableHeight * 0.022).clamp(11.0, 16.0);
+        final errorIconSize = (availableHeight * 0.025).clamp(14.0, 18.0);
+
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(),
-              SizedBox(height: 5.h),
+              _buildHeader(availableHeight),
+              SizedBox(height: availableHeight * 0.04),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.5.h),
+                padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(30),
@@ -156,8 +219,14 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                     showFlags: true,
                     setSelectorButtonAsPrefixIcon: true,
                   ),
-                  selectorTextStyle: GoogleFonts.poppins(color: Colors.black, fontSize: fieldFont),
-                  textStyle: GoogleFonts.poppins(fontSize: fieldFont, color: Colors.black),
+                  selectorTextStyle: GoogleFonts.poppins(
+                    color: Colors.black,
+                    fontSize: fieldFont,
+                  ),
+                  textStyle: GoogleFonts.poppins(
+                    fontSize: fieldFont,
+                    color: Colors.black,
+                  ),
                   formatInput: true,
                   keyboardType: TextInputType.phone,
                   inputDecoration: InputDecoration(
@@ -170,25 +239,25 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                     ),
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 2.w,
-                      vertical: 1.5.h,
+                      vertical: 1.h,
                     ),
                   ),
-                  spaceBetweenSelectorAndTextField: 10,
+                  spaceBetweenSelectorAndTextField: 8,
                   maxLength: 15,
                 ),
               ),
               if (_phoneError != null) ...[
-                SizedBox(height: 0.5.h),
+                SizedBox(height: availableHeight * 0.008),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.error_outline, color: Colors.red, size: 4.w),
-                    SizedBox(width: 1.w),
+                    Icon(Icons.error_outline, color: Colors.red, size: errorIconSize),
+                    SizedBox(width: 2.w),
                     Expanded(
                       child: Text(
                         _phoneError!,
                         style: GoogleFonts.poppins(
-                          fontSize: 12.sp,
+                          fontSize: fieldFont * 0.9,
                           color: Colors.red,
                         ),
                       ),
@@ -196,24 +265,24 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                   ],
                 ),
               ],
-              SizedBox(height: 2.h),
+              SizedBox(height: availableHeight * 0.02),
               Row(
                 children: [
                   GestureDetector(
                     onTap: () => setState(() => _remember = !_remember),
                     child: Container(
-                      width: 4.w,
-                      height: 4.w,
+                      width: 18,
+                      height: 18,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: _remember ? Colors.blue : Colors.grey,
-                          width: 0.2.w,
+                          width: 2,
                         ),
                         color: _remember ? Colors.blue : Colors.transparent,
                       ),
                       child: _remember
-                          ? Icon(Icons.check, size: 2.w, color: Colors.white)
+                          ? Icon(Icons.check, size: 12, color: Colors.white)
                           : null,
                     ),
                   ),
@@ -224,11 +293,11 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                   ),
                 ],
               ),
-              Spacer(),
+              const Spacer(),
               Column(
                 children: [
                   _buildProgressIndicator(0),
-                  SizedBox(height: 2.h),
+                  SizedBox(height: availableHeight * 0.02),
                   CustomElevatedButton(
                     text: 'Suivant',
                     backgroundColor: const Color(0xFF007AFF),
@@ -243,28 +312,47 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                           _phoneError = null;
                         }
                       });
-                      if (_phoneError != null) return;
+
+                      if (_phoneError != null) {
+                        _showToast(
+                          message: _phoneError!,
+                          type: ToastificationType.warning,
+                        );
+                        return;
+                      }
+
                       try {
                         final exists = await _userService.checkUserExists(_phone);
                         if (exists) {
+                          _showToast(
+                            message: "Numéro vérifié avec succès",
+                            type: ToastificationType.success,
+                          );
                           _next();
                         } else {
                           setState(() {
-                            _phoneError =
-                                "Ce numéro n'est pas associé à un utilisateur";
+                            _phoneError = "Ce numéro n'est pas associé à un utilisateur";
                           });
+                          _showToast(
+                            message: "Ce numéro n'est pas associé à un utilisateur",
+                            type: ToastificationType.error,
+                          );
                         }
                       } catch (e) {
                         setState(() {
                           _phoneError = "Erreur de connexion au serveur";
                         });
+                        _showToast(
+                          message: "Erreur de connexion au serveur",
+                          type: ToastificationType.error,
+                        );
                       }
                     },
                     width: 70.w,
                   ),
                 ],
               ),
-              SizedBox(height: 2.h),
+              SizedBox(height: availableHeight * 0.02),
             ],
           ),
         );
@@ -275,7 +363,14 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
   Widget _buildPasswordStep(BuildContext ctx) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double fieldFont = constraints.maxHeight < 600 ? 11.sp : 14.sp;
+        final availableHeight = constraints.maxHeight;
+        final illustrationHeight = (availableHeight * 0.22).clamp(110.0, 180.0);
+        final titleSize = (availableHeight * 0.032).clamp(16.0, 22.0);
+        final subtitleSize = (availableHeight * 0.023).clamp(12.0, 16.0);
+        final fieldFont = (availableHeight * 0.022).clamp(11.0, 16.0);
+        final infoBoxFont = (availableHeight * 0.018).clamp(10.0, 14.0);
+        final errorIconSize = (availableHeight * 0.025).clamp(14.0, 18.0);
+
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
           child: Column(
@@ -289,15 +384,15 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                       color: Color(0xFF007AFF),
                       shape: BoxShape.circle,
                     ),
-                    padding: const EdgeInsets.all(8),
+                    padding: EdgeInsets.all(8),
                     child: Icon(
                       Icons.arrow_back_ios_new,
                       color: Colors.white,
-                      size: 15.sp,
+                      size: 16,
                     ),
                   ),
                   onPressed: () {
-                    _passController.clear(); // Efface le champ mot de passe à chaque retour
+                    _passController.clear();
                     _pc.previousPage(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeInOut,
@@ -306,23 +401,29 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                 ),
               ),
               Center(
-                child: SvgPicture.asset('assets/illustration.svg', height: 23.h),
+                child: SvgPicture.asset(
+                  'assets/illustration.svg',
+                  height: illustrationHeight,
+                ),
               ),
-              SizedBox(height: 2.h),
+              SizedBox(height: availableHeight * 0.015),
               Text(
                 "Bienvenue",
                 style: GoogleFonts.poppins(
-                  fontSize: 18.sp,
+                  fontSize: titleSize,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
                 ),
               ),
-              SizedBox(height: 1.h),
+              SizedBox(height: availableHeight * 0.008),
               Text(
                 "Connectez-vous à votre compte",
-                style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.black54),
+                style: GoogleFonts.poppins(
+                  fontSize: subtitleSize,
+                  color: Colors.black54,
+                ),
               ),
-              SizedBox(height: 3.h),
+              SizedBox(height: availableHeight * 0.025),
               Container(
                 padding: EdgeInsets.all(3.w),
                 decoration: BoxDecoration(
@@ -335,15 +436,15 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                   "• Au moins une lettre minuscule\n"
                   "• Au moins un chiffre",
                   style: GoogleFonts.poppins(
-                    fontSize: 12.sp,
+                    fontSize: infoBoxFont,
                     color: Colors.black87,
-                    height: 1.6,
+                    height: 1.4,
                   ),
                 ),
               ),
-              SizedBox(height: 3.h),
+              SizedBox(height: availableHeight * 0.025),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 3.w),
+                padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.5.h),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(30),
@@ -357,12 +458,17 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                 child: TextField(
                   controller: _passController,
                   obscureText: _obscurePass,
+                  style: GoogleFonts.poppins(fontSize: fieldFont),
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: "Mot de passe",
                     hintStyle: GoogleFonts.poppins(
-                      fontSize: 13.sp,
+                      fontSize: fieldFont,
                       color: Colors.grey,
+                    ),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 3.w,
+                      vertical: 1.2.h,
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -377,17 +483,17 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                 ),
               ),
               if (_errorMessage != null) ...[
-                SizedBox(height: 0.5.h),
+                SizedBox(height: availableHeight * 0.008),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.error_outline, color: Colors.red, size: 4.w),
-                    SizedBox(width: 1.w),
+                    Icon(Icons.error_outline, color: Colors.red, size: errorIconSize),
+                    SizedBox(width: 2.w),
                     Expanded(
                       child: Text(
                         _errorMessage!,
                         style: GoogleFonts.poppins(
-                          fontSize: 12.sp,
+                          fontSize: fieldFont * 0.9,
                           color: Colors.red,
                         ),
                       ),
@@ -395,24 +501,24 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                   ],
                 ),
               ],
-              SizedBox(height: 2.h),
+              SizedBox(height: availableHeight * 0.02),
               Row(
                 children: [
                   GestureDetector(
                     onTap: () => setState(() => _remember = !_remember),
                     child: Container(
-                      width: 4.w,
-                      height: 4.w,
+                      width: 18,
+                      height: 18,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: _remember ? Colors.blue : Colors.grey,
-                          width: 0.2.w,
+                          width: 2,
                         ),
                         color: _remember ? Colors.blue : Colors.transparent,
                       ),
                       child: _remember
-                          ? Icon(Icons.check, size: 2.w, color: Colors.white)
+                          ? Icon(Icons.check, size: 12, color: Colors.white)
                           : null,
                     ),
                   ),
@@ -423,11 +529,11 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                   ),
                 ],
               ),
-              Spacer(),
+              const Spacer(),
               Column(
                 children: [
                   _buildProgressIndicator(1),
-                  SizedBox(height: 2.h),
+                  SizedBox(height: availableHeight * 0.02),
                   CustomElevatedButton(
                     text: 'Se connecter',
                     backgroundColor: const Color(0xFF007AFF),
@@ -435,41 +541,68 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                     width: 70.w,
                     onPressed: () async {
                       final password = _passController.text.trim();
+
                       if (password.isEmpty) {
                         setState(() {
                           _errorMessage = "Veuillez entrer votre mot de passe";
                         });
+                        _showToast(
+                          message: "Veuillez entrer votre mot de passe",
+                          type: ToastificationType.warning,
+                        );
                         return;
                       }
-                      final result = await _userService.loginByPhone(_phone, password);
-                      if (result != null) {
-                        final data = jsonDecode(result);
-                        final String token = data['access_token'];
-                        final bool firstLogin = data['first_login'];
-                        await context.read<AuthProvider>().setToken(token);
 
-                        // efface les contrôleurs avant la navigation
-                        _clearControllers();
+                      try {
+                        final result = await _userService.loginByPhone(_phone, password);
 
-                        if (firstLogin) {
-                          Navigator.pushReplacementNamed(
-                            context,
-                            '/change_password',
-                            arguments: {'phone': _phone},
+                        if (result != null) {
+                          final data = jsonDecode(result);
+                          final String token = data['access_token'];
+                          final bool firstLogin = data['first_login'];
+                          await context.read<AuthProvider>().setToken(token);
+
+                          _showToast(
+                            message: "Connexion réussie !",
+                            type: ToastificationType.success,
                           );
+
+                          _clearControllers();
+
+                          await Future.delayed(const Duration(milliseconds: 500));
+
+                          if (firstLogin) {
+                            Navigator.pushReplacementNamed(
+                              context,
+                              '/change_password',
+                              arguments: {'phone': _phone},
+                            );
+                          } else {
+                            Navigator.pushReplacementNamed(context, '/store_selection');
+                          }
                         } else {
-                          Navigator.pushReplacementNamed(context, '/store_selection');
+                          setState(() {
+                            _errorMessage = "Mot de passe incorrect";
+                          });
+                          _showToast(
+                            message: "Mot de passe incorrect",
+                            type: ToastificationType.error,
+                          );
                         }
-                      } else {
+                      } catch (e) {
                         setState(() {
-                          _errorMessage = "Mot de passe incorrect ou erreur serveur";
+                          _errorMessage = "Erreur de connexion au serveur";
                         });
+                        _showToast(
+                          message: "Erreur de connexion au serveur",
+                          type: ToastificationType.error,
+                        );
                       }
                     },
                   ),
                 ],
               ),
-              SizedBox(height: 2.h),
+              SizedBox(height: availableHeight * 0.02),
             ],
           ),
         );

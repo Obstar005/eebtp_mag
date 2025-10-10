@@ -2,9 +2,7 @@ import 'package:eebtp_frontend/widgets/nav.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
-
 import '../widgets/button.dart';
-
 
 class SupplyRequestScreen extends StatefulWidget {
   const SupplyRequestScreen({super.key});
@@ -14,19 +12,16 @@ class SupplyRequestScreen extends StatefulWidget {
 }
 
 class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
-  // Controllers
   final _quantityController = TextEditingController();
   final _motifController = TextEditingController();
 
-  // Dropdown values
   String? _selectedProduct;
   String? _selectedResponsible;
   bool _isProductDropdownOpen = false;
   bool _isResponsibleDropdownOpen = false;
 
-  // Sample data pour les produits
   final List<Map<String, dynamic>> _products = [
-    {'name': 'ciment', 'quantity': 150,'unit': 't'},
+    {'name': 'Ciment', 'quantity': 150,'unit': 't'},
     {'name': 'Sable', 'quantity': 500,'unit': 'm3'},
     {'name': 'Brique', 'quantity': 1000,'unit': 'piece'},
     {'name': 'Granit', 'quantity': 400,'unit': 'm3'},
@@ -39,7 +34,6 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
     {'name': 'Gravier', 'quantity': 300, 'unit': 'Kg'},
   ];
 
-  // Sample data pour les responsables
   final List<Map<String, dynamic>> _responsibles = [
     {'name': 'Jean Dupont', 'role': 'Manager'},
     {'name': 'Marie Martin', 'role': 'Superviseur'},
@@ -157,7 +151,7 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
   }
 
   void _submitForm() {
-    // TODO: Envoyer le formulaire
+    // TODO: Envoyer le formulaire à ton backend ou logique métier
     debugPrint("Produit: $_selectedProduct");
     debugPrint("Quantité: ${_quantityController.text}");
     debugPrint("Motif: ${_motifController.text}");
@@ -165,136 +159,162 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
     Navigator.pop(context);
   }
 
-   Widget _buildAppBar() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
-      decoration: const BoxDecoration(
-        color: Color(0xFF007AFF),
-      
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const CircleAvatar(
-              backgroundColor: Colors.white,
-              child: Icon(Icons.arrow_back_ios_new, color: Color(0xFF007AFF)),
-            ),
+  Widget _buildAppBar() {
+    return SafeArea(
+      bottom: false,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.only(
+          left: 5.w,
+          right: 3.w,
+          top: 2.h,
+          bottom: 2.h,
+        ),
+        decoration: BoxDecoration(
+          color: const Color(0xFF007AFF),
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(20),
           ),
-          Text(
-            "Déclarer une\nentrée en stock",
-            style: GoogleFonts.poppins(
-              fontSize: 16.sp,
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 14,
+              offset: const Offset(0, 2),
             ),
-          ),
-          Stack(
-            children: [
-              Container(
-                padding: EdgeInsets.all(2.5.w),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.notifications_outlined,
-                    size: 7.w, color: Color(0xFF007AFF)),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Icon(Icons.arrow_back_ios_new, color: Color(0xFF007AFF), size: 18.sp),
               ),
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  padding: EdgeInsets.all(1.w),
+            ),
+            SizedBox(width: 3.w),
+            Expanded(
+              child: Text(
+                "Demande\nd'approvisionnement",
+                maxLines: 2,
+                textAlign: TextAlign.left,
+                style: GoogleFonts.poppins(
+                  fontSize: 16.sp,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  height: 1.1,
+                ),
+              ),
+            ),
+            Stack(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(2.2.w),
                   decoration: const BoxDecoration(
-                      color: Colors.red, shape: BoxShape.circle),
-                  child: Text(
-                    "3",
-                    style: GoogleFonts.poppins(
-                      fontSize: 9.sp,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.notifications_outlined,
+                      size: 6.5.w, color: Color(0xFF007AFF)),
+                ),
+                Positioned(
+                  right: 2,
+                  top: 2,
+                  child: Container(
+                    padding: EdgeInsets.all(.7.w),
+                    decoration: const BoxDecoration(
+                        color: Colors.red, shape: BoxShape.circle),
+                    constraints: const BoxConstraints(minWidth: 19, minHeight: 19),
+                    child: Text(
+                      "3",
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontSize: 8.sp,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        height: 1,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ], 
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-
- Widget _buildSectionHeader(String title, {bool isLeftAligned = true}) {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: isLeftAligned
-        ? [
-            Text(
-              title,
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: 14.sp,
-                color: Colors.black87,
+  Widget _buildSectionHeader(String title, {bool isLeftAligned = true}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: isLeftAligned
+          ? [
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14.sp,
+                  color: Colors.black87,
+                ),
               ),
-            ),
-            Container(
-              height: 2,
-              width: 65.w,
-              color: const Color(0xFF007AFF),
-            ),
-          ]
-        : [
-            Container(
-              height: 2,
-              width: 70.w,
-              color: const Color(0xFF007AFF),
-            ),
-            Text(
-              title,
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: 14.sp,
-                color: Colors.black87,
+              Container(
+                height: 2,
+                width: 65.w,
+                color: const Color(0xFF007AFF),
               ),
-            ),
-          ],
-  );
-}
+            ]
+          : [
+              Container(
+                height: 2,
+                width: 70.w,
+                color: const Color(0xFF007AFF),
+              ),
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14.sp,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+    );
+  }
 
- Widget _buildBasicInputField({
-  required TextEditingController controller,
-  required String hintText,
-  String? labelText,
-  int maxLines = 1, // valeur par défaut
-}) {
-  return Container(
-    decoration: BoxDecoration(
-      color: const Color.fromARGB(255, 241, 240, 240),
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: Color(0xFF007AFF)),
-    ),
-    child: TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      style: GoogleFonts.poppins(fontSize: 14.sp),
-      decoration: InputDecoration(
-        border: InputBorder.none,
-        hintText: hintText,
-        labelText: labelText,
-        hintStyle: GoogleFonts.poppins(
-          fontSize: 14.sp,
-          color: Colors.grey[600],
-        ),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: 4.w,
-          vertical: maxLines > 1 ? 2.5.h : 1.8.h,
+  Widget _buildBasicInputField({
+    required TextEditingController controller,
+    required String hintText,
+    String? labelText,
+    int maxLines = 1,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 241, 240, 240),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Color(0xFF007AFF)),
+      ),
+      child: TextFormField(
+        controller: controller,
+        maxLines: maxLines,
+        style: GoogleFonts.poppins(fontSize: 14.sp),
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          hintText: hintText,
+          labelText: labelText,
+          hintStyle: GoogleFonts.poppins(
+            fontSize: 14.sp,
+            color: Colors.grey[600],
+          ),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 4.w,
+            vertical: maxLines > 1 ? 2.5.h : 1.8.h,
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildProductDropdown() {
     return Column(
@@ -303,8 +323,7 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
           onTap: () {
             setState(() {
               _isProductDropdownOpen = !_isProductDropdownOpen;
-                            _isResponsibleDropdownOpen = !_isResponsibleDropdownOpen;
-
+              _isResponsibleDropdownOpen = false;
             });
           },
           child: Container(
@@ -362,7 +381,7 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
                       style: GoogleFonts.poppins(fontSize: 14.sp),
                       decoration: InputDecoration(
                         border: InputBorder.none,
-                        hintText: "Rechercher ",
+                        hintText: "Rechercher",
                         prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
                         hintStyle: GoogleFonts.poppins(
                           fontSize: 14.sp,
@@ -392,7 +411,7 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            product['quantity'].toString() + product['unit'].toString(),
+                            '${product['quantity']}${product['unit']}',
                             style: GoogleFonts.poppins(
                               fontSize: 12.sp,
                               color: Colors.white,
@@ -475,7 +494,6 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: const Color(0xFFF5F5F5),
-                    
                     ),
                     child: TextFormField(
                       onChanged: _filterResponsibles,
@@ -483,7 +501,7 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
                       decoration: InputDecoration(
                         border: InputBorder.none,
                         hintText: "Rechercher un responsable...",
-                        prefixIcon: Icon(Icons.search, color: const Color.fromARGB(255, 246, 246, 246)),
+                        prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
                         hintStyle: GoogleFonts.poppins(
                           fontSize: 14.sp,
                           color: Colors.grey[600],
@@ -516,7 +534,6 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 12.sp,
                               color: Colors.white,
-                             // fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
@@ -576,7 +593,7 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
                     _buildSectionHeader("Responsable", isLeftAligned: true),
                     SizedBox(height: 2.h),
                     _buildResponsibleDropdown(),
-                    SizedBox(height: 15.h),
+                    SizedBox(height: 12.h),
                     Center(
                       child: CustomElevatedButton(
                         text: 'Enregistrer',
@@ -594,7 +611,6 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
           ],
         ),
       ),
-     
     );
   }
 

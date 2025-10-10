@@ -1,11 +1,9 @@
 import 'package:eebtp_frontend/screens/RequestDetail.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
-import 'package:eebtp_frontend/widgets/nav.dart'; // Importez votre NavContainer
+import 'package:eebtp_frontend/widgets/nav.dart';
 
-// Model pour les demandes
 class SupplyRequest {
   final String id;
   final String title;
@@ -40,9 +38,7 @@ class RequestsTrackingScreen extends StatefulWidget {
 }
 
 class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
-  
-  // Données factices
-  final List<SupplyRequest> _requests = [
+ final List<SupplyRequest> _requests = [
     SupplyRequest(
       id: "DEM-006",
       title: "Demande d'appro de ciment",
@@ -146,60 +142,90 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
   }
 
   Widget _buildAppBar() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
-      decoration: const BoxDecoration(
-        color: Color(0xFF007AFF),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const CircleAvatar(
-              backgroundColor: Colors.white,
-              child: Icon(Icons.arrow_back_ios_new, color: Color(0xFF007AFF)),
+    return SafeArea(
+      bottom: false,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.only(
+          left: 5.w,
+          right: 5.w,
+          top: 2.h,
+          bottom: 2.h,
+        ),
+        decoration: BoxDecoration(
+          color: const Color(0xFF007AFF),
+          
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 14,
+              offset: const Offset(0, 2),
             ),
-          ),
-          Text(
-            "Suivre\nmes demandes",
-            style: GoogleFonts.poppins(
-              fontSize: 16.sp,
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          Stack(
-            children: [
-              Container(
-                padding: EdgeInsets.all(2.5.w),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.notifications_outlined,
-                    size: 7.w, color: Color(0xFF007AFF)),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Flèche retour
+            GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Icon(Icons.arrow_back_ios_new, color: Color(0xFF007AFF), size: 18.sp),
               ),
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  padding: EdgeInsets.all(1.w),
+            ),
+            SizedBox(width: 3.w),
+            // Titre à côté de la flèche
+            Expanded(
+              child: Text(
+                "Suivre\nmes demandes",
+                maxLines: 2,
+                textAlign: TextAlign.left,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.poppins(
+                  fontSize: 16.sp,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  height: 1.1,
+                ),
+              ),
+            ),
+            // Badge notif à droite (pas centré)
+            Stack(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(2.2.w),
                   decoration: const BoxDecoration(
-                      color: Colors.red, shape: BoxShape.circle),
-                  child: Text(
-                    "3",
-                    style: GoogleFonts.poppins(
-                      fontSize: 9.sp,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.notifications_outlined,
+                      size: 6.5.w, color: Color(0xFF007AFF)),
+                ),
+                Positioned(
+                  right: 2,
+                  top: 2,
+                  child: Container(
+                    padding: EdgeInsets.all(.7.w),
+                    decoration: const BoxDecoration(
+                        color: Colors.red, shape: BoxShape.circle),
+                    constraints: const BoxConstraints(minWidth: 19, minHeight: 19),
+                    child: Text(
+                      "3",
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontSize: 8.sp,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        height: 1,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -225,9 +251,11 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Ligne titre, status
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Titre + n°
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,75 +272,67 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
                       Text(
                         "N° ${request.id}",
                         style: GoogleFonts.poppins(
-                          fontSize: 14.sp,
+                          fontSize: 13.sp,
                           color: const Color.fromRGBO(67, 69, 69, 1),
                         ),
                       ),
                     ],
                   ),
                 ),
-           Container(
-  padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
-  decoration: BoxDecoration(
-    color: _getStatusColor(request.status),
-    borderRadius: BorderRadius.circular(10),
-  ),
-  child: Row(
-    mainAxisSize: MainAxisSize.min, // 👈 évite l'overflow
-    children: [
-      Icon(
-        _getStatusIcon(request.status),
-        color: Colors.white,
-        size: 14.sp, // 👈 un peu plus petit
-      ),
-      SizedBox(width: 1.w),
-      Flexible( // 👈 évite les coupures si le texte est trop long
-        child: Text(
-          request.status,
-          style: GoogleFonts.poppins(
-            fontSize: 12.sp, // 👈 texte un peu plus petit
-            color: Colors.white,
-            fontWeight: FontWeight.w500,
-          ),
-          overflow: TextOverflow.ellipsis, // 👈 coupe proprement si trop long
-        ),
-      ),
-    ],
-  ),
-)
- ],
-            ),
-            SizedBox(height: 2.h),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(request.status),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        "Émit le ${request.emissionDate.day.toString().padLeft(2, '0')}/${request.emissionDate.month.toString().padLeft(2, '0')}/${request.emissionDate.year}",
-                        style: GoogleFonts.poppins(
-                          fontSize: 14.sp,
-                          color: const Color.fromRGBO(67, 69, 69, 1),
+                      Icon(
+                        _getStatusIcon(request.status),
+                        color: Colors.white,
+                        size: 13.sp,
+                      ),
+                      SizedBox(width: 1.w),
+                      Flexible(
+                        child: Text(
+                          request.status,
+                          style: GoogleFonts.poppins(
+                            fontSize: 11.sp,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 2.h),
+            // Ligne dates
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    "Émit le ${request.emissionDate.day.toString().padLeft(2, '0')}/${request.emissionDate.month.toString().padLeft(2, '0')}/${request.emissionDate.year}",
+                    style: GoogleFonts.poppins(
+                      fontSize: 12.sp,
+                      color: const Color.fromRGBO(67, 69, 69, 1),
+                    ),
                   ),
                 ),
                 if (request.processDate != null)
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          "Traitée le ${request.processDate!.day.toString().padLeft(2, '0')}/${request.processDate!.month.toString().padLeft(2, '0')}/${request.processDate!.year}",
-          style: GoogleFonts.poppins(
-            fontSize: 14.sp,
-            color: Color.fromRGBO(67, 69, 69, 1),
-          ),
-        ),
-      ],
-    ),
+                    child: Text(
+                      "Traitée le ${request.processDate!.day.toString().padLeft(2, '0')}/${request.processDate!.month.toString().padLeft(2, '0')}/${request.processDate!.year}",
+                      textAlign: TextAlign.right,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.sp,
+                        color: Color.fromRGBO(67, 69, 69, 1),
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -325,7 +345,7 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
   @override
   Widget build(BuildContext context) {
     return NavContainer(
-      initialIndex: 2, // Index pour "Demande"
+      initialIndex: 2, // Onglet "Demande"
       body: Column(
         children: [
           _buildAppBar(),
@@ -343,4 +363,3 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
     );
   }
 }
-

@@ -8,7 +8,6 @@ import 'package:eebtp_frontend/models/utilisateur.dart';
 import 'package:eebtp_frontend/providers/auth_provider.dart';
 
 class StoreSelectionPage extends StatefulWidget {
-  // ✅ Plus besoin du token en paramètre
   const StoreSelectionPage({super.key});
 
   @override
@@ -24,14 +23,12 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
   @override
   void initState() {
     super.initState();
-    // ✅ Récupération du token via Provider dans initState
     final token = context.read<AuthProvider>().token;
-    
+
     if (token != null) {
       _futureUser = _userService.getUserInfo(token);
       _futureStores = _loadStores(token);
     } else {
-      // Si pas de token, rediriger vers login
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushReplacementNamed(context, '/login');
       });
@@ -42,6 +39,11 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
     try {
       final Utilisateur user = await _futureUser;
 
+      // Vérification : pas de projet = empty state
+      if (user.projets == null || user.projets.isEmpty) {
+        return [];
+      }
+
       List<Map<String, dynamic>> stores = [];
 
       for (var projet in user.projets) {
@@ -49,12 +51,9 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
         if (projetId == 0) continue;
 
         try {
-          // Récupération des magasins pour ce projet
           final response = await _projetService.getMagasinsByProjet(projetId, token);
-          final List<Map<String, dynamic>> magasins =
-              List<Map<String, dynamic>>.from(response['magasins'] ?? []);
+          final List<Map<String, dynamic>> magasins = List<Map<String, dynamic>>.from(response['magasins'] ?? []);
 
-          // Ajout des magasins formatés
           for (var magasin in magasins) {
             stores.add({
               'id': magasin['id'],
@@ -68,7 +67,6 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
           print('❌ Erreur pour le projet $projetId: $e');
         }
       }
-
       return stores;
     } catch (e) {
       throw Exception('Erreur lors du chargement des magasins: $e');
@@ -77,10 +75,7 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Récupération du token via Provider dans build pour les widgets
     final token = context.watch<AuthProvider>().token;
-    
-    // Si pas de token, afficher écran de chargement ou rediriger
     if (token == null) {
       return Scaffold(
         body: Center(
@@ -94,7 +89,7 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header moderne avec effet de verre
+            // Header
             Container(
               padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
               decoration: BoxDecoration(
@@ -113,7 +108,6 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
               ),
               child: Row(
                 children: [
-                  // Titre avec icône
                   Row(
                     children: [
                       Column(
@@ -141,10 +135,7 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
                       ),
                     ],
                   ),
-                  
                   const Spacer(),
-                  
-                  // Photo de profil avec badge
                   FutureBuilder<Utilisateur>(
                     future: _futureUser,
                     builder: (context, snapshot) {
@@ -186,7 +177,6 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
                 ],
               ),
             ),
-
             // Contenu principal
             Expanded(
               child: FutureBuilder<Utilisateur>(
@@ -196,133 +186,121 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
                     return _buildLoadingState();
                   }
 
-                  // ✅ Stocker l'utilisateur dans Provider une fois chargé
+                  // Affiche immédiatement l'empty state si projets nuls ou vides
+                  if (userSnapshot.hasData &&
+                      (userSnapshot.data!.projets == null ||
+                          userSnapshot.data!.projets.isEmpty)) {
+                    return _buildEmptyState();
+                  }
+
                   if (userSnapshot.hasData) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       context.read<AuthProvider>().setUser(userSnapshot.data!);
                     });
                   }
 
-                  return CustomScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    slivers: [
-                      // Section de bienvenue
-                      SliverToBoxAdapter(
-                        child: Container(
-                          margin: EdgeInsets.fromLTRB(5.w, 3.h, 5.w, 1.h),
-                          padding: EdgeInsets.all(4.w),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF007AFF), Color(0xFF0056CC)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF007AFF).withOpacity(0.3),
-                                blurRadius: 15,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    RichText(
-                                      text: TextSpan(
-                                        children: [
-                                          TextSpan(
-                                            text: "Bonjour ",
-                                            style: GoogleFonts.montserrat(
-                                              fontSize: 15.sp,
-                                              color: Colors.white.withOpacity(0.9),
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                          TextSpan(
-                                            text: userSnapshot.data?.username ?? "Utilisateur",
-                                            style: GoogleFonts.montserrat(
-                                              fontSize: 15.sp,
-                                              fontWeight: FontWeight.w700,
-                                              color: Colors.white,
-                                              letterSpacing: -0.3,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    SizedBox(height: 1.h),
-                                    Text(
-                                      "Sélectionnez un magasin pour accéder à son espace",
-                                      style: GoogleFonts.montserrat(
-                                        fontSize: 13.sp,
-                                        color: Colors.white.withOpacity(0.8),
-                                        fontWeight: FontWeight.w400,
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                  ],
+                  return FutureBuilder<List<Map<String, dynamic>>>(
+                    future: _futureStores,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return _buildLoadingState();
+                      } else if (snapshot.hasError) {
+                        return _buildErrorState();
+                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return _buildEmptyState();
+                      }
+                      final stores = snapshot.data!;
+                      return CustomScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        slivers: [
+                          SliverToBoxAdapter(
+                            child: Container(
+                              margin: EdgeInsets.fromLTRB(5.w, 3.h, 5.w, 1.h),
+                              padding: EdgeInsets.all(4.w),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF007AFF), Color(0xFF0056CC)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
                                 ),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF007AFF).withOpacity(0.3),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
                               ),
-                              SizedBox(width: 3.w),
-                              Icon(
-                                Icons.storefront_rounded,
-                                size: 10.w,
-                                color: Colors.white.withOpacity(0.9),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        RichText(
+                                          text: TextSpan(
+                                            children: [
+                                              TextSpan(
+                                                text: "Bonjour ",
+                                                style: GoogleFonts.montserrat(
+                                                  fontSize: 15.sp,
+                                                  color: Colors.white.withOpacity(0.9),
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                              TextSpan(
+                                                text: userSnapshot.data?.username ?? "Utilisateur",
+                                                style: GoogleFonts.montserrat(
+                                                  fontSize: 15.sp,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Colors.white,
+                                                  letterSpacing: -0.3,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        SizedBox(height: 1.h),
+                                        Text(
+                                          "Sélectionnez un magasin pour accéder à son espace",
+                                          style: GoogleFonts.montserrat(
+                                            fontSize: 13.sp,
+                                            color: Colors.white.withOpacity(0.8),
+                                            fontWeight: FontWeight.w400,
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(width: 3.w),
+                                  Icon(
+                                    Icons.storefront_rounded,
+                                    size: 10.w,
+                                    color: Colors.white.withOpacity(0.9),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-
-                      // Liste des magasins
-                      FutureBuilder<List<Map<String, dynamic>>>(
-                        future: _futureStores,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return SliverToBoxAdapter(
-                              child: Container(
-                                height: 30.h,
-                                child: _buildLoadingState(),
-                              ),
-                            );
-                          } else if (snapshot.hasError) {
-                            return SliverFillRemaining(
-                              child: _buildErrorState(),
-                            );
-                          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                            return SliverFillRemaining(
-                              child: _buildEmptyState(),
-                            );
-                          }
-
-                          final stores = snapshot.data!;
-
-                          return SliverPadding(
+                          SliverToBoxAdapter(child: _buildStoreHeader(stores.length)),
+                          SliverPadding(
                             padding: EdgeInsets.fromLTRB(5.w, 2.h, 5.w, 2.h),
                             sliver: SliverList(
                               delegate: SliverChildBuilderDelegate(
                                 (context, index) {
-                                  if (index == 0) {
-                                    return _buildStoreHeader(stores.length);
-                                  }
-                                  
-                                  final store = stores[index - 1];
+                                  final store = stores[index];
                                   return _buildStoreCard(store);
                                 },
-                                childCount: stores.length + 1,
+                                childCount: stores.length,
                               ),
                             ),
-                          );
-                        },
-                      ),
-
-                      SliverToBoxAdapter(child: SizedBox(height: 4.h)),
-                    ],
+                          ),
+                          SliverToBoxAdapter(child: SizedBox(height: 4.h)),
+                        ],
+                      );
+                    },
                   );
                 },
               ),
@@ -333,47 +311,59 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
     );
   }
 
-  Widget _buildStoreHeader(int storeCount) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 3.h),
-      child: Row(
-        children: [
-          Text(
-            "Magasins disponibles",
+Widget _buildStoreHeader(int storeCount) {
+  return Container(
+    margin: EdgeInsets.fromLTRB(5.w, 2.h, 5.w, 2.h), // marge gauche/droite/haut/bas
+    padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h), // padding interne
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.03),
+          blurRadius: 6,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
+        Text(
+          "Magasins disponibles",
+          style: GoogleFonts.montserrat(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1D1D1F),
+            letterSpacing: -0.3,
+          ),
+        ),
+        const Spacer(),
+        Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: 3.w,
+            vertical: 0.8.h,
+          ),
+          decoration: BoxDecoration(
+            color: const Color(0xFF007AFF).withOpacity(0.10),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: const Color(0xFF007AFF).withOpacity(0.18),
+              width: 1,
+            ),
+          ),
+          child: Text(
+            "$storeCount",
             style: GoogleFonts.montserrat(
-              fontSize: 16.sp,
+              fontSize: 12.sp,
+              color: const Color(0xFF007AFF),
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF1D1D1F),
-              letterSpacing: -0.3,
             ),
           ),
-          const Spacer(),
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: 4.w,
-              vertical: 1.h,
-            ),
-            decoration: BoxDecoration(
-              color: const Color(0xFF007AFF).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: const Color(0xFF007AFF).withOpacity(0.2),
-                width: 1,
-              ),
-            ),
-            child: Text(
-              "$storeCount",
-              style: GoogleFonts.montserrat(
-                fontSize: 12.sp,
-                color: const Color(0xFF007AFF),
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildStoreCard(Map<String, dynamic> store) {
     return Container(
@@ -397,9 +387,7 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            // ✅ Stocker le storeId dans Provider et naviguer
             await context.read<AuthProvider>().setStoreId(store['id']);
-            
             Navigator.pushNamed(context, '/profile');
           },
           borderRadius: BorderRadius.circular(20),
@@ -409,7 +397,6 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
             padding: EdgeInsets.all(5.w),
             child: Row(
               children: [
-                // Avatar du magasin avec gradient
                 Container(
                   width: 16.w,
                   height: 16.w,
@@ -434,10 +421,7 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
                     color: Colors.white,
                   ),
                 ),
-
                 SizedBox(width: 4.w),
-
-                // Informations du magasin
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -497,10 +481,7 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
                     ],
                   ),
                 ),
-
                 SizedBox(width: 3.w),
-
-                // Indicateur de navigation
                 Container(
                   padding: EdgeInsets.all(2.5.w),
                   decoration: BoxDecoration(

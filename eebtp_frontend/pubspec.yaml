@@ -48,6 +48,8 @@ dependencies:
   provider: ^6.1.5+1
   intl_phone_field: ^3.2.0
   iconsax: ^0.0.8
+  cherry_toast: ^1.13.0
+  toastification: ^3.0.3
 dev_dependencies:
   flutter_test:
     sdk: flutter
