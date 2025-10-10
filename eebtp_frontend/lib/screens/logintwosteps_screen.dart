@@ -88,10 +88,7 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
         setState(() {
           _phoneError = "Veuillez entrer un numéro valide";
         });
-        _showToast(
-          message: "Veuillez entrer un numéro valide",
-          type: ToastificationType.warning,
-        );
+      
       }
     }
   }
@@ -314,11 +311,7 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                       });
 
                       if (_phoneError != null) {
-                        _showToast(
-                          message: _phoneError!,
-                          type: ToastificationType.warning,
-                        );
-                        return;
+                                            return;
                       }
 
                       try {
@@ -333,19 +326,13 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                           setState(() {
                             _phoneError = "Ce numéro n'est pas associé à un utilisateur";
                           });
-                          _showToast(
-                            message: "Ce numéro n'est pas associé à un utilisateur",
-                            type: ToastificationType.error,
-                          );
+                        
                         }
                       } catch (e) {
                         setState(() {
                           _phoneError = "Erreur de connexion au serveur";
                         });
-                        _showToast(
-                          message: "Erreur de connexion au serveur",
-                          type: ToastificationType.error,
-                        );
+                     
                       }
                     },
                     width: 70.w,
@@ -546,10 +533,7 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                         setState(() {
                           _errorMessage = "Veuillez entrer votre mot de passe";
                         });
-                        _showToast(
-                          message: "Veuillez entrer votre mot de passe",
-                          type: ToastificationType.warning,
-                        );
+                     
                         return;
                       }
 
@@ -584,19 +568,13 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                           setState(() {
                             _errorMessage = "Mot de passe incorrect";
                           });
-                          _showToast(
-                            message: "Mot de passe incorrect",
-                            type: ToastificationType.error,
-                          );
+                    
                         }
                       } catch (e) {
                         setState(() {
                           _errorMessage = "Erreur de connexion au serveur";
                         });
-                        _showToast(
-                          message: "Erreur de connexion au serveur",
-                          type: ToastificationType.error,
-                        );
+                  
                       }
                     },
                   ),
