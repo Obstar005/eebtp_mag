@@ -30,7 +30,7 @@ urlpatterns = [
     path('Users/', include('users.urls')),
     path('Projets/', include('projets.urls')),
     path('Mouvements/', include('mouvements.urls')),
-    # path('Demandes/', include('demandes.urls')),
+    path('Demandes/', include('demandes.urls')),
     path('Notifications/', include('notifications.urls')), 
 ]
 

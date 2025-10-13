@@ -368,10 +368,10 @@ def set_password(request):
         {"message": "Mot de passe créé avec succès."}, status=status.HTTP_200_OK
     )
 
-# Fonction pour authentifier un utilisateur par son numero de telephone
+# Fonction pour authentifier un utilisateur par son numero de telephone sur le web
 @swagger_auto_schema(
     method='post',
-    operation_description="Authentifier un utilisateur par téléphone et mot de passe",
+    operation_description="Authentifier un utilisateur par téléphone et mot de passe sur le web",
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         required=['telephone', 'password'],
@@ -384,7 +384,7 @@ def set_password(request):
 )
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def login_by_phone(request):
+def login_by_phone_web(request):
     phone = request.data.get('telephone')
     password = request.data.get('password')
 
@@ -406,7 +406,7 @@ def login_by_phone(request):
         )
     #Ici verifions si l'utilisateur n'est pas un magasinier
     
-    if user.id_profil.libelle == "magasinier": 
+    if user.profil.libelle == "magasinier": 
         return Response(
             {"error": "Accès refusé! Vous n'êtes pas autorisé à vous connecter à cette plateforme."},status=status.HTTP_403_FORBIDDEN
         )
@@ -426,6 +426,60 @@ def login_by_phone(request):
 
     return Response(
         {"message": "Connexion réussie.", 'access_token': str(refresh.access_token), "first_login": first}, status=status.HTTP_200_OK)
+
+#Vue pour authentifier un utilisateur par son numero de telephone sur mobile
+@swagger_auto_schema(
+    method='post',
+    operation_description="Authentifier un utilisateur par téléphone et mot de passe pour mobile",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['telephone', 'password'],
+        properties={
+            'telephone': openapi.Schema(type=openapi.TYPE_STRING, description='Numéro de téléphone de l\'utilisateur', example='0022890099009'),
+            'password': openapi.Schema(type=openapi.TYPE_STRING, description='Mot de passe de l\'utilisateur')
+        }
+    ),
+    responses={200: openapi.Response(description='Connexion réussie'), 400: 'Bad Request', 401: 'Mot de passe incorrect', 404: 'Utilisateur introuvable', 403: 'Utilisateur désactivé ou accès refusé' }
+)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login_by_phone_mobile(request):
+    phone = request.data.get('telephone')
+    password = request.data.get('password')
+
+    if not phone or not password:
+        return Response(
+            {"error": "Téléphone et mot de passe sont requis."}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        user = CustomUser.objects.get(telephone=phone)
+    except CustomUser.DoesNotExist:
+        return Response(
+            {"error": "Utilisateur introuvable."}, status=status.HTTP_404_NOT_FOUND
+        )
+    # Vérifier si l'utilisateur est actif et est autorisé à se connecter
+    if not user.is_active: 
+        return Response(
+            {"error": "Votre compte a été désactivé. Veuillez contacter votre supérieur."}, status=status.HTTP_403_FORBIDDEN
+        )
+
+    if not check_password(password, user.password):
+        return Response(
+            {"error": "Mot de passe incorrect."},status=status.HTTP_401_UNAUTHORIZED
+        )
+    #Verifions si l'utilisateur s'est connecté pour la première fois
+    # if user.first_login:
+    #     return Response(
+    #         {"error": "Vous devez changer votre mot de passe car c'est votre première connexion."}, status=status.HTTP_200_OK
+    #     )
+    first = user.first_login
+    # Générer un token JWT
+    refresh = RefreshToken.for_user(user)
+
+    return Response(
+        {"message": "Connexion réussie.", 'access_token': str(refresh.access_token), "first_login": first}, status=status.HTTP_200_OK)
+
 
 #^pour récuperer les informations de l'utilisateur connecté
 @swagger_auto_schema(

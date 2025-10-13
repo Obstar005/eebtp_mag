@@ -23,7 +23,7 @@ class CustomUser(AbstractUser):
     type = models.CharField(max_length=50, choices=[('Interne', 'Interne'), ('Consultant', 'Consultant')])
     titre = models.CharField(max_length=100)
     poste = models.CharField(max_length=100)
-    id_profil = models.ForeignKey(Profil, on_delete=models.SET_NULL, null=True)
+    profil = models.ForeignKey(Profil, on_delete=models.SET_NULL, null=True)
     photo_profil = models.ImageField(upload_to='photos/', null=True, blank=True)
     telephone = models.CharField(max_length=20, unique=True)
     is_active = models.BooleanField(default=True)

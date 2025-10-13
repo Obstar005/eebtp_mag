@@ -21,7 +21,8 @@ urlpatterns = [
     #Authentification et vérification
     path('authentication/check-user-exists/', views.check_user_by_phone, name='check_user_by_phone'),
     path('authentication/set-password/', views.change_password, name='set_password'),
-    path('authentication/login-by-phone/', views.login_by_phone, name='login_user'),
+    path('authentication/login-by-phone-web/', views.login_by_phone_web, name='login_user_web'),
+    path('authentication/login-by-phone-mobile/', views.login_by_phone_mobile, name='login_user_mobile'),
     path('authentication/user-info/', views.user_info, name='user_info'),
     path('authentication/verify-sms', views.send_code_view, name='verify_sms_code'),
 ]
