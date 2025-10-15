@@ -82,6 +82,7 @@ class _NavContainerState extends State<NavContainer>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // <-- LIGNE AJOUTÉE
       body: widget.body,
       floatingActionButton: ImprovedFAB(
         isExpanded: _isFabExpanded,
@@ -135,9 +136,9 @@ class ImprovedFAB extends StatelessWidget {
                 backgroundColor: const Color(0xFF007AFF),
                 onPressed: () => onSecondaryPressed('entry'),
                 child: SvgPicture.asset(
-                  'assets/icons/entry.svg',  // remplace par l'icône désirée
-                  width: iconSize *0.5,
-                  height: iconSize *0.5,
+                  'assets/icons/entry.svg',
+                  width: iconSize * 0.5,
+                  height: iconSize * 0.5,
                   color: Colors.white,
                 ),
               ),
@@ -157,8 +158,8 @@ class ImprovedFAB extends StatelessWidget {
                 onPressed: () => onSecondaryPressed('refresh'),
                 child: SvgPicture.asset(
                   'assets/icons/refresh.svg',
-                  width: iconSize *0.5,
-                  height: iconSize *0.5,
+                  width: iconSize * 0.5,
+                  height: iconSize * 0.5,
                   color: Colors.white,
                 ),
               ),
@@ -179,8 +180,8 @@ class ImprovedFAB extends StatelessWidget {
                 onPressed: () => onSecondaryPressed('exit'),
                 child: SvgPicture.asset(
                   'assets/icons/exit.svg',
-                  width: iconSize *0.5,
-                  height: iconSize *0.5,
+                  width: iconSize * 0.5,
+                  height: iconSize * 0.5,
                   color: Colors.white,
                 ),
               ),
@@ -226,7 +227,7 @@ class ImprovedBottomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double navHeight = MediaQuery.of(context).size.height * 0.085; // Responsive
+    final double navHeight = MediaQuery.of(context).size.height * 0.085;
     final double iconSize = navHeight * 0.33;
     return SizedBox(
       height: navHeight,

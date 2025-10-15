@@ -4,16 +4,34 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
 import '../widgets/nav.dart';
+import 'package:provider/provider.dart';
+import 'package:eebtp_frontend/providers/auth_provider.dart';
 
-class EntryDetailPage extends StatelessWidget {
+class EntryDetailPage extends StatefulWidget {
   final Entree entry;
 
   const EntryDetailPage({super.key, required this.entry});
 
   @override
+  State<EntryDetailPage> createState() => _EntryDetailPageState();
+}
+
+class _EntryDetailPageState extends State<EntryDetailPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Provider.of<AuthProvider>(context, listen: false)
+            .checkTokenExpiry(context);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return NavContainer(
-      body: _EntryDetailContent(entry: entry),
+      body: _EntryDetailContent(entry: widget.entry),
       initialIndex: 1,
     );
   }
@@ -25,7 +43,6 @@ class _EntryDetailContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Affichage intelligent selon le type
     final isRetour = entry.type == "retour";
     final String pageTitle = isRetour ? "Détail retour" : "Détail entrée";
     final String cardLabel = isRetour ? "Déposant" : "Livreur";
@@ -102,7 +119,8 @@ class _EntryDetailContent extends StatelessWidget {
                       SizedBox(height: 2.h),
                       _buildSupplierCard(entry.societe!, entry.telSociete ?? "-"),
                     ],
-            /*         SizedBox(height: 3.h),
+                    /*  -------
+                    SizedBox(height: 3.h),
                     // Description
                     if (entry.remarques != null && entry.remarques!.isNotEmpty) ...[
                       Text(
@@ -123,7 +141,8 @@ class _EntryDetailContent extends StatelessWidget {
                         ),
                       ),
                     ],
-                    */ SizedBox(height: 10.h),
+                    ------- */
+                    SizedBox(height: 10.h),
                   ],
                 )),
           ),

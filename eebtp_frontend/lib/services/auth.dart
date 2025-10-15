@@ -8,7 +8,7 @@ class UserService {
   // 🔐 Authentification
   Future<String?> loginByPhone(String phone, String password) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/Users/authentication/login-by-phone/'),
+      Uri.parse('$baseUrl/Users/authentication/login-by-phone-mobile/'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'telephone': _formatPhone(phone),
@@ -98,18 +98,42 @@ class UserService {
   }
 
 // 👥 Gestion des utilisateurs
-  Future<List<Utilisateur>> getAllUsers() async {
+
+Future<List<Utilisateur>> getAllUsers() async {
+  final url = Uri.parse('$baseUrl/Users/liste-users');
+
+  try {
     final response = await http.get(
-      Uri.parse('$baseUrl/Users/liste-users/'),
+      url,
       headers: {'Content-Type': 'application/json'},
     );
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((json) => Utilisateur.fromJson(json)).toList();
-    } else {
-      throw Exception('Erreur lors du chargement des utilisateurs');
+
+    switch (response.statusCode) {
+      case 200:
+        try {
+          final List<dynamic> data = jsonDecode(response.body);
+          return data.map((json) => Utilisateur.fromJson(json)).toList();
+        } catch (e) {
+          throw FormatException('Erreur de parsing JSON : $e');
+        }
+
+      case 401:
+        throw Exception('Non autorisé : token manquant ou invalide');
+
+      case 403:
+        throw Exception('Accès refusé : permissions insuffisantes');
+
+      case 500:
+        throw Exception('Erreur serveur : veuillez réessayer plus tard');
+
+      default:
+        throw Exception('Erreur HTTP ${response.statusCode} : ${response.reasonPhrase}');
     }
+  } catch (e) {
+    throw Exception('Erreur réseau ou inattendue : $e');
   }
+}
+
 
   Future<Utilisateur> getUserDetail(int id) async {
     final response = await http.get(

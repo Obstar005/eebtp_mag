@@ -35,10 +35,14 @@ class _StockPageState extends State<StockPage> {
 
   bool _isLoading = false;
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+ @override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
+    }
+ 
       _initializeServices();
     });
   }

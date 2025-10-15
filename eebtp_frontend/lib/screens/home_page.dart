@@ -1,5 +1,7 @@
+import 'package:eebtp_frontend/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import 'package:eebtp_frontend/widgets/nav.dart';
 
@@ -45,6 +47,15 @@ class _HomePageState extends State<HomePage> {
     ActivityItem(type: ActivityType.entry, title: "Réapprovisionnement hebdomadaire", time: "Il y a 4 jours", icon: Icons.login, color: Color(0xFF007AFF)),
     ActivityItem(type: ActivityType.other, title: "Inventaire hebdomadaire complété", time: "Il y a 5 jours", icon: Icons.inventory, color: Color(0xFF8E8E93)),
   ];
+@override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
+    }
+  });
+}
 
   @override
   void dispose() {
@@ -80,7 +91,7 @@ class _HomePageState extends State<HomePage> {
           titleSpacing: 0,
           title: Row(
             children: [
-              SizedBox(width: 2.w),
+              SizedBox(width: 3.w),
               Container(
                 width: 54, height: 54,
                 decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white),
@@ -116,7 +127,7 @@ class _HomePageState extends State<HomePage> {
                     child: Container(
                       padding: EdgeInsets.all(5),
                       decoration: BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                      child: Text("3", style: TextStyle(color: Colors.white, fontSize: 13.sp, fontWeight: FontWeight.bold)),
+                      child: Text("3", style: TextStyle(color: Colors.white, fontSize: 14.sp, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],

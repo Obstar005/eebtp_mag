@@ -76,7 +76,7 @@ class Utilisateur {
     dateJoined: DateTime.parse(json['date_joined']),
     dateCreation: DateTime.parse(json['date_creation']),
     dateModif: DateTime.parse(json['date_modif']),
-    firstLogin: json['first_login'] ?? false,
+    firstLogin: json['first_login'] ?? true,
     idProfil: json['id_profil'],
     projets: (json['projets'] as List<dynamic>).map((e) => int.parse(e.toString())).toList(),
     groups: json['groups'] != null ? List<int>.from(json['groups']) : [],

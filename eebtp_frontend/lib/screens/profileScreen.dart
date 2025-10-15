@@ -20,19 +20,25 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   late Future<Utilisateur> _futureUser;
 
-  @override
-  void initState() {
-    super.initState();
-    final token = context.read<AuthProvider>().token;
-
-    if (token != null) {
-      _futureUser = UserService().getUserInfo(token);
-    } else {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacementNamed(context, '/login');
-      });
+ @override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
     }
+  });
+
+  final token = context.read<AuthProvider>().token;
+  if (token != null) {
+    _futureUser = UserService().getUserInfo(token);
+  } else {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Navigator.pushReplacementNamed(context, '/login');
+    });
   }
+}
+
 
   Future<void> _pickImage(bool fromCamera) async {
     final token = context.read<AuthProvider>().token;

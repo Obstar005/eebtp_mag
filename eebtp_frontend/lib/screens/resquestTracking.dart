@@ -1,34 +1,13 @@
+import 'package:eebtp_frontend/models/demande.dart';
+import 'package:eebtp_frontend/providers/auth_provider.dart';
 import 'package:eebtp_frontend/screens/RequestDetail.dart';
+import 'package:eebtp_frontend/services/demandeService.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import 'package:eebtp_frontend/widgets/nav.dart';
-
-class SupplyRequest {
-  final String id;
-  final String title;
-  final String status;
-  final DateTime emissionDate;
-  final DateTime? processDate;
-  final String responsiblePerson;
-  final double requestedQuantity;
-  final double? approvedQuantity;
-  final String motif;
-  final String observation;
-
-  SupplyRequest({
-    required this.id,
-    required this.title,
-    required this.status,
-    required this.emissionDate,
-    this.processDate,
-    required this.responsiblePerson,
-    required this.requestedQuantity,
-    this.approvedQuantity,
-    required this.motif,
-    required this.observation,
-  });
-}
+import 'package:toastification/toastification.dart';
 
 class RequestsTrackingScreen extends StatefulWidget {
   const RequestsTrackingScreen({super.key});
@@ -38,82 +17,76 @@ class RequestsTrackingScreen extends StatefulWidget {
 }
 
 class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
- final List<SupplyRequest> _requests = [
-    SupplyRequest(
-      id: "DEM-006",
-      title: "Demande d'appro de ciment",
-      status: "acceptée",
-      emissionDate: DateTime(2025, 2, 2),
-      processDate: DateTime(2025, 2, 20),
-      responsiblePerson: "John Doe",
-      requestedQuantity: 20,
-      approvedQuantity: 20,
-      motif: "Besoin urgent pour le chantier principal. Les travaux de fondation nécessitent du ciment de qualité supérieure.",
-      observation: "Approvisionnement validé. Livraison prévue dans les délais. Qualité conforme aux spécifications.",
-    ),
-    SupplyRequest(
-      id: "DEM-005",
-      title: "Demande d'appro de fer à...",
-      status: "acceptée",
-      emissionDate: DateTime(2025, 2, 2),
-      processDate: DateTime(2025, 2, 20),
-      responsiblePerson: "Marie Martin",
-      requestedQuantity: 15,
-      approvedQuantity: 15,
-      motif: "Armatures nécessaires pour la structure en béton armé du projet résidentiel.",
-      observation: "Demande approuvée. Stock suffisant disponible.",
-    ),
-    SupplyRequest(
-      id: "DEM-004",
-      title: "Demande d'appro de fer...",
-      status: "En cours",
-      emissionDate: DateTime(2025, 2, 2),
-      responsiblePerson: "Pierre Durand",
-      requestedQuantity: 25,
-      motif: "Commande de fer pour l'extension du bâtiment industriel.",
-      observation: "En cours de validation par le service technique.",
-    ),
-    SupplyRequest(
-      id: "DEM-003",
-      title: "Demande d'appro de col...",
-      status: "refusée",
-      emissionDate: DateTime(2025, 2, 2),
-      processDate: DateTime(2025, 2, 20),
-      responsiblePerson: "Sophie Bernard",
-      requestedQuantity: 10,
-      motif: "Colle spéciale pour carrelage de la salle de bain principale.",
-      observation: "Budget insuffisant pour ce type de colle. Proposer une alternative moins coûteuse.",
-    ),
-    SupplyRequest(
-      id: "DEM-002",
-      title: "Demande d'appro de fer...",
-      status: "En cours",
-      emissionDate: DateTime(2025, 2, 2),
-      responsiblePerson: "Paul Moreau",
-      requestedQuantity: 30,
-      motif: "Renforcement de la structure métallique existante.",
-      observation: "Vérification des spécifications techniques en cours.",
-    ),
-    SupplyRequest(
-      id: "DEM-001",
-      title: "Demande d'appro de fer...",
-      status: "En cours",
-      emissionDate: DateTime(2025, 2, 2),
-      responsiblePerson: "Lucie Petit",
-      requestedQuantity: 12,
-      motif: "Barres d'armature pour les poteaux de soutènement.",
-      observation: "Attente de confirmation du fournisseur pour les délais de livraison.",
-    ),
-  ];
+  List<Demande> _demandes = [];
+  List<Demande> _filteredDemandes = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
+        _fetchDemandes();
+      }
+    });
+  }
+
+ Future<void> _fetchDemandes() async {
+  final token = Provider.of<AuthProvider>(context, listen: false).token;
+  if (token == null) {
+    setState(() { _isLoading = false; });
+    return;
+  }
+
+  try {
+    final demandeService = DemandeService();
+    final demandes = await demandeService.getDemandesEmises(token);
+    
+    setState(() {
+      _demandes = demandes; // Maintenant List<Demande>
+      _filteredDemandes = demandes;
+      _isLoading = false;
+    });
+  } catch (e) {
+    setState(() { _isLoading = false; });
+    print("Erreur chargement demandes: $e");
+    _showToast(message: 'Erreur lors du chargement des demandes', type: ToastificationType.error);
+  }
+}
+  void _showToast({required String message, required ToastificationType type}) {
+    toastification.show(
+      context: context,
+      type: type,
+      style: ToastificationStyle.flatColored,
+      title: Text(message, style: GoogleFonts.poppins(
+        fontSize: 13.sp,
+        fontWeight: FontWeight.w500
+      )),
+      autoCloseDuration: const Duration(seconds: 4),
+      alignment: Alignment.topCenter,
+      animationDuration: const Duration(milliseconds: 300),
+      borderRadius: BorderRadius.circular(12),
+      showProgressBar: true,
+      closeOnClick: false,
+      pauseOnHover: true,
+      dragToClose: true,
+      applyBlurEffect: true,
+    );
+  }
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'acceptée':
-        return const Color.fromRGBO(38, 161, 90, 1);
-      case 'en cours':
-        return const Color.fromRGBO(218, 164, 0, 1);
-      case 'refusée':
-        return const Color.fromRGBO(206, 0, 0, 1);
+      case 'validée':
+      case 'livrée':
+        return const Color.fromRGBO(38, 161, 90, 1); // Vert
+      case 'confirmée':
+      case 'approuvée':
+        return const Color.fromRGBO(0, 122, 255, 1); // Bleu
+      case 'emise':
+        return const Color.fromRGBO(218, 164, 0, 1); // Orange
+      case 'rejetée':
+        return const Color.fromRGBO(206, 0, 0, 1); // Rouge
       default:
         return Colors.grey;
     }
@@ -121,22 +94,55 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
 
   IconData _getStatusIcon(String status) {
     switch (status.toLowerCase()) {
-      case 'acceptée':
+      case 'validée':
+      case 'livrée':
         return Icons.check_circle;
-      case 'en cours':
-        return Icons.info;
-      case 'refusée':
-        return Icons.error;
+      case 'confirmée':
+      case 'approuvée':
+        return Icons.verified;
+      case 'emise':
+        return Icons.pending;
+      case 'rejetée':
+        return Icons.cancel;
       default:
         return Icons.help;
     }
   }
 
-  void _navigateToRequestDetail(SupplyRequest request) {
+  String _getDisplayStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'emise':
+        return 'Emise';
+      case 'confirmee':
+        return 'Confirmée';
+      case 'approuvee':
+        return 'Approuvée';
+      case 'validee':
+        return 'Validée';
+      case 'rejetee':
+        return 'Rejetée';
+      case 'livree':
+        return 'Livrée';
+      default:
+        return status;
+    }
+  }
+
+  DateTime? _getProcessDate(Demande demande) {
+    // Retourne la date la plus récente selon le statut
+    if (demande.dateRejet != null) return demande.dateRejet;
+    if (demande.dateValidation != null) return demande.dateValidation;
+    if (demande.dateApprobation != null) return demande.dateApprobation;
+    if (demande.dateConfirmation != null) return demande.dateConfirmation;
+    if (demande.dateEmission != null) return demande.dateEmission;
+    return null;
+  }
+
+  void _navigateToRequestDetail(Demande demande) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => RequestDetailScreen(request: request),
+        builder: (context) => RequestDetailScreen(demande: demande),
       ),
     );
   }
@@ -154,7 +160,6 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
         ),
         decoration: BoxDecoration(
           color: const Color(0xFF007AFF),
-          
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.08),
@@ -166,7 +171,6 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Flèche retour
             GestureDetector(
               onTap: () => Navigator.pop(context),
               child: CircleAvatar(
@@ -175,7 +179,6 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
               ),
             ),
             SizedBox(width: 3.w),
-            // Titre à côté de la flèche
             Expanded(
               child: Text(
                 "Suivre\nmes demandes",
@@ -190,7 +193,6 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
                 ),
               ),
             ),
-            // Badge notif à droite (pas centré)
             Stack(
               children: [
                 Container(
@@ -230,7 +232,10 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
     );
   }
 
-  Widget _buildRequestCard(SupplyRequest request) {
+  Widget _buildRequestCard(Demande demande) {
+    final processDate = _getProcessDate(demande);
+    final displayStatus = _getDisplayStatus(demande.statut);
+
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
       padding: EdgeInsets.all(4.w),
@@ -246,22 +251,20 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
         ],
       ),
       child: InkWell(
-        onTap: () => _navigateToRequestDetail(request),
+        onTap: () => _navigateToRequestDetail(demande),
         borderRadius: BorderRadius.circular(15),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Ligne titre, status
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Titre + n°
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        request.title,
+                        demande.stockItemName ?? 'Demande sans nom',
                         style: GoogleFonts.poppins(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
@@ -270,7 +273,7 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
                       ),
                       SizedBox(height: 1.h),
                       Text(
-                        "N° ${request.id}",
+                        "N° ${demande.number}",
                         style: GoogleFonts.poppins(
                           fontSize: 13.sp,
                           color: const Color.fromRGBO(67, 69, 69, 1),
@@ -282,21 +285,21 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(request.status),
+                    color: _getStatusColor(demande.statut),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        _getStatusIcon(request.status),
+                        _getStatusIcon(demande.statut),
                         color: Colors.white,
                         size: 13.sp,
                       ),
                       SizedBox(width: 1.w),
                       Flexible(
                         child: Text(
-                          request.status,
+                          displayStatus,
                           style: GoogleFonts.poppins(
                             fontSize: 11.sp,
                             color: Colors.white,
@@ -311,22 +314,21 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
               ],
             ),
             SizedBox(height: 2.h),
-            // Ligne dates
             Row(
               children: [
                 Expanded(
                   child: Text(
-                    "Émit le ${request.emissionDate.day.toString().padLeft(2, '0')}/${request.emissionDate.month.toString().padLeft(2, '0')}/${request.emissionDate.year}",
+                    "Émit le ${demande.dateCreation.day.toString().padLeft(2, '0')}/${demande.dateCreation.month.toString().padLeft(2, '0')}/${demande.dateCreation.year}",
                     style: GoogleFonts.poppins(
                       fontSize: 12.sp,
                       color: const Color.fromRGBO(67, 69, 69, 1),
                     ),
                   ),
                 ),
-                if (request.processDate != null)
+                if (processDate != null)
                   Expanded(
                     child: Text(
-                      "Traitée le ${request.processDate!.day.toString().padLeft(2, '0')}/${request.processDate!.month.toString().padLeft(2, '0')}/${request.processDate!.year}",
+                      "Traitée le ${processDate.day.toString().padLeft(2, '0')}/${processDate.month.toString().padLeft(2, '0')}/${processDate.year}",
                       textAlign: TextAlign.right,
                       style: GoogleFonts.poppins(
                         fontSize: 12.sp,
@@ -342,21 +344,73 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
     );
   }
 
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(color: Color(0xFF007AFF)),
+          SizedBox(height: 2.h),
+          Text(
+            "Chargement des demandes...",
+            style: GoogleFonts.poppins(
+              fontSize: 14.sp,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.inbox_outlined, size: 50.sp, color: Colors.grey[400]),
+          SizedBox(height: 2.h),
+          Text(
+            "Aucune demande trouvée",
+            style: GoogleFonts.poppins(
+              fontSize: 16.sp,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: 1.h),
+          Text(
+            "Vos demandes d'approvisionnement apparaîtront ici",
+            style: GoogleFonts.poppins(
+              fontSize: 12.sp,
+              color: Colors.grey[500],
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return NavContainer(
-      initialIndex: 2, // Onglet "Demande"
+      initialIndex: 2,
       body: Column(
         children: [
           _buildAppBar(),
           Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.symmetric(vertical: 2.h),
-              itemCount: _requests.length,
-              itemBuilder: (context, index) {
-                return _buildRequestCard(_requests[index]);
-              },
-            ),
+            child: _isLoading
+                ? _buildLoadingState()
+                : _demandes.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.builder(
+                        padding: EdgeInsets.symmetric(vertical: 2.h),
+                        itemCount: _demandes.length,
+                        itemBuilder: (context, index) {
+                          return _buildRequestCard(_demandes[index]);
+                        },
+                      ),
           ),
         ],
       ),

@@ -35,9 +35,15 @@ class _StockExitScreenState extends State<StockExitScreen> {
   final TextEditingController _phoneController = TextEditingController();
   PhoneNumber _initialPhone = PhoneNumber(isoCode: 'TG');
 
-  @override
-  void initState() {
-    super.initState();
+    @override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
+    }
+  });
+
     _fetchProductsWithUnits();
   }
 

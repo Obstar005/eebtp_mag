@@ -1,6 +1,8 @@
+import 'package:eebtp_frontend/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import '../widgets/button.dart';
 import '../widgets/nav.dart';
@@ -13,6 +15,16 @@ class SupplyRequestHomeScreen extends StatefulWidget {
 }
 
 class _SupplyRequestHomeScreenState extends State<SupplyRequestHomeScreen> {
+  @override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
+    }
+  });
+}
+
   void _navigateToCreateRequest() {
     Navigator.pushNamed(context, '/demande_form');
   }

@@ -44,8 +44,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
   String? _serverPhotoUrl;
 
   @override
-  void initState() {
-    super.initState();
+   @override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
+    }
+  });
     _firstNameController.text = widget.user.firstName ?? '';
     _lastNameController.text = widget.user.lastName ?? '';
     _surnameController.text = widget.user.surname ?? '';

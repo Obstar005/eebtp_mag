@@ -67,7 +67,7 @@ class Entree {
       makeBy: json['make_by'],
     );
   }
-
+ 
   Map<String, dynamic> toJson() {
     return {
       'magasin': magasin,

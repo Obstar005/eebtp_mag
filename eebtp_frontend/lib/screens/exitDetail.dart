@@ -23,8 +23,15 @@ class _ExitDetailPageState extends State<ExitDetailPage> {
   bool isError = false;
 
   @override
-  void initState() {
-    super.initState();
+   @override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
+    }
+  });
+
     _loadArticle();
   }
 

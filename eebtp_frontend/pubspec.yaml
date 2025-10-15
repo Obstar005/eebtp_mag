@@ -50,6 +50,7 @@ dependencies:
   iconsax: ^0.0.8
   cherry_toast: ^1.13.0
   toastification: ^3.0.3
+  jwt_decoder: ^2.0.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

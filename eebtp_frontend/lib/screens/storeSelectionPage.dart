@@ -20,20 +20,29 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
   final UserService _userService = UserService();
   final ProjetService _projetService = ProjetService();
 
-  @override
-  void initState() {
-    super.initState();
-    final token = context.read<AuthProvider>().token;
-
-    if (token != null) {
-      _futureUser = _userService.getUserInfo(token);
-      _futureStores = _loadStores(token);
-    } else {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacementNamed(context, '/login');
-      });
+@override
+void initState() {
+  super.initState();
+  // Vérification token expiré automatique dès ouverture
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      Provider.of<AuthProvider>(context, listen: false)
+          .checkTokenExpiry(context);
     }
+  });
+
+  final token = context.read<AuthProvider>().token;
+
+  if (token != null) {
+    _futureUser = _userService.getUserInfo(token);
+    _futureStores = _loadStores(token);
+  } else {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Navigator.pushReplacementNamed(context, '/login');
+    });
   }
+}
+
 
   Future<List<Map<String, dynamic>>> _loadStores(String token) async {
     try {

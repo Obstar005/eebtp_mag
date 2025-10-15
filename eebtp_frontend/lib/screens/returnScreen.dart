@@ -42,11 +42,19 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
   bool _isSortieDropdownOpen = false;
   int? _selectedSortieId;
 
-  @override
-  void initState() {
-    super.initState();
+  
+@override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) {
+      Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
+    }
+   });
     _fetchProductsAndSorties();
-  }
+ 
+}
+ 
 
   void _showToast({
     required String message,
@@ -317,14 +325,18 @@ class _StockReturnScreenState extends State<StockReturnScreen> {
                                 isLeftAligned: false),
                             SizedBox(height: 2.h),
                             _buildProductDropdown(),
-                            _buildSortieDropdown(),
-                            _buildBasicInputField(
+                             _buildBasicInputField(
                               controller: _quantityController,
                               hintText: "Définir la quantité",
                             ),
+                            SizedBox(height: 2.h),
+                            _buildSectionHeader("Produit",
+                                isLeftAligned: true),
+                            _buildSortieDropdown(),
+                           
                             SizedBox(height: 3.h),
                             _buildSectionHeader("Déposant",
-                                isLeftAligned: true),
+                                isLeftAligned: false),
                             SizedBox(height: 2.h),
                             _buildBasicInputField(
                               controller: _deposantNameController,

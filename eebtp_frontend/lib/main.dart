@@ -41,6 +41,7 @@ void main() async {
   await authProvider.loadFromStorage();
   runApp(
     ChangeNotifierProvider.value(
+      
       value: authProvider,
       child: const MyApp(),
     ),

@@ -1,5 +1,4 @@
 import 'package:eebtp_frontend/screens/modal_success.dart';
-import 'package:eebtp_frontend/screens/passwordCreatedConfirmation.dart';
 import 'package:eebtp_frontend/widgets/button.dart';
 import 'package:eebtp_frontend/widgets/input.dart';
 import 'package:flutter/material.dart';
@@ -35,130 +34,147 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     final String phone = args['phone'];
 
+    // Responsive sizing based on Sizer
+    double topPad = 2.h;
+    double fieldFont = 12.sp;
+    double titleFont = 17.sp;
+    double errorIcon = 16.sp;
+    double smallGap = 1.2.h;
+    double largeGap = 2.5.h;
+    double imageSize = 22.h;
+
     return Scaffold(
       backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: false, // Important
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final fieldFont = constraints.maxHeight < 700 ? 11.sp : 14.sp;
-            final titleFont = constraints.maxHeight < 700 ? 16.sp : 18.sp;
-            final smallPad = constraints.maxHeight < 700 ? 6.0 : 12.0;
-            return Padding(
-              padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      icon: Container(
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF007AFF),
-                          shape: BoxShape.circle,
-                        ),
-                        padding: const EdgeInsets.all(8),
-                        child: Icon(
-                          Icons.arrow_back_ios_new,
-                          color: Colors.white,
-                          size: fieldFont,
-                        ),
-                      ),
-                      onPressed: () {
-                        _clearControllers();
-                        Navigator.pop(context);
-                      },
-                    ),
-                  ),
-                  Center(child: SvgPicture.asset('assets/Floor.svg', height: 25.h)), // illustration
-                  SizedBox(height: 2.h),
-                  Text(
-                    "Modifier votre mot de passe",
-                    style: GoogleFonts.poppins(
-                      fontSize: titleFont,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  SizedBox(height: 1.h),
-                  Text(
-                    "Saisissez votre nouveau mot de passe",
-                    style: GoogleFonts.poppins(
-                      fontSize: fieldFont,
-                      color: Colors.black54,
-                    ),
-                  ),
-                  SizedBox(height: 2.h),
-                  Container(
-                    padding: EdgeInsets.all(3.w),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEAF2FF),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      "Le mot de passe doit comporter un minimum de huit caractères sans espaces avec :\n\n"
-                      "• Au moins une lettre majuscule\n"
-                      "• Au moins une lettre minuscule\n"
-                      "• Au moins un chiffre",
-                      style: GoogleFonts.poppins(
-                        fontSize: fieldFont * .85,
-                        color: Colors.black87,
-                        height: 1.6,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 3.h),
-                  CustomInputField(
-                    controller: oldPassController,
-                    hintText: "Ancien mot de passe",
-                    obscureText: _obscurePass,
-                    fontSize: fieldFont,
-                    onToggleVisibility: () {
-                      setState(() => _obscurePass = !_obscurePass);
-                    },
-                  ),
-                  SizedBox(height: 2.h),
-                  CustomInputField(
-                    controller: newPassController,
-                    hintText: "Nouveau mot de passe",
-                    obscureText: _obscurePass,
-                    fontSize: fieldFont,
-                    onToggleVisibility: () {
-                      setState(() => _obscurePass = !_obscurePass);
-                    },
-                  ),
-                  SizedBox(height: 2.h),
-                  CustomInputField(
-                    controller: confirmPassController,
-                    hintText: "Confirmer le mot de passe",
-                    obscureText: _obscurePass,
-                    fontSize: fieldFont,
-                    onToggleVisibility: () {
-                      setState(() => _obscurePass = !_obscurePass);
-                    },
-                  ),
-                  if (_errorMessage != null) ...[
-                    SizedBox(height: 1.h),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.error_outline, color: Colors.red, size: fieldFont * 1.1),
-                        SizedBox(width: 1.w),
-                        Expanded(
-                          child: Text(
-                            _errorMessage!,
-                            style: GoogleFonts.poppins(
-                              fontSize: fieldFont * .98,
-                              color: Colors.red,
-                            ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.5.h),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: 50.h,
+                maxWidth: 90.w,
+              ),
+              child: IntrinsicHeight(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: topPad),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                        icon: Container(
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF007AFF),
+                            shape: BoxShape.circle,
+                          ),
+                          padding: EdgeInsets.all(2.w),
+                          child: Icon(
+                            Icons.arrow_back_ios_new,
+                            color: Colors.white,
+                            size: 16.sp,
                           ),
                         ),
-                      ],
+                        onPressed: () {
+                          _clearControllers();
+                          Navigator.pop(context);
+                        },
+                      ),
                     ),
-                  ],
-                  Spacer(),
-                  Center(
-                    child: CustomElevatedButton(
+                    Center(
+                      child: SvgPicture.asset(
+                        'assets/Floor.svg',
+                        height: imageSize,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    SizedBox(height: smallGap),
+                    Text(
+                      "Modifier votre mot de passe",
+                      style: GoogleFonts.poppins(
+                        fontSize: titleFont,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    SizedBox(height: 0.8.h),
+                    Text(
+                      "Saisissez votre nouveau mot de passe",
+                      style: GoogleFonts.poppins(
+                        fontSize: fieldFont * 0.93,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    SizedBox(height: smallGap),
+                    Container(
+                      padding: EdgeInsets.all(3.w),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEAF2FF),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        "Le mot de passe doit comporter un minimum de huit caractères sans espaces avec :\n\n"
+                        "• Au moins une lettre majuscule\n"
+                        "• Au moins une lettre minuscule\n"
+                        "• Au moins un chiffre",
+                        style: GoogleFonts.poppins(
+                          fontSize: fieldFont * .85,
+                          color: Colors.black87,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: largeGap),
+                    CustomInputField(
+                      controller: oldPassController,
+                      hintText: "Ancien mot de passe",
+                      obscureText: _obscurePass,
+                      fontSize: fieldFont,
+                      onToggleVisibility: () {
+                        setState(() => _obscurePass = !_obscurePass);
+                      },
+                    ),
+                    SizedBox(height: smallGap),
+                    CustomInputField(
+                      controller: newPassController,
+                      hintText: "Nouveau mot de passe",
+                      obscureText: _obscurePass,
+                      fontSize: fieldFont,
+                      onToggleVisibility: () {
+                        setState(() => _obscurePass = !_obscurePass);
+                      },
+                    ),
+                    SizedBox(height: smallGap),
+                    CustomInputField(
+                      controller: confirmPassController,
+                      hintText: "Confirmer le mot de passe",
+                      obscureText: _obscurePass,
+                      fontSize: fieldFont,
+                      onToggleVisibility: () {
+                        setState(() => _obscurePass = !_obscurePass);
+                      },
+                    ),
+                    if (_errorMessage != null) ...[
+                      SizedBox(height: 1.h),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.error_outline, color: Colors.red, size: errorIcon),
+                          SizedBox(width: 2.w),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: GoogleFonts.poppins(
+                                fontSize: fieldFont * .98,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    SizedBox(height: largeGap),
+                    CustomElevatedButton(
                       text: 'Suivant',
                       backgroundColor: const Color(0xFF007AFF),
                       textColor: Colors.white,
@@ -193,14 +209,14 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                           });
                         }
                       },
-                      width: 70.w,
+                      width: 72.w,
                     ),
-                  ),
-                  SizedBox(height: 2.h),
-                ],
+                    SizedBox(height: 2.h),
+                  ],
+                ),
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
     );
