@@ -44,7 +44,7 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
     final demandes = await demandeService.getDemandesEmises(token);
     
     setState(() {
-      _demandes = demandes; // Maintenant List<Demande>
+      _demandes = demandes; 
       _filteredDemandes = demandes;
       _isLoading = false;
     });
@@ -134,7 +134,7 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
     if (demande.dateValidation != null) return demande.dateValidation;
     if (demande.dateApprobation != null) return demande.dateApprobation;
     if (demande.dateConfirmation != null) return demande.dateConfirmation;
-    if (demande.dateEmission != null) return demande.dateEmission;
+    // if (demande.dateEmission != null) return demande.dateEmission;
     return null;
   }
 
@@ -216,7 +216,7 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
                       "3",
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
-                        fontSize: 8.sp,
+                        fontSize: 13.sp,
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         height: 1,

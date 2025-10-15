@@ -15,7 +15,7 @@ import 'package:sizer/sizer.dart';
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
 import 'package:signature/signature.dart';
-
+import 'dart:typed_data';
 class StockEntryScreen extends StatefulWidget {
   const StockEntryScreen({super.key});
   @override
@@ -216,38 +216,47 @@ Future<void> fetchDemandes() async {
       showToast(message: 'Erreur utilisateur non connecté', type: ToastificationType.error);
       return;
     }
-    // Signature en base64 PNG
+    try {
     final signatureBytes = await signatureController.toPngBytes();
-    final signatureBase64 = signatureBytes != null ? base64Encode(signatureBytes) : null;
+    if (signatureBytes == null) {
+      showToast(message: 'Erreur lors de la génération de la signature', type: ToastificationType.error);
+      return;
+    }
+
+    // Convertir en URI data (data:image/png;base64,...)
+    final signatureBase64 = base64Encode(signatureBytes);
+    final signatureDataUri = 'data:image/png;base64,$signatureBase64';
 
     final data = {
       'magasin': magasinId,
-      'stockitem': selectedProduct!.id.toString(), // au lieu de int brut
-
-     // 'stockitem': selectedProduct!.id,
-      'source': selectedRequest!.id,
+      'stock_item': selectedProduct!.id.toString(),
+      'source': selectedRequest!.id.toString(),
       'type': 'Livraison',
-      'quantitem': quantityController.text.trim(),
+      'quantite_m': quantityController.text.trim(),
       'societe': supplierController.text.trim(),
-      'telsociete': phoneController.text.trim(),
-      'nomlivreur': companyController.text.trim(),
-      'tellivreur': phoneController.text.trim(),
-      'signaturelivreur': signatureBase64,
-      'isactive': true,
+      'tel_societe': phoneController.text.trim(),
+      'nom_livreur': companyController.text.trim(),
+      'tel_livreur': phoneController.text.trim(),
+      'signature_livreur': signatureDataUri, // Envoyer comme URI data
+      'is_active': true,
     };
+
     print(data);
-    try {
-      final mouvementsService = MouvementsService(token: token);
-      final response = await mouvementsService.createEntree(data);
-      if (response.statusCode == 201) {
-        showToast(message: 'Livraison enregistrée avec succès!', type: ToastificationType.success);
-        Navigator.pop(context);
-      } else {
-        showToast(message: 'Erreur lors de l’enregistrement.', type: ToastificationType.error);
-      }
-    } catch (e) {
-      showToast(message: 'Erreur lors de l’enregistrement.', type: ToastificationType.error);
+    
+    final mouvementsService = MouvementsService(token: token);
+    final response = await mouvementsService.createEntree(data);
+    
+    if (response.statusCode == 201) {
+      showToast(message: 'Livraison enregistrée avec succès!', type: ToastificationType.success);
+      Navigator.pop(context);
+    } else {
+      final errorBody = jsonDecode(response.body);
+      showToast(message: 'Erreur lors de l\'enregistrement: ${errorBody.toString()}', type: ToastificationType.error);
     }
+  } catch (e) {
+    print("Erreur soumission: $e");
+    showToast(message: 'Erreur lors de l\'enregistrement: ${e.toString()}', type: ToastificationType.error);
+  }
   }
 
   @override
