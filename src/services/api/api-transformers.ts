@@ -661,3 +661,126 @@ export function apiProjetStatsResponseToProjetStats(
     par_pays: apiResponse.par_pays,
   };
 }
+
+// ==================== TRANSFORMATEURS DEMANDES ====================
+
+import type { MaterialRequest, RequestTreatment } from "../../types/request";
+import type { ApiDemande } from "../../types/api-demandes";
+import { API_TO_FRONTEND_STATUS } from "../../types/api-demandes";
+
+/**
+ * Convertir ApiDemande vers MaterialRequest (frontend)
+ */
+export function apiDemandeToMaterialRequest(
+  apiDemande: ApiDemande
+): MaterialRequest {
+  return {
+    id: apiDemande.id.toString(),
+    demande: apiDemande.stock_item_name,
+    nomMagasinier: apiDemande.emis_par_name,
+    quantiteDemandee: apiDemande.quantite,
+    profil: "Magasinier", // À adapter selon les données disponibles
+    status: (API_TO_FRONTEND_STATUS[apiDemande.statut] || "emis") as any,
+    dateDemande: formatApiDate(apiDemande.date_creation),
+    userId: apiDemande.emis_par?.toString(),
+    notes: apiDemande.raison,
+    createdAt: apiDemande.date_creation,
+    updatedAt: apiDemande.date_creation, // À adapter si date de modification disponible
+
+    // Champs additionnels pour le détail
+    nomMagasin: apiDemande.magasin_name,
+    nomProjet: "N/A", // À compléter si disponible dans l'API
+    adresseMagasin: "N/A", // À compléter si disponible dans l'API
+    donneurOrdre: apiDemande.emis_par_name,
+    quantiteValidee: undefined, // À adapter selon les besoins
+    motif: apiDemande.raison,
+    observation: apiDemande.motif_rejet,
+    traitements: generateTreatmentsFromApiDemande(apiDemande),
+  };
+}
+
+/**
+ * Générer les traitements basés sur les données de l'API
+ */
+function generateTreatmentsFromApiDemande(
+  apiDemande: ApiDemande
+): RequestTreatment[] {
+  const treatments: RequestTreatment[] = [];
+
+  // Émission
+  if (apiDemande.emis_par_name && apiDemande.date_emission) {
+    treatments.push({
+      id: `emission_${apiDemande.id}`,
+      nom: apiDemande.emis_par_name,
+      profil: "Magasinier",
+      action: "emis",
+      date: apiDemande.date_emission,
+    });
+  }
+
+  // Confirmation
+  if (apiDemande.confirme_par_name && apiDemande.date_confirmation) {
+    treatments.push({
+      id: `confirmation_${apiDemande.id}`,
+      nom: apiDemande.confirme_par_name,
+      profil: "Chef Appro",
+      action: "confirme",
+      date: apiDemande.date_confirmation,
+    });
+  }
+
+  // Approbation
+  if (apiDemande.approve_par_name && apiDemande.date_approbation) {
+    treatments.push({
+      id: `approbation_${apiDemande.id}`,
+      nom: apiDemande.approve_par_name,
+      profil: "Directeur Technique",
+      action: "approuve",
+      date: apiDemande.date_approbation,
+    });
+  }
+
+  // Validation
+  if (apiDemande.valide_par_name && apiDemande.date_validation) {
+    treatments.push({
+      id: `validation_${apiDemande.id}`,
+      nom: apiDemande.valide_par_name,
+      profil: "Directeur",
+      action: "valide",
+      date: apiDemande.date_validation,
+    });
+  }
+
+  // Rejet
+  if (apiDemande.rejete_par_name && apiDemande.date_rejet) {
+    treatments.push({
+      id: `rejet_${apiDemande.id}`,
+      nom: apiDemande.rejete_par_name,
+      profil: "Directeur",
+      action: "refuse",
+      date: apiDemande.date_rejet,
+    });
+  }
+
+  return treatments;
+}
+
+/**
+ * Formater une date API pour l'affichage
+ */
+function formatApiDate(apiDate: string): string {
+  try {
+    const date = new Date(apiDate);
+    return date
+      .toLocaleDateString("fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+      .replace(",", " à");
+  } catch {
+    return apiDate;
+  }
+}

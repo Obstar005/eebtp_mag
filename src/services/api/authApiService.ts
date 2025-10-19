@@ -104,7 +104,7 @@ export class AuthApiService {
     try {
       // Utiliser Basic Auth admin pour cette requête, credentials utilisateur dans le body
       const response = await apiClient.post<ApiLoginByPhoneResponse>(
-        "/Users/authentication/login-by-phone/",
+        "/Users/authentication/login-by-phone-web/",
         {
           telephone: credentials.phone,
           password: credentials.password,

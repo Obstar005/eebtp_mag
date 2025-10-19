@@ -16,6 +16,232 @@
   "securityDefinitions": { "Basic": { "type": "basic" } },
   "security": [{ "Basic": [] }],
   "paths": {
+    "/Demandes/demande/approuver/{id}": {
+      "post": {
+        "operationId": "Demandes_demande_approuver_create",
+        "description": "Approuver une demande (par les DT, c-a-d directeur technique(dt) ou par le directeur des travaux(dtx) ou un supérieur autorisé)",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Demande" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Demande" }
+          }
+        },
+        "tags": ["Demandes"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Demandes/demande/confirmer/{id}": {
+      "post": {
+        "operationId": "Demandes_demande_confirmer_create",
+        "description": "Confirmer une demande (par un chef appro ou un supérieur autorisé)",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Demande" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Demande" }
+          }
+        },
+        "tags": ["Demandes"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Demandes/demande/detail/{id}": {
+      "get": {
+        "operationId": "Demandes_demande_detail_read",
+        "description": "Récupérer les détails d'une demande spécifique",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Demande" }
+          },
+          "404": { "description": "Not Found" }
+        },
+        "tags": ["Demandes"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Demandes/demande/emettre": {
+      "post": {
+        "operationId": "Demandes_demande_emettre_create",
+        "description": "Émettre une nouvelle demande de stock (par un magasinier) sur le mobile",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Demande" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Demande" }
+          }
+        },
+        "tags": ["Demandes"]
+      },
+      "parameters": []
+    },
+    "/Demandes/demande/rejeter/{id}": {
+      "post": {
+        "operationId": "Demandes_demande_rejeter_create",
+        "description": "Rejeter une demande (par le DGA, ou le Directeur Financier (DF), ou le DG)",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Demande" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Demande" }
+          }
+        },
+        "tags": ["Demandes"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Demandes/demande/valider/{id}": {
+      "post": {
+        "operationId": "Demandes_demande_valider_create",
+        "description": "Valider une demande (par le DGA, ou le Directeur Financier (DF), ou le DG)",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Demande" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Demande" }
+          }
+        },
+        "tags": ["Demandes"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Demandes/demandes/approuvees": {
+      "get": {
+        "operationId": "Demandes_demandes_approuvees_list",
+        "description": "Récupérer la liste des demandes approuvées",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Demandes"]
+      },
+      "parameters": []
+    },
+    "/Demandes/demandes/confirmees": {
+      "get": {
+        "operationId": "Demandes_demandes_confirmees_list",
+        "description": "Récupérer la liste des demandes confirmées",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Demandes"]
+      },
+      "parameters": []
+    },
+    "/Demandes/demandes/emises": {
+      "get": {
+        "operationId": "Demandes_demandes_emises_list",
+        "description": "Récupérer la liste des demandes émises par le magasinier connecté",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Demandes"]
+      },
+      "parameters": []
+    },
+    "/Demandes/demandes/en-attente-validation": {
+      "get": {
+        "operationId": "Demandes_demandes_en-attente-validation_list",
+        "description": "Récupérer la liste des demandes en attente de validation (c-a-d soit soit émises, approuvées, soit confirmées)",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Demandes"]
+      },
+      "parameters": []
+    },
+    "/Demandes/demandes/livrees": {
+      "get": {
+        "operationId": "Demandes_demandes_livrees_list",
+        "description": "Récupérer la liste des demandes qui ont été livrées",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Demandes"]
+      },
+      "parameters": []
+    },
+    "/Demandes/demandes/rejetees": {
+      "get": {
+        "operationId": "Demandes_demandes_rejetees_list",
+        "description": "Récupérer la liste des demandes rejetées",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Demandes"]
+      },
+      "parameters": []
+    },
+    "/Demandes/demandes/statistiques": {
+      "get": {
+        "operationId": "Demandes_demandes_statistiques_list",
+        "description": "Récupérer quelques statistiques sur les demandes, Nombre total de demandes(total_demandes), Nombre de demandes par statut(demandes_par_statut), nombre de demandes en attente de validation(demandes_en_attente_validation)et les demandes traitéées (validées et rejetées)",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Demandes"]
+      },
+      "parameters": []
+    },
+    "/Demandes/demandes/toutes": {
+      "get": {
+        "operationId": "Demandes_demandes_toutes_list",
+        "description": "Récupérer la liste de toutes les demandes",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Demandes"]
+      },
+      "parameters": []
+    },
+    "/Demandes/demandes/validees": {
+      "get": {
+        "operationId": "Demandes_demandes_validees_list",
+        "description": "Récupérer la liste des demandes validées",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Demandes"]
+      },
+      "parameters": []
+    },
     "/Mouvements/entree-create": {
       "post": {
         "operationId": "Mouvements_entree-create_create",
@@ -179,6 +405,16 @@
       "parameters": [
         { "name": "id", "in": "path", "required": true, "type": "string" }
       ]
+    },
+    "/Notifications/notifications/test/": {
+      "post": {
+        "operationId": "Notifications_notifications_test_create",
+        "description": "",
+        "parameters": [],
+        "responses": { "201": { "description": "" } },
+        "tags": ["Notifications"]
+      },
+      "parameters": []
     },
     "/Projets/liste-magasins": {
       "get": {
@@ -767,10 +1003,47 @@
       },
       "parameters": []
     },
-    "/Users/authentication/login-by-phone/": {
+    "/Users/authentication/login-by-phone-mobile/": {
       "post": {
-        "operationId": "Users_authentication_login-by-phone_create",
-        "description": "Authentifier un utilisateur par téléphone et mot de passe",
+        "operationId": "Users_authentication_login-by-phone-mobile_create",
+        "description": "Authentifier un utilisateur par téléphone et mot de passe pour mobile",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "required": ["telephone", "password"],
+              "type": "object",
+              "properties": {
+                "telephone": {
+                  "description": "Numéro de téléphone de l'utilisateur",
+                  "type": "string",
+                  "example": "0022890099009"
+                },
+                "password": {
+                  "description": "Mot de passe de l'utilisateur",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Connexion réussie" },
+          "400": { "description": "Bad Request" },
+          "401": { "description": "Mot de passe incorrect" },
+          "404": { "description": "Utilisateur introuvable" },
+          "403": { "description": "Utilisateur désactivé ou accès refusé" }
+        },
+        "tags": ["Users"]
+      },
+      "parameters": []
+    },
+    "/Users/authentication/login-by-phone-web/": {
+      "post": {
+        "operationId": "Users_authentication_login-by-phone-web_create",
+        "description": "Authentifier un utilisateur par téléphone et mot de passe sur le web",
         "parameters": [
           {
             "name": "data",
@@ -1118,19 +1391,151 @@
     }
   },
   "definitions": {
+    "Demande": {
+      "required": ["quantite", "raison", "stock_item", "magasin"],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "magasin_name": {
+          "title": "Magasin name",
+          "type": "string",
+          "readOnly": true
+        },
+        "stock_item_name": {
+          "title": "Stock item name",
+          "type": "string",
+          "readOnly": true
+        },
+        "emis_par_name": {
+          "title": "Emis par name",
+          "type": "string",
+          "readOnly": true
+        },
+        "confirme_par_name": {
+          "title": "Confirme par name",
+          "type": "string",
+          "readOnly": true
+        },
+        "approve_par_name": {
+          "title": "Approve par name",
+          "type": "string",
+          "readOnly": true
+        },
+        "valide_par_name": {
+          "title": "Valide par name",
+          "type": "string",
+          "readOnly": true
+        },
+        "rejete_par_name": {
+          "title": "Rejete par name",
+          "type": "string",
+          "readOnly": true
+        },
+        "number": {
+          "title": "Number",
+          "type": "string",
+          "readOnly": true,
+          "minLength": 1
+        },
+        "quantite": { "title": "Quantite", "type": "number" },
+        "raison": { "title": "Raison", "type": "string", "minLength": 1 },
+        "statut": {
+          "title": "Statut",
+          "type": "string",
+          "enum": [
+            "Emise",
+            "Confirmée",
+            "Approuvée",
+            "Validée",
+            "Rejetée",
+            "Livrée"
+          ],
+          "readOnly": true
+        },
+        "date_creation": {
+          "title": "Date creation",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "date_emission": {
+          "title": "Date emission",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true,
+          "x-nullable": true
+        },
+        "date_confirmation": {
+          "title": "Date confirmation",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true,
+          "x-nullable": true
+        },
+        "date_approbation": {
+          "title": "Date approbation",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true,
+          "x-nullable": true
+        },
+        "date_validation": {
+          "title": "Date validation",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true,
+          "x-nullable": true
+        },
+        "motif_rejet": {
+          "title": "Motif rejet",
+          "type": "string",
+          "readOnly": true,
+          "minLength": 1,
+          "x-nullable": true
+        },
+        "date_rejet": {
+          "title": "Date rejet",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true,
+          "x-nullable": true
+        },
+        "stock_item": { "title": "Stock item", "type": "integer" },
+        "magasin": { "title": "Magasin", "type": "integer" },
+        "emis_par": {
+          "title": "Emis par",
+          "type": "integer",
+          "readOnly": true,
+          "x-nullable": true
+        },
+        "confirme_par": {
+          "title": "Confirme par",
+          "type": "integer",
+          "readOnly": true,
+          "x-nullable": true
+        },
+        "approve_par": {
+          "title": "Approve par",
+          "type": "integer",
+          "readOnly": true,
+          "x-nullable": true
+        },
+        "valide_par": {
+          "title": "Valide par",
+          "type": "integer",
+          "readOnly": true,
+          "x-nullable": true
+        },
+        "rejete_par": {
+          "title": "Rejete par",
+          "type": "integer",
+          "readOnly": true,
+          "x-nullable": true
+        }
+      }
+    },
     "Entree": {
-      "required": [
-        "magasin",
-        "stock_item",
-        "type",
-        "nom_deposant",
-        "tel_deposant",
-        "fonction_deposant",
-        "societe",
-        "tel_societe",
-        "nom_livreur",
-        "tel_livreur"
-      ],
+      "required": ["magasin", "stock_item", "type"],
       "type": "object",
       "properties": {
         "id": { "title": "ID", "type": "integer", "readOnly": true },
@@ -1161,19 +1566,19 @@
           "title": "Nom deposant",
           "type": "string",
           "maxLength": 100,
-          "minLength": 1
+          "x-nullable": true
         },
         "tel_deposant": {
           "title": "Tel deposant",
           "type": "string",
           "maxLength": 20,
-          "minLength": 1
+          "x-nullable": true
         },
         "fonction_deposant": {
           "title": "Fonction deposant",
           "type": "string",
           "maxLength": 100,
-          "minLength": 1
+          "x-nullable": true
         },
         "date_creation": {
           "title": "Date creation",
@@ -1191,25 +1596,25 @@
           "title": "Societe",
           "type": "string",
           "maxLength": 100,
-          "minLength": 1
+          "x-nullable": true
         },
         "tel_societe": {
           "title": "Tel societe",
           "type": "string",
           "maxLength": 20,
-          "minLength": 1
+          "x-nullable": true
         },
         "nom_livreur": {
           "title": "Nom livreur",
           "type": "string",
           "maxLength": 100,
-          "minLength": 1
+          "x-nullable": true
         },
         "tel_livreur": {
           "title": "Tel livreur",
           "type": "string",
           "maxLength": 20,
-          "minLength": 1
+          "x-nullable": true
         },
         "signature_livreur": {
           "title": "Signature livreur",
@@ -2155,11 +2560,7 @@
           "readOnly": true
         },
         "first_login": { "title": "First login", "type": "boolean" },
-        "id_profil": {
-          "title": "Id profil",
-          "type": "integer",
-          "x-nullable": true
-        },
+        "profil": { "title": "Profil", "type": "integer", "x-nullable": true },
         "groups": {
           "description": "The groups this user belongs to. A user will get all permissions granted to each of their groups.",
           "type": "array",

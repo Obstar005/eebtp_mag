@@ -8,3 +8,4 @@ export * from "./accountService";
 export * from "./projetService";
 export { default as projetService } from "./projetService";
 export * from "./magasinService";
+export * from "./demandeService";

@@ -32,6 +32,9 @@ export function ProjectDetailsPage() {
   // Log pour déboguer la récupération des comptes associés
   console.log("🔍 Projet détails:", projet);
   console.log("🔍 Comptes associés:", comptes);
+  console.log("📸 Photos récupérées:", photos);
+  console.log("📸 Nombre de photos:", photos?.length || 0);
+  console.log("📸 État de chargement des photos:", isLoadingPhotos);
   const { getCountryByAbbreviation, getTogoCountry } = useCountries();
   const deleteProjetMutation = useDeleteProjet();
   const confirmDeleteModal = useModal();

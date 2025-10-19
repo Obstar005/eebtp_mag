@@ -1,50 +1,22 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import type { MaterialRequest, RequestTreatment } from "../types/request";
+
 import { Truck } from "lucide-react";
 import RequestTreatmentModal from "../components/requests/RequestTreatmentModal";
-
-// MOCK pour la démo
-const mockRequest: MaterialRequest = {
-  id: "DEM-001",
-  demande: "Ciment",
-  nomMagasinier: "John Doe",
-  quantiteDemandee: 80,
-  profil: "Magasinier",
-  status: "emis",
-  dateDemande: "01-01-2025 à 3h00",
-  createdAt: "2025-01-01T03:00:00Z",
-  updatedAt: "2025-01-01T03:00:00Z",
-  nomMagasin: "John Doe",
-  nomProjet: "John Doe",
-  adresseMagasin: "John Doe",
-  donneurOrdre: "John Doe",
-  quantiteValidee: undefined,
-  motif: "Motif de la demande",
-  observation: "Observation de la demande par le chef appro",
-  traitements: [
-    {
-      id: "1",
-      nom: "John Doe",
-      profil: "Directeur Technique",
-      action: "approuve",
-      date: "2025-01-01T03:00:00Z",
-    },
-    {
-      id: "2",
-      nom: "John Doe",
-      profil: "Chef Appro",
-      action: "valide",
-      date: "2025-01-01T03:00:00Z",
-    },
-  ],
-};
+import { useDemande, useTraiterDemande } from "../hooks/useDemandes";
+import { showErrorMessage, logError } from "../utils/errorHandling";
 
 export default function RequestDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [request] = useState<MaterialRequest>(mockRequest);
   const [isTreatmentModalOpen, setIsTreatmentModalOpen] = useState(false);
+
+  // Récupération des données de la demande depuis l'API
+  const { data: request, isLoading, error } = useDemande(id!);
+
+  // Mutation pour traiter la demande
+  const { mutate: traiterDemande, isPending: isTraitementLoading } =
+    useTraiterDemande();
 
   const handleOpenTreatmentModal = () => setIsTreatmentModalOpen(true);
   const handleCloseTreatmentModal = () => setIsTreatmentModalOpen(false);
@@ -52,9 +24,63 @@ export default function RequestDetailPage() {
     traitement: string;
     motif: string;
   }) => {
-    // TODO: Envoyer le traitement au backend ou mettre à jour l'état
-    setIsTreatmentModalOpen(false);
+    if (!request || !id) return;
+
+    traiterDemande(
+      {
+        id: id,
+        action: data.traitement as
+          | "confirmer"
+          | "approuver"
+          | "valider"
+          | "rejeter",
+        motif: data.motif,
+      },
+      {
+        onSuccess: () => {
+          handleCloseTreatmentModal();
+          // Optionnel : afficher un message de succès
+          console.log("✅ Demande traitée avec succès");
+        },
+        onError: (error: unknown) => {
+          logError("Traitement de demande", error);
+          showErrorMessage(error);
+        },
+      }
+    );
   };
+
+  // Gestion des états de chargement et d'erreur
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !request) {
+    return (
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="text-center p-8">
+          <p className="text-red-600">
+            Erreur lors du chargement de la demande
+          </p>
+          <p className="text-gray-500 mt-2">
+            La demande demandée n'existe pas ou n'est plus accessible
+          </p>
+          <button
+            onClick={() => navigate("/requests")}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Retour aux demandes
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -63,10 +89,17 @@ export default function RequestDetailPage() {
           Détails de la demande N° {request.id}
         </h1>
         <button
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          className={`px-4 py-2 rounded-lg text-white transition-colors ${
+            isTraitementLoading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
           onClick={handleOpenTreatmentModal}
+          disabled={isTraitementLoading}
         >
-          Traiter la demande
+          {isTraitementLoading
+            ? "Traitement en cours..."
+            : "Traiter la demande"}
         </button>
       </div>
       <RequestTreatmentModal
@@ -75,6 +108,7 @@ export default function RequestDetailPage() {
         onSubmit={handleSubmitTreatment}
         article={request.demande}
         quantite={request.quantiteDemandee}
+        isLoading={isTraitementLoading}
       />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Colonne gauche : Détails basiques */}
@@ -154,6 +188,12 @@ export default function RequestDetailPage() {
                         ? "Approuvée"
                         : t.action === "valide"
                         ? "Validée"
+                        : t.action === "confirme"
+                        ? "Confirmée"
+                        : t.action === "refuse"
+                        ? "Rejetée"
+                        : t.action === "emis"
+                        ? "Émise"
                         : t.action}
                     </td>
                   </tr>

@@ -8,3 +8,4 @@ export * from "./useAccounts";
 export * from "./useProjets";
 export * from "./useMagasins";
 export * from "./useDeclarations";
+export * from "./useDemandes";

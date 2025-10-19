@@ -6,6 +6,9 @@ import {
   useUpdateProjet,
   useProjet,
   useProjetMagasins,
+  useProjetPhotos,
+  useAddPhotoToProjet,
+  useDeleteProjetPhoto,
 } from "../../hooks/useProjets";
 import { useAccounts } from "../../hooks/useAccounts";
 import { CountrySelector } from "../../components/ui/CountrySelector";
@@ -25,9 +28,12 @@ export function AddEditProjectPage() {
   const { data: projet, isLoading: isLoadingProjet } = useProjet(projetId);
   const { data: magasins, isLoading: isLoadingMagasins } =
     useProjetMagasins(projetId);
+  const { data: photos } = useProjetPhotos(projetId);
   const { data: accounts } = useAccounts({});
   const createProjetMutation = useCreateProjet();
   const updateProjetMutation = useUpdateProjet();
+  const addPhotoMutation = useAddPhotoToProjet();
+  const deletePhotoMutation = useDeleteProjetPhoto();
   const { countries } = useCountries();
 
   // States
@@ -36,6 +42,11 @@ export function AddEditProjectPage() {
     undefined
   );
   const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([]); // Nouvelles images à envoyer
+  const [existingPhotos, setExistingPhotos] = useState<
+    { id: number; photo: string; description?: string }[]
+  >([]); // Photos existantes
+  const [deletedPhotoIds, setDeletedPhotoIds] = useState<number[]>([]); // IDs des photos à supprimer
   const [error, setError] = useState<string | null>(null);
 
   // États pour les comptes associés
@@ -82,6 +93,20 @@ export function AddEditProjectPage() {
     comptes: [],
     comptes_associes: [],
   });
+
+  // Charger les photos existantes lors de l'édition
+  useEffect(() => {
+    if (isEditing && photos && photos.length > 0) {
+      console.log("📸 Chargement des photos existantes:", photos);
+      setExistingPhotos(photos);
+      const photoUrls = photos.map((photo) => photo.photo);
+      setPreviewImages(photoUrls);
+    } else if (isEditing && photos && photos.length === 0) {
+      // Réinitialiser si pas de photos
+      setExistingPhotos([]);
+      setPreviewImages([]);
+    }
+  }, [isEditing, photos]);
 
   // Initialiser le pays par défaut
   useEffect(() => {
@@ -175,10 +200,8 @@ export function AddEditProjectPage() {
         }
       }
 
-      // Charger les images existantes
-      if (projet.images) {
-        setPreviewImages(projet.images);
-      }
+      // Les images seront chargées via useEffect séparé avec les photos de l'API
+      // (projet.images n'est pas utilisé car les photos sont récupérées séparément)
 
       // Charger les comptes associés si disponibles
       if (projetComptes.length > 0 && accounts?.data) {
@@ -218,10 +241,20 @@ export function AddEditProjectPage() {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    const newImages = [...(formData.images || []), ...files];
-    setFormData((prev) => ({ ...prev, images: newImages }));
+    console.log("📤 Nouvelles images sélectionnées:", files);
+    console.log(
+      "📤 État actuel de newImageFiles avant ajout:",
+      newImageFiles.length
+    );
 
-    // Créer des prévisualisations
+    // Ajouter les nouveaux fichiers à la liste des nouvelles images
+    setNewImageFiles((prev) => {
+      const updated = [...prev, ...files];
+      console.log("📤 newImageFiles mis à jour:", updated.length, "fichiers");
+      return updated;
+    });
+
+    // Créer des prévisualisations pour les nouvelles images
     files.forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -232,10 +265,40 @@ export function AddEditProjectPage() {
   };
 
   const removeImage = (index: number) => {
-    const newImages = [...(formData.images || [])];
-    newImages.splice(index, 1);
-    setFormData((prev) => ({ ...prev, images: newImages }));
+    console.log("🗑️ Suppression de l'image à l'index:", index);
 
+    // Déterminer si c'est une image existante ou nouvelle
+    const totalExistingPhotos = existingPhotos.length;
+
+    if (index < totalExistingPhotos) {
+      // C'est une image existante - la marquer pour suppression
+      const photoToRemove = existingPhotos[index];
+      console.log(
+        "🗑️ Marquage pour suppression d'une photo existante:",
+        photoToRemove
+      );
+
+      // Ajouter l'ID à la liste des photos à supprimer
+      setDeletedPhotoIds((prev) => [...prev, photoToRemove.id]);
+
+      // Retirer de la liste des photos existantes
+      const newExistingPhotos = [...existingPhotos];
+      newExistingPhotos.splice(index, 1);
+      setExistingPhotos(newExistingPhotos);
+    } else {
+      // C'est une nouvelle image - la retirer de la liste des nouveaux fichiers
+      const newImageIndex = index - totalExistingPhotos;
+      console.log(
+        "🗑️ Suppression d'une nouvelle image à l'index:",
+        newImageIndex
+      );
+
+      const newFiles = [...newImageFiles];
+      newFiles.splice(newImageIndex, 1);
+      setNewImageFiles(newFiles);
+    }
+
+    // Retirer la prévisualisation
     const newPreviews = [...previewImages];
     newPreviews.splice(index, 1);
     setPreviewImages(newPreviews);
@@ -324,6 +387,41 @@ export function AddEditProjectPage() {
       );
     }) || [];
 
+  // Fonction pour gérer les images après la création/modification du projet
+  const handleImages = async (projetId: number) => {
+    console.log("📸 Gestion des images pour le projet:", projetId);
+    console.log("📸 Nouvelles images à ajouter:", newImageFiles.length);
+    console.log("📸 Photos à supprimer:", deletedPhotoIds.length);
+
+    // Supprimer les photos marquées pour suppression
+    for (const photoId of deletedPhotoIds) {
+      try {
+        console.log("🗑️ Suppression de la photo ID:", photoId);
+        await deletePhotoMutation.mutateAsync({ photoId, projetId });
+      } catch (error) {
+        console.error("Erreur lors de la suppression de la photo:", error);
+        // On continue même si une suppression échoue
+      }
+    }
+
+    // Ajouter les nouvelles images
+    for (const imageFile of newImageFiles) {
+      try {
+        console.log("📤 Ajout de la nouvelle image:", imageFile.name);
+        await addPhotoMutation.mutateAsync({
+          projetId,
+          photo: imageFile,
+          description: `Photo ajoutée le ${new Date().toLocaleDateString()}`,
+        });
+      } catch (error) {
+        console.error("Erreur lors de l'ajout de la photo:", error);
+        // On continue même si un ajout échoue
+      }
+    }
+
+    console.log("✅ Gestion des images terminée");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -381,15 +479,62 @@ export function AddEditProjectPage() {
     };
 
     try {
+      let savedProjetId = projetId;
+
       if (isEditing) {
         const updateData: UpdateProjetData = {
           id: projetId,
           ...formDataWithComptes,
         };
         await updateProjetMutation.mutateAsync(updateData);
+        console.log("✅ Projet mis à jour, ID:", projetId);
       } else {
-        await createProjetMutation.mutateAsync(formDataWithComptes);
+        console.log("🚀 Création d'un nouveau projet...");
+        const newProjet = await createProjetMutation.mutateAsync(
+          formDataWithComptes
+        );
+        console.log("📋 Réponse complète de l'API:", newProjet);
+        console.log("🔍 ID du nouveau projet:", newProjet?.id);
+        console.log("🔍 Type de l'ID:", typeof newProjet?.id);
+
+        if (newProjet && newProjet.id) {
+          savedProjetId = newProjet.id;
+          console.log("✅ Nouveau projet créé, ID:", savedProjetId);
+        } else {
+          console.error(
+            "❌ ERREUR: Le nouveau projet n'a pas d'ID!",
+            newProjet
+          );
+          setError(
+            "Erreur: le projet a été créé mais l'ID n'est pas disponible"
+          );
+          return;
+        }
       }
+
+      // Gérer les images après l'enregistrement du projet
+      console.log("🔍 Vérification du traitement des images:");
+      console.log(
+        "📤 Nouvelles images à traiter (newImageFiles):",
+        newImageFiles.length
+      );
+      console.log(
+        "📤 Détail des fichiers:",
+        newImageFiles.map((f) => ({ name: f.name, size: f.size }))
+      );
+      console.log("🗑️ Photos à supprimer:", deletedPhotoIds.length);
+      console.log("🖼️ Preview images actuelles:", previewImages.length);
+
+      if (newImageFiles.length > 0 || deletedPhotoIds.length > 0) {
+        console.log(
+          "📸 Traitement des images pour le projet ID:",
+          savedProjetId
+        );
+        await handleImages(savedProjetId);
+      } else {
+        console.log("⚠️ Aucune image à traiter");
+      }
+
       navigate("/projects");
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);

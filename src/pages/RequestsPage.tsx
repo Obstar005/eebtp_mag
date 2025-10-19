@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Eye, Edit, Trash2, ArrowUpRight } from "lucide-react";
-import {
-  type MaterialRequest,
-  RequestStatus,
-  RequestStatusLabels,
-} from "../types/request";
+import { Search, Eye, Edit, Trash2 } from "lucide-react";
+import { RequestStatus, RequestStatusLabels } from "../types/request";
+import { useDemandes, useDemandeStats } from "../hooks/useDemandes";
+import { getErrorMessage } from "../utils/errorHandling";
 
 export function RequestsPage() {
   const [activeTab, setActiveTab] = useState<RequestStatus>("tous");
@@ -13,78 +11,55 @@ export function RequestsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Données mockées basées sur l'image et le schéma de base de données
-  const mockRequests: MaterialRequest[] = [
-    {
-      id: "1",
-      demande: "Ciment",
-      nomMagasinier: "John Doe",
-      quantiteDemandee: 20,
-      profil: "Magasinier",
-      status: "approuve", // Utilisation du nouveau statut
-      dateDemande: "01-01-2025 à 3h00",
-      createdAt: "2025-01-01T03:00:00Z",
-      updatedAt: "2025-01-01T03:00:00Z",
-    },
-    {
-      id: "2",
-      demande: "Fer de 8",
-      nomMagasinier: "John Doe",
-      quantiteDemandee: 20,
-      profil: "Magasinier",
-      status: "approuve", // Utilisation du nouveau statut
-      dateDemande: "01-01-2025 à 3h00",
-      createdAt: "2025-01-01T03:00:00Z",
-      updatedAt: "2025-01-01T03:00:00Z",
-    },
-    {
-      id: "3",
-      demande: "Ciment",
-      nomMagasinier: "John Doe",
-      quantiteDemandee: 20,
-      profil: "Magasinier",
-      status: "emis", // Statut "émis" au lieu de "refusé"
-      dateDemande: "01-01-2025 à 3h00",
-      createdAt: "2025-01-01T03:00:00Z",
-      updatedAt: "2025-01-01T03:00:00Z",
-    },
-    {
-      id: "4",
-      demande: "Ciment",
-      nomMagasinier: "Emily Davis",
-      quantiteDemandee: 100,
-      profil: "Chef appro",
-      status: "emis", // Statut "émis"
-      dateDemande: "01-01-2025 à 3h00",
-      createdAt: "2025-01-01T03:00:00Z",
-      updatedAt: "2025-01-01T03:00:00Z",
-    },
-  ];
-
-  // Filtrer les demandes selon l'onglet actif
-  const filteredRequests = mockRequests.filter((request) => {
-    const matchesTab = activeTab === "tous" || request.status === activeTab;
-    const matchesSearch =
-      searchQuery === "" ||
-      request.demande.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.nomMagasinier.toLowerCase().includes(searchQuery.toLowerCase());
-
-    return matchesTab && matchesSearch;
+  // Récupération des demandes depuis l'API
+  const {
+    data: demandesResponse,
+    isLoading,
+    error,
+  } = useDemandes({
+    status: activeTab === "tous" ? undefined : activeTab,
+    search: searchQuery || undefined,
   });
 
+  // Récupération des statistiques pour les compteurs
+  const { data: stats } = useDemandeStats();
+
+  // Extraire les demandes de la réponse
+  const allRequests = demandesResponse?.data || [];
+
   const navigate = useNavigate();
-  // Pagination
-  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
+
+  // Les données sont déjà filtrées par le hook useDemandes
+  // Pagination côté client pour l'instant
+  const totalPages = Math.ceil(allRequests.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedRequests = filteredRequests.slice(
+  const paginatedRequests = allRequests.slice(
     startIndex,
     startIndex + itemsPerPage
   );
 
-  // Compter les demandes par statut
+  // Compter les demandes par statut (utiliser les stats de l'API)
   const getStatusCount = (status: RequestStatus) => {
-    if (status === "tous") return mockRequests.length;
-    return mockRequests.filter((req) => req.status === status).length;
+    if (!stats) return 0;
+
+    switch (status) {
+      case "tous":
+        return stats.total;
+      case "emis":
+        return stats.emises;
+      case "confirme":
+        return stats.confirmees;
+      case "approuve":
+        return stats.approuvees;
+      case "valide":
+        return stats.validees;
+      case "refuse":
+        return stats.rejetees;
+      case "livre":
+        return stats.livrees;
+      default:
+        return 0;
+    }
   };
 
   const getStatusBadge = (status: RequestStatus) => {
@@ -104,6 +79,48 @@ export function RequestsPage() {
         return `${baseClasses} bg-gray-100 text-gray-800`;
     }
   };
+
+  // Gestion des états de chargement et d'erreur
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900">Demandes</h1>
+        </div>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    const errorMessage = getErrorMessage(error);
+    const isPermissionError = errorMessage.includes("Permission refusée");
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900">Demandes</h1>
+        </div>
+        <div className="text-center p-8 bg-red-50 border border-red-200 rounded-lg">
+          <div className="text-red-600 font-medium mb-2">
+            {isPermissionError ? "Accès non autorisé" : "Erreur de chargement"}
+          </div>
+          <p className="text-gray-700 whitespace-pre-line">{errorMessage}</p>
+          {isPermissionError && (
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+              <p className="text-yellow-800 text-sm">
+                💡 <strong>Conseil :</strong> Contactez votre administrateur
+                pour obtenir les permissions nécessaires pour consulter les
+                demandes.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -285,53 +302,66 @@ export function RequestsPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {paginatedRequests.map((request) => (
-                <tr key={request.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {request.demande}
-                  </td>
-                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                    {request.nomMagasinier}
-                  </td>
-                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                    {request.quantiteDemandee}t
-                  </td>
-                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
-                    {request.profil}
-                  </td>
-                  <td className="px-6 py-3 whitespace-nowrap">
-                    <span className={getStatusBadge(request.status)}>
-                      {RequestStatusLabels[request.status]}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
-                    {request.dateDemande}
-                  </td>
-                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        className="p-0.5 px-2  bg-green-500 text-gray-100 hover:bg-green-600 transition-colors"
-                        title="Voir"
-                        onClick={() => navigate(`/requests/${request.id}`)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button
-                        className="p-0.5 px-2  bg-orange-400 text-gray-100 hover:bg-orange-600 transition-colors"
-                        title="Modifier"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        className="p-1 px-3 bg-red-500 text-gray-100 hover:bg-red-600 transition-colors rounded-md"
-                        title="Supprimer"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+              {paginatedRequests.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-6 py-8 text-center text-gray-500"
+                  >
+                    {searchQuery || activeTab !== "tous"
+                      ? "Aucune demande trouvée pour les critères sélectionnés"
+                      : "Aucune demande disponible"}
                   </td>
                 </tr>
-              ))}
+              ) : (
+                paginatedRequests.map((request) => (
+                  <tr key={request.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {request.demande}
+                    </td>
+                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                      {request.nomMagasinier}
+                    </td>
+                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                      {request.quantiteDemandee}t
+                    </td>
+                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
+                      {request.profil}
+                    </td>
+                    <td className="px-6 py-3 whitespace-nowrap">
+                      <span className={getStatusBadge(request.status)}>
+                        {RequestStatusLabels[request.status]}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
+                      {request.dateDemande}
+                    </td>
+                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          className="p-0.5 px-2  bg-green-500 text-gray-100 hover:bg-green-600 transition-colors"
+                          title="Voir"
+                          onClick={() => navigate(`/requests/${request.id}`)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
+                          className="p-0.5 px-2  bg-orange-400 text-gray-100 hover:bg-orange-600 transition-colors"
+                          title="Modifier"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          className="p-1 px-3 bg-red-500 text-gray-100 hover:bg-red-600 transition-colors rounded-md"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -340,8 +370,8 @@ export function RequestsPage() {
         <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
           <div className="flex items-center text-sm text-gray-500">
             Affichage de {startIndex + 1} à{" "}
-            {Math.min(startIndex + itemsPerPage, filteredRequests.length)} sur{" "}
-            {filteredRequests.length} données
+            {Math.min(startIndex + itemsPerPage, allRequests.length)} sur{" "}
+            {allRequests.length} données
           </div>
 
           <div className="flex items-center space-x-2">
