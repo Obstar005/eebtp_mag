@@ -59,7 +59,7 @@ export class AuthService {
     refreshToken?: string;
   }> {
     if (useMockService) {
-      return mockService.directLogin(data);
+    return mockService.directLogin(data);
     }
     throw new Error("API not implemented");
   }
@@ -125,6 +125,8 @@ export class AuthService {
     try {
       // Utiliser le service API et transformer la réponse
       const authResponse = await authApiService.loginByPhone(data);
+
+      console.log("authResponse:", authResponse);
 
       return {
         success: true,

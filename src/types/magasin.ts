@@ -51,7 +51,6 @@ export interface StockArticle {
   description?: string;
   quantite: number; // Quantité disponible
   quantite_seuil: number; // Quantité seuil
-  etat: ArticleEtat;
   type_enum?: ArticleType;
   unite?: ArticleUnite; // Unité de mesure
   date_creation: Date;
@@ -79,7 +78,6 @@ export interface CreateStockArticleData {
   description?: string;
   quantite: number;
   quantite_seuil: number;
-  etat: ArticleEtat;
   type_enum?: ArticleType;
   unite?: ArticleUnite;
   magasin_id: number;
@@ -94,7 +92,6 @@ export interface UpdateStockArticleData {
   description?: string;
   quantite?: number;
   quantite_seuil?: number;
-  etat?: ArticleEtat;
   type_enum?: ArticleType;
   unite?: ArticleUnite;
   prix_unitaire?: number;
@@ -150,7 +147,6 @@ export interface MagasinFilter {
 export interface StockArticleFilter {
   search?: string;
   magasin_id?: number;
-  etat?: ArticleEtat;
   type_enum?: ArticleType;
 }
 

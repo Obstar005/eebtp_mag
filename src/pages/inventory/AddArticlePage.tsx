@@ -189,7 +189,7 @@ export function AddArticlePage() {
               </div>
 
               {/* Description */}
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Description
                 </label>
@@ -200,7 +200,7 @@ export function AddArticlePage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Description de l'article"
                 />
-              </div>
+              </div> */}
 
               {/* Type avec switch toggle */}
               <div>
@@ -259,7 +259,7 @@ export function AddArticlePage() {
               </div>
 
               {/* État */}
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   État
                 </label>
@@ -270,14 +270,14 @@ export function AddArticlePage() {
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="neuf">Bon</option>
-                  <option value="usagé">Mauvais</option>
+                  <option value="neuf">Neuf</option>
+                  <option value="usagé">Usagé</option>
                   <option value="endommagé">Endommagé</option>
                 </select>
-              </div>
+              </div> */}
 
               {/* Quantité et seuil */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Quantité
@@ -329,10 +329,10 @@ export function AddArticlePage() {
                     </p>
                   )}
                 </div>
-              </div>
+              </div> */}
 
               {/* Prix unitaire */}
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Prix unitaire
                 </label>
@@ -350,7 +350,7 @@ export function AddArticlePage() {
                   step="0.01"
                   placeholder="0.00"
                 />
-              </div>
+              </div> */}
 
               {/* Bouton de sauvegarde */}
               <div className="pt-4">

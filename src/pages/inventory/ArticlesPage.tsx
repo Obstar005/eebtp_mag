@@ -7,17 +7,12 @@ import {
 } from "../../hooks/useArticles";
 import { useModal } from "../../hooks/useModal";
 import { ConfirmationModal } from "../../components/layout/ConfirmationModal";
-import type {
-  StockArticleFilter,
-  ArticleEtat,
-  ArticleType,
-} from "../../types/magasin";
+import type { StockArticleFilter, ArticleType } from "../../types/magasin";
 
 export function ArticlesPage() {
   const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedEtat, setSelectedEtat] = useState<ArticleEtat | "">("");
   const [selectedType, setSelectedType] = useState<ArticleType | "">("");
   const [selectedArticleId, setSelectedArticleId] = useState<number | null>(
     null
@@ -25,10 +20,11 @@ export function ArticlesPage() {
   const [activeTab, setActiveTab] = useState<"tous" | "materiel" | "materiaux">(
     "tous"
   );
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const filter: StockArticleFilter = {
     search: searchTerm || undefined,
-    etat: selectedEtat || undefined,
     type_enum: selectedType || undefined,
   };
 
@@ -47,6 +43,29 @@ export function ArticlesPage() {
     return true;
   });
 
+  // Calculs de pagination
+  const totalItems = filteredArticles.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedArticles = filteredArticles.slice(startIndex, endIndex);
+
+  // Réinitialiser à la page 1 quand on change de filtre/recherche
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleTypeChange = (value: ArticleType | "") => {
+    setSelectedType(value);
+    setCurrentPage(1);
+  };
+
+  const handleTabChange = (tab: "tous" | "materiel" | "materiaux") => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+  };
+
   const handleDeleteArticle = (articleId: number) => {
     setSelectedArticleId(articleId);
     confirmDeleteModal.open();
@@ -64,16 +83,14 @@ export function ArticlesPage() {
     }
   };
 
-  const getEtatColor = (etat: string) => {
-    switch (etat) {
-      case "neuf":
-        return "bg-green-100 text-green-800";
-      case "usagé":
-        return "bg-yellow-100 text-yellow-800";
-      case "abandonné":
-        return "bg-red-100 text-red-800";
+  const getTypeColor = (type: ArticleType) => {
+    switch (type) {
+      case "matiere_premiere":
+        return "text-green-600";
+      case "equipement":
+        return "text-purple-600";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "text-yellow-600";
     }
   };
 
@@ -133,7 +150,7 @@ export function ArticlesPage() {
               <button
                 key={tab.id}
                 onClick={() =>
-                  setActiveTab(tab.id as "tous" | "materiel" | "materiaux")
+                  handleTabChange(tab.id as "tous" | "materiel" | "materiaux")
                 }
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === tab.id
@@ -157,33 +174,18 @@ export function ArticlesPage() {
                 type="text"
                 placeholder="Rechercher"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
             {/* Filtres */}
             <div className="flex gap-3">
-              {/* Filtre par état */}
-              <select
-                value={selectedEtat}
-                onChange={(e) =>
-                  setSelectedEtat(e.target.value as ArticleEtat | "")
-                }
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                title="Filtrer par état"
-              >
-                <option value="">État</option>
-                <option value="neuf">Neuf</option>
-                <option value="usagé">Usagé</option>
-                <option value="endommagé">Endommagé</option>
-              </select>
-
               {/* Filtre par type */}
               <select
                 value={selectedType}
                 onChange={(e) =>
-                  setSelectedType(e.target.value as ArticleType | "")
+                  handleTypeChange(e.target.value as ArticleType | "")
                 }
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 title="Filtrer par type"
@@ -206,7 +208,7 @@ export function ArticlesPage() {
 
         {/* Table des articles */}
         <div className="overflow-x-auto">
-          {filteredArticles.length === 0 ? (
+          {totalItems === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-500">
                 {searchTerm
@@ -236,9 +238,6 @@ export function ArticlesPage() {
                     Type
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    État
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date d'ajout
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -247,7 +246,7 @@ export function ArticlesPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredArticles.map((article) => (
+                {paginatedArticles.map((article) => (
                   <tr key={article.id} className="hover:bg-gray-50">
                     <td className="px-6 py-3 whitespace-nowrap">
                       <div className="font-medium text-gray-900">
@@ -259,28 +258,19 @@ export function ArticlesPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-3 whitespace-nowrap text-gray-900">
-                      Kilogramme
+                    <td className="px-6 py-3 whitespace-nowrap text-gray-900 capitalize">
+                      {article.unite === "m" ? "mètre" : article.unite}
                     </td>
-                    <td className="px-6 py-3 whitespace-nowrap text-gray-900">
+                    <td
+                      className={`px-6 py-3 whitespace-nowrap text-gray-900 ${getTypeColor(
+                        article.type_enum || "equipement"
+                      )}`}
+                    >
                       {article.type_enum === "matiere_premiere"
                         ? "Matériaux"
                         : article.type_enum === "equipement"
                         ? "Matériel"
                         : "Consommable"}
-                    </td>
-                    <td className="px-6 py-3 whitespace-nowrap">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEtatColor(
-                          article.etat
-                        )}`}
-                      >
-                        {article.etat === "neuf"
-                          ? "Bon"
-                          : article.etat === "usagé"
-                          ? "Mauvais"
-                          : article.etat}
-                      </span>
                     </td>
                     <td className="px-6 py-3 whitespace-nowrap text-gray-900">
                       {new Date(article.date_creation).toLocaleDateString(
@@ -329,21 +319,80 @@ export function ArticlesPage() {
         </div>
 
         {/* Footer avec pagination */}
-        {filteredArticles.length > 0 && (
+        {totalItems > 0 && (
           <div className="px-6 py-3 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-500">
-                Affichage de 1-10 sur {filteredArticles.length} données
+                Affichage de {startIndex + 1}-{Math.min(endIndex, totalItems)}{" "}
+                sur {totalItems} données
               </div>
-              <div className="flex items-center gap-1">
-                <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors">
-                  1
-                </button>
-                <span className="px-2 text-gray-500">/</span>
-                <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors">
-                  2
-                </button>
-              </div>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  {/* Bouton Précédent */}
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(1, prev - 1))
+                    }
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Précédent
+                  </button>
+
+                  {/* Numéros de page */}
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (page) => {
+                        // Afficher seulement certaines pages pour éviter l'encombrement
+                        const showPage =
+                          page === 1 ||
+                          page === totalPages ||
+                          (page >= currentPage - 1 && page <= currentPage + 1);
+
+                        if (!showPage) {
+                          // Afficher "..." pour les pages cachées
+                          if (
+                            page === currentPage - 2 ||
+                            page === currentPage + 2
+                          ) {
+                            return (
+                              <span key={page} className="px-2 text-gray-500">
+                                ...
+                              </span>
+                            );
+                          }
+                          return null;
+                        }
+
+                        return (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`px-3 py-1 text-sm border rounded transition-colors ${
+                              currentPage === page
+                                ? "bg-blue-500 text-white border-blue-500"
+                                : "border-gray-300 hover:bg-gray-50"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        );
+                      }
+                    )}
+                  </div>
+
+                  {/* Bouton Suivant */}
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Suivant
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

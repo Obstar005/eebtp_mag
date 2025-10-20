@@ -105,10 +105,12 @@ export class ArticleService {
         return stockArticle;
       } catch (error) {
         console.error("❌ Erreur API lors de la création:", error);
-        throw error;
+        // En cas d'erreur, utiliser le mock
       }
     }
-    throw new Error("API non activée, impossible de créer l'article");
+
+    // Utiliser le service mock
+    return mockArticleService.createArticle(data);
   }
 
   /**
@@ -136,10 +138,12 @@ export class ArticleService {
         return stockArticle;
       } catch (error) {
         console.error("❌ Erreur API lors de la mise à jour:", error);
-        throw error;
+        // En cas d'erreur, utiliser le mock
       }
     }
-    throw new Error("API non activée, impossible de mettre à jour l'article");
+
+    // Utiliser le service mock
+    return mockArticleService.updateArticle(data);
   }
 
   /**
@@ -149,26 +153,111 @@ export class ArticleService {
     if (import.meta.env.VITE_ENABLE_VERIFICATION === "true") {
       try {
         await articleApiService.deleteArticle(id);
+        return;
       } catch (error) {
         console.error("❌ Erreur API lors de la suppression:", error);
-        throw error;
+        // En cas d'erreur, utiliser le mock
       }
     }
-    throw new Error("API non activée, impossible de supprimer l'article");
+
+    // Utiliser le service mock
+    return mockArticleService.deleteArticle(id);
   }
 }
 
 // Service mock pour le développement
 const mockArticleService = {
-  articles: [] as StockArticle[],
+  articles: [
+    {
+      id: 1,
+      name: "Marteau BTP",
+      description: "Marteau de chantier professionnel",
+      type_enum: "equipement" as const,
+      quantite: 5,
+      quantite_seuil: 2,
+      unite: "unite",
+      prix_unitaire: 45.99,
+      magasin_id: 1,
+      user_id: 1,
+      date_creation: new Date("2024-01-15"),
+      date_modif: new Date("2024-01-15"),
+    },
+    {
+      id: 2,
+      name: "Ciment Portland",
+      description: "Sac de ciment 25kg",
+      type_enum: "matiere_premiere" as const,
+      quantite: 12,
+      quantite_seuil: 5,
+      unite: "kg",
+      prix_unitaire: 8.5,
+      magasin_id: 1,
+      user_id: 1,
+      date_creation: new Date("2024-01-10"),
+      date_modif: new Date("2024-01-20"),
+    },
+    {
+      id: 3,
+      name: "Perceuse électrique",
+      description: "Perceuse professionnelle 800W",
+      type_enum: "equipement" as const,
+      quantite: 1,
+      quantite_seuil: 1,
+      unite: "unite",
+      prix_unitaire: 120.0,
+      magasin_id: 1,
+      user_id: 1,
+      date_creation: new Date("2024-01-05"),
+      date_modif: new Date("2024-01-25"),
+    },
+    {
+      id: 4,
+      name: "Sable fin",
+      description: "Sable fin pour mortier",
+      type_enum: "matiere_premiere" as const,
+      quantite: 25,
+      quantite_seuil: 5,
+      unite: "m3",
+      prix_unitaire: 15.0,
+      magasin_id: 1,
+      user_id: 1,
+      date_creation: new Date("2024-02-01"),
+      date_modif: new Date("2024-02-01"),
+    },
+  ] as StockArticle[],
 
   async getArticles(
-    _magasinId: number,
-    _filter?: StockArticleFilter
+    magasinId: number,
+    filter?: StockArticleFilter
   ): Promise<PaginatedResponse<StockArticle>> {
+    let filteredArticles = this.articles.filter(
+      (a) => a.magasin_id === magasinId
+    );
+
+    // Appliquer les filtres
+    if (filter?.search) {
+      const search = filter.search.toLowerCase();
+      filteredArticles = filteredArticles.filter(
+        (article) =>
+          article.name.toLowerCase().includes(search) ||
+          article.description?.toLowerCase().includes(search)
+      );
+    }
+
+    if (filter?.type_enum) {
+      filteredArticles = filteredArticles.filter(
+        (article) => article.type_enum === filter.type_enum
+      );
+    }
+
     return {
-      data: this.articles,
-      pagination: { page: 1, limit: 50, total: 0, totalPages: 0 },
+      data: filteredArticles,
+      pagination: {
+        page: 1,
+        limit: 50,
+        total: filteredArticles.length,
+        totalPages: Math.ceil(filteredArticles.length / 50),
+      },
     };
   },
 
@@ -187,8 +276,8 @@ const mockArticleService = {
       description: data.description,
       quantite: data.quantite,
       quantite_seuil: data.quantite_seuil,
-      etat: data.etat,
       type_enum: data.type_enum,
+      unite: data.unite,
       prix_unitaire: data.prix_unitaire || 0,
       date_creation: new Date(),
       date_modif: new Date(),

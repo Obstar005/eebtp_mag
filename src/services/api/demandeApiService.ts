@@ -27,10 +27,10 @@ export class DemandeApiService {
   async getAllDemandes(): Promise<ApiDemande[]> {
     // Pour le développement, utiliser les données mockées
     // TODO: Remplacer par l'API réelle une fois l'authentification configurée
-    console.log("🔄 Utilisation des données mockées pour le développement");
-    return mockApiDemandes;
+    // console.log("🔄 Utilisation des données mockées pour le développement");
+    // return mockApiDemandes;
 
-    /* Code API réel - à réactiver une fois l'authentification configurée
+    
     try {
       console.log("📋 Récupération de toutes les demandes...");
 
@@ -45,7 +45,7 @@ export class DemandeApiService {
       console.warn("🔄 Utilisation des données mockées en fallback");
       return mockApiDemandes;
     }
-    */
+    
   }
 
   /**

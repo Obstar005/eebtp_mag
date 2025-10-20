@@ -39,9 +39,9 @@ export function apiProduitToStockArticle(apiProduit: ApiProduit): StockArticle {
     description: apiProduit.designation, // API n'a pas de description séparée
     quantite: 0, // L'API Produit ne contient pas la quantité (c'est dans StockItem)
     quantite_seuil: 0, // L'API Produit ne contient pas le seuil
-    etat: "neuf", // Valeur par défaut
     type_enum:
       TYPE_API_TO_FRONTEND_MAPPING[apiProduit.type] || "matiere_premiere",
+    unite: apiProduit.unite, // Mapper l'unité depuis l'API
     prix_unitaire: 0, // L'API Produit ne contient pas le prix
     date_creation: new Date(apiProduit.date_creation),
     date_modif: new Date(apiProduit.date_modif),

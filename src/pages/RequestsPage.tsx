@@ -345,7 +345,7 @@ export function RequestsPage() {
                         >
                           <Eye className="h-4 w-4" />
                         </button>
-                        <button
+                        {/* <button
                           className="p-0.5 px-2  bg-orange-400 text-gray-100 hover:bg-orange-600 transition-colors"
                           title="Modifier"
                         >
@@ -356,7 +356,7 @@ export function RequestsPage() {
                           title="Supprimer"
                         >
                           <Trash2 className="h-4 w-4" />
-                        </button>
+                        </button> */}
                       </div>
                     </td>
                   </tr>

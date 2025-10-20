@@ -171,7 +171,7 @@ export default function EditArticlePage() {
             </h3>
             <div className="space-y-4">
               {/* Désignation */}
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Désignation
                 </label>
@@ -187,7 +187,7 @@ export default function EditArticlePage() {
                 {errors.name && (
                   <p className="mt-1 text-sm text-red-600">{errors.name}</p>
                 )}
-              </div>
+              </div> */}
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -256,7 +256,7 @@ export default function EditArticlePage() {
                 </select>
               </div>
               {/* État */}
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   État
                 </label>
@@ -271,9 +271,9 @@ export default function EditArticlePage() {
                   <option value="usagé">Usagé</option>
                   <option value="endommagé">Endommagé</option>
                 </select>
-              </div>
+              </div> */}
               {/* Quantité et seuil */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Quantité
@@ -325,9 +325,9 @@ export default function EditArticlePage() {
                     </p>
                   )}
                 </div>
-              </div>
+              </div> */}
               {/* Prix unitaire */}
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Prix unitaire
                 </label>
@@ -345,7 +345,7 @@ export default function EditArticlePage() {
                   step="0.01"
                   placeholder="0.00"
                 />
-              </div>
+              </div> */}
               {/* Bouton de sauvegarde */}
               <div className="pt-4">
                 <button
