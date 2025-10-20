@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
@@ -9,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from projets.models import Projet, Magasin, StockItem
 from .models import Sortie, Entree
 from .serializers import SortieSerializer, EntreeSerializer
+from demandes.models import Demande
 
 
 #Créer une sortie de stock
@@ -107,6 +107,7 @@ def create_entree(request):
     data = request.data.copy()
     quantity = data.get('quantite_m', 0)
     type = data.get('type', '')
+    demande_source_id = data.get('demande_source', None)
 
     try:
         stock_item = StockItem.objects.get(pk=data.get('stock_item'))
@@ -126,11 +127,26 @@ def create_entree(request):
         if sortie.quantite_m < int(quantity):
             return Response({'error': f'Quantité de retour dépasse la quantité de la sortie source pour l\'article {sortie.stock_item}'}, status=status.HTTP_400_BAD_REQUEST)
         
-    if type  == 'Livraison' and (not data.get('societe') or not data.get('tel_societe') or not data.get('nom_livreur') or not data.get('tel_livreur')):
-        return Response({'error': 'Ces champs sont obligatoires pour déclarer une livraison de stock'}, status=status.HTTP_400_BAD_REQUEST)
-    
+    if type  == 'Livraison' and not data.get('societe') and not data.get('tel_societe') and not data.get('nom_livreur') and not data.get('tel_livreur') and not demande_source_id:
+        return Response({'error': 'Champ manquant pour déclarer une livraison de stock'}, status=status.HTTP_400_BAD_REQUEST)
+        #on va verifier si l'article de la demande_source correspond à celui de l'entrée
+    if demande_source_id:
+        try:
+            demande = Demande.objects.get(pk=demande_source_id)
+        except Demande.DoesNotExist:
+            return Response({'error': 'Demande source introuvable'}, status=status.HTTP_404_NOT_FOUND)
+        if demande.stock_item != stock_item:
+            return Response({'error': 'L\'article de la demande concernée ne correspond pas à celui de l\'entrée que vous voulez déclarer'}, status=status.HTTP_400_BAD_REQUEST)
+        if demande.statut == 'Rejetée':
+            return Response({'error': 'La demande concernée a été rejetée, vous ne pouvez pas déclarer cette entrée de stock'}, status=status.HTTP_400_BAD_REQUEST)
+        if not demande.statut == 'Validée':
+            return Response({'error': f'La demande concernée n\'a pas encore été validée veuillez contacter votre supérieur. Statut actuel: {demande.statut}'}, status=status.HTTP_400_BAD_REQUEST)
+    #Changer le statut de la demande
+        demande.statut = 'Livrée'
+        demande.save()
     stock_item.quantite += int(quantity)
     stock_item.save()
+    #Cha
 
     serializer = EntreeSerializer(data=request.data)
     if serializer.is_valid():

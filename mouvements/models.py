@@ -2,6 +2,7 @@ from django.db import models
 from projets.models import Magasin
 from users.models import CustomUser
 from projets.models import StockItem
+from demandes.models import Demande
 
 class Sortie(models.Model):
     magasin = models.ForeignKey(Magasin, on_delete=models.CASCADE)
@@ -39,4 +40,5 @@ class Entree(models.Model):
     tel_livreur = models.CharField(max_length=20, null=True, blank=True)
     signature_livreur = models.ImageField(upload_to='signatures/', null=True, blank=True)
     is_active = models.BooleanField(default=True)
+    demande_source = models.ForeignKey(Demande, on_delete=models.SET_NULL, null=True, blank=True)
 

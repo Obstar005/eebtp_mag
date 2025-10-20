@@ -13,4 +13,4 @@ urlpatterns = [
     path('entree-create', views.create_entree, name='create_entree'),
     path('entree-detail/<int:pk>', views.get_entree, name='get_entree'),
     path('liste-entree-magasin/<int:magasin_id>', views.list_entrees_magasin, name='list_entrees_magasin'),
-]
+] 

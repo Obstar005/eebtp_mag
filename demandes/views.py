@@ -128,6 +128,8 @@ def approuver_demande(request, id):
         demande = Demande.objects.get(pk=id)
     except Demande.DoesNotExist:
         return Response({'error': 'Demande non trouvée'}, status=status.HTTP_404_NOT_FOUND)
+    if not demande.statut == 'Confirmée':
+        return Response({'error': f'La demande n\'a pas encore été confirmée statut actuel: {demande.statut}.'}, status=status.HTTP_400_BAD_REQUEST)
 
     demande.statut = 'Approuvée'
     demande.approve_par = user
@@ -159,6 +161,8 @@ def valider_demande(request, id):
         demande = Demande.objects.get(pk=id)
     except Demande.DoesNotExist:
         return Response({'error': 'Demande non trouvée'}, status=status.HTTP_404_NOT_FOUND)
+    if not demande.statut == 'Approuvée':
+        return Response({'error': f'La demande n\'a pas encore été approuvée statut actuel: {demande.statut}.'}, status=status.HTTP_400_BAD_REQUEST)
 
     demande.statut = 'Validée'
     demande.valide_par = user
@@ -185,15 +189,19 @@ def liste_demandes_validees(request):
 def rejeter_demande(request, id):
     user = request.user
     if user.profil.libelle not in ['chef_appro', 'dga', 'df', 'dg']:
-        return Response({'error': 'Vous n\'êtes pas autorisé à rejeter cette demande.'}, status=status.HTTP_403_FORBIDDEN)
+        return Response({'error': 'Vous n\'êtes pas abilité à rejeter cette demande.'}, status=status.HTTP_403_FORBIDDEN)
     try:
         demande = Demande.objects.get(pk=id)
     except Demande.DoesNotExist:
         return Response({'error': 'Demande non trouvée'}, status=status.HTTP_404_NOT_FOUND)
+    if not demande.statut == 'Validée':
+        return Response({'error': f'Seules les demandes validées peuvent être rejetées. Statut actuel: {demande.statut}'}, status=status.HTTP_400_BAD_REQUEST)
+    if demande.statut == 'Validée':
+        return Response({'error': 'La demande a déjà été validée et ne peut plus être rejetée.'}, status=status.HTTP_400_BAD_REQUEST)
 
     demande.statut = 'Rejetée'
     demande.rejete_par = user
-    demande.date_validation = timezone.now()
+    demande.date_rejet = timezone.now()
     demande.save()
     return Response({'message': 'Demande rejetée avec succès'}, status=status.HTTP_200_OK)
 
