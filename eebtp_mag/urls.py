@@ -32,6 +32,7 @@ urlpatterns = [
     path('Mouvements/', include('mouvements.urls')),
     path('Demandes/', include('demandes.urls')),
     path('Notifications/', include('notifications.urls')), 
+    path('App/', include('app.urls')),
 ]
 
 if settings.DEBUG:

@@ -9,6 +9,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
+from app.utils import enregistrer_action
 
 
 #Vue pour la création d'un projet
@@ -35,11 +36,13 @@ def create_projet(request):
         )
     # Projet.creator = request.user  # Assigner l'utilisateur connecté comme créateur du projet
     data['creator'] = request.user.id  # Assigner l'ID de l'utilisateur
+    enregistrer_action(request.user, 'creation', 'A créé un nouveau projet', f"Projet #{projet_nom}")
     
     serializer = ProjetSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
         return Response({'message': 'Projet créé avec succès'}, status=status.HTTP_201_CREATED)
+    
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 #Vue pour la liste des projets
@@ -55,6 +58,7 @@ def create_projet(request):
 def list_projets(request):
     projets = Projet.objects.filter(is_active=True).order_by('-date_creation')
     serializer = ProjetSerializer(projets, many=True)
+    enregistrer_action(request.user, 'consultation', 'A consulté la liste des projets.', "Liste des projets")
     return Response(serializer.data)
 
 #Vue pour la récupération d'un projet
@@ -75,6 +79,7 @@ def get_projet(request, pk):
         return Response({'error': 'Projet introuvable'}, status=status.HTTP_404_NOT_FOUND)
 
     serializer = ProjetSerializer(projet)
+    enregistrer_action(request.user, 'consultation', 'A consulté les détails d\'un projet.', f"Projet #{projet.id}")
     return Response(serializer.data)
 
 #Vue pour la mise à jour d'un projet
@@ -103,6 +108,7 @@ def update_projet(request, pk):
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)
+    enregistrer_action(request.user, 'modification', 'A modifié un projet.', f"Projet #{projet.id}")
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 #Vue pour la suppression d'un projet
@@ -121,6 +127,7 @@ def delete_projet(request, pk):
         projet = Projet.objects.get(pk=pk)
         projet.is_active = False
         projet.save()
+        enregistrer_action(request.user, 'suppression', 'A supprimé un projet', f"Projet #{projet.id}")
         return Response({'message': 'Projet désactivé avec succès.'}, status=status.HTTP_200_OK)
     except projet.DoesNotExist:
         return Response({'error': 'Projet introuvable.'}, status=status.HTTP_404_NOT_FOUND)

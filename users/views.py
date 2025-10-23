@@ -16,6 +16,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .send_sms_service import send_verification_sms
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
+from app.utils import enregistrer_action
 
 
 #Pour recup la liste des pays:
@@ -423,6 +424,7 @@ def login_by_phone_web(request):
     first = user.first_login
     # Générer un token JWT
     refresh = RefreshToken.for_user(user)
+    enregistrer_action(user, 'connexion', 'S\'est connecté au système', f"Utilisateur #{user.id}, à la date {user.last_login}")
 
     return Response(
         {"message": "Connexion réussie.", 'access_token': str(refresh.access_token), "first_login": first}, status=status.HTTP_200_OK)

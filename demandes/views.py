@@ -12,6 +12,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.db import models
 from django.db.models import Max
+from app.utils import enregistrer_action
 
 
 #Détail d'une demande
@@ -60,6 +61,8 @@ def emettre_demande(request):
             emis_par=user,
             date_emission=timezone.now()
         )
+        enregistrer_action(user, 'creation', 'A créé une nouvelle demande', f"Demande #{new_demande_number}")
+
         return Response({'message': 'Demande émise avec succès'}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
