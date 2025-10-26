@@ -549,14 +549,7 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                         style: GoogleFonts.poppins(fontSize: fieldFont),
                       ),
                       Spacer(),
-                      Text(
-                        'Mots de pass oublié?',
-                        style: GoogleFonts.poppins(
-                          fontSize: fieldFont,
-                          color: const Color(0xFF007AFF),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                    
                     ],
                   ),
                   Spacer(),

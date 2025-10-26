@@ -1,46 +1,69 @@
+import 'package:eebtp_frontend/models/article.dart';
 import 'package:eebtp_frontend/models/demande.dart';
+import 'package:eebtp_frontend/services/stockservice.dart';
 import 'package:eebtp_frontend/widgets/nav.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
+import '../providers/auth_provider.dart';
 
-class RequestDetailScreen extends StatelessWidget {
+class RequestDetailScreen extends StatefulWidget {
   final Demande demande;
 
-  const RequestDetailScreen({Key? key, required this.demande})
-      : super(key: key);
+  const RequestDetailScreen({Key? key, required this.demande}) : super(key: key);
+
+  @override
+  State<RequestDetailScreen> createState() => _RequestDetailScreenState();
+}
+
+class _RequestDetailScreenState extends State<RequestDetailScreen> {
+  String? _unite;
+  bool _loadingUnite = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUnite();
+  }
+
+  Future<void> _fetchUnite() async {
+    setState(() => _loadingUnite = true);
+    try {
+      final token = Provider.of<AuthProvider>(context, listen: false).token;
+      final stockItemId = widget.demande.stockItem ?? widget.demande.stockItem ?? widget.demande.stockItem;
+      if (token != null && stockItemId != null) {
+        final service = StockService(token: token);
+        final article = await service.getArticleDetail(stockItemId);
+        setState(() {
+          _unite = article?.unite ?? "unités";
+          _loadingUnite = false;
+        });
+      } else {
+        setState(() { _unite = "unités"; _loadingUnite = false; });
+      }
+    } catch (e) {
+      setState(() { _unite = "unités"; _loadingUnite = false; });
+      debugPrint('Erreur unité: $e');
+    }
+  }
+
+  Color get primaryBlue => const Color(0xFF007AFF);
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'validée':
       case 'livrée':
-        return const Color(0xFF00C897); // Vert moderne
+        return const Color(0xFF2ECC71);
       case 'confirmée':
       case 'approuvée':
-        return const Color(0xFF007AFF); // Bleu
+        return primaryBlue;
       case 'emise':
-        return const Color(0xFFFFA41B); // Orange vif
+        return const Color(0xFFF59E42);
       case 'rejetée':
-        return const Color(0xFFFF4D4D); // Rouge moderne
+        return const Color(0xFFFF4D4D);
       default:
-        return const Color(0xFF6C63FF); // Violet par défaut
-    }
-  }
-
-  Color _getStatusBackgroundColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'validée':
-      case 'livrée':
-        return const Color(0xFFE6F7F2);
-      case 'confirmée':
-      case 'approuvée':
-        return const Color(0xFFE6F0FF);
-      case 'emise':
-        return const Color(0xFFFFF4E6);
-      case 'rejetée':
-        return const Color(0xFFFFE6E6);
-      default:
-        return const Color(0xFFF0EFFF);
+        return const Color(0xFF6C63FF);
     }
   }
 
@@ -48,115 +71,62 @@ class RequestDetailScreen extends StatelessWidget {
     switch (status.toLowerCase()) {
       case 'validée':
       case 'livrée':
-        return Icons.verified_rounded;
+        return Icons.verified;
       case 'confirmée':
       case 'approuvée':
-        return Icons.thumb_up_rounded;
+        return Icons.thumb_up_alt_rounded;
       case 'emise':
-        return Icons.pending_rounded;
+        return Icons.timelapse;
       case 'rejetée':
         return Icons.cancel_rounded;
       default:
-        return Icons.help_rounded;
+        return Icons.info_outline_rounded;
     }
   }
 
   String _getDisplayStatus(String status) {
     switch (status.toLowerCase()) {
-      case 'emise':
-        return 'Emise';
-      case 'confirmee':
-        return 'Confirmée';
-      case 'approuvee':
-        return 'Approuvée';
-      case 'validee':
-        return 'Validée';
-      case 'rejetee':
-        return 'Rejetée';
-      case 'livree':
-        return 'Livrée';
-      default:
-        return status;
+      case 'emise': return 'Emise';
+      case 'confirmee': return 'Confirmée';
+      case 'approuvee': return 'Approuvée';
+      case 'validee': return 'Validée';
+      case 'rejetee': return 'Rejetée';
+      case 'livree': return 'Livrée';
+      default: return status;
     }
   }
 
   Widget _buildAppBar(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 2.h),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF007AFF), Color(0xFF6C63FF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        bottom: false,
+    return Material(
+      elevation: 0,
+      color: primaryBlue,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.4.h),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             GestureDetector(
               onTap: () => Navigator.pop(context),
               child: Container(
-                padding: EdgeInsets.all(3.w),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.arrow_back_ios_new, 
-                    size: 6.w, color: Color(0xFF007AFF)),
+                padding: EdgeInsets.all(2.2.w),
+                child: Icon(Icons.arrow_back_ios_new, color: primaryBlue, size: 21),
               ),
             ),
+            SizedBox(width: 3.w),
             Expanded(
-              child: Center(
-                child: Text(
-                  "Détails\n de la demande",
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    fontSize: 16.sp,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                  ),
+              child: Text(
+                "Détail de la demande",
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17.sp,
+                  color: Colors.white,
+                  letterSpacing: 0.16,
                 ),
               ),
-            ),
-            Stack(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(2.5.w),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.notifications_outlined,
-                      size: 7.w, color: Color(0xFF007AFF)),
-                ),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    padding: EdgeInsets.all(1.w),
-                    decoration: const BoxDecoration(
-                        color: Colors.red, shape: BoxShape.circle),
-                    child: Text(
-                      "3",
-                      style: GoogleFonts.poppins(
-                        fontSize: 9.sp,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
             ),
           ],
         ),
@@ -164,94 +134,84 @@ class RequestDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryCard() {
-    final displayStatus = _getDisplayStatus(demande.statut);
-
+  Widget _buildHeader() {
+    final color = _getStatusColor(widget.demande.statut);
     return Container(
-      margin: EdgeInsets.only(bottom: 4.h, top: 3.h),
-      padding: EdgeInsets.all(6.w),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.white, Colors.grey[50]!],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 25,
-            offset: const Offset(0, 10),
-          ),
-        ],
-        border: Border.all(color: Colors.grey[100]!),
-      ),
+      width: double.infinity,
+      color: Colors.white,
+      padding: EdgeInsets.only(top: 2.8.h, bottom: 2.h),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: EdgeInsets.all(3.w),
-                decoration: BoxDecoration(
-                  color: _getStatusBackgroundColor(demande.statut),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(_getStatusIcon(demande.statut),
-                    size: 18.sp, color: _getStatusColor(demande.statut)),
-              ),
-              SizedBox(width: 4.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "N° ${demande.number}",
-                      style: GoogleFonts.poppins(
-                        fontSize: 13.sp,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: 0.5.h),
-                    Text(
-                      demande.stockItemName ?? 'Demande sans nom',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black87,
-                        height: 1.2,
-                      ),
-                    ),
-                  ],
+              Icon(_getStatusIcon(widget.demande.statut), color: color, size: 21),
+              SizedBox(width: 2.w),
+              Text(
+                _getDisplayStatus(widget.demande.statut),
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13.7.sp,
+                  color: color,
                 ),
               ),
             ],
           ),
-          SizedBox(height: 3.h),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
-            decoration: BoxDecoration(
-              color: _getStatusBackgroundColor(demande.statut),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _getStatusColor(demande.statut).withOpacity(0.3)),
+          SizedBox(height: 1.7.h),
+          Text(
+            widget.demande.stockItemName ?? 'Demande sans nom',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              fontSize: 19.5.sp,
+              color: Colors.black87,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(_getStatusIcon(demande.statut),
-                    size: 16.sp, color: _getStatusColor(demande.statut)),
-                SizedBox(width: 2.w),
-                Text(
-                  displayStatus.toUpperCase(),
-                  style: GoogleFonts.poppins(
-                    fontSize: 14.sp,
-                    color: _getStatusColor(demande.statut),
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ],
+          ),
+          SizedBox(height: 0.8.h),
+          Text(
+            "N° ${widget.demande.number}",
+            style: GoogleFonts.poppins(
+              fontSize: 12.8.sp,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow({required IconData icon, required String label, required String value, Color? color}) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 1.4.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(icon, color: color ?? primaryBlue, size: 18),
+          SizedBox(width: 3.w),
+          Expanded(
+            child: Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 12.5.sp,
+                color: Colors.grey[800],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          SizedBox(width: 2.w),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: GoogleFonts.poppins(
+                fontSize: 13.2.sp,
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+                height: 1.1,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
             ),
           ),
         ],
@@ -260,231 +220,115 @@ class RequestDetailScreen extends StatelessWidget {
   }
 
   Widget _buildInfoSection() {
+    final d = widget.demande;
     return Container(
-      margin: EdgeInsets.only(bottom: 4.h),
-      padding: EdgeInsets.all(5.w),
+      width: double.infinity,
+      margin: EdgeInsets.symmetric(vertical: 2.4.h),
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.5.h),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "INFORMATIONS PRINCIPALES",
-            style: GoogleFonts.poppins(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF6C63FF),
-              letterSpacing: 1.0,
-            ),
-          ),
-          SizedBox(height: 3.h),
-          _buildInfoTile(
-            Icons.calendar_month_rounded,
-            "Date d'émission",
-            "${demande.dateCreation.day.toString().padLeft(2, '0')}/${demande.dateCreation.month.toString().padLeft(2, '0')}/${demande.dateCreation.year}",
-            const Color(0xFF00C897),
-          ),
-          if (demande.dateEmission != null)
-            _buildInfoTile(
-              Icons.send_rounded,
-              "Date d'envoi",
-              "${demande.dateEmission!.day.toString().padLeft(2, '0')}/${demande.dateEmission!.month.toString().padLeft(2, '0')}/${demande.dateEmission!.year}",
-              const Color(0xFFFFA41B),
-            ),
-          if (demande.dateConfirmation != null)
-            _buildInfoTile(
-              Icons.verified_rounded,
-              "Date de confirmation",
-              "${demande.dateConfirmation!.day.toString().padLeft(2, '0')}/${demande.dateConfirmation!.month.toString().padLeft(2, '0')}/${demande.dateConfirmation!.year}",
-              const Color(0xFF007AFF),
-            ),
-          if (demande.dateApprobation != null)
-            _buildInfoTile(
-              Icons.thumb_up_rounded,
-              "Date d'approbation",
-              "${demande.dateApprobation!.day.toString().padLeft(2, '0')}/${demande.dateApprobation!.month.toString().padLeft(2, '0')}/${demande.dateApprobation!.year}",
-              const Color(0xFF6C63FF),
-            ),
-          if (demande.dateValidation != null)
-            _buildInfoTile(
-              Icons.check_circle_rounded,
-              "Date de validation",
-              "${demande.dateValidation!.day.toString().padLeft(2, '0')}/${demande.dateValidation!.month.toString().padLeft(2, '0')}/${demande.dateValidation!.year}",
-              const Color(0xFF00C897),
-            ),
-          if (demande.dateRejet != null)
-            _buildInfoTile(
-              Icons.cancel_rounded,
-              "Date de rejet",
-              "${demande.dateRejet!.day.toString().padLeft(2, '0')}/${demande.dateRejet!.month.toString().padLeft(2, '0')}/${demande.dateRejet!.year}",
-              const Color(0xFFFF4D4D),
-            ),
-          _buildInfoTile(
-            Icons.person_rounded,
-            "Émis par",
-            demande.emisParName,
-            const Color(0xFFFFA41B),
-          ),
-          if (demande.confirmeParName.isNotEmpty)
-            _buildInfoTile(
-              Icons.verified_user_rounded,
-              "Confirmé par",
-              demande.confirmeParName,
-              const Color(0xFF007AFF),
-            ),
-          if (demande.approveParName.isNotEmpty)
-            _buildInfoTile(
-              Icons.engineering_rounded,
-              "Approuvé par",
-              demande.approveParName,
-              const Color(0xFF6C63FF),
-            ),
-          if (demande.valideParName.isNotEmpty)
-            _buildInfoTile(
-              Icons.admin_panel_settings_rounded,
-              "Validé par",
-              demande.valideParName,
-              const Color(0xFF00C897),
-            ),
-          if (demande.rejeteParName.isNotEmpty)
-            _buildInfoTile(
-              Icons.do_not_disturb_rounded,
-              "Rejeté par",
-              demande.rejeteParName,
-              const Color(0xFFFF4D4D),
-            ),
-          _buildInfoTile(
-            Icons.scale_rounded,
-            "Quantité demandée",
-            "${demande.quantite} unités",
-            const Color(0xFF007AFF),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoTile(IconData icon, String label, String value, Color color) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 3.h),
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.grey[100]!),
+        borderRadius: BorderRadius.circular(7),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: EdgeInsets.all(3.w),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 18.sp),
+          _buildInfoRow(
+            icon: Icons.event_note,
+            label: "Date d'émission",
+            value: "${d.dateCreation.day.toString().padLeft(2, '0')}/${d.dateCreation.month.toString().padLeft(2, '0')}/${d.dateCreation.year}",
           ),
-          SizedBox(width: 4.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label.toUpperCase(),
-                  style: GoogleFonts.poppins(
-                    fontSize: 11.sp,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-                SizedBox(height: 0.5.h),
-                Text(
-                  value,
-                  style: GoogleFonts.poppins(
-                    fontSize: 15.sp,
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+          if (d.dateEmission != null)
+            _buildInfoRow(
+              icon: Icons.send_rounded,
+              label: "Date d'envoi",
+              value: "${d.dateEmission!.day.toString().padLeft(2, '0')}/${d.dateEmission!.month.toString().padLeft(2, '0')}/${d.dateEmission!.year}",
             ),
+          if (d.dateConfirmation != null)
+            _buildInfoRow(
+              icon: Icons.verified_rounded,
+              label: "Date de confirmation",
+              value: "${d.dateConfirmation!.day.toString().padLeft(2, '0')}/${d.dateConfirmation!.month.toString().padLeft(2, '0')}/${d.dateConfirmation!.year}",
+            ),
+          if (d.dateApprobation != null)
+            _buildInfoRow(
+              icon: Icons.thumb_up_rounded,
+              label: "Date d'approbation",
+              value: "${d.dateApprobation!.day.toString().padLeft(2, '0')}/${d.dateApprobation!.month.toString().padLeft(2, '0')}/${d.dateApprobation!.year}",
+            ),
+          if (d.dateValidation != null)
+            _buildInfoRow(
+              icon: Icons.check_circle_rounded,
+              label: "Date de validation",
+              value: "${d.dateValidation!.day.toString().padLeft(2, '0')}/${d.dateValidation!.month.toString().padLeft(2, '0')}/${d.dateValidation!.year}",
+            ),
+          if (d.dateRejet != null)
+            _buildInfoRow(
+              icon: Icons.cancel_rounded,
+              label: "Date de rejet",
+              value: "${d.dateRejet!.day.toString().padLeft(2, '0')}/${d.dateRejet!.month.toString().padLeft(2, '0')}/${d.dateRejet!.year}",
+              color: Colors.red
+            ),
+          _buildInfoRow(
+            icon: Icons.scale_rounded,
+            label: "Quantité demandée",
+            value: _loadingUnite
+              ? "..."
+              : "${d.quantite} ${_unite ?? "unités"}",
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTextCard(String title, String content, Color color) {
+  Widget _buildPeopleSection() {
+    final d = widget.demande;
+    final lines = <Widget>[
+      if (d.emisParName.isNotEmpty)
+        _buildInfoRow(
+          icon: Icons.person_rounded,
+          label: "Émis par",
+          value: d.emisParName,
+        ),
+      if (d.confirmeParName.isNotEmpty)
+        _buildInfoRow(
+          icon: Icons.verified_user_rounded,
+          label: "Confirmé par",
+          value: d.confirmeParName,
+        ),
+      if (d.approveParName.isNotEmpty)
+        _buildInfoRow(
+          icon: Icons.engineering_rounded,
+          label: "Approuvé par",
+          value: d.approveParName,
+        ),
+      if (d.valideParName.isNotEmpty)
+        _buildInfoRow(
+          icon: Icons.admin_panel_settings_rounded,
+          label: "Validé par",
+          value: d.valideParName,
+        ),
+      if (d.rejeteParName.isNotEmpty)
+        _buildInfoRow(
+          icon: Icons.do_not_disturb_rounded,
+          label: "Rejeté par",
+          value: d.rejeteParName,
+          color: Colors.red,
+        ),
+    ];
+    if (lines.isEmpty) return const SizedBox();
     return Container(
-      margin: EdgeInsets.only(bottom: 4.h),
-      padding: EdgeInsets.all(5.w),
+      width: double.infinity,
+      margin: EdgeInsets.only(bottom: 2.4.h),
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.2.h),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: const Color(0xFFF8F9FB),
+        border: Border.all(color: Colors.grey[100]!),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(2.w),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  title == "Motif" ? Icons.description_rounded : Icons.visibility_rounded,
-                  color: color,
-                  size: 16.sp,
-                ),
-              ),
-              SizedBox(width: 3.w),
-              Text(
-                title.toUpperCase(),
-                style: GoogleFonts.poppins(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w700,
-                  color: color,
-                  letterSpacing: 1.0,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 2.h),
-          Container(
-            padding: EdgeInsets.all(4.w),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              content.isNotEmpty ? content : "Aucune information",
-              style: GoogleFonts.poppins(
-                fontSize: 14.sp,
-                color: Colors.black87,
-                height: 1.6,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
+        children: lines,
       ),
     );
   }
@@ -493,27 +337,28 @@ class RequestDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return NavContainer(
       initialIndex: 2,
-      body: Column(
-        children: [
-          _buildAppBar(context),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(5.w),
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSummaryCard(),
-                  _buildInfoSection(),
-                  _buildTextCard("Motif", demande.raison, const Color(0xFF00C897)),
-                  if (demande.motifRejet != null && demande.motifRejet!.isNotEmpty)
-                    _buildTextCard("Motif du rejet", demande.motifRejet!, const Color(0xFFFF4D4D)),
-                  SizedBox(height: 2.h),
-                ],
+      body: Container(
+        color: const Color(0xFFF5F6FA),
+        child: Column(
+          children: [
+            _buildAppBar(context),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildHeader(),
+                    Divider(color: Colors.grey[50], thickness: 8, height: 0),
+                    _buildInfoSection(),
+                    _buildPeopleSection(),
+                    SizedBox(height: 2.5.h),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

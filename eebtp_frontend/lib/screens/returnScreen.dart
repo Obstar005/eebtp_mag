@@ -330,7 +330,7 @@ void initState() {
                               hintText: "Définir la quantité",
                             ),
                             SizedBox(height: 2.h),
-                            _buildSectionHeader("Produit",
+                            _buildSectionHeader("Sortie concernée",
                                 isLeftAligned: true),
                             _buildSortieDropdown(),
                            
@@ -480,14 +480,8 @@ void initState() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          "Sortie concernée",
-          style: GoogleFonts.poppins(
-            fontSize: 14.sp.clamp(12, 16),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        SizedBox(height: 1.h),
+      
+      //  SizedBox(height: 1.h),
         GestureDetector(
           onTap: () {
             setState(() {

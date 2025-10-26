@@ -51,6 +51,8 @@ dependencies:
   cherry_toast: ^1.13.0
   toastification: ^3.0.3
   jwt_decoder: ^2.0.1
+  http_parser: ^4.1.2
+  http: ^1.5.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

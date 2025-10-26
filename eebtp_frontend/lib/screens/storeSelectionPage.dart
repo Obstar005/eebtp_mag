@@ -650,7 +650,7 @@ Widget _buildStoreHeader(int storeCount) {
             ),
             SizedBox(height: 1.5.h),
             Text(
-              "Vous n'avez actuellement accès à aucun magasin.\nContactez votre administrateur pour obtenir les droits.",
+              "Vous n'avez actuellement accès à aucun magasin.\nContactez votre supérieur pour obtenir les droits.",
               style: GoogleFonts.montserrat(
                 fontSize: 13.sp,
                 color: const Color(0xFF8E8E93),

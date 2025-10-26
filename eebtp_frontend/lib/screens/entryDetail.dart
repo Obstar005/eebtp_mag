@@ -9,7 +9,6 @@ import 'package:eebtp_frontend/providers/auth_provider.dart';
 
 class EntryDetailPage extends StatefulWidget {
   final Entree entry;
-
   const EntryDetailPage({super.key, required this.entry});
 
   @override
@@ -41,9 +40,11 @@ class _EntryDetailContent extends StatelessWidget {
   final Entree entry;
   const _EntryDetailContent({required this.entry});
 
+  static const String backendUrl = 'http://185.197.195.209:8000';
+
   @override
   Widget build(BuildContext context) {
-    final isRetour = entry.type == "retour";
+    final isRetour = entry.type == "Retour";
     final String pageTitle = isRetour ? "Détail retour" : "Détail entrée";
     final String cardLabel = isRetour ? "Déposant" : "Livreur";
     final String dateLabel = isRetour ? "Retour le" : "Entrée le";
@@ -55,96 +56,83 @@ class _EntryDetailContent extends StatelessWidget {
           child: Container(
             color: Colors.white,
             child: SingleChildScrollView(
-                padding: EdgeInsets.all(5.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildProductImage(),
-                    SizedBox(height: 3.h),
-                    // Désignation stock
-                    Text(
-                      (entry.stockItemName ?? "-").toUpperCase(),
-                      style: GoogleFonts.montserrat(
-                        fontSize: 22.sp,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                        letterSpacing: 0.5,
-                      ),
+              padding: EdgeInsets.all(5.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildProductImage(),
+                  SizedBox(height: 3.h),
+                  // Désignation stock
+                  Text(
+                    (entry.stockItemName ?? "-").toUpperCase(),
+                    style: GoogleFonts.montserrat(
+                      fontSize: 22.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                      letterSpacing: 0.5,
                     ),
-                    SizedBox(height: 1.h),
-                    Text(
-                      "StockID: ${entry.stockItem}",
-                      style: GoogleFonts.montserrat(
-                        fontSize: 15.sp,
-                        color: Colors.grey[500],
-                        fontWeight: FontWeight.w500,
-                      ),
+                  ),
+                  SizedBox(height: 1.h),
+                  Text(
+                    "StockID: ${entry.stockItem}",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 15.sp,
+                      color: Colors.grey[500],
+                      fontWeight: FontWeight.w500,
                     ),
-                    SizedBox(height: 3.h),
-                    // Informations principales
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildInfoCard(
-                            icon: Icons.grid_view,
-                            title: "Type",
-                            value: entry.stockItemType ?? "-",
-                          ),
-                        ),
-                        SizedBox(width: 3.w),
-                        Expanded(
-                          child: _buildInfoCard(
-                              icon: Icons.calendar_today_outlined,
-                              title: dateLabel,
-                              value: _formatDate(entry.dateCreation)),
-                        ),
-                        SizedBox(width: 3.w),
-                        Expanded(
-                          child: _buildInfoCard(
-                              icon: Icons.shopping_cart_outlined,
-                              title: "Qté entrée",
-                              value: "${entry.quantiteM}"),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 3.h),
-                    // Card Livreur ou déposant
-                    _buildPersonCard(
-                      label: cardLabel,
-                      name: entry.nomDeposant ?? "-",
-                      role: entry.fonctionDeposant ?? "-",
-                      phone: entry.telDeposant ?? "-",
-                    ),
-                    if (entry.societe?.isNotEmpty == true) ...[
-                      SizedBox(height: 2.h),
-                      _buildSupplierCard(entry.societe!, entry.telSociete ?? "-"),
-                    ],
-                    /*  -------
-                    SizedBox(height: 3.h),
-                    // Description
-                    if (entry.remarques != null && entry.remarques!.isNotEmpty) ...[
-                      Text(
-                        "Remarques",
-                        style: GoogleFonts.montserrat(
-                          fontSize: 20.sp,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black,
+                  ),
+                  SizedBox(height: 3.h),
+                  // Informations principales
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildInfoCard(
+                          icon: Icons.grid_view,
+                          title: "Type",
+                          value: entry.stockItemType ?? "-",
                         ),
                       ),
-                      SizedBox(height: 1.5.h),
-                      Text(
-                        entry.remarques!,
-                        style: GoogleFonts.montserrat(
-                          fontSize: 14.sp,
-                          color: Colors.grey[600],
-                          height: 1.5,
-                        ),
+                      SizedBox(width: 3.w),
+                      Expanded(
+                        child: _buildInfoCard(
+                          icon: Icons.calendar_today_outlined,
+                          title: dateLabel,
+                          value: _formatDate(entry.dateCreation)),
+                      ),
+                      SizedBox(width: 3.w),
+                      Expanded(
+                        child: _buildInfoCard(
+                          icon: Icons.shopping_cart_outlined,
+                          title: "Qté entrée",
+                          value: "${entry.quantiteM}"),
                       ),
                     ],
-                    ------- */
-                    SizedBox(height: 10.h),
+                  ),
+                  SizedBox(height: 3.h),
+                  // Card Livreur ou Déposant + Signature selon type
+                  isRetour
+                      ? _buildPersonCard(
+                          label: cardLabel,
+                          name: entry.nomDeposant ?? "-",
+                          role: entry.fonctionDeposant ?? "-",
+                          phone: entry.telDeposant ?? "-",
+                          signatureUrl: null,
+                        )
+                      : _buildPersonCard(
+                          label: cardLabel,
+                          name: entry.nomLivreur ?? "-",
+                          role: "-",
+                          phone: entry.telLivreur ?? "-",
+                          signatureUrl: entry.signatureLivreur,
+                        ),
+                  if (entry.societe?.isNotEmpty == true) ...[
+                    SizedBox(height: 2.h),
+                    _buildSupplierCard(entry.societe!, entry.telSociete ?? "-"),
                   ],
-                )),
+                  SizedBox(height: 10.h),
+                ],
+              ),
+            ),
           ),
         ),
       ],
@@ -258,7 +246,31 @@ class _EntryDetailContent extends StatelessWidget {
     required String name,
     required String role,
     required String phone,
+    String? signatureUrl,
   }) {
+    Widget signatureWidget = const SizedBox.shrink();
+
+    if (signatureUrl != null && signatureUrl.isNotEmpty) {
+      // Correction: si l'url de la signature commence par /media, concatène backendUrl + signatureUrl
+      String effectiveUrl = signatureUrl;
+      if (signatureUrl.startsWith('/media')) {
+        effectiveUrl = '$backendUrl$signatureUrl';
+      }
+      signatureWidget = Padding(
+        padding: EdgeInsets.only(left: 2.w),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.network(
+            effectiveUrl,
+            height: 64,
+            width: 64,
+            fit: BoxFit.contain,
+            errorBuilder: (c, e, s) => const Icon(Icons.error, size: 42),
+          ),
+        ),
+      );
+    }
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(4.w),
@@ -267,6 +279,7 @@ class _EntryDetailContent extends StatelessWidget {
         borderRadius: BorderRadius.circular(3.w),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             width: 16.w,
@@ -274,7 +287,6 @@ class _EntryDetailContent extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.grey[300],
-              // option image: DecorationImage(...)
             ),
             child: Icon(Icons.person, size: 10.w, color: Colors.white),
           ),
@@ -299,24 +311,19 @@ class _EntryDetailContent extends StatelessWidget {
                     color: Colors.grey[600],
                   ),
                 ),
+                SizedBox(height: 0.3.h),
+                Text(
+                  phone,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF34C759),
+                  ),
+                ),
               ],
             ),
           ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE8F5E9),
-              borderRadius: BorderRadius.circular(2.w),
-            ),
-            child: Text(
-              phone,
-              style: GoogleFonts.montserrat(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF34C759),
-              ),
-            ),
-          ),
+          if (signatureUrl != null && signatureUrl.isNotEmpty) signatureWidget,
         ],
       ),
     );

@@ -54,6 +54,43 @@ Future<List<Demande>> getDemandesEmises(String token) async {
       throw Exception('Erreur lors de la récupération des détails de la demande');
     }
   }
+  /// 🔹 Récupérer la liste des demandes validées
+  Future<List<Demande>> getDemandesValidees(String token) async {
+    final url = Uri.parse('$baseUrl/Demandes/demandes/validees');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        try {
+          final data = jsonDecode(response.body);
+          if (data is List) {
+            return data.map((item) => Demande.fromJson(item as Map<String, dynamic>)).toList();
+          } else {
+            throw FormatException('Réponse inattendue : attendu une liste');
+          }
+        } catch (e) {
+          throw FormatException('Erreur de parsing JSON : $e');
+        }
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : token invalide ou expiré');
+      } else if (response.statusCode == 403) {
+        throw Exception('Accès refusé : permissions insuffisantes');
+      } else if (response.statusCode == 500) {
+        throw Exception('Erreur serveur : veuillez réessayer plus tard');
+      } else {
+        throw Exception('Erreur HTTP ${response.statusCode} : ${response.reasonPhrase}');
+      }
+    } catch (e) {
+      throw Exception('Erreur réseau ou inattendue : $e');
+    }
+  }
 
   /// 🔹 Émettre une nouvelle demande de stock
  Future<void> emettreDemande({
