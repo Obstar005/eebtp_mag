@@ -112,6 +112,19 @@ class Utilisateur {
     'user_permissions': userPermissions,
     'password': password,
   };
+// Ne renvoie que les champs attendus pour le PUT profil utilisateur
+Map<String, dynamic> toUpdateJson() => {
+  'id': id,
+    'username': username,
+
+    'telephone': telephone,
+    'nationality': nationality,
+    'surname': surname,
+    'type': type,
+    'titre': titre,
+    'poste': poste,
+ 
+};
 
   Utilisateur copyWith({
     int? id,

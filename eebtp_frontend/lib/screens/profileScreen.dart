@@ -401,60 +401,66 @@ void initState() {
     );
   }
 
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierColor: Colors.black.withOpacity(0.5),
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4.w),
-          ),
-          title: Center(
-            child: Text(
-              "Déconnexion",
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w700,
-                fontFamily: "Montserrat",
-              ),
-            ),
-          ),
-          content: Text(
-            "Souhaitez-vous vous déconnecter ?",
-            style: TextStyle(fontSize: 14.sp, fontFamily: "Montserrat"),
-          ),
-          actionsAlignment: MainAxisAlignment.spaceAround,
-          actions: [
-            CustomElevatedButton(
-              text: "NON",
-              backgroundColor: Colors.transparent,
-              textColor: const Color(0xFF8E8E93),
-              onPressed: () => Navigator.pop(context),
-              width: 30.w,
-              outlined: true,
-            ),
-            CustomElevatedButton(
-              text: "OUI",
-              backgroundColor: const Color(0xFFFF3B30),
-              textColor: Colors.white,
-              onPressed: () {
-                Navigator.pop(context);
-                context.read<AuthProvider>().clear();
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/login',
-                  (route) => false,
-                );
-              },
-              width: 30.w,
-            ),
-          ],
+void _showLogoutDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    barrierColor: Colors.black.withOpacity(0.5),
+    builder: (context) => BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+      child: AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(4.w),
         ),
+        title: Center(
+          child: Text(
+            "Déconnexion",
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w700,
+              fontFamily: "Montserrat",
+            ),
+          ),
+        ),
+        content: Text(
+          "Souhaitez-vous vous déconnecter ?",
+          style: TextStyle(fontSize: 14.sp, fontFamily: "Montserrat"),
+        ),
+        actionsPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8), // ajustable
+        actions: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              CustomElevatedButton(
+                text: "NON",
+                backgroundColor: Colors.white,
+                textColor: const Color.fromARGB(255, 0, 0, 0),
+                onPressed: () => Navigator.pop(context),
+                width: 30.w,
+                outlined: true,
+              ),
+              SizedBox(width: 14),
+              CustomElevatedButton(
+                text: "OUI",
+                backgroundColor: const Color(0xFFFF3B30),
+                textColor: Colors.white,
+                onPressed: () {
+                  Navigator.pop(context);
+                  context.read<AuthProvider>().clear();
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/login',
+                    (route) => false,
+                  );
+                },
+                width: 30.w,
+              ),
+            ],
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 // ----------- Clipper Top -----------

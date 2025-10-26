@@ -1,9 +1,13 @@
+import 'package:eebtp_frontend/models/history.dart';
+import 'package:eebtp_frontend/services/historiqueService.dart';
+import 'package:eebtp_frontend/models/utilisateur.dart';
 import 'package:eebtp_frontend/providers/auth_provider.dart';
+import 'package:eebtp_frontend/services/auth.dart';
+import 'package:eebtp_frontend/widgets/nav.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
-import 'package:eebtp_frontend/widgets/nav.dart';
 
 enum ActivityType { reload, gauge, entry, exit, other }
 
@@ -36,26 +40,46 @@ class _HomePageState extends State<HomePage> {
   String _selectedUnit = "Kilogramme";
   String _selectedCardType = "Entrée";
 
-  final List<ActivityItem> _todayActivities = [
-    ActivityItem(type: ActivityType.reload, title: "Rechargement de stock effectué", time: "Depuis 2 heures", icon: Icons.refresh, color: Color(0xFF007AFF)),
-    ActivityItem(type: ActivityType.gauge, title: "Niveau de stock vérifié", time: "Depuis 3 heures", icon: Icons.speed, color: Color(0xFF007AFF)),
-    ActivityItem(type: ActivityType.entry, title: "Nouvelle entrée de produits", time: "Depuis 4 heures", icon: Icons.login, color: Color(0xFF007AFF)),
-    ActivityItem(type: ActivityType.entry, title: "Commande reçue du fournisseur", time: "Depuis 5 heures", icon: Icons.login, color: Color(0xFF007AFF)),
-  ];
-  final List<ActivityItem> _lastWeekActivities = [
-    ActivityItem(type: ActivityType.exit, title: "Sortie de produits pour vente", time: "Il y a 3 jours", icon: Icons.logout, color: Color(0xFF007AFF)),
-    ActivityItem(type: ActivityType.entry, title: "Réapprovisionnement hebdomadaire", time: "Il y a 4 jours", icon: Icons.login, color: Color(0xFF007AFF)),
-    ActivityItem(type: ActivityType.other, title: "Inventaire hebdomadaire complété", time: "Il y a 5 jours", icon: Icons.inventory, color: Color(0xFF8E8E93)),
-  ];
-@override
-void initState() {
-  super.initState();
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (mounted) {
-      Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
+  Utilisateur? _user;
+  List<HistoriqueAction> _allHistory = [];
+  bool _loadingUser = true;
+  bool _loadingHistory = true;
+
+  final HistoryService _historyService = HistoryService();
+  final UserService _userService = UserService();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadUserAndHistory());
+  }
+
+  Future<void> _loadUserAndHistory() async {
+    try {
+      final token = context.read<AuthProvider>().token;
+      if (token == null) return;
+
+      setState(() {
+        _loadingUser = true;
+        _loadingHistory = true;
+      });
+
+      final fetchedUser = await _userService.getUserInfo(token);
+      final fetchedHistory = await _historyService.getHistoriqueUser(token);
+
+      setState(() {
+        _user = fetchedUser;
+        _allHistory = fetchedHistory;
+        _loadingUser = false;
+        _loadingHistory = false;
+      });
+    } catch (e) {
+      setState(() {
+        _loadingUser = false;
+        _loadingHistory = false;
+      });
     }
-  });
-}
+  }
 
   @override
   void dispose() {
@@ -93,18 +117,37 @@ void initState() {
             children: [
               SizedBox(width: 3.w),
               Container(
-                width: 54, height: 54,
+                width: 54,
+                height: 54,
                 decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white),
-                child: ClipOval(child: Image.asset("assets/profile.png", fit: BoxFit.cover)),
+                child: ClipOval(
+                  child: _loadingUser
+                      ? Container(color: Colors.white)
+                      : _user != null && _user!.photoProfil != null
+                        ? Image.network(_user!.photoProfil!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Image.asset("assets/profile.png", fit: BoxFit.cover))
+                        : Image.asset("assets/profile.png", fit: BoxFit.cover),
+                ),
               ),
               SizedBox(width: 2.w),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text("John Doe", style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.w600, color: Colors.white)),
+                  _loadingUser
+                      ? Container(width: 80, height: 14, color: Colors.white.withOpacity(0.3))
+                      : Text(
+                          "${_user?.firstName ?? ""} ${_user?.lastName ?? ""}",
+                          style: GoogleFonts.montserrat(
+                              fontSize: 19, fontWeight: FontWeight.w600, color: Colors.white),
+                        ),
                   SizedBox(height: 2),
-                  Text("Magasinier", style: GoogleFonts.montserrat(fontSize: 14, fontWeight: FontWeight.w400, color: Colors.white.withOpacity(0.9))),
+                  _loadingUser
+                      ? Container(width: 60, height: 12, color: Colors.white.withOpacity(0.3))
+                      : Text(
+                          _user?.poste ?? "",
+                          style: GoogleFonts.montserrat(
+                              fontSize: 14, fontWeight: FontWeight.w400, color: Colors.white.withOpacity(0.9)),
+                        ),
                 ],
               ),
             ],
@@ -232,15 +275,28 @@ void initState() {
                   ],
                 ),
                 SizedBox(height: 17),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemCount: _selectedActivityFilter == "Aujourd'hui" ? _todayActivities.length : _lastWeekActivities.length,
-                  itemBuilder: (context, index) {
-                    final activities = _selectedActivityFilter == "Aujourd'hui" ? _todayActivities : _lastWeekActivities;
-                    return _buildActivityItem(activities[index], index, activities.length);
-                  },
-                ),
+                if (_loadingHistory)
+                  Center(child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4.h),
+                    child: CircularProgressIndicator(color: Color(0xFF007AFF)),
+                  ))
+                else if (_allHistory.isEmpty)
+                  Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 4.h),
+                      child: Text("Aucun historique récent", style: GoogleFonts.poppins(fontSize: 13.sp, color: Colors.grey)),
+                    ),
+                  )
+                else
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemCount: _allHistory.length,
+                    itemBuilder: (context, index) {
+                      final action = _allHistory[index];
+                      return _buildHistoryActionItem(action, index, _allHistory.length);
+                    },
+                  ),
                 SizedBox(height: 38),
               ],
             ),
@@ -260,7 +316,29 @@ void initState() {
       ),
     );
   }
-  Widget _buildActivityItem(ActivityItem activity, int index, int totalItems) {
+
+  Widget _buildHistoryActionItem(HistoriqueAction action, int index, int total) {
+    final Map<ActionType, IconData> icons = {
+      ActionType.creation: Icons.add_circle_outline,
+      ActionType.modification: Icons.edit,
+      ActionType.suppression: Icons.delete_outline,
+      ActionType.validation: Icons.check_circle_outline,
+      ActionType.connexion: Icons.login,
+      ActionType.autre: Icons.help_outline,
+    };
+    final Map<ActionType, Color> colors = {
+      ActionType.creation: Color(0xFF007AFF),
+      ActionType.modification: Color(0xFF007AFF),
+      ActionType.suppression:Color(0xFF007AFF),
+      ActionType.validation: Color(0xFF007AFF),
+      ActionType.connexion: Color(0xFF007AFF),
+      ActionType.autre: Color(0xFF007AFF)
+    };
+
+    final icon = icons[action.actionType] ?? Icons.history;
+    final color = colors[action.actionType] ?? Colors.grey;
+    String dateStr = "${action.dateAction.day.toString().padLeft(2, '0')}/${action.dateAction.month.toString().padLeft(2, '0')}/${action.dateAction.year} - ${action.dateAction.hour.toString().padLeft(2, '0')}:${action.dateAction.minute.toString().padLeft(2, '0')}";
+
     return Container(
       margin: EdgeInsets.only(bottom: 1.7.h),
       child: Row(
@@ -268,8 +346,9 @@ void initState() {
         children: [
           Column(
             children: [
-              Container(width: 3.w, height: 3.w, decoration: BoxDecoration(color: activity.color, shape: BoxShape.circle)),
-              if (index < totalItems - 1) Container(width: 2, height: 6.h, color: Colors.grey[300]),
+              Container(width: 3.w, height: 3.w, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+              if (index < total - 1)
+                Container(width: 2, height: 6.h, color: Colors.grey[300]),
             ],
           ),
           SizedBox(width: 4.w),
@@ -282,24 +361,29 @@ void initState() {
                     children: [
                       Container(
                         padding: EdgeInsets.all(2.w),
-                        decoration: BoxDecoration(color: activity.color, shape: BoxShape.circle),
-                        child: Icon(activity.icon, color: Colors.white, size: 4.w),
+                        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                        child: Icon(icon, color: Colors.white, size: 4.w),
                       ),
                       SizedBox(width: 3.w),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(activity.title, style: GoogleFonts.poppins(fontSize: 13.sp, fontWeight: FontWeight.w500, color: Colors.black87), maxLines: 2, overflow: TextOverflow.ellipsis),
+                            Text(
+                              action.description,
+                              style: GoogleFonts.poppins(fontSize: 13.sp, fontWeight: FontWeight.w500, color: Colors.black87),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                             SizedBox(height: 0.5.h),
-                            Text(activity.time, style: GoogleFonts.poppins(fontSize: 11.sp, color: Colors.grey[500], fontStyle: FontStyle.italic)),
+                            Text(dateStr, style: GoogleFonts.poppins(fontSize: 11.sp, color: Colors.grey[500], fontStyle: FontStyle.italic)),
                           ],
                         ),
                       ),
                     ],
                   ),
                 ),
-                if (index < totalItems - 1) SizedBox(height: 1.h),
+                if (index < total - 1) SizedBox(height: 1.h),
               ],
             ),
           ),
@@ -307,6 +391,7 @@ void initState() {
       ),
     );
   }
+
   void _showTimeFilterDialog() {
     showDialog(context: context, builder: (BuildContext context) {
       return AlertDialog(

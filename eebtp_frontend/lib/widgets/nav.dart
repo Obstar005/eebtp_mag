@@ -187,25 +187,30 @@ class ImprovedFAB extends StatelessWidget {
               ),
             ),
           ),
-          Positioned(
-            bottom: MediaQuery.of(context).size.height * 0.05,
-            child: SizedBox(
-              width: fabSize,
-              height: fabSize,
-              child: FloatingActionButton(
-                heroTag: "main",
-                backgroundColor: const Color(0xFF007AFF),
-                onPressed: onToggle,
-                shape: const CircleBorder(),
-                child: SvgPicture.asset(
-                  'assets/icons/add.svg',
-                  width: iconSize,
-                  height: iconSize,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
+  Positioned(
+  bottom: MediaQuery.of(context).size.height * 0.05,
+  child: SizedBox(
+    width: fabSize,
+    height: fabSize,
+    child: FloatingActionButton(
+      heroTag: "main",
+      backgroundColor: const Color(0xFF007AFF),
+      onPressed: onToggle,
+      shape: const CircleBorder(),
+      child: AnimatedRotation(
+        turns: isExpanded ? 0.125 : 0.0, // 45 degrés (0.125 tour = 360/8)
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        child: SvgPicture.asset(
+          'assets/icons/add.svg',
+          width: iconSize,
+          height: iconSize,
+          color: Colors.white,
+        ),
+      ),
+    ),
+  ),
+),
         ],
       ),
     );

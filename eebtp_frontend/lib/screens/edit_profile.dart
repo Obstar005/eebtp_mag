@@ -1,22 +1,20 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 import 'package:eebtp_frontend/models/utilisateur.dart';
 import 'package:eebtp_frontend/services/auth.dart';
 import 'package:eebtp_frontend/widgets/button.dart';
 import 'package:eebtp_frontend/widgets/nav.dart';
+import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:sizer/sizer.dart';
 import 'package:provider/provider.dart';
 import 'package:eebtp_frontend/providers/auth_provider.dart';
+import 'package:toastification/toastification.dart';
 
-// Helpers téléphone (inchangé)
-const Map<String, String> _prefixToIso = {"00228": "TG", "00229": "BJ", "00221": "SN", "00225": "CI"};
-const Map<String, String> _isoToDial = {"TG": "228", "BJ": "229", "SN": "221", "CI": "225"};
-String _getIsoFromRawPhone(String phone) {for (final e in _prefixToIso.entries) {if (phone.startsWith(e.key)) return e.value;}return "TG";}
-String _stripCountryCode(String phone) {final regex = RegExp(r"^00\d{2,3}");return phone.replaceFirst(regex, "");}
 
 class EditProfilePage extends StatefulWidget {
   final Utilisateur user;
@@ -31,39 +29,37 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final _lastNameController = TextEditingController();
   final _surnameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final TextEditingController _inputPhoneRawController = TextEditingController();
 
-  String _phone = '';
-  PhoneNumber _initialPhone = PhoneNumber(isoCode: 'TG');
-  String _currentIso = 'TG';
-  String _currentDial = '228';
-  bool _isPasswordVisible = false;
+  Country _selectedCountry = Country.parse('TG');
+
   bool _loading = false;
   File? _pickedImage;
   String? _serverPhotoUrl;
 
   @override
-   @override
-void initState() {
-  super.initState();
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (mounted) {
-      Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
-    }
-  });
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
+      }
+    });
     _firstNameController.text = widget.user.firstName ?? '';
     _lastNameController.text = widget.user.lastName ?? '';
     _surnameController.text = widget.user.surname ?? '';
     _emailController.text = widget.user.email ?? '';
     final rawPhone = widget.user.telephone ?? '';
-    final iso = _getIsoFromRawPhone(rawPhone);
-    final local = rawPhone.isNotEmpty ? _stripCountryCode(rawPhone) : '';
-    _currentIso = iso;
-    _currentDial = _isoToDial[iso] ?? '228';
-    _initialPhone = PhoneNumber(isoCode: _currentIso, phoneNumber: local);
-    _phoneController.text = local;
-    _phone = local;
+    final countryList = ['TG', 'BJ', 'SN', 'CI'];
+    for (final code in countryList) {
+      final country = Country.parse(code);
+      if (rawPhone.startsWith('00${country.phoneCode}')) {
+        _selectedCountry = country;
+        _inputPhoneRawController.text =
+          rawPhone.replaceFirst('00${country.phoneCode}', '');
+        break;
+      }
+    }
     _serverPhotoUrl = widget.user.photoProfil;
   }
 
@@ -73,20 +69,8 @@ void initState() {
     _lastNameController.dispose();
     _surnameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
-    _passwordController.dispose();
+    _inputPhoneRawController.dispose();
     super.dispose();
-  }
-
-  String _formatPhoneForBackend() {
-    if (_phone.isNotEmpty) {
-      if (_phone.startsWith('+')) return _phone.replaceFirst('+', '00');
-      if (_phone.startsWith('00')) return _phone;
-      return '00$_currentDial${_phone.replaceAll(RegExp(r'[^0-9]'), '')}';
-    }
-    final local = _phoneController.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
-    if (local.isEmpty) return local;
-    return '00$_currentDial$local';
   }
 
   Future<void> _pickImage(bool fromCamera) async {
@@ -101,72 +85,122 @@ void initState() {
     }
   }
 
-  Future<void> _saveProfile() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _loading = true);
-    final userService = UserService();
-    final formattedPhone = _formatPhoneForBackend();
-    final token = context.read<AuthProvider>().token;
-    if (token == null) {
-      setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Erreur: Token non disponible"),
-        backgroundColor: Colors.red,
-      ));
-      return;
-    }
-    if (formattedPhone.length < 10) {
-      setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Numéro de téléphone invalide"),
-        backgroundColor: Colors.red,
-      ));
-      return;
-    }
-
-    String? finalPhotoUrl = _serverPhotoUrl ?? widget.user.photoProfil;
-    if (_pickedImage != null) {
-      final uploadSuccess =
-          await userService.updateProfilePicture(token, _pickedImage!.path);
-      if (uploadSuccess) {
-        try {
-          final refreshed = await userService.getUserInfo(token);
-          finalPhotoUrl = refreshed.photoProfil;
-          setState(() => _serverPhotoUrl = finalPhotoUrl);
-          context.read<AuthProvider>().setUser(refreshed);
-        } catch (_) {}
-      } else {
-        setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Échec de l'upload de la photo de profil"),
-          backgroundColor: Colors.red,
-        ));
-        return;
-      }
-    }
-
-    final updatedUser = widget.user.copyWith(
-      firstName: _firstNameController.text.trim(),
-      lastName: _lastNameController.text.trim(),
-      surname: _surnameController.text.trim(),
-      email: _emailController.text.trim(),
-      telephone: formattedPhone,
-      photoProfil: finalPhotoUrl,
-    );
-    final success = await userService.updateUser(widget.user.id!, updatedUser);
-
+ Future<void> _saveProfile() async {
+  if (!_formKey.currentState!.validate()) return;
+  setState(() => _loading = true);
+  final userService = UserService();
+  final token = context.read<AuthProvider>().token;
+  if (token == null) {
     setState(() => _loading = false);
+    toastification.show(
+      context: context,
+      type: ToastificationType.error,
+      title: Text("Erreur: Token non disponible"),
+      description: Text("Aucune session authentifiée."),
+    );
+    return;
+  }
 
-    if (success) {
-      context.read<AuthProvider>().setUser(updatedUser);
-      _showSuccessDialog();
+  final phoneRaw = _inputPhoneRawController.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
+  String fullPhone = '';
+  if (phoneRaw.isNotEmpty) {
+    fullPhone = '00${_selectedCountry.phoneCode}$phoneRaw';
+  }
+  print('[DEBUG] Numéro à envoyer : $fullPhone');
+
+  if (fullPhone.length < 10) {
+    setState(() => _loading = false);
+    toastification.show(
+      context: context,
+      type: ToastificationType.error,
+      title: Text("Numéro de téléphone invalide"),
+      description: Text("Vérifiez votre saisie et l’indicatif du pays."),
+    );
+    return;
+  }
+
+  String? finalPhotoUrl = _serverPhotoUrl ?? widget.user.photoProfil;
+  if (_pickedImage != null) {
+    final uploadSuccess = await userService.updateProfilePicture(token, _pickedImage!.path);
+    if (uploadSuccess) {
+      try {
+        final refreshed = await userService.getUserInfo(token);
+        finalPhotoUrl = refreshed.photoProfil;
+        setState(() => _serverPhotoUrl = finalPhotoUrl);
+        context.read<AuthProvider>().setUser(refreshed);
+      } catch (e) {
+        print('[ERROR] Exception after profile picture update: $e');
+      }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Erreur lors de la mise à jour du profil"),
-        backgroundColor: Colors.red,
-      ));
+      setState(() => _loading = false);
+      toastification.show(
+        context: context,
+        type: ToastificationType.error,
+        title: Text("Échec de l'upload de la photo de profil"),
+        description: Text("Veuillez réessayer ou choisir une autre image."),
+      );
+      return;
     }
   }
+
+  final updatedUser = widget.user.copyWith(
+    firstName: _firstNameController.text.trim(),
+    lastName: _lastNameController.text.trim(),
+    surname: _surnameController.text.trim(),
+    email: _emailController.text.trim(),
+    telephone: fullPhone,
+    photoProfil: finalPhotoUrl,
+  );
+
+  try {
+    final resp = await userService.updateUser(widget.user.id!, updatedUser, token);
+    setState(() => _loading = false);
+    if (resp) {
+      context.read<AuthProvider>().setUser(updatedUser);
+      toastification.show(
+        context: context,
+        type: ToastificationType.success,
+        title: Text("Profil mis à jour !"),
+        description: Text("Vos modifications ont bien été enregistrées."),
+      );
+      _showSuccessDialog();
+    }
+  } catch (e) {
+    setState(() => _loading = false);
+
+    String errorMsg = "Impossible de mettre à jour votre profil.";
+    bool showTechnicalDetail = false;
+
+    if (e is http.Response) {
+      try {
+        final decoded = jsonDecode(e.body);
+        if (decoded is Map && decoded['detail'] != null) {
+          errorMsg = decoded['detail'].toString();
+        } else if (decoded is String) {
+          errorMsg = decoded;
+        } else {
+          errorMsg = e.body;
+        }
+      } catch (_) {
+        errorMsg = e.body;
+      }
+    } else {
+      // Exception non prévue, on log en console !
+      print('[EXCEPTION] $e');
+      showTechnicalDetail = true;
+    }
+    toastification.show(
+      context: context,
+      type: ToastificationType.error,
+      title: Text("Erreur lors de la mise à jour"),
+      description: Text(errorMsg),
+    );
+    // Affiche aussi le détail technique uniquement en console
+    if (showTechnicalDetail) {
+      print('[EXCEPTION/DETAIL] $e');
+    }
+  }
+}
 
   void _showImagePickerOptions(BuildContext context) {
     showModalBottomSheet(
@@ -202,10 +236,7 @@ void initState() {
             SizedBox(height: 3.h),
             Text(
               "Modifier la photo de profil",
-              style: GoogleFonts.montserrat(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
-              ),
+              style: GoogleFonts.montserrat(fontSize: 16.sp, fontWeight: FontWeight.w600),
             ),
             SizedBox(height: 3.h),
             ListTile(
@@ -214,12 +245,8 @@ void initState() {
               onTap: () => _pickImage(true),
             ),
             ListTile(
-              leading: Icon(
-                Icons.photo_library,
-                color: const Color(0xFF007AFF),
-              ),
-              title:
-                  Text("Choisir depuis la galerie", style: GoogleFonts.montserrat()),
+              leading: Icon(Icons.photo_library, color: const Color(0xFF007AFF)),
+              title: Text("Choisir depuis la galerie", style: GoogleFonts.montserrat()),
               onTap: () => _pickImage(false),
             ),
             SizedBox(height: 2.h),
@@ -236,9 +263,7 @@ void initState() {
       builder: (ctx) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
         child: AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           backgroundColor: Colors.white,
           shadowColor: Colors.black.withOpacity(0.3),
           elevation: 10,
@@ -247,24 +272,14 @@ void initState() {
               children: [
                 Icon(Icons.check_circle, color: Colors.green, size: 15.w),
                 SizedBox(height: 2.h),
-                Text(
-                  "Succès",
-                  style: GoogleFonts.montserrat(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF2D3748),
-                  ),
-                ),
+                Text("Succès", style: GoogleFonts.montserrat(fontSize: 18.sp, fontWeight: FontWeight.w700, color: const Color(0xFF2D3748))),
               ],
             ),
           ),
           content: Text(
             "Votre profil a été mis à jour avec succès !",
             textAlign: TextAlign.center,
-            style: GoogleFonts.montserrat(
-              fontSize: 14.sp,
-              color: const Color(0xFF4A5568),
-            ),
+            style: GoogleFonts.montserrat(fontSize: 14.sp, color: const Color(0xFF4A5568)),
           ),
           actions: [
             Center(
@@ -288,66 +303,34 @@ void initState() {
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
-    bool isPassword = false,
     String? Function(String?)? validator,
     TextInputType? keyboardType,
+    IconData? icon,
   }) {
     return Container(
-      margin: EdgeInsets.only(bottom: 2.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.montserrat(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w600,
-              color: const Color.fromARGB(255, 8, 8, 8),
-            ),
+      margin: EdgeInsets.only(bottom: 2.5.h),
+      child: TextFormField(
+        controller: controller,
+        validator: validator,
+        keyboardType: keyboardType,
+        style: GoogleFonts.montserrat(fontSize: 14.sp, fontWeight: FontWeight.w500),
+        decoration: InputDecoration(
+          prefixIcon: icon != null ? Icon(icon, color: const Color(0xFF007AFF)) : null,
+          contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+          labelText: label,
+          labelStyle: GoogleFonts.montserrat(
+              color: Colors.grey[800], fontWeight: FontWeight.w600, fontSize: 13.sp),
+          filled: true,
+          fillColor: const Color(0xFFF7F7F7),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: const Color(0xFF007AFF).withOpacity(0.35)),
           ),
-          SizedBox(height: 1.h),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Color(0xFF007AFF).withOpacity(0.6)),
-            ),
-            child: TextFormField(
-              controller: controller,
-              validator: validator,
-              obscureText: isPassword ? !_isPasswordVisible : false,
-              keyboardType: keyboardType,
-              style: GoogleFonts.montserrat(fontSize: 14.sp),
-              decoration: InputDecoration(
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 4.w,
-                  vertical: 2.h,
-                ),
-                border: InputBorder.none,
-                hintText: isPassword
-                    ? "Laisser vide si inchangé"
-                    : "Entrez votre $label",
-                hintStyle: GoogleFonts.montserrat(
-                  color: const Color.fromARGB(255, 0, 0, 0),
-                  fontSize: 12.sp,
-                ),
-                suffixIcon: isPassword
-                    ? IconButton(
-                        icon: Icon(
-                          _isPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: const Color(0xFF007AFF),
-                        ),
-                        onPressed: () => setState(
-                          () => _isPasswordVisible = !_isPasswordVisible,
-                        ),
-                      )
-                    : null,
-              ),
-            ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: const Color(0xFF007AFF), width: 1.6),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -355,97 +338,53 @@ void initState() {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF6F7FB),
       body: NavContainer(
         initialIndex: 3,
         body: Stack(
           children: [
-            // Bg et clipper (inchangé)
-            SizedBox(
-              height: 100.h,
+            Container(
+              height: 36.h,
               width: 100.w,
-              child: Stack(
-                children: [
-                  ClipPath(
-                    clipper: ProfileTopClipper(),
-                    child: Container(
-                      height: 40.h,
-                      width: 100.w,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xFF007AFF), Color(0xFF0056CC)],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF007AFF).withOpacity(0.3),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: _pickedImage != null || _serverPhotoUrl != null
-                          ? Opacity(
-                              opacity: 0.1,
-                              child: ImageFiltered(
-                                imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                                child: _pickedImage != null
-                                    ? Image.file(_pickedImage!, fit: BoxFit.cover)
-                                    : Image.network(_serverPhotoUrl!, fit: BoxFit.cover),
-                              ),
-                            )
-                          : null,
-                    ),
-                  ),
-                ],
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF007AFF), Color(0xFF0056CC)],
+                ),
               ),
             ),
-
-            // HEADER (non scrollable) + CONTENU (scrollable)
             SafeArea(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // ----------- AppBar fixe ----------- //
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.5.h),
                     child: Row(
                       children: [
                         GestureDetector(
                           onTap: () => Navigator.pop(context),
                           child: Container(
-                            padding: EdgeInsets.all(3.w),
-                            decoration: BoxDecoration(
+                            padding: EdgeInsets.all(2.5.w),
+                            decoration: const BoxDecoration(
                               color: Colors.white,
                               shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
                             ),
-                            child: Icon(
-                              Icons.arrow_back_ios,
-                              size: 5.w,
-                              color: const Color(0xFF007AFF),
-                            ),
+                            child: Icon(Icons.arrow_back_ios_new, color: Color(0xFF007AFF), size: 22),
                           ),
                         ),
                         SizedBox(width: 4.w),
                         Text(
-                          "Modification",
+                          "Mon profil",
                           style: GoogleFonts.montserrat(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
                             shadows: [
                               Shadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withOpacity(0.08),
                                 blurRadius: 10,
-                                offset: const Offset(0, 2),
+                                offset: const Offset(0, 1),
                               ),
                             ],
                           ),
@@ -457,20 +396,19 @@ void initState() {
                     child: SingleChildScrollView(
                       padding: EdgeInsets.zero,
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // Bloc photo profil
+                          SizedBox(height: 1.5.h),
                           Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.all(5.w),
-                            margin: EdgeInsets.only(bottom: 3.h, top: 5.h),
+                            padding: EdgeInsets.all(4.w),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(18),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.15),
-                                  blurRadius: 25,
-                                  offset: const Offset(0, 10),
+                                  color: Colors.black.withOpacity(0.06),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 4),
                                 ),
                               ],
                             ),
@@ -479,111 +417,83 @@ void initState() {
                                 Stack(
                                   children: [
                                     Container(
-                                      width: 30.w,
-                                      height: 30.w,
+                                      width: 28.w,
+                                      height: 28.w,
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: const Color(0xFF007AFF),
-                                          width: 4,
-                                        ),
+                                        border: Border.all(color: const Color(0xFF007AFF), width: 4),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: const Color(0xFF007AFF)
-                                                .withOpacity(0.3),
-                                            blurRadius: 15,
-                                            offset: const Offset(0, 5),
+                                            color: const Color(0xFF007AFF).withOpacity(0.14),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 4),
                                           ),
                                         ],
                                       ),
                                       child: ClipOval(
                                         child: _pickedImage != null
-                                            ? Image.file(
-                                                _pickedImage!,
-                                                fit: BoxFit.cover,
-                                              )
+                                            ? Image.file(_pickedImage!, fit: BoxFit.cover)
                                             : (_serverPhotoUrl != null
-                                                ? Image.network(
-                                                    _serverPhotoUrl!,
-                                                    fit: BoxFit.cover,
-                                                  )
-                                                : (widget.user.photoProfil != null
-                                                    ? Image.network(
-                                                        widget.user.photoProfil!,
-                                                        fit: BoxFit.cover,
-                                                      )
-                                                    : Image.asset(
-                                                        "assets/profile.png",
-                                                        fit: BoxFit.cover,
-                                                      ))),
+                                              ? Image.network(_serverPhotoUrl!, fit: BoxFit.cover)
+                                              : (widget.user.photoProfil != null
+                                                  ? Image.network(widget.user.photoProfil!, fit: BoxFit.cover)
+                                                  : Image.asset("assets/profile.png", fit: BoxFit.cover)
+                                                )
+                                              ),
                                       ),
                                     ),
                                     Positioned(
-                                      bottom: 0,
-                                      right: 0,
+                                      right: 3, bottom: 3,
                                       child: GestureDetector(
                                         onTap: () => _showImagePickerOptions(context),
                                         child: Container(
-                                          padding: EdgeInsets.all(3.w),
+                                          padding: EdgeInsets.all(2.9.w),
                                           decoration: BoxDecoration(
                                             color: const Color(0xFF007AFF),
                                             shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: Colors.white,
-                                              width: 3,
-                                            ),
+                                            border: Border.all(color: Colors.white, width: 2),
                                             boxShadow: [
                                               BoxShadow(
-                                                color: Colors.black.withOpacity(0.18),
-                                                blurRadius: 10,
-                                                offset: const Offset(0, 3),
+                                                color: Colors.black.withOpacity(0.15),
+                                                blurRadius: 12,
+                                                offset: const Offset(0, 2),
                                               ),
                                             ],
                                           ),
-                                          child: Icon(
-                                            Icons.camera_alt,
-                                            size: 5.w,
-                                            color: Colors.white,
-                                          ),
+                                          child: Icon(Icons.photo_camera, color: Colors.white, size: 22),
                                         ),
                                       ),
-                                    ),
+                                    )
                                   ],
                                 ),
-                                SizedBox(height: 2.5.h),
+                                SizedBox(height: 2.2.h),
                                 Text(
                                   "${widget.user.firstName ?? ""} ${widget.user.lastName ?? ""}",
-                                  style: GoogleFonts.montserrat(
-                                    fontSize: 18.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF007AFF),
-                                  ),
-                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.montserrat(fontSize: 17.sp, fontWeight: FontWeight.bold, color: const Color(0xFF007AFF)),
                                 ),
                                 SizedBox(height: 0.5.h),
                                 Text(
                                   widget.user.poste ?? "Utilisateur",
                                   style: GoogleFonts.montserrat(
-                                    fontSize: 12.sp,
-                                    color: const Color(0xFF8E8E93),
-                                    fontWeight: FontWeight.w500,
+                                    fontSize: 13.sp, color: const Color(0xFF8E8E93), fontWeight: FontWeight.w500
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          // Bloc formulaire
+                          SizedBox(height: 2.5.h),
                           Container(
                             width: double.infinity,
                             padding: EdgeInsets.all(5.w),
+                            margin: EdgeInsets.symmetric(horizontal: 5.w),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(18),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.15),
-                                  blurRadius: 25,
-                                  offset: const Offset(0, 10),
+                                  color: Colors.black.withOpacity(0.08),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
                                 ),
                               ],
                             ),
@@ -595,122 +505,126 @@ void initState() {
                                   Text(
                                     "Informations personnelles",
                                     style: GoogleFonts.montserrat(
-                                      fontSize: 16.sp,
-                                      fontWeight: FontWeight.w700,
-                                      color: const Color(0xFF2D3748),
-                                    ),
+                                      fontSize: 16.sp, fontWeight: FontWeight.w700, color: const Color(0xFF2D3748)),
                                   ),
                                   SizedBox(height: 3.h),
                                   _buildTextField(
                                     controller: _firstNameController,
                                     label: "Prénom",
                                     validator: (v) => v!.isEmpty ? "Le prénom est requis" : null,
+                                    icon: Icons.person_outline,
                                   ),
                                   _buildTextField(
                                     controller: _lastNameController,
-                                    label: "Nom",
+                                    label: "Nom de famille",
+                                    icon: Icons.badge_outlined,
                                   ),
                                   _buildTextField(
                                     controller: _surnameController,
                                     label: "Surnom",
                                     validator: (v) => v!.isEmpty ? "Le surnom est requis" : null,
+                                    icon: Icons.drive_file_rename_outline,
                                   ),
                                   _buildTextField(
                                     controller: _emailController,
-                                    label: "Email",
+                                    label: "Adresse e-mail",
                                     keyboardType: TextInputType.emailAddress,
+                                    icon: Icons.email_outlined,
                                   ),
+                                  SizedBox(height: 2.h),
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      "Téléphone",
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFF2D3748),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 1.h),
                                   Container(
-                                    margin: EdgeInsets.only(bottom: 2.h),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF7F7F7),
+                                      borderRadius: BorderRadius.circular(13),
+                                      border: Border.all(color: const Color(0xFF007AFF).withOpacity(0.39)),
+                                    ),
+                                    child: Row(
                                       children: [
-                                        Text(
-                                          "Téléphone",
-                                          style: GoogleFonts.montserrat(
-                                            fontSize: 12.sp,
-                                            fontWeight: FontWeight.w600,
-                                            color: const Color(0xFF2D3748),
+                                        GestureDetector(
+                                          onTap: () {
+                                            showCountryPicker(
+                                              context: context,
+                                              showPhoneCode: true,
+                                              countryListTheme: CountryListThemeData(
+                                                borderRadius: BorderRadius.circular(10),
+                                                backgroundColor: Colors.white,
+                                                inputDecoration: InputDecoration(
+                                                  hintText: 'Chercher un pays',
+                                                  prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                                                  border: OutlineInputBorder(
+                                                    borderRadius: BorderRadius.circular(10),
+                                                  ),
+                                                ),
+                                              ),
+                                              onSelect: (Country c) {
+                                                setState(() => _selectedCountry = c);
+                                              },
+                                              countryFilter: ['TG', 'BJ', 'SN', 'CI'],
+                                            );
+                                          },
+                                          child: Padding(
+                                            padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 2.2.h),
+                                            child: Row(
+                                              children: [
+                                                Text(
+                                                  _selectedCountry.flagEmoji,
+                                                  style: TextStyle(fontSize: 24),
+                                                ),
+                                                SizedBox(width: 6),
+                                                Text(
+                                                  "+${_selectedCountry.phoneCode}",
+                                                  style: GoogleFonts.montserrat(fontSize: 13.sp, fontWeight: FontWeight.bold),
+                                                ),
+                                                SizedBox(width: 3),
+                                                Icon(Icons.keyboard_arrow_down, size: 18, color: const Color(0xFF007AFF)),
+                                              ],
+                                            ),
                                           ),
                                         ),
-                                        SizedBox(height: 1.h),
-                                        Container(
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(12),
-                                            border: Border.all(
-                                              color: const Color(0xFF007AFF).withOpacity(0.6),
-                                            ),
-                                          ),
-                                          child: InternationalPhoneNumberInput(
-                                            onInputChanged: (PhoneNumber num) {
-                                              setState(() {
-                                                _phone = num.phoneNumber ?? '';
-                                                _initialPhone = num;
-                                                if (num.isoCode != null) {
-                                                  _currentIso = num.isoCode!;
-                                                  _currentDial = num.dialCode
-                                                      ?.replaceFirst('+', '') ??
-                                                      _isoToDial[_currentIso] ??
-                                                      _currentDial;
-                                                }
-                                              });
-                                            },
-                                            onInputValidated: (_) {},
-                                            initialValue: _initialPhone,
-                                            textFieldController: _phoneController,
-                                            selectorConfig: SelectorConfig(
-                                              selectorType: PhoneInputSelectorType.DIALOG,
-                                              useEmoji: true,
-                                              setSelectorButtonAsPrefixIcon: true,
-                                            ),
-                                            formatInput: true,
+                                        Container(width: 1.5, height: 4.9.h, color: Colors.grey.withOpacity(0.18)),
+                                        Expanded(
+                                          child: TextFormField(
+                                            controller: _inputPhoneRawController,
                                             keyboardType: TextInputType.phone,
-                                            inputDecoration: InputDecoration(
-                                              contentPadding: EdgeInsets.symmetric(
-                                                horizontal: 4.w,
-                                                vertical: 2.h,
-                                              ),
+                                            style: GoogleFonts.montserrat(fontSize: 14.sp),
+                                            decoration: InputDecoration(
+                                              hintText: "Numéro de téléphone",
+                                              hintStyle: GoogleFonts.montserrat(color: const Color(0xFFA0AEC0), fontSize: 12.sp),
                                               border: InputBorder.none,
-                                              hintText: "Entrez votre numéro",
-                                              hintStyle: GoogleFonts.montserrat(
-                                                color: const Color(0xFFA0AEC0),
-                                                fontSize: 12.sp,
-                                              ),
+                                              contentPadding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 2.h),
                                             ),
-                                            textStyle: GoogleFonts.montserrat(fontSize: 13.sp),
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  _buildTextField(
-                                    controller: _passwordController,
-                                    label: "Mot de passe",
-                                    isPassword: true,
-                                  ),
                                   SizedBox(height: 4.h),
                                   _loading
-                                      ? Center(
-                                          child: CircularProgressIndicator(
-                                            valueColor: AlwaysStoppedAnimation<Color>(
-                                              const Color(0xFF007AFF),
-                                            ),
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : CustomElevatedButton(
-                                          text: "Enregistrer les modifications",
-                                          backgroundColor: const Color(0xFF007AFF),
-                                          textColor: Colors.white,
-                                          onPressed: _saveProfile,
-                                          width: double.infinity,
-                                        ),
+                                    ? Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(const Color(0xFF007AFF)), strokeWidth: 2))
+                                    : CustomElevatedButton(
+                                        text: "Enregistrer les modifications",
+                                        backgroundColor: const Color(0xFF007AFF),
+                                        textColor: Colors.white,
+                                        onPressed: _saveProfile,
+                                        width: double.infinity,
+                                      ),
                                 ],
                               ),
                             ),
                           ),
-                          SizedBox(height: 4.h),
+                          SizedBox(height: 6.h),
                         ],
                       ),
                     ),
@@ -723,37 +637,4 @@ void initState() {
       ),
     );
   }
-}
-
-class ProfileTopClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.moveTo(0, 0);
-    path.lineTo(size.width, 0);
-    path.lineTo(size.width, size.height * 0.7);
-    path.quadraticBezierTo(
-      size.width * 0.8,
-      size.height * 0.9,
-      size.width * 0.6,
-      size.height * 0.8,
-    );
-    path.quadraticBezierTo(
-      size.width * 0.4,
-      size.height * 0.7,
-      size.width * 0.2,
-      size.height * 0.8,
-    );
-    path.quadraticBezierTo(
-      size.width * 0.05,
-      size.height * 0.9,
-      0,
-      size.height * 0.7,
-    );
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }

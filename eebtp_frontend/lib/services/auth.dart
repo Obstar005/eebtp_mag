@@ -156,14 +156,40 @@ Future<List<Utilisateur>> getAllUsers() async {
     return response.statusCode == 201;
   }
 
-  Future<bool> updateUser(int id, Utilisateur user) async {
+ Future<bool> updateUser(int id, Utilisateur user, String token) async {
+  final url = Uri.parse('$baseUrl/Users/user-update/$id');
+
+  try {
     final response = await http.put(
-      Uri.parse('$baseUrl/Users/user-update/$id/'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(user.toJson()),
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(user.toUpdateJson()),
     );
-    return response.statusCode == 200;
+
+    if (response.statusCode == 200) {
+      return true;
+    } else if (response.statusCode == 400) {
+      final error = jsonDecode(response.body);
+      throw Exception('Données invalides : ${error['detail'] ?? response.body}');
+    } else if (response.statusCode == 401) {
+      throw Exception('Non autorisé : token invalide ou expiré');
+    } else if (response.statusCode == 403) {
+      throw Exception('Accès refusé : permissions insuffisantes');
+    } else if (response.statusCode == 404) {
+      throw Exception('Utilisateur non trouvé');
+    } else if (response.statusCode == 500) {
+      throw Exception('Erreur serveur : veuillez réessayer plus tard');
+    } else {
+      throw Exception('Erreur HTTP ${response.statusCode} : ${response.reasonPhrase}');
+    }
+  } catch (e) {
+    throw Exception('Échec de mise à jour de l’utilisateur : $e');
   }
+}
+
 
   Future<bool> deleteUser(int id) async {
     final response = await http.delete(
