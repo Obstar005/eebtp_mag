@@ -6,6 +6,7 @@ from rest_framework import status
 from .models import HistoriqueAction
 from .serializers import HistoriqueActionSerializer
 from drf_yasg.utils import swagger_auto_schema
+from app.utils import enregistrer_action
 
 @swagger_auto_schema(
     method='get',
@@ -19,6 +20,7 @@ def historique_utilisateur(request):
     user_id = user.id
 
     historiques = HistoriqueAction.objects.filter(user_id=user_id).order_by('-date_action')
+    # enregistrer_action(user, 'consultation', 'A consulter son historique', f"Liste des historiques.")
     serializer = HistoriqueActionSerializer(historiques, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -31,5 +33,6 @@ def historique_utilisateur(request):
 @permission_classes([IsAuthenticated])
 def historique_toutes_actions(request):
     historiques = HistoriqueAction.objects.all().order_by('-date_action')
+    # enregistrer_action(request.user, 'consultation', 'A consulté la liste de tous les historiques', f"Liste de tous les historiques.")
     serializer = HistoriqueActionSerializer(historiques, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)

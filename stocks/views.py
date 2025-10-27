@@ -10,6 +10,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from projets.models import Magasin, StockItem
 from projets.serializers import MagasinSerializer, StockItemSerializer
+from app.utils import enregistrer_action
 
 #Creation d'un produit dans le système
 @swagger_auto_schema(
@@ -22,6 +23,8 @@ from projets.serializers import MagasinSerializer, StockItemSerializer
 @permission_classes([IsAuthenticated])
 def create_article(request):
     serializer = ProduitSerializer(data=request.data)
+    enregistrer_action(request.user, 'creation', 'A crée un article dans le système.', f"Article #{request.data.get('designation')}")
+
     if serializer.is_valid():
         article = serializer.save()
         return Response({'message': 'Article crée avec succès'}, status=status.HTTP_201_CREATED)
@@ -37,6 +40,7 @@ def create_article(request):
 @permission_classes([IsAuthenticated])
 def list_articles(request):
     articles = Produit.objects.filter(is_active=True).order_by('-date_creation')
+    enregistrer_action(request.user, 'consultation', 'A consulté la liste des articles dans le système.', "Liste des articles")
     serializer = ProduitSerializer(articles, many=True)
     return Response(serializer.data)
 
@@ -53,6 +57,7 @@ def get_article(request, pk):
         article = Produit.objects.get(pk=pk)
     except Produit.DoesNotExist:
         return Response({'error': 'Article introuvable'}, status=status.HTTP_404_NOT_FOUND)
+    # enregistrer_action(request.user, 'consultation', 'A consulté l.', "Liste des projets")
     
     #Verifier si le produit n'est pas désactivé
     if not article.is_active:
@@ -75,6 +80,7 @@ def update_article(request, pk):
         article = Produit.objects.get(pk=pk)
     except Produit.DoesNotExist:
         return Response({'error': 'Article introuvable'}, status=status.HTTP_404_NOT_FOUND)
+    enregistrer_action(request.user, 'modification', 'A modifié un article dans le système.', f"Article #{article.id}")
 
     serializer = ProduitSerializer(article, data=request.data)
     if serializer.is_valid():
@@ -95,6 +101,7 @@ def delete_article(request, pk):
         article = Produit.objects.get(pk=pk)
         article.is_active = False
         article.save()
+        enregistrer_action(request.user, 'suppression', 'A supprimé un article dans le système.', f"Article #{article.id}")
         return Response({'message': 'Article désactivé avec succès.'}, status=status.HTTP_200_OK)
     except Produit.DoesNotExist:
         return Response({'error': 'Article introuvable.'}, status=status.HTTP_404_NOT_FOUND)
@@ -111,6 +118,7 @@ def delete_article(request, pk):
 def add_stock_item(request):
     user = request.user
     serializer = StockItemSerializer(data=request.data)
+    enregistrer_action(request.user, 'creation', 'A ajouté un article au stock d\'un magasin.', f"Article dans le magasin #{request.data.get('magasin')}")
     if serializer.is_valid():
         serializer.save(add_by=user)
         return Response({'message': 'Article ajouté au stock du magasin avec succès.'}, status=status.HTTP_201_CREATED)
@@ -129,6 +137,7 @@ def list_stock_items(request, magasin_id):
         magasin = Magasin.objects.get(pk=magasin_id)
     except Magasin.DoesNotExist:
         return Response({'error': 'Magasin introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+    enregistrer_action(request.user, 'consultation', 'A consulté la liste des articles dans un magasin.', f"Liste des articles du magasin #{magasin.id}")
 
     stock_items = StockItem.objects.filter(magasin=magasin, is_active=True).order_by('-date_ajout')
     serializer = StockItemSerializer(stock_items, many=True)
@@ -150,6 +159,7 @@ def update_stock_item(request, magasin_id):
         return Response({'error': 'Article introuvable'}, status=status.HTTP_404_NOT_FOUND)
     
     stock_item.updated_by = request.user
+    enregistrer_action(request.user, 'modification', 'A modifié un article dans le stock d\'un magasin.', f"Article #{stock_item.id} dans le magasin #{stock_item.magasin.id}")
 
     serializer = StockItemSerializer(stock_item, data=request.data)
     if serializer.is_valid():
@@ -189,9 +199,7 @@ def delete_stock_item(request, stock_item_id):
         stock_item = StockItem.objects.get(pk=stock_item_id)
         stock_item.is_active = False
         stock_item.save()
+        enregistrer_action(request.user, 'suppression', 'A supprimé un article dans le stock d\'un magasin.', f"Article #{stock_item.id} dans le magasin #{stock_item.magasin.id}")
         return Response({'message': 'Article supprimé avec succès dans le magasin.'}, status=status.HTTP_200_OK)
     except StockItem.DoesNotExist:
         return Response({'error': 'Article introuvable.'}, status=status.HTTP_404_NOT_FOUND)
-
-
-

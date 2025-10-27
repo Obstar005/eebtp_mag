@@ -25,4 +25,5 @@ urlpatterns = [
     path('authentication/login-by-phone-mobile/', views.login_by_phone_mobile, name='login_user_mobile'),
     path('authentication/user-info/', views.user_info, name='user_info'),
     path('authentication/verify-sms', views.send_code_view, name='verify_sms_code'),
+    path('authentication/logout/', views.logout_user, name='logout_user'),
 ]

@@ -31,6 +31,7 @@ class CustomUser(AbstractUser):
     date_modif = models.DateTimeField(auto_now=True)
     first_login = models.BooleanField(default=True)
     projets = models.ManyToManyField('projets.Projet', related_name='users', blank=True)
+    is_connected = models.BooleanField(default=False)
 
 
     def __str__(self):

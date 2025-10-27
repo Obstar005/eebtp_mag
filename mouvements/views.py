@@ -9,6 +9,7 @@ from projets.models import Projet, Magasin, StockItem
 from .models import Sortie, Entree
 from .serializers import SortieSerializer, EntreeSerializer
 from demandes.models import Demande
+from app.utils import enregistrer_action
 
 
 #Créer une sortie de stock
@@ -33,6 +34,7 @@ def create_sortie(request):
     
     stock_item.quantite -= int(quantity)
     stock_item.save()
+    enregistrer_action(user, 'creation', 'A crée une sortie de stock dans le système.', f"Sortie de {quantity} de l'article #{stock_item.id} du magasin #{data.get('magasin')}")
 
     serializer = SortieSerializer(data=request.data)
     if serializer.is_valid():
@@ -50,6 +52,7 @@ def create_sortie(request):
 @permission_classes([IsAuthenticated])
 def list_sorties(request):
     sorties = Sortie.objects.filter(is_active=True).order_by('-date_creation')
+    enregistrer_action(request.user, 'consultation', 'A consulté la liste des sorties de stock dans le système.', "Liste des sorties de stock")
     serializer = SortieSerializer(sorties, many=True)
     return Response(serializer.data)
 
@@ -66,6 +69,7 @@ def list_sorties_magasin(request, magasin_id):
         magasin = Magasin.objects.get(pk=magasin_id)
     except Magasin.DoesNotExist:
         return Response({'error': 'Magasin introuvable'}, status=status.HTTP_404_NOT_FOUND)
+    enregistrer_action(request.user, 'consultation', 'A consulté la liste des sorties de stock dans un magasin.', f"Liste des sorties du magasin #{magasin.id}")
     
     sorties = Sortie.objects.filter(magasin=magasin, is_active=True).order_by('-date_creation')
     serializer = SortieSerializer(sorties, many=True)
@@ -146,7 +150,7 @@ def create_entree(request):
         demande.save()
     stock_item.quantite += int(quantity)
     stock_item.save()
-    #Cha
+    enregistrer_action(user, 'creation', 'A crée une entrée de stock dans le système.', f"Entrée de {quantity} de l'article #{stock_item.id} du magasin #{data.get('magasin')}")
 
     serializer = EntreeSerializer(data=request.data)
     if serializer.is_valid():
@@ -181,6 +185,7 @@ def get_entree(request, pk):
 @permission_classes([IsAuthenticated])
 def list_entrees(request):
     entrees = Entree.objects.filter(is_active=True).order_by('-date_creation')
+    enregistrer_action(request.user, 'consultation', 'A consulté la liste des entrées de stock dans le système.', "Liste des entrées de stock")
     serializer = EntreeSerializer(entrees, many=True)
     return Response(serializer.data)
 
@@ -197,6 +202,7 @@ def list_entrees_magasin(request, magasin_id):
         magasin = Magasin.objects.get(pk=magasin_id)
     except Magasin.DoesNotExist:
         return Response({'error': 'Magasin introuvable'}, status=status.HTTP_404_NOT_FOUND)
+    enregistrer_action(request.user, 'consultation', 'A consulté la liste des entrées de stock dans un magasin.', f"Liste des entrées du magasin #{magasin.id}")
     
     entrees = Entree.objects.filter(magasin=magasin, is_active=True).order_by('-date_creation')
     serializer = EntreeSerializer(entrees, many=True)

@@ -15,7 +15,8 @@ from app.utils import enregistrer_action
 #Vue pour la création d'un projet
 @swagger_auto_schema(
     method='post',
-    operation_description="Cette API permet de créer un nouveau projet.",
+    operation_description="Cette API permet de créer un nouveau projet ainsi que son magasin associé. (nom_magasin et adresse_magasin sont les noms des" \
+    "champs du magasin).",
     request_body=ProjetSerializer,  # Le modèle d'entrée
     responses={
         201: openapi.Response("Projet créé avec succès", ProjetSerializer),
@@ -25,25 +26,55 @@ from app.utils import enregistrer_action
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_projet(request):
-    data = request.data
+    data = request.data.copy()
 
-    #Verifions si le projet existe déjà?
+    # 1️ Vérifions si le projet existe déjà
     projet_nom = data.get('nom')
     if Projet.objects.filter(nom=projet_nom).exists():
         return Response(
-            {'error': f'Il existe déjà un projet avec le nom <<{projet_nom}>>. Veuillez choisir un nom différent.'},
+            {'error': f'Il existe déjà un projet avec le nom <<{projet_nom}>>.'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    # Projet.creator = request.user  # Assigner l'utilisateur connecté comme créateur du projet
-    data['creator'] = request.user.id  # Assigner l'ID de l'utilisateur
-    enregistrer_action(request.user, 'creation', 'A créé un nouveau projet', f"Projet #{projet_nom}")
-    
-    serializer = ProjetSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response({'message': 'Projet créé avec succès'}, status=status.HTTP_201_CREATED)
-    
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    #  Ajout du créateur
+    data['creator'] = request.user.id
+
+    # 3️ On commence par créer le projet
+    projet_serializer = ProjetSerializer(data=data)
+    if not projet_serializer.is_valid():
+        return Response(projet_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    projet = projet_serializer.save()
+    enregistrer_action(request.user, 'creation', 'A créé un nouveau projet', f"Projet #{projet.nom}")
+
+    # 4️ Ensuite, on crée le magasin associé
+    magasin_nom = data.get('nom_magasin')
+    magasin_adresse = data.get('adresse_magasin')
+
+    if magasin_nom:  # si le nom du magasin est fourni
+        magasin = Magasin.objects.create(
+            nom=magasin_nom,
+            adresse=magasin_adresse,
+            creator=request.user,
+            projet=projet  # ici on associe le projet qu’on vient de créer
+        )
+
+        enregistrer_action(
+            request.user,
+            'creation',
+            'A créé un nouveau magasin',
+            f"Magasin #{magasin.nom} pour le projet #{projet.nom}"
+        )
+
+    # 5️ Réponse finale
+    return Response(
+        {
+            'message': 'Projet et magasin créés avec succès',
+            'projet': ProjetSerializer(projet).data
+        },
+        status=status.HTTP_201_CREATED
+    )
+
 
 #Vue pour la liste des projets
 @swagger_auto_schema(
@@ -58,7 +89,7 @@ def create_projet(request):
 def list_projets(request):
     projets = Projet.objects.filter(is_active=True).order_by('-date_creation')
     serializer = ProjetSerializer(projets, many=True)
-    enregistrer_action(request.user, 'consultation', 'A consulté la liste des projets.', "Liste des projets")
+    enregistrer_action(request.user, 'consultation', 'A consulté la liste des projets du système.', "Liste des projets")
     return Response(serializer.data)
 
 #Vue pour la récupération d'un projet
@@ -103,12 +134,13 @@ def update_projet(request, pk):
     
     data = request.data.copy()
     data['creator'] = projet.creator.id  # Conserver le créateur existant
+    enregistrer_action(request.user, 'modification', 'A modifié un projet.', f"Projet #{projet.id}")
 
     serializer = ProjetSerializer(projet, data=data)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)
-    enregistrer_action(request.user, 'modification', 'A modifié un projet.', f"Projet #{projet.id}")
+    
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 #Vue pour la suppression d'un projet
@@ -247,36 +279,37 @@ def delete_photo(request, pk):
         return Response({'error': 'Photo introuvable.'}, status=status.HTTP_404_NOT_FOUND)
     
 #MASGASINS
-@swagger_auto_schema(
-    method='post',
-    operation_description="Cette API permet de créer un nouveau magasin.",
-    request_body=MagasinSerializer,
-    responses={
-        201: openapi.Response("Magasin créé avec succès", MagasinSerializer),
-        400: "Données invalides"
-    }
-)
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def create_magasin(request):
-    data = request.data
+# @swagger_auto_schema(
+#     method='post',
+#     operation_description="Cette API permet de créer un nouveau magasin.",
+#     request_body=MagasinSerializer,
+#     responses={
+#         201: openapi.Response("Magasin créé avec succès", MagasinSerializer),
+#         400: "Données invalides"
+#     }
+# )
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def create_magasin(request):
+#     data = request.data
    
-    projet_id = data.get('projet')  
-    # Vérifier si le magasin existe déjà pour ce projet
-    if Magasin.objects.filter(projet_id=projet_id).exists():
-        return Response(
-            {'error': f'Il existe déjà un magasin pour ce projet.'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+#     projet_id = data.get('projet')  
+#     # Vérifier si le magasin existe déjà pour ce projet
+#     if Magasin.objects.filter(projet_id=projet_id).exists():
+#         return Response(
+#             {'error': f'Il existe déjà un magasin pour ce projet.'},
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
 
-    # Assigner l'utilisateur connecté comme créateur du magasin
-    data['creator'] = request.user.id  
+#     # Assigner l'utilisateur connecté comme créateur du magasin
+#     data['creator'] = request.user.id  
+#     # enregistrer_action(request.user, 'creation', 'A crée un magasin.', f"Magasin #{pro.id}")
 
-    serializer = MagasinSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response({'message': 'Magasin créé avec succès'}, status=status.HTTP_201_CREATED)    
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#     serializer = MagasinSerializer(data=request.data)
+#     if serializer.is_valid():
+#         serializer.save()
+#         return Response({'message': 'Magasin créé avec succès'}, status=status.HTTP_201_CREATED)    
+#     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 #Vue pour la liste des magasins
@@ -291,6 +324,7 @@ def create_magasin(request):
 @permission_classes([IsAuthenticated])
 def list_magasins(request):
     magasins = Magasin.objects.filter(is_active=True).order_by('-date_creation')
+    enregistrer_action(request.user, 'consultation', 'A consulté la liste des magasins du système.', "Liste des Magasins")
     serializer = MagasinSerializer(magasins, many=True)
     return Response(serializer.data)
 
@@ -310,6 +344,7 @@ def get_magasin(request, pk):
         magasin = Magasin.objects.get(pk=pk)
     except Magasin.DoesNotExist:
         return Response({'error': 'Magasin introuvable'}, status=status.HTTP_404_NOT_FOUND)
+    enregistrer_action(request.user, 'consultation', 'A consulté les détails d\'un magasin.', f"Magasin #{magasin.id}")
 
     serializer = MagasinSerializer(magasin)
     return Response(serializer.data)
@@ -338,6 +373,7 @@ def update_magasin(request, pk):
         data['creator'] = magasin.creator.id  # garder le créateur existant
     else:
         data['creator'] = request.user.id  # si jamais il était null, on assigne l'user courant
+    enregistrer_action(request.user, 'modification', 'A modifié un magasin.', f"Magasin #{magasin.id}")
 
     serializer = MagasinSerializer(magasin, data=data, partial=True)
     if serializer.is_valid():
@@ -361,6 +397,7 @@ def delete_magasin(request, pk):
         magasin = Magasin.objects.get(pk=pk)
         magasin.is_active = False
         magasin.save()
+        enregistrer_action(request.user, 'suppression', 'A supprimé un magasin', f"Magasin #{magasin.id}")
         return Response({'message': 'Magasin désactivé avec succès.'}, status=status.HTTP_200_OK)
     except Magasin.DoesNotExist:
         return Response({'error': 'Magasin introuvable.'}, status=status.HTTP_404_NOT_FOUND)
@@ -384,6 +421,7 @@ def list_magasins_by_projet(request, pk):
 
         # Récupérer uniquement les magasins lié à ce projet
         magasins = Magasin.objects.filter(projet=projet)
+        enregistrer_action(request.user, 'consultation', 'A consulté la liste des magasins d\'un projet.', f"Liste des magasins du projet #{projet.id}")
 
         # Sérialiser les données
         serializer = MagasinSerializer(magasins, many=True)

@@ -78,6 +78,7 @@ def liste_demandes_emises(request):
         return Response({'error': 'Seul un magasinier peut voir ses demandes émises.'}, status=status.HTTP_403_FORBIDDEN)
 
     demandes = Demande.objects.filter(emis_par=user).order_by('-date_creation')
+
     serializer = DemandeSerializer(demandes, many=True)
     return Response(serializer.data)
 
@@ -104,6 +105,7 @@ def confirmer_demande(request, id):
     demande.confirme_par = user
     demande.date_confirmation = timezone.now()
     demande.save()
+    enregistrer_action(user, 'modification', 'A confirmé une demande', f"Demande #{demande.number}")
 
     return Response({'message': 'Demande confirmée avec succès'}, status=status.HTTP_200_OK)
 
@@ -138,6 +140,7 @@ def approuver_demande(request, id):
     demande.approve_par = user
     demande.date_approbation = timezone.now()
     demande.save()
+    enregistrer_action(user, 'modification', 'A approuvé une demande', f"Demande #{demande.number}")
     return Response({'message': 'Demande approuvée avec succès'}, status=status.HTTP_200_OK)
 
 #Liste des demandes approuvées
@@ -171,6 +174,7 @@ def valider_demande(request, id):
     demande.valide_par = user
     demande.date_validation = timezone.now()
     demande.save()
+    enregistrer_action(user, 'modification', 'A validé une demande', f"Demande #{demande.number}")
     return Response({'message': 'Demande validée avec succès'}, status=status.HTTP_200_OK)
 
 #Liste des demandes validées
@@ -206,6 +210,7 @@ def rejeter_demande(request, id):
     demande.rejete_par = user
     demande.date_rejet = timezone.now()
     demande.save()
+    enregistrer_action(user, 'modification', 'A rejeté une demande', f"Demande #{demande.number}")
     return Response({'message': 'Demande rejetée avec succès'}, status=status.HTTP_200_OK)
 
 #Liste des demandes rejetées

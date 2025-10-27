@@ -20,7 +20,7 @@ urlpatterns = [
 
     # Pour les magasins
     path('liste-magasins', views.list_magasins, name='list_magasins'),
-    path('magasin-create', views.create_magasin, name='create_magasin'),    
+    # path('magasin-create', views.create_magasin, name='create_magasin'),    
     path('magasin-detail/<int:pk>', views.get_magasin, name='get_magasin'),
     path('magasin-update/<int:pk>', views.update_magasin, name='update_magasin'),
     path('magasin-delete/<int:pk>', views.delete_magasin, name='delete_magasin'),
