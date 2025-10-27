@@ -59,7 +59,7 @@ export class AuthService {
     refreshToken?: string;
   }> {
     if (useMockService) {
-    return mockService.directLogin(data);
+      return mockService.directLogin(data);
     }
     throw new Error("API not implemented");
   }
@@ -137,6 +137,10 @@ export class AuthService {
       };
     } catch (error) {
       console.error("Erreur lors de la connexion simple:", error);
+      // Préserver le message d'erreur original si disponible
+      if (error instanceof Error) {
+        throw error; // Re-lancer l'erreur originale avec son message
+      }
       throw new Error("Erreur lors de la connexion");
     }
   }
@@ -179,6 +183,10 @@ export class AuthService {
       }
     } catch (error) {
       console.error("Erreur lors du changement de mot de passe:", error);
+      // Préserver le message d'erreur original si disponible
+      if (error instanceof Error) {
+        throw error; // Re-lancer l'erreur originale avec son message
+      }
       throw new Error("Erreur lors du changement de mot de passe");
     }
   }

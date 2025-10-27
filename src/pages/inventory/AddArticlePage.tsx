@@ -4,7 +4,6 @@ import { ArrowLeft, Upload, X } from "lucide-react";
 import { useCreateStockArticle } from "../../hooks/useArticles";
 import type {
   CreateStockArticleData,
-  ArticleEtat,
   ArticleType,
   ArticleUnite,
 } from "../../types/magasin";
@@ -13,7 +12,6 @@ import { CustomImage } from "../../components/ui/CustomImage";
 interface ArticleForm {
   name: string;
   description: string;
-  etat: ArticleEtat;
   type_enum: ArticleType;
   unite: ArticleUnite;
   quantite: number;
@@ -26,7 +24,6 @@ interface ArticleForm {
 interface ArticleFormErrors {
   name?: string;
   description?: string;
-  etat?: string;
   type_enum?: string;
   quantite?: string;
   quantite_seuil?: string;
@@ -41,7 +38,6 @@ export function AddArticlePage() {
   const [form, setForm] = useState<ArticleForm>({
     name: "",
     description: "",
-    etat: "neuf",
     type_enum: "matiere_premiere",
     unite: "unite",
     quantite: 0,
@@ -87,7 +83,6 @@ export function AddArticlePage() {
       const createData: CreateStockArticleData = {
         name: form.name.trim(),
         description: form.description.trim(),
-        etat: form.etat,
         type_enum: form.type_enum,
         unite: form.unite,
         quantite: form.quantite,

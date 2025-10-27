@@ -1,5 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Modal, ModalButton } from "../layout";
+import { useAuth } from "../../contexts/AuthContext";
+import {
+  getAvailableTreatmentActionsSync,
+  type AvailableAction,
+} from "../../utils/permissions";
 
 interface RequestTreatmentModalProps {
   isOpen: boolean;
@@ -8,6 +13,7 @@ interface RequestTreatmentModalProps {
   article: string;
   quantite: number;
   isLoading?: boolean;
+  requestStatus: string; // État actuel de la demande
 }
 
 export default function RequestTreatmentModal({
@@ -17,9 +23,17 @@ export default function RequestTreatmentModal({
   article,
   quantite,
   isLoading = false,
+  requestStatus,
 }: RequestTreatmentModalProps) {
+  const { user } = useAuth();
   const [traitement, setTraitement] = useState("");
   const [motif, setMotif] = useState("");
+
+  // Déterminer les actions disponibles selon le profil utilisateur et l'état de la demande
+  // Utilise la hiérarchie : Émission → Confirmation → Approbation → Validation/Rejet
+  const availableActions = useMemo(() => {
+    return getAvailableTreatmentActionsSync(user, requestStatus);
+  }, [user, requestStatus]);
 
   const handleSubmit = () => {
     if (!traitement) {
@@ -53,7 +67,7 @@ export default function RequestTreatmentModal({
           <ModalButton
             variant="primary"
             onClick={handleSubmit}
-            disabled={isLoading}
+            disabled={isLoading || availableActions.length === 0}
           >
             {isLoading ? "Traitement..." : "Valider"}
           </ModalButton>
@@ -76,17 +90,26 @@ export default function RequestTreatmentModal({
           <label className="block text-xs text-gray-500 mb-1">
             Action de traitement
           </label>
-          <select
-            className="w-full rounded-lg px-3 py-2 bg-gray-100 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={traitement}
-            onChange={(e) => setTraitement(e.target.value)}
-          >
-            <option value="">-- Sélectionner une action --</option>
-            <option value="confirmer">Confirmer (Chef Appro)</option>
-            <option value="approuver">Approuver (Directeur Technique)</option>
-            <option value="valider">Valider (Directeur)</option>
-            <option value="rejeter">Rejeter la demande</option>
-          </select>
+          {availableActions.length > 0 ? (
+            <select
+              className="w-full rounded-lg px-3 py-2 bg-gray-100 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={traitement}
+              onChange={(e) => setTraitement(e.target.value)}
+            >
+              <option value="">-- Sélectionner une action --</option>
+              {availableActions.map((action: AvailableAction) => (
+                <option key={action.value} value={action.value}>
+                  {action.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className="w-full rounded-lg px-3 py-2 bg-red-50 border border-red-200 text-red-600 text-sm">
+              {!user
+                ? "Vous devez être connecté pour traiter cette demande"
+                : `Aucune action disponible pour votre profil (${user.profil}) à l'état "${requestStatus}"`}
+            </div>
+          )}
         </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">

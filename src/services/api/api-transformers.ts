@@ -7,6 +7,9 @@ import type {
   UpdateAccountData,
 } from "../../types/account";
 import type { User, AuthResponse } from "../../types/auth";
+import { UserProfil } from "../../types/auth";
+import { mapProfilLibelleToUserProfil } from "../../utils/permissions";
+import { apiClient } from "./client";
 import type {
   Projet,
   ProjetWithDetails,
@@ -89,69 +92,161 @@ function convertCountryNameToCode(countryName: string | undefined): string {
   return reverseCountryMap[countryName] || "TG"; // Par défaut Togo si non trouvé
 }
 
-export function apiUserToAccount(apiUser: ApiCustomUser): Account {
+export async function apiUserToAccount(
+  apiUser: ApiCustomUser
+): Promise<Account> {
   // Vérifier et tracer les données API
   console.log("🔍 apiUserToAccount: Données API reçues:", {
     id: apiUser.id,
     username: apiUser.username,
     first_name: apiUser.first_name,
     last_name: apiUser.last_name,
-    id_profil: apiUser.id_profil,
+    profil: apiUser.profil,
   });
 
   // Convertir le nom de pays en code
   const countryCode = convertCountryNameToCode(apiUser.nationality);
 
-  const account = {
-    id: apiUser.id.toString(),
-    code: `CPT-${apiUser.id.toString().padStart(3, "0")}`, // Générer un code
-    nom: apiUser.last_name,
-    prenoms: apiUser.first_name,
-    nom_utilisateur: apiUser.username,
-    date_naissance: apiUser.birth_date || "",
-    nationalite: countryCode, // Convertir le nom complet du pays en code
-    mot_de_passe: "", // Ne pas exposer
-    type: apiUser.type as AccountType,
-    telephone: apiUser.telephone,
-    photo_profil: apiUser.photo_profil,
-    is_active: apiUser.is_active,
-    date_creation: apiUser.date_creation,
-    date_modification: apiUser.date_modif,
-    derniere_connexion: apiUser.last_login,
-    profile_id: apiUser.id_profil ? apiUser.id_profil.toString() : "",
-  };
+  try {
+    // Récupérer les détails du profil depuis l'API
+    const response = await apiClient.get<ApiProfil>(
+      `/Users/profil-detail/${apiUser.profil}`
+    );
+    const apiProfil = response.data;
 
-  // Tracer l'objet compte résultant
-  console.log("🔄 apiUserToAccount: Compte transformé:", account);
+    // Transformer l'ApiProfil en Profile
+    const profile: Profile = {
+      id: apiProfil.id.toString(),
+      nom: apiProfil.libelle,
+      description: apiProfil.description,
+    };
 
-  return account;
+    const account: Account = {
+      id: apiUser.id.toString(),
+      code: `CPT-${apiUser.id.toString().padStart(3, "0")}`, // Générer un code
+      nom: apiUser.last_name,
+      prenoms: apiUser.first_name,
+      nom_utilisateur: apiUser.username,
+      date_naissance: apiUser.birth_date || "",
+      nationalite: countryCode, // Convertir le nom complet du pays en code
+      mot_de_passe: "", // Ne pas exposer
+      type: apiUser.type as AccountType,
+      telephone: apiUser.telephone,
+      photo_profil: apiUser.photo_profil,
+      is_active: apiUser.is_active,
+      date_creation: apiUser.date_creation,
+      date_modification: apiUser.date_modif,
+      derniere_connexion: apiUser.last_login,
+      profile_id: apiUser.profil.toString(),
+      profile: profile, // Inclure l'objet profile complet
+    };
+
+    // Tracer l'objet compte résultant
+    console.log("🔄 apiUserToAccount: Compte transformé:", account);
+
+    return account;
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération du profil pour le compte:",
+      error
+    );
+
+    // Fallback avec un profil par défaut
+    const defaultProfile: Profile = {
+      id: apiUser.profil.toString(),
+      nom: "Profil non trouvé",
+      description: "Profil non disponible",
+    };
+
+    const account: Account = {
+      id: apiUser.id.toString(),
+      code: `CPT-${apiUser.id.toString().padStart(3, "0")}`,
+      nom: apiUser.last_name,
+      prenoms: apiUser.first_name,
+      nom_utilisateur: apiUser.username,
+      date_naissance: apiUser.birth_date || "",
+      nationalite: countryCode,
+      mot_de_passe: "",
+      type: apiUser.type as AccountType,
+      telephone: apiUser.telephone,
+      photo_profil: apiUser.photo_profil,
+      is_active: apiUser.is_active,
+      date_creation: apiUser.date_creation,
+      date_modification: apiUser.date_modif,
+      derniere_connexion: apiUser.last_login,
+      profile_id: apiUser.profil.toString(),
+      profile: defaultProfile,
+    };
+
+    return account;
+  }
 }
 
-export function apiUserToUser(apiUser: ApiCustomUser): User {
-  return {
-    id: apiUser.id.toString(),
-    email: apiUser.email,
-    phone: apiUser.telephone,
-    // Utiliser surname comme prénom si first_name est "ADMIN", sinon garder first_name
-    firstName:
-      apiUser.first_name === "ADMIN" ? apiUser.surname : apiUser.first_name,
-    // Si first_name était "ADMIN", utiliser username comme nom de famille, sinon garder last_name
-    lastName:
-      apiUser.first_name === "ADMIN" ? apiUser.username : apiUser.last_name,
-    role: apiUser.is_superuser ? "admin" : "employee", // Mapper selon la logique métier
-    isActive: apiUser.is_active,
-    isPhoneVerified: true, // Assumer vérifié si dans l'API
-    isEmailVerified: !!apiUser.email,
-    hasCompletedSetup: true,
-    createdAt: apiUser.date_creation,
-    updatedAt: apiUser.date_modif,
-  };
+export async function apiUserToUser(apiUser: ApiCustomUser): Promise<User> {
+  try {
+    // Récupérer les détails du profil depuis l'API directement
+    const response = await apiClient.get<ApiProfil>(
+      `/Users/profil-detail/${apiUser.profil}`
+    );
+    const apiProfil = response.data;
+
+    // Mapper le libellé du profil vers un profil EEBTP
+    const userProfil = mapProfilLibelleToUserProfil(apiProfil.libelle);
+
+    // Fallback vers 'magasinier' si le mapping échoue
+    const finalProfil = userProfil || UserProfil.MAGASINIER;
+
+    console.log("🔄 apiUserToUser: Mapping profil", {
+      profileId: apiUser.profil,
+      libelle: apiProfil.libelle,
+      mappedProfil: finalProfil,
+    });
+
+    return {
+      id: apiUser.id.toString(),
+      email: apiUser.email,
+      phone: apiUser.telephone,
+      // Utiliser surname comme prénom si first_name est "ADMIN", sinon garder first_name
+      firstName:
+        apiUser.first_name === "ADMIN" ? apiUser.surname : apiUser.first_name,
+      // Si first_name était "ADMIN", utiliser username comme nom de famille, sinon garder last_name
+      lastName:
+        apiUser.first_name === "ADMIN" ? apiUser.username : apiUser.last_name,
+      profil: finalProfil, // Profil EEBTP mappé depuis l'API
+      profileId: apiUser.profil, // ID du profil EEBTP (provient de profil dans l'API)
+      isActive: apiUser.is_active,
+      isPhoneVerified: true, // Assumer vérifié si dans l'API
+      isEmailVerified: !!apiUser.email,
+      hasCompletedSetup: true,
+      createdAt: apiUser.date_creation,
+      updatedAt: apiUser.date_modif,
+    };
+  } catch (error) {
+    console.error("Erreur lors de la récupération du profil:", error);
+
+    // Fallback en cas d'erreur - utiliser profil magasinier par défaut
+    return {
+      id: apiUser.id.toString(),
+      email: apiUser.email,
+      phone: apiUser.telephone,
+      firstName: apiUser.first_name,
+      lastName: apiUser.last_name,
+      profil: UserProfil.MAGASINIER, // Profil par défaut en cas d'erreur
+      profileId: apiUser.profil,
+      isActive: apiUser.is_active,
+      isPhoneVerified: true,
+      isEmailVerified: !!apiUser.email,
+      hasCompletedSetup: true,
+      createdAt: apiUser.date_creation,
+      updatedAt: apiUser.date_modif,
+    };
+  }
 }
 
 // Fonction pour transformer la réponse de login API vers AuthResponse
-export function apiLoginResponseToAuthResponse(
+export async function apiLoginResponseToAuthResponse(
   apiResponse: ApiLoginByPhoneResponse
-): AuthResponse {
+): Promise<AuthResponse> {
   // Pour l'instant, créer un utilisateur temporaire car l'API ne retourne que le token
   const tempUser: User = {
     id: "temp_user",
@@ -159,7 +254,7 @@ export function apiLoginResponseToAuthResponse(
     phone: "",
     firstName: "Utilisateur",
     lastName: "Connecté",
-    role: "employee",
+    profil: "magasinier", // Profil par défaut sécurisé
     isActive: true,
     isPhoneVerified: true,
     isEmailVerified: false,
@@ -169,7 +264,7 @@ export function apiLoginResponseToAuthResponse(
   };
 
   return {
-    user: apiResponse.user ? apiUserToUser(apiResponse.user) : tempUser,
+    user: apiResponse.user ? await apiUserToUser(apiResponse.user) : tempUser,
     token: apiResponse.access_token || "",
     refreshToken: apiResponse.refresh_token || "",
     requiresSetup: apiResponse.is_firstlogin || false,
@@ -664,23 +759,33 @@ export function apiProjetStatsResponseToProjetStats(
 
 // ==================== TRANSFORMATEURS DEMANDES ====================
 
-import type { MaterialRequest, RequestTreatment } from "../../types/request";
+import type {
+  MaterialRequest,
+  RequestTreatment,
+  DemandeStatut,
+} from "../../types/request";
 import type { ApiDemande } from "../../types/api-demandes";
 import { API_TO_FRONTEND_STATUS } from "../../types/api-demandes";
-
 /**
  * Convertir ApiDemande vers MaterialRequest (frontend)
  */
 export function apiDemandeToMaterialRequest(
   apiDemande: ApiDemande
 ): MaterialRequest {
+  // Vérification de sécurité pour l'ID
+  if (!apiDemande.id) {
+    console.warn("⚠️ apiDemande.id est undefined:", apiDemande);
+    throw new Error("ID de demande manquant dans la réponse API");
+  }
+
   return {
     id: apiDemande.id.toString(),
     demande: apiDemande.stock_item_name,
     nomMagasinier: apiDemande.emis_par_name,
     quantiteDemandee: apiDemande.quantite,
     profil: "Magasinier", // À adapter selon les données disponibles
-    status: (API_TO_FRONTEND_STATUS[apiDemande.statut] || "emis") as any,
+    status: (API_TO_FRONTEND_STATUS[apiDemande.statut] ||
+      "emis") as DemandeStatut,
     dateDemande: formatApiDate(apiDemande.date_creation),
     userId: apiDemande.emis_par?.toString(),
     notes: apiDemande.raison,
@@ -706,6 +811,15 @@ function generateTreatmentsFromApiDemande(
   apiDemande: ApiDemande
 ): RequestTreatment[] {
   const treatments: RequestTreatment[] = [];
+
+  // Vérification de sécurité pour l'ID
+  if (!apiDemande.id) {
+    console.warn(
+      "⚠️ apiDemande.id manquant pour générer les traitements:",
+      apiDemande
+    );
+    return treatments;
+  }
 
   // Émission
   if (apiDemande.emis_par_name && apiDemande.date_emission) {

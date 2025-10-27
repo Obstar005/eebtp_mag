@@ -13,6 +13,7 @@ export * from "./api-declarations";
 export * from "./api-transformers-declarations";
 export * from "./api-articles";
 export * from "./api-transformers-articles";
+export * from "./notification";
 
 // Export explicite pour éviter les conflits de noms
 export type {

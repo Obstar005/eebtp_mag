@@ -16,6 +16,68 @@ export interface ApiError {
 }
 
 /**
+ * Fonction spécialisée pour les erreurs d'authentification
+ */
+export function getAuthErrorMessage(error: unknown): string {
+  // Si c'est une erreur avec un message spécifique et utile, l'utiliser directement
+  if (
+    error instanceof Error &&
+    error.message &&
+    !error.message.includes("Request failed with status code") &&
+    !error.message.includes("Network Error")
+  ) {
+    return error.message;
+  }
+
+  const apiError = error as ApiError;
+
+  // Erreur 401 - Informations incorrectes
+  if (apiError?.response?.status === 401 || apiError?.status === 401) {
+    return "Informations de connexion incorrectes. Veuillez vérifier votre numéro de téléphone et votre mot de passe.";
+  }
+
+  // Erreur 404 - Utilisateur non trouvé
+  if (apiError?.response?.status === 404 || apiError?.status === 404) {
+    return "Utilisateur non trouvé. Veuillez vérifier votre numéro de téléphone.";
+  }
+
+  // Erreur 422 - Données invalides
+  if (apiError?.response?.status === 422 || apiError?.status === 422) {
+    return "Format de données invalide. Veuillez vérifier les informations saisies.";
+  }
+
+  // Erreur 400 - Requête invalide
+  if (apiError?.response?.status === 400 || apiError?.status === 400) {
+    return "Données invalides. Veuillez vérifier votre numéro de téléphone et mot de passe.";
+  }
+
+  // Erreur 500 - Erreur serveur
+  if (apiError?.response?.status === 500 || apiError?.status === 500) {
+    return "Erreur du serveur. Veuillez réessayer plus tard.";
+  }
+
+  // Erreur réseau
+  if (
+    apiError?.code === "NETWORK_ERROR" ||
+    apiError?.message?.includes("Network Error")
+  ) {
+    return "Erreur de connexion. Veuillez vérifier votre connexion internet.";
+  }
+
+  // Message personnalisé de l'API
+  if (apiError?.response?.data?.message) {
+    return apiError.response.data.message;
+  }
+
+  if (apiError?.response?.data?.detail) {
+    return apiError.response.data.detail;
+  }
+
+  // Fallback
+  return "Erreur lors de la connexion. Veuillez réessayer.";
+}
+
+/**
  * Fonction pour extraire et formater un message d'erreur utilisateur
  */
 export function getErrorMessage(error: unknown): string {

@@ -255,9 +255,6 @@ class MagasinService {
       if (filter.search) {
         params.append("search", filter.search);
       }
-      if (filter.etat) {
-        params.append("etat", filter.etat);
-      }
       if (filter.type_enum) {
         params.append("type_enum", filter.type_enum);
       }
@@ -434,10 +431,9 @@ class MagasinService {
       const stats: MagasinStats = {
         totalMagasins: magasins.length,
         totalArticles: allArticles.length,
-        articlesNeuf: allArticles.filter((a) => a.etat === "neuf").length,
-        articlesUsage: allArticles.filter((a) => a.etat === "usagé").length,
-        articlesEndommage: allArticles.filter((a) => a.etat === "endommagé")
-          .length,
+        articlesNeuf: 0, // Supprimé car le champ 'etat' n'existe plus
+        articlesUsage: 0, // Supprimé car le champ 'etat' n'existe plus
+        articlesEndommage: 0, // Supprimé car le champ 'etat' n'existe plus
       };
 
       return stats;

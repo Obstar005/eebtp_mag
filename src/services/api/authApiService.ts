@@ -125,12 +125,23 @@ export class AuthApiService {
         }
 
         // Utiliser le transformateur pour inclure is_firstlogin
-        return apiLoginResponseToAuthResponse(response.data);
+        return await apiLoginResponseToAuthResponse(response.data);
       } else {
         throw new Error(response.data.message || "Échec de la connexion");
       }
     } catch (error) {
       console.error("Erreur loginByPhone:", error);
+
+      // Améliorer le message d'erreur pour les erreurs 401
+      if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as {
+          response?: { status: number; data?: { message?: string } };
+        };
+        if (axiosError.response?.status === 401) {
+          throw new Error("Informations de connexion incorrectes");
+        }
+      }
+
       throw error;
     }
   }
@@ -177,7 +188,7 @@ export class AuthApiService {
       const response = await apiClient.get<ApiCustomUser>(
         "/Users/authentication/user-info/"
       );
-      return apiUserToUser(response.data);
+      return await apiUserToUser(response.data);
     } catch (error) {
       console.error(
         "Erreur lors de la récupération des infos utilisateur:",
@@ -265,7 +276,7 @@ export class UserApiService {
         response.data
       );
 
-      const accounts = response.data.map(apiUserToAccount);
+      const accounts = await Promise.all(response.data.map(apiUserToAccount));
       console.log("🔄 UserApiService: Utilisateurs transformés:", accounts);
 
       return accounts;
@@ -284,7 +295,7 @@ export class UserApiService {
       const response = await apiClient.get<ApiCustomUser>(
         `/Users/user-detail${id}`
       );
-      return apiUserToAccount(response.data);
+      return await apiUserToAccount(response.data);
     } catch (error) {
       console.error("Erreur getUserById:", error);
       throw new Error("Impossible de récupérer l'utilisateur");
@@ -336,7 +347,7 @@ export class UserApiService {
           "✅ Utilisateur créé avec succès avec image:",
           response.data
         );
-        return apiUserToAccount(response.data);
+        return await apiUserToAccount(response.data);
       } else {
         // Si pas d'image, utiliser JSON standard
         const response = await apiClient.post<ApiCustomUser>(
@@ -345,7 +356,7 @@ export class UserApiService {
         );
 
         console.log("✅ Utilisateur créé avec succès:", response.data);
-        return apiUserToAccount(response.data);
+        return await apiUserToAccount(response.data);
       }
     } catch (error) {
       console.error("❌ Erreur lors de la création de l'utilisateur:", error);
@@ -392,7 +403,7 @@ export class UserApiService {
         `/Users/user-update/${data.id}`,
         apiData
       );
-      return apiUserToAccount(response.data);
+      return await apiUserToAccount(response.data);
     } catch (error) {
       console.error("Erreur updateUser:", error);
       throw new Error("Impossible de mettre à jour l'utilisateur");
@@ -428,7 +439,7 @@ export class UserApiService {
       );
 
       // 4. Retourner l'utilisateur mis à jour
-      return apiUserToAccount(response.data);
+      return await apiUserToAccount(response.data);
     } catch (error) {
       console.error("Erreur toggleAccountStatus:", error);
       throw new Error("Impossible de modifier le statut du compte");
@@ -571,7 +582,7 @@ export class ProfileApiService {
   }
 
   // Récupérer un profil par ID
-  async getProfileById(id: string): Promise<Profile> {
+  async getProfileById(id: number): Promise<Profile> {
     try {
       const response = await apiClient.get<ApiProfil>(
         `/Users/profil-detail/${id}`

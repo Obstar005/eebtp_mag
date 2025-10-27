@@ -35,23 +35,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Vérifier le token au chargement
   useEffect(() => {
-    // Si l'authentification est désactivée, connecter automatiquement un utilisateur de test
+    // Plus d'utilisateur de test automatique
+    // L'utilisateur doit passer par le vrai flux d'authentification
     if (isAuthDisabled) {
-      const testUser: User = {
-        id: "debug-user",
-        firstName: "Debug",
-        lastName: "User",
-        email: "debug@test.com",
-        phone: "+1234567890",
-        role: "admin",
-        isActive: true,
-        isPhoneVerified: true,
-        isEmailVerified: true,
-        hasCompletedSetup: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setUser(testUser);
+      console.log(
+        "🔧 Mode développement: Authentification désactivée mais pas d'auto-connexion"
+      );
       setIsLoading(false);
       return;
     }

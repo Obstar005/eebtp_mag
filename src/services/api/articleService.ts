@@ -42,10 +42,6 @@ export class ArticleService {
           );
         }
 
-        if (filter?.etat) {
-          articles = articles.filter((article) => article.etat === filter.etat);
-        }
-
         if (filter?.type_enum) {
           articles = articles.filter(
             (article) => article.type_enum === filter.type_enum
@@ -99,7 +95,6 @@ export class ArticleService {
         stockArticle.magasin_id = data.magasin_id;
         stockArticle.quantite = data.quantite;
         stockArticle.quantite_seuil = data.quantite_seuil;
-        stockArticle.etat = data.etat;
         stockArticle.prix_unitaire = data.prix_unitaire || 0;
 
         return stockArticle;
@@ -131,7 +126,6 @@ export class ArticleService {
         stockArticle.quantite = data.quantite ?? stockArticle.quantite;
         stockArticle.quantite_seuil =
           data.quantite_seuil ?? stockArticle.quantite_seuil;
-        stockArticle.etat = data.etat || stockArticle.etat;
         stockArticle.prix_unitaire =
           data.prix_unitaire ?? stockArticle.prix_unitaire;
 

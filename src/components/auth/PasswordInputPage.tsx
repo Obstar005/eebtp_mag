@@ -1,18 +1,17 @@
 import { useState } from "react";
-import { ChevronRight, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { ChevronRight, Eye, EyeOff } from "lucide-react";
 import logoPng from "../../assets/eebtp.png";
 import logoPngBg from "../../assets/logo_eebtp.png";
 
 interface PasswordInputPageProps {
   phone: string;
   isNewUser: boolean;
-  onSubmit: (password: string) => void;
+  onSubmit: (password: string) => Promise<void>;
   onBack: () => void;
   isLoading: boolean;
 }
 
 export function PasswordInputPage({
-  phone,
   isNewUser,
   onSubmit,
   onBack,
@@ -24,8 +23,9 @@ export function PasswordInputPage({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Empêcher la propagation de l'événement
     setError("");
 
     if (!password.trim()) {
@@ -33,14 +33,12 @@ export function PasswordInputPage({
       return;
     }
 
-    onSubmit(password.trim());
-  };
-
-  const formatPhone = (phoneNumber: string) => {
-    return phoneNumber.replace(
-      /(\+\d{3})(\d{2})(\d{2})(\d{2})(\d{2})/,
-      "$1 $2 $3 $4 $5"
-    );
+    // Appel asynchrone sécurisé avec await
+    try {
+      await onSubmit(password.trim());
+    } catch (error) {
+      console.error("Erreur lors de la soumission du mot de passe:", error);
+    }
   };
 
   return (

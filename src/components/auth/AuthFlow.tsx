@@ -7,6 +7,7 @@ import {
   useResendOtp,
 } from "../../hooks/useAuth";
 import { AuthStep } from "../../types";
+import { getAuthErrorMessage } from "../../utils/errorHandling";
 import type {
   PhoneVerificationResponse,
   OtpVerificationResponse,
@@ -49,8 +50,9 @@ export function AuthFlow({ onAuthSuccess, onAuthError }: AuthFlowProps) {
       setSessionId(response.sessionId);
       setIsNewUser(response.isNewUser);
       setCurrentStep(AuthStep.OTP_VERIFICATION);
-    } catch {
-      onAuthError("Erreur lors de la vérification du téléphone");
+    } catch (error) {
+      const errorMessage = getAuthErrorMessage(error);
+      onAuthError(errorMessage);
     }
   };
 
@@ -75,8 +77,9 @@ export function AuthFlow({ onAuthSuccess, onAuthError }: AuthFlowProps) {
       } else {
         onAuthError("Code OTP invalide");
       }
-    } catch {
-      onAuthError("Erreur lors de la vérification OTP");
+    } catch (error) {
+      const errorMessage = getAuthErrorMessage(error);
+      onAuthError(errorMessage);
     }
   };
 
@@ -104,8 +107,11 @@ export function AuthFlow({ onAuthSuccess, onAuthError }: AuthFlowProps) {
       });
 
       onAuthSuccess();
-    } catch {
-      onAuthError("Erreur lors de la configuration du compte");
+    } catch (error) {
+      const errorMessage =
+        getAuthErrorMessage(error) ||
+        "Erreur lors de la configuration du compte";
+      onAuthError(errorMessage);
     }
   };
 
@@ -118,8 +124,10 @@ export function AuthFlow({ onAuthSuccess, onAuthError }: AuthFlowProps) {
       });
 
       onAuthSuccess();
-    } catch {
-      onAuthError("Identifiants incorrects");
+    } catch (error) {
+      const errorMessage =
+        getAuthErrorMessage(error) || "Identifiants incorrects";
+      onAuthError(errorMessage);
     }
   };
 
@@ -128,8 +136,10 @@ export function AuthFlow({ onAuthSuccess, onAuthError }: AuthFlowProps) {
     try {
       await resendOtpMutation.mutateAsync(sessionId);
       // Afficher un message de succès
-    } catch {
-      onAuthError("Erreur lors du renvoi du code");
+    } catch (error) {
+      const errorMessage =
+        getAuthErrorMessage(error) || "Erreur lors du renvoi du code";
+      onAuthError(errorMessage);
     }
   };
 

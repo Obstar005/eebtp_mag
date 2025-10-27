@@ -7,8 +7,6 @@ class ApiClient {
   constructor() {
     const baseURL =
       import.meta.env.VITE_API_URL || "http://185.197.195.209:8000";
-    console.log("🌐 Configuration du client API avec baseURL:", baseURL);
-
     this.axiosInstance = axios.create({
       baseURL,
       timeout: 15000, // Augmenté à 15 secondes pour l'upload de fichiers
@@ -29,9 +27,6 @@ class ApiClient {
           // Ne pas définir Content-Type pour FormData, le navigateur gère automatiquement les boundaries
           // Axios ajoutera automatiquement le bon Content-Type avec boundary
           delete config.headers["Content-Type"];
-          console.log(
-            "📦 Détection de FormData: Content-Type sera géré automatiquement"
-          );
         }
 
         // Permettre de désactiver l'authentification explicitement
@@ -46,7 +41,6 @@ class ApiClient {
           localStorage.getItem("authToken") ||
           localStorage.getItem("auth_token");
         if (jwtToken) {
-          console.log("🔑 Authentification avec JWT Token");
           config.headers.Authorization = `Bearer ${jwtToken}`;
           return config;
         }
@@ -73,7 +67,18 @@ class ApiClient {
       async (error) => {
         const originalRequest = error.config;
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Ne pas traiter les erreurs 401 pour les requêtes d'authentification
+        const isAuthRequest =
+          originalRequest.url?.includes("/authentication/") ||
+          originalRequest.url?.includes("/login-by-phone") ||
+          originalRequest.url?.includes("/check-user-exists") ||
+          originalRequest.url?.includes("/set-password");
+
+        if (
+          error.response?.status === 401 &&
+          !originalRequest._retry &&
+          !isAuthRequest
+        ) {
           originalRequest._retry = true;
 
           // Tentative de refresh du JWT token

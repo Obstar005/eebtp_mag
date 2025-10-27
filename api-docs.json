@@ -16,6 +16,43 @@
   "securityDefinitions": { "Basic": { "type": "basic" } },
   "security": [{ "Basic": [] }],
   "paths": {
+    "/App/historique-toutes-actions": {
+      "get": {
+        "operationId": "App_historique-toutes-actions_list",
+        "description": "Récupérer l'historique des actions de tous les utilisateurs dans le système.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/HistoriqueAction" }
+            }
+          },
+          "404": { "description": "Not Found" }
+        },
+        "tags": ["App"]
+      },
+      "parameters": []
+    },
+    "/App/historique-user": {
+      "get": {
+        "operationId": "App_historique-user_list",
+        "description": "Récupérer l'historique des actions de l'utilisateur connecté, en passant le token de l'utilisateur dans les en-têtes.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/HistoriqueAction" }
+            }
+          }
+        },
+        "tags": ["App"]
+      },
+      "parameters": []
+    },
     "/Demandes/demande/approuver/{id}": {
       "post": {
         "operationId": "Demandes_demande_approuver_create",
@@ -1391,6 +1428,42 @@
     }
   },
   "definitions": {
+    "HistoriqueAction": {
+      "required": ["action_type", "description"],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "user": { "title": "User", "type": "string", "readOnly": true },
+        "action_type": {
+          "title": "Action type",
+          "type": "string",
+          "enum": [
+            "creation",
+            "modification",
+            "suppression",
+            "validation",
+            "connexion",
+            "autre"
+          ]
+        },
+        "description": {
+          "title": "Description",
+          "type": "string",
+          "minLength": 1
+        },
+        "date_action": {
+          "title": "Date action",
+          "type": "string",
+          "format": "date-time"
+        },
+        "objet_concerne": {
+          "title": "Objet concerne",
+          "type": "string",
+          "maxLength": 100,
+          "x-nullable": true
+        }
+      }
+    },
     "Demande": {
       "required": ["quantite", "raison", "stock_item", "magasin"],
       "type": "object",
@@ -1628,6 +1701,11 @@
           "title": "Make by",
           "type": "integer",
           "readOnly": true,
+          "x-nullable": true
+        },
+        "demande_source": {
+          "title": "Demande source",
+          "type": "integer",
           "x-nullable": true
         }
       }

@@ -27,6 +27,8 @@ import { DeclarationsPage } from "../pages/declarations/DeclarationsPage";
 import { DeclarationEntreeDetailPage } from "../pages/declarations/DeclarationEntreeDetailPage";
 import { DeclarationSortieDetailPage } from "../pages/declarations/DeclarationSortieDetailPage";
 import { DeclarationRetourDetailPage } from "../pages/declarations/DeclarationRetourDetailPage";
+// Page des notifications
+import { NotificationsPage } from "../pages/NotificationsPage";
 // Page de test API (développement uniquement)
 import ApiTestPage from "../pages/ApiTestPage";
 
@@ -58,6 +60,10 @@ export const router = createBrowserRouter([
       {
         path: "reports",
         element: <ReportsPage />,
+      },
+      {
+        path: "notifications",
+        element: <NotificationsPage />,
       },
       // Routes des comptes
       {

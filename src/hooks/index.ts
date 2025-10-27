@@ -9,3 +9,5 @@ export * from "./useProjets";
 export * from "./useMagasins";
 export * from "./useDeclarations";
 export * from "./useDemandes";
+export * from "./usePermissions";
+export * from "./usePermissions";

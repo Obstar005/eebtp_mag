@@ -211,53 +211,7 @@ export const profileService = {
 
 // Services mock pour le développement
 const mockAccountService = {
-  accounts: [
-    {
-      id: "1",
-      code: "CPT-001",
-      nom: "Doe",
-      prenoms: "John",
-      nom_utilisateur: "johndoe",
-      type: "Interne" as const,
-      telephone: "+228 90909090",
-      is_active: true,
-      derniere_connexion: "2025-01-01T08:00:00Z",
-      profile: {
-        id: "profile-1",
-        nom: "Magasinier",
-      },
-    },
-    {
-      id: "2",
-      code: "CPT-002",
-      nom: "Smith",
-      prenoms: "Jane",
-      nom_utilisateur: "janesmith",
-      type: "Interne" as const,
-      telephone: "+33 1 23 45 67 89",
-      is_active: true,
-      derniere_connexion: "2025-01-01T09:30:00Z",
-      profile: {
-        id: "profile-2",
-        nom: "Directeur général",
-      },
-    },
-    {
-      id: "3",
-      code: "CPT-003",
-      nom: "Davis",
-      prenoms: "Emily",
-      nom_utilisateur: "emilydavis",
-      type: "Consultant" as const,
-      telephone: "+228 98765432",
-      is_active: false,
-      derniere_connexion: "2024-12-15T14:20:00Z",
-      profile: {
-        id: "profile-3",
-        nom: "Chef approvisionnement",
-      },
-    },
-  ] as AccountWithProfile[],
+  accounts: [] as AccountWithProfile[], // Pas de comptes de test prédéfinis
 
   async getAccounts(
     filters?: AccountFilters,
@@ -442,28 +396,7 @@ const mockAccountService = {
 };
 
 const mockProfileService = {
-  profiles: [
-    {
-      id: "profile-1",
-      nom: "Magasinier",
-      description: "Gestion des stocks et des inventaires",
-    },
-    {
-      id: "profile-2",
-      nom: "Directeur général",
-      description: "Direction et supervision générale",
-    },
-    {
-      id: "profile-3",
-      nom: "Directeur général adjoint",
-      description: "Assistance à la direction générale",
-    },
-    {
-      id: "profile-4",
-      nom: "Chef approvisionnement",
-      description: "Gestion des approvisionnements et achats",
-    },
-  ] as Profile[],
+  profiles: [] as Profile[], // Pas de profils de test prédéfinis
 
   async getProfiles(): Promise<Profile[]> {
     await new Promise((resolve) => setTimeout(resolve, 200));

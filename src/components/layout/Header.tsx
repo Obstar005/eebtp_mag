@@ -1,6 +1,7 @@
-import { Bell, User, Search, Settings, Menu } from "lucide-react";
+import { User, Search, Settings, Menu } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useLocation } from "react-router-dom";
+import { NotificationDropdown } from "./NotificationDropdown";
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -81,14 +82,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
               <Search className="h-5 w-5" />
             </button>
             {/* Notifications */}
-            <button
-              className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-              title="Notifications"
-              aria-label="Notifications"
-            >
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
-            </button>
+            <NotificationDropdown />
             {/* Bouton mode sombre/clair */}
             <button
               className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
@@ -106,9 +100,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
                 <p className="text-sm font-medium text-gray-900 capitalize">
                   {user?.firstName || "John"} {user?.lastName || "Doe"}
                 </p>
-                <p className="text-xs text-gray-500">
-                  {user?.role === "admin" ? "Admin" : "DG"}
-                </p>
+                <p className="text-xs text-gray-500">Utilisateur connecté</p>
               </div>
             </div>
           </div>

@@ -36,6 +36,7 @@ export const routePaths = {
   },
   stores: "/stores",
   reports: "/reports",
+  notifications: "/notifications",
   settings: "/settings",
   profile: "/profile",
   // Route de test (développement uniquement)

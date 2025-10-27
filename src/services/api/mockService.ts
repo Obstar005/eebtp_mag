@@ -31,37 +31,8 @@ export class MockAuthService {
   >();
 
   constructor() {
-    // Ajouter quelques utilisateurs de test
-    this.mockUsers.set("+22890123456", {
-      phone: "+22890123456",
-      password: "123456",
-      firstName: "John",
-      lastName: "Doe",
-      email: "john.doe@example.com",
-      isNewUser: false,
-      first_login: false, // Utilisateur existant
-    });
-
-    this.mockUsers.set("+22891234567", {
-      phone: "+22891234567",
-      password: "password",
-      firstName: "Marie",
-      lastName: "Dupont",
-      email: "marie.dupont@example.com",
-      isNewUser: false,
-      first_login: false, // Utilisateur existant
-    });
-
-    // Utilisateur qui doit changer son mot de passe (première connexion)
-    this.mockUsers.set("+22892345678", {
-      phone: "+22892345678",
-      password: "temp123", // Mot de passe temporaire
-      firstName: "Pierre",
-      lastName: "Martin",
-      email: "pierre.martin@example.com",
-      isNewUser: false,
-      first_login: true, // Première connexion obligatoire
-    });
+    // Plus d'utilisateurs de test prédéfinis
+    // Les utilisateurs seront créés dynamiquement lors des tests
   }
 
   private mockSessions = new Map<
@@ -159,8 +130,8 @@ export class MockAuthService {
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,
-      role: "employee",
       isActive: true,
+      profil: data.profil,
       isPhoneVerified: true,
       isEmailVerified: false,
       hasCompletedSetup: true,
@@ -215,7 +186,7 @@ export class MockAuthService {
       firstName: mockUser.firstName || "Utilisateur",
       lastName: mockUser.lastName || "Test",
       email: mockUser.email,
-      role: "employee",
+      profil: "magasinier", // Profil par défaut sécurisé
       isActive: true,
       isPhoneVerified: true,
       isEmailVerified: false,
@@ -307,7 +278,7 @@ export class MockAuthService {
       lastName: existingUser.lastName || "Test",
       email: existingUser.email,
       phone: data.phone,
-      role: "employee",
+      profil: "magasinier", // Profil par défaut sécurisé
       isActive: true,
       isPhoneVerified: true,
       isEmailVerified: !!existingUser.email,
@@ -366,7 +337,7 @@ export class MockAuthService {
       lastName: data.lastName,
       email: data.email,
       phone: data.phone,
-      role: "employee",
+      profil: "magasinier", // Profil par défaut sécurisé
       isActive: true,
       isPhoneVerified: true,
       isEmailVerified: !!data.email,
@@ -420,7 +391,7 @@ export class MockAuthService {
       lastName: existingUser.lastName || "Test",
       email: existingUser.email,
       phone: data.phone,
-      role: "employee",
+      profil: "magasinier", // Profil par défaut sécurisé
       isActive: true,
       isPhoneVerified: true,
       isEmailVerified: !!existingUser.email,

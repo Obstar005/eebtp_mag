@@ -16,7 +16,6 @@ import type {
   StockArticle,
   CreateStockArticleData,
   UpdateStockArticleData,
-  ArticleEtat,
   ArticleType,
 } from "./magasin";
 
@@ -135,7 +134,6 @@ export const apiStockItemToStockArticle = (
     description: apiItem.description || "",
     quantite: apiItem.quantite,
     quantite_seuil: apiItem.quantite_seuil,
-    etat: mapApiEtatToFrontend(apiItem.etat),
     type_enum: mapApiTypeToFrontend(apiItem.type_enum),
     prix_unitaire: apiItem.prix_unitaire || 0,
     magasin_id: apiItem.magasin, // L'API utilise 'magasin' (ID)
@@ -179,7 +177,7 @@ export const stockArticleToApiRequest = (
     magasin: article.magasin_id,
     quantite: article.quantite,
     quantite_seuil: article.quantite_seuil,
-    etat: article.etat,
+    etat: "Neuf", // Valeur par défaut pour compatibilité API
     type_enum: article.type_enum,
     prix_unitaire: article.prix_unitaire,
     description: article.description,
@@ -196,7 +194,7 @@ export const stockArticleToApiUpdateRequest = (
     magasin: article.magasin_id,
     quantite: article.quantite,
     quantite_seuil: article.quantite_seuil,
-    etat: article.etat,
+    etat: "Neuf", // Valeur par défaut pour compatibilité API
     type_enum: article.type_enum,
     prix_unitaire: article.prix_unitaire,
     description: article.description,
@@ -212,7 +210,7 @@ export const createStockArticleDataToApiRequest = (
     magasin: data.magasin_id,
     quantite: data.quantite,
     quantite_seuil: data.quantite_seuil,
-    etat: mapFrontendEtatToApi(data.etat),
+    etat: "Neuf", // Valeur par défaut pour compatibilité API
     type_enum: mapFrontendTypeToApi(data.type_enum || "matiere_premiere"),
     prix_unitaire: data.prix_unitaire,
     description: data.description,
@@ -228,7 +226,7 @@ export const updateStockArticleDataToApiRequest = (
     magasin: data.magasin_id,
     quantite: data.quantite,
     quantite_seuil: data.quantite_seuil,
-    etat: data.etat ? mapFrontendEtatToApi(data.etat) : undefined,
+    etat: "Neuf", // Valeur par défaut pour compatibilité API
     type_enum: data.type_enum
       ? mapFrontendTypeToApi(data.type_enum)
       : undefined,
@@ -236,35 +234,6 @@ export const updateStockArticleDataToApiRequest = (
     description: data.description,
   };
 };
-
-// Mappages des états
-function mapApiEtatToFrontend(etat?: string): ArticleEtat {
-  switch (etat) {
-    case "neuf":
-      return "Neuf";
-    case "usagé":
-    case "usage":
-      return "Usagé";
-    case "endommagé":
-    case "endommage":
-      return "Endommagé";
-    default:
-      return "Neuf";
-  }
-}
-
-function mapFrontendEtatToApi(etat: ArticleEtat): string {
-  switch (etat) {
-    case "Neuf":
-      return "neuf";
-    case "Usagé":
-      return "usagé";
-    case "Endommagé":
-      return "endommagé";
-    default:
-      return "neuf";
-  }
-}
 
 // Mappages des types
 function mapApiTypeToFrontend(type?: string): ArticleType {

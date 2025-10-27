@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authService } from "../services/api";
 import type {
@@ -97,15 +97,15 @@ export function useSimpleAuthState() {
     currentStep: "phone_input",
   });
 
-  const updateAuthState = (updates: Partial<SimpleAuthState>) => {
+  const updateAuthState = useCallback((updates: Partial<SimpleAuthState>) => {
     setAuthState((prev) => ({ ...prev, ...updates }));
-  };
+  }, []);
 
-  const resetAuthState = () => {
+  const resetAuthState = useCallback(() => {
     setAuthState({
       currentStep: "phone_input",
     });
-  };
+  }, []);
 
   return {
     authState,

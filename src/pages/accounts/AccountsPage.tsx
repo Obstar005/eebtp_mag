@@ -71,6 +71,18 @@ export function AccountsPage() {
     toggleStatusMutation.mutate(accountId);
   };
 
+  const [showProfileOptions, setShowProfileOptions] = useState(false);
+
+  const toggleProfileOptions = () => {
+    setShowProfileOptions(!showProfileOptions);
+  };
+
+  const tabs = [
+    { label: "Tous", value: "all" },
+    { label: "Interne", value: "Interne" },
+    { label: "Consultant", value: "Consultant" },
+  ];
+
   const accounts = accountsData?.data || [];
   const totalPages = accountsData?.totalPages || 1;
   const total = accountsData?.total || 0;
@@ -87,16 +99,12 @@ export function AccountsPage() {
         {isActive ? (
           <>
             <span className="h-4 w-4 rounded-full border-2 border-white bg-green-800"></span>
-            <span className="text-xs font-medium text-green-800">
-              Actif
-            </span>
+            <span className="text-xs font-medium text-green-800">Actif</span>
           </>
         ) : (
           <>
             <span className="h-4 w-4 rounded-full border-2 border-white bg-red-800"></span>
-            <span className="text-xs font-medium text-red-800">
-              Inactif
-            </span>
+            <span className="text-xs font-medium text-red-800">Inactif</span>
           </>
         )}
       </div>
@@ -153,85 +161,85 @@ export function AccountsPage() {
         </button>
       </div>
 
-      {/* Filters and Search */}
       <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex flex-col lg:flex-row gap-4 mb-6">
-          {/* Search */}
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Rechercher par nom, prénom ou nom d'utilisateur..."
-                value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
+        <div className="flex max-md:flex-col md:items-center md:justify-between">
+          {/* Tabs */}
+          <div className="bg-blue-100 p-1 rounded-md mb-6">
+            <nav className="flex space-x-8">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => handleTabChange(tab.value as any)}
+                  className={`px-3 py-2 rounded-md font-medium ${
+                    activeTab === tab.value
+                      ? "bg-white text-blue-600 shadow"
+                      : "text-blue-900 hover:bg-blue-200"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Filters and Search */}
+          <div className="flex flex-col lg:flex-row gap-4 mb-6">
+            {/* Search */}
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Rechercher par nom, prénom ou nom d'utilisateur..."
+                  value={searchTerm}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            <div className="relative h-min w-min">
+              <button
+                onClick={toggleProfileOptions}
+                className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                <Filter className="h-4 w-4" />
+                Filtres
+              </button>
+              {/* Filter by Profile */}
+              <div
+                className={[
+                  "lg:w-64 absolute top-full right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-4 z-10",
+                  !showProfileOptions ? "hidden" : "",
+                ].join(" ")}
+              >
+                {profiles &&
+                  profiles.map((profile) => (
+                    <label
+                      htmlFor={`profile-${profile.id}`}
+                      key={profile.id}
+                      className="flex items-center gap-4 p-2 hover:bg-blue-100 rounded-md"
+                    >
+                      <input
+                        type="radio"
+                        id={`profile-${profile.id}`}
+                        checked={filters.profile_id === profile.id.toString()}
+                        onChange={() =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            profile_id:
+                              prev.profile_id === profile.id.toString()
+                                ? undefined
+                                : profile.id.toString(),
+                          }))
+                        }
+                        className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                      />
+                      {profile.nom}
+                    </label>
+                  ))}
+              </div>
             </div>
           </div>
-
-          {/* Filter by Profile */}
-          <div className="lg:w-64">
-            <select
-              value={filters.profile_id || ""}
-              onChange={(e) => {
-                setFilters({
-                  ...filters,
-                  profile_id: e.target.value || undefined,
-                });
-                setPage(1);
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-            >
-              <option value="">Tous les profils</option>
-              {profiles?.map((profile) => (
-                <option key={profile.id} value={profile.id}>
-                  {profile.nom}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-            <Filter className="h-4 w-4" />
-            Filtres
-          </button>
-        </div>
-
-        {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="flex space-x-8">
-            <button
-              onClick={() => handleTabChange("all")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "all"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Tous ({total})
-            </button>
-            <button
-              onClick={() => handleTabChange("Interne")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "Interne"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Interne
-            </button>
-            <button
-              onClick={() => handleTabChange("Consultant")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "Consultant"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Consultant
-            </button>
-          </nav>
         </div>
 
         {/* Table */}

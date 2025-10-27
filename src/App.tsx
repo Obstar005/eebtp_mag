@@ -53,17 +53,9 @@ function AuthPage() {
     // car l'utilisateur sera maintenant authentifié
   };
 
-  const handleAuthError = (error: string) => {
-    console.error("Erreur d'authentification:", error);
-    // Ici vous pourriez afficher une notification d'erreur
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <SimpleAuthFlow
-        onAuthSuccess={handleAuthSuccess}
-        onAuthError={handleAuthError}
-      />
+      <SimpleAuthFlow onAuthSuccess={handleAuthSuccess} />
     </div>
   );
 }

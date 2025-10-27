@@ -30,7 +30,6 @@ export class DemandeApiService {
     // console.log("🔄 Utilisation des données mockées pour le développement");
     // return mockApiDemandes;
 
-    
     try {
       console.log("📋 Récupération de toutes les demandes...");
 
@@ -45,7 +44,6 @@ export class DemandeApiService {
       console.warn("🔄 Utilisation des données mockées en fallback");
       return mockApiDemandes;
     }
-    
   }
 
   /**
@@ -140,6 +138,16 @@ export class DemandeApiService {
         data || {}
       );
 
+      // Validation de la réponse
+      if (!response.data || !response.data.id) {
+        console.warn(
+          "⚠️ Réponse API incomplète pour confirmation:",
+          response.data
+        );
+        // En cas de réponse incomplète, récupérer la demande mise à jour
+        return await this.getDemandeById(id);
+      }
+
       console.log("✅ Demande confirmée avec succès:", response.data);
       return response.data;
     } catch (error) {
@@ -163,6 +171,15 @@ export class DemandeApiService {
         `${this.basePath}/demande/approuver/${id}`,
         data || {}
       );
+
+      // Validation de la réponse
+      if (!response.data || !response.data.id) {
+        console.warn(
+          "⚠️ Réponse API incomplète pour approbation:",
+          response.data
+        );
+        return await this.getDemandeById(id);
+      }
 
       console.log("✅ Demande approuvée avec succès:", response.data);
       return response.data;
@@ -188,6 +205,15 @@ export class DemandeApiService {
         data || {}
       );
 
+      // Validation de la réponse
+      if (!response.data || !response.data.id) {
+        console.warn(
+          "⚠️ Réponse API incomplète pour validation:",
+          response.data
+        );
+        return await this.getDemandeById(id);
+      }
+
       console.log("✅ Demande validée avec succès:", response.data);
       return response.data;
     } catch (error) {
@@ -211,6 +237,12 @@ export class DemandeApiService {
         `${this.basePath}/demande/rejeter/${id}`,
         data
       );
+
+      // Validation de la réponse
+      if (!response.data || !response.data.id) {
+        console.warn("⚠️ Réponse API incomplète pour rejet:", response.data);
+        return await this.getDemandeById(id);
+      }
 
       console.log("✅ Demande rejetée avec succès:", response.data);
       return response.data;

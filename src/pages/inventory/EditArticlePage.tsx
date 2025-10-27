@@ -5,14 +5,13 @@ import {
   useStockArticle,
   useUpdateStockArticle,
 } from "../../hooks/useArticles";
-import { ArticleEtat, ArticleType, ArticleUnite } from "../../types/magasin";
+import { ArticleType, ArticleUnite } from "../../types/magasin";
 import type { UpdateStockArticleData } from "../../types/magasin";
 import { CustomImage } from "../../components/ui/CustomImage";
 
 interface ArticleForm {
   name: string;
   description: string;
-  etat: ArticleEtat;
   type_enum: ArticleType;
   unite: ArticleUnite;
   quantite: number;
@@ -39,7 +38,6 @@ export default function EditArticlePage() {
   const [form, setForm] = useState<ArticleForm>({
     name: "",
     description: "",
-    etat: "neuf",
     type_enum: "matiere_premiere",
     unite: "unite",
     quantite: 0,
@@ -61,7 +59,6 @@ export default function EditArticlePage() {
       setForm({
         name: article.name || "",
         description: article.description || "",
-        etat: article.etat,
         type_enum: article.type_enum || "matiere_premiere",
         unite: article.unite || "unite",
         quantite: article.quantite,
@@ -95,7 +92,6 @@ export default function EditArticlePage() {
         id: parseInt(articleId),
         name: form.name.trim(),
         description: form.description.trim(),
-        etat: form.etat,
         type_enum: form.type_enum,
         unite: form.unite,
         quantite: form.quantite,

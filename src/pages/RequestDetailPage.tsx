@@ -1,14 +1,20 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 import { Truck } from "lucide-react";
 import RequestTreatmentModal from "../components/requests/RequestTreatmentModal";
 import { useDemande, useTraiterDemande } from "../hooks/useDemandes";
 import { showErrorMessage, logError } from "../utils/errorHandling";
+import { useAuth } from "../contexts/AuthContext";
+import {
+  canUserTreatRequestSync,
+  mapApiStatusToPermissionStatus,
+} from "../utils/permissions";
 
 export default function RequestDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isTreatmentModalOpen, setIsTreatmentModalOpen] = useState(false);
 
   // Récupération des données de la demande depuis l'API
@@ -17,6 +23,21 @@ export default function RequestDetailPage() {
   // Mutation pour traiter la demande
   const { mutate: traiterDemande, isPending: isTraitementLoading } =
     useTraiterDemande();
+
+  // Déterminer si l'utilisateur peut traiter cette demande
+  const canTreatRequest = useMemo(() => {
+    const apiStatus = request?.status || "";
+    const mappedStatus = mapApiStatusToPermissionStatus(apiStatus);
+
+    console.log("🔍 RequestDetailPage: Debugging request object", {
+      request: request,
+      apiStatus: apiStatus,
+      mappedStatus: mappedStatus,
+      allProps: request ? Object.keys(request) : "no request",
+    });
+
+    return canUserTreatRequestSync(user, mappedStatus);
+  }, [user, request]);
 
   const handleOpenTreatmentModal = () => setIsTreatmentModalOpen(true);
   const handleCloseTreatmentModal = () => setIsTreatmentModalOpen(false);
@@ -88,19 +109,21 @@ export default function RequestDetailPage() {
         <h1 className="text-2xl font-bold text-gray-900">
           Détails de la demande N° {request.id}
         </h1>
-        <button
-          className={`px-4 py-2 rounded-lg text-white transition-colors ${
-            isTraitementLoading
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700"
-          }`}
-          onClick={handleOpenTreatmentModal}
-          disabled={isTraitementLoading}
-        >
-          {isTraitementLoading
-            ? "Traitement en cours..."
-            : "Traiter la demande"}
-        </button>
+        {canTreatRequest && (
+          <button
+            className={`px-4 py-2 rounded-lg text-white transition-colors ${
+              isTraitementLoading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
+            onClick={handleOpenTreatmentModal}
+            disabled={isTraitementLoading}
+          >
+            {isTraitementLoading
+              ? "Traitement en cours..."
+              : "Traiter la demande"}
+          </button>
+        )}
       </div>
       <RequestTreatmentModal
         isOpen={isTreatmentModalOpen}
@@ -109,6 +132,7 @@ export default function RequestDetailPage() {
         article={request.demande}
         quantite={request.quantiteDemandee}
         isLoading={isTraitementLoading}
+        requestStatus={mapApiStatusToPermissionStatus(request.status)}
       />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Colonne gauche : Détails basiques */}

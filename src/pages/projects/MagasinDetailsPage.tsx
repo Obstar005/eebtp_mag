@@ -19,7 +19,7 @@ import { useCountries } from "../../hooks/useCountries";
 import { ConfirmationModal } from "../../components/layout/ConfirmationModal";
 import { AddEditArticleModal } from "../../components/magasins/AddEditArticleModal";
 import { EditMagasinModal } from "../../components/magasins/EditMagasinModal";
-import type { ArticleEtat, StockArticleFilter } from "../../types/magasin";
+import type { StockArticleFilter } from "../../types/magasin";
 
 export function MagasinDetailsPage() {
   const navigate = useNavigate();
@@ -27,7 +27,6 @@ export function MagasinDetailsPage() {
   const magasinId = id ? parseInt(id) : 0;
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedEtat, setSelectedEtat] = useState<ArticleEtat | "">("");
   const [showAddArticleModal, setShowAddArticleModal] = useState(false);
   const [showEditArticleModal, setShowEditArticleModal] = useState(false);
   const [showEditMagasinModal, setShowEditMagasinModal] = useState(false);
@@ -79,7 +78,6 @@ export function MagasinDetailsPage() {
 
   const filter: StockArticleFilter = {
     search: searchTerm || undefined,
-    etat: selectedEtat || undefined,
   };
 
   const { data: articlesResponse, isLoading: isLoadingArticles } =
@@ -114,19 +112,6 @@ export function MagasinDetailsPage() {
   const handleEditArticle = (articleId: number) => {
     setSelectedArticleId(articleId);
     setShowEditArticleModal(true);
-  };
-
-  const getEtatColor = (etat: ArticleEtat) => {
-    switch (etat) {
-      case "neuf":
-        return "bg-green-100 text-green-800";
-      case "usagé":
-        return "bg-yellow-100 text-yellow-800";
-      case "endommagé":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
   };
 
   if (isLoadingMagasin) {
@@ -227,19 +212,6 @@ export function MagasinDetailsPage() {
                   />
                 </div>
                 <div className="flex gap-2">
-                  <select
-                    value={selectedEtat}
-                    onChange={(e) =>
-                      setSelectedEtat(e.target.value as ArticleEtat | "")
-                    }
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    title="Filtrer par état"
-                  >
-                    <option value="">Tous les états</option>
-                    <option value="neuf">Neuf</option>
-                    <option value="usagé">Usagé</option>
-                    <option value="endommagé">Endommagé</option>
-                  </select>
                   <button className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                     <Filter className="h-4 w-4" />
                     Filtres
@@ -269,9 +241,6 @@ export function MagasinDetailsPage() {
                         Quantité
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        État
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -289,14 +258,8 @@ export function MagasinDetailsPage() {
                             {article.quantite} t
                           </div>
                         </td>
-                        <td className="px-6 py-3 whitespace-nowrap">
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getEtatColor(
-                              article.etat
-                            )}`}
-                          >
-                            {article.etat}
-                          </span>
+                        <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                          {/* Colonne état supprimée */}
                         </td>
                         <td className="px-6 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-2">

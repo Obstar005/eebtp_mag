@@ -15,6 +15,7 @@ import {
   Plus,
   User,
   LogOut,
+  Bell,
 } from "lucide-react";
 import logoPng from "../../assets/logo_eebtp.png";
 import { useAuth } from "../../contexts/AuthContext";
@@ -52,6 +53,11 @@ const navigation: NavigationSection[] = [
         href: "/requests",
         icon: MessageSquare,
       },
+      // {
+      //   name: "Notifications",
+      //   href: "/notifications",
+      //   icon: Bell,
+      // },
     ],
   },
   // Section Comptes

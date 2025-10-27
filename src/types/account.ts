@@ -16,9 +16,7 @@ export interface Account {
   date_modification: string; // ISO string
   derniere_connexion?: string; // ISO string
   profile_id: string;
-
-  // Relations
-  profile?: Profile;
+  profile: Profile;
 }
 
 export interface Profile {

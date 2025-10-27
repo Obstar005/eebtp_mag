@@ -20,43 +20,130 @@ import type {
   ApiCreateProduitRequest,
   ApiUpdateProduitRequest,
 } from "./api-stocks";
+import { UserProfil } from "./auth";
+import { mapProfilLibelleToUserProfil } from "../utils/permissions";
+import { apiClient } from "../services/api/client";
 
-export function apiUserToAccount(apiUser: ApiCustomUser): Account {
-  return {
-    id: apiUser.id.toString(),
-    code: `CPT-${apiUser.id.toString().padStart(3, "0")}`, // Générer un code
-    nom: apiUser.last_name,
-    prenoms: apiUser.first_name,
-    nom_utilisateur: apiUser.username,
-    date_naissance: apiUser.birth_date || "",
-    nationalite: apiUser.nationality, // TODO: Convertir nom pays → code pays
-    mot_de_passe: "", // Ne pas exposer
-    type: apiUser.type as AccountType,
-    telephone: apiUser.telephone,
-    photo_profil: apiUser.photo_profil,
-    is_active: apiUser.is_active,
-    date_creation: apiUser.date_creation,
-    date_modification: apiUser.date_modif,
-    derniere_connexion: apiUser.last_login,
-    profile_id: apiUser.id_profil?.toString() || "",
-  };
+export async function apiUserToAccount(
+  apiUser: ApiCustomUser
+): Promise<Account> {
+  try {
+    // Récupérer les détails du profil depuis l'API
+    const response = await apiClient.get<ApiProfil>(
+      `/Users/profil-detail/${apiUser.profil}`
+    );
+    const apiProfil = response.data;
+
+    // Transformer l'ApiProfil en Profile
+    const profile: Profile = {
+      id: apiProfil.id.toString(),
+      nom: apiProfil.libelle,
+      description: apiProfil.description,
+    };
+
+    return {
+      id: apiUser.id.toString(),
+      code: `CPT-${apiUser.id.toString().padStart(3, "0")}`, // Générer un code
+      nom: apiUser.last_name,
+      prenoms: apiUser.first_name,
+      nom_utilisateur: apiUser.username,
+      date_naissance: apiUser.birth_date || "",
+      nationalite: apiUser.nationality, // TODO: Convertir nom pays → code pays
+      mot_de_passe: "", // Ne pas exposer
+      type: apiUser.type as AccountType,
+      telephone: apiUser.telephone,
+      photo_profil: apiUser.photo_profil,
+      is_active: apiUser.is_active,
+      date_creation: apiUser.date_creation,
+      date_modification: apiUser.date_modif,
+      derniere_connexion: apiUser.last_login,
+      profile_id: apiUser.profil.toString(),
+      profile: profile,
+    };
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération du profil pour le compte:",
+      error
+    );
+
+    // Fallback avec un profil par défaut
+    const defaultProfile: Profile = {
+      id: apiUser.profil.toString(),
+      nom: "Profil non trouvé",
+      description: "Profil non disponible",
+    };
+
+    return {
+      id: apiUser.id.toString(),
+      code: `CPT-${apiUser.id.toString().padStart(3, "0")}`,
+      nom: apiUser.last_name,
+      prenoms: apiUser.first_name,
+      nom_utilisateur: apiUser.username,
+      date_naissance: apiUser.birth_date || "",
+      nationalite: apiUser.nationality,
+      mot_de_passe: "",
+      type: apiUser.type as AccountType,
+      telephone: apiUser.telephone,
+      photo_profil: apiUser.photo_profil,
+      is_active: apiUser.is_active,
+      date_creation: apiUser.date_creation,
+      date_modification: apiUser.date_modif,
+      derniere_connexion: apiUser.last_login,
+      profile_id: apiUser.profil.toString(),
+      profile: defaultProfile,
+    };
+  }
 }
 
-export function apiUserToUser(apiUser: ApiCustomUser): User {
-  return {
-    id: apiUser.id.toString(),
-    email: apiUser.email,
-    phone: apiUser.telephone,
-    firstName: apiUser.first_name,
-    lastName: apiUser.last_name,
-    role: apiUser.is_superuser ? "admin" : "employee", // Mapper selon la logique métier
-    isActive: apiUser.is_active,
-    isPhoneVerified: true, // Assumer vérifié si dans l'API
-    isEmailVerified: !!apiUser.email,
-    hasCompletedSetup: true,
-    createdAt: apiUser.date_creation,
-    updatedAt: apiUser.date_modif,
-  };
+export async function apiUserToUser(apiUser: ApiCustomUser): Promise<User> {
+  try {
+    // Récupérer les détails du profil depuis l'API directement
+    const response = await apiClient.get<ApiProfil>(
+      `/Users/profil-detail/${apiUser.profil}`
+    );
+    const apiProfil = response.data;
+
+    // Mapper le libellé du profil vers un profil EEBTP
+    const userProfil = mapProfilLibelleToUserProfil(apiProfil.libelle);
+
+    // Fallback vers 'magasinier' si le mapping échoue
+    const finalProfil = userProfil || UserProfil.MAGASINIER;
+
+    return {
+      id: apiUser.id.toString(),
+      email: apiUser.email,
+      phone: apiUser.telephone,
+      firstName: apiUser.first_name,
+      lastName: apiUser.last_name,
+      profil: finalProfil, // Profil EEBTP mappé depuis l'API
+      profileId: apiUser.profil, // ID du profil EEBTP
+      isActive: apiUser.is_active,
+      isPhoneVerified: true, // Assumer vérifié si dans l'API
+      isEmailVerified: !!apiUser.email,
+      hasCompletedSetup: true,
+      createdAt: apiUser.date_creation,
+      updatedAt: apiUser.date_modif,
+    };
+  } catch (error) {
+    console.error("Erreur lors de la récupération du profil:", error);
+
+    // Fallback en cas d'erreur
+    return {
+      id: apiUser.id.toString(),
+      email: apiUser.email,
+      phone: apiUser.telephone,
+      firstName: apiUser.first_name,
+      lastName: apiUser.last_name,
+      profil: UserProfil.MAGASINIER, // Profil par défaut en cas d'erreur
+      profileId: apiUser.profil,
+      isActive: apiUser.is_active,
+      isPhoneVerified: true,
+      isEmailVerified: !!apiUser.email,
+      hasCompletedSetup: true,
+      createdAt: apiUser.date_creation,
+      updatedAt: apiUser.date_modif,
+    };
+  }
 }
 
 export function apiProfilToProfile(apiProfil: ApiProfil): Profile {

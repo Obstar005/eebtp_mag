@@ -5,7 +5,8 @@ export interface User {
   phone: string;
   firstName: string;
   lastName: string;
-  role: UserRole;
+  profil: UserProfil;
+  profileId?: number; // ID du profil EEBTP (provient de id_profil dans l'API)
   isActive: boolean;
   isPhoneVerified: boolean;
   isEmailVerified: boolean;
@@ -14,14 +15,15 @@ export interface User {
   updatedAt: string;
 }
 
-export const UserRole = {
-  ADMIN: "admin",
-  MANAGER: "manager",
-  EMPLOYEE: "employee",
-  VIEWER: "viewer",
+export const UserProfil = {
+  DTX: "dtx",
+  DT: "dt",
+  DGA: "dga",
+  ADMIN: "Admin",
+  MAGASINIER: "magasinier",
 } as const;
 
-export type UserRole = (typeof UserRole)[keyof typeof UserRole];
+export type UserProfil = (typeof UserProfil)[keyof typeof UserProfil];
 
 export interface AuthResponse {
   user: User;

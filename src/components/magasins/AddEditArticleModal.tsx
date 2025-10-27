@@ -37,7 +37,6 @@ export function AddEditArticleModal({
     description: string;
     quantite: number;
     quantite_seuil: number;
-    etat: ArticleEtat;
     type_enum: ArticleType;
     magasin_id: number;
     prix_unitaire: number;
@@ -46,7 +45,6 @@ export function AddEditArticleModal({
     description: "",
     quantite: 0,
     quantite_seuil: 0,
-    etat: "Neuf",
     type_enum: "matiere_premiere",
     magasin_id: magasinId,
     prix_unitaire: 0,
@@ -67,7 +65,6 @@ export function AddEditArticleModal({
         description: article.description || "",
         quantite: article.quantite,
         quantite_seuil: article.quantite_seuil,
-        etat: article.etat,
         type_enum: article.type_enum || "matiere_premiere",
         magasin_id: article.magasin_id,
         prix_unitaire: article.prix_unitaire || 0,
@@ -83,7 +80,6 @@ export function AddEditArticleModal({
         description: "",
         quantite: 0,
         quantite_seuil: 0,
-        etat: "Neuf",
         type_enum: "matiere_premiere",
         magasin_id: magasinId,
         prix_unitaire: 0,
