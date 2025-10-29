@@ -132,7 +132,7 @@ def delete_profil(request, pk):
     responses={200: CustomUserSerializer(many=True)}
 )
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def list_users(request):
     users = CustomUser.objects.filter(is_active=True).order_by('-date_creation')
     enregistrer_action(request.user, 'consultation', 'A consulté la liste des utilisateurs dans le système.', "Liste des utilisateurs")
@@ -411,7 +411,7 @@ def login_by_phone_web(request):
     enregistrer_action(user, 'connexion', 'S\'est connecté au système(Web)', f"Utilisateur #{user.id}, à la date {user.last_login}")
 
     return Response(
-        {"message": "Connexion réussie.", 'access_token': str(refresh.access_token), "first_login": first}, status=status.HTTP_200_OK)
+        {"message": "Connexion réussie.", 'access_token': str(refresh.access_token), "first_login": first, "refresh_token": str(refresh)}, status=status.HTTP_200_OK)
 
 #Vue pour authentifier un utilisateur par son numero de telephone sur mobile
 @swagger_auto_schema(

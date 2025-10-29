@@ -10,6 +10,8 @@ from .models import Sortie, Entree
 from .serializers import SortieSerializer, EntreeSerializer
 from demandes.models import Demande
 from app.utils import enregistrer_action
+from django.utils import timezone
+from datetime import timedelta
 
 
 #Créer une sortie de stock
@@ -50,8 +52,19 @@ def create_sortie(request):
 )
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def list_sorties(request):
-    sorties = Sortie.objects.filter(is_active=True).order_by('-date_creation')
+def list_sorties(request, periode):
+    now = timezone.now()
+    if periode == 'jour':
+        start_date = now - timedelta(days=1)
+        sorties = Sortie.objects.filter(is_active=True, date_creation__gte=start_date).order_by('-date_creation')
+    elif periode == 'semaine':
+        start_date = now - timedelta(weeks=1)
+        sorties = Sortie.objects.filter(is_active=True, date_creation__gte=start_date).order_by('-date_creation')
+    elif periode == 'mois':
+        start_date = now - timedelta(days=30)
+        sorties = Sortie.objects.filter(is_active=True, date_creation__gte=start_date).order_by('-date_creation')
+    else:
+        sorties = Sortie.objects.filter(is_active=True).order_by('-date_creation')
     enregistrer_action(request.user, 'consultation', 'A consulté la liste des sorties de stock dans le système.', "Liste des sorties de stock")
     serializer = SortieSerializer(sorties, many=True)
     return Response(serializer.data)
@@ -59,19 +72,30 @@ def list_sorties(request):
 #Récupérer la liste des sorties de stock pour un magasin
 @swagger_auto_schema(
     method='get',
-    operation_description="Récupérer la liste des sorties de stock pour un magasin spécifique",
+    operation_description="Récupérer la liste des sorties de stock pour un magasin spécifique selon les périodes: jour, semaine, mois, total",
     responses={200: SortieSerializer, 404: 'Not Found'}
 )
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def list_sorties_magasin(request, magasin_id):
+def list_sorties_magasin(request, magasin_id, periode):
     try:
         magasin = Magasin.objects.get(pk=magasin_id)
     except Magasin.DoesNotExist:
         return Response({'error': 'Magasin introuvable'}, status=status.HTTP_404_NOT_FOUND)
+    now = timezone.now()
+    if periode == 'jour':
+        start_date = now - timedelta(days=1)
+        sorties = Sortie.objects.filter(magasin=magasin, is_active=True, date_creation__gte=start_date).order_by('-date_creation')
+    elif periode == 'semaine':
+        start_date = now - timedelta(weeks=1)
+        sorties = Sortie.objects.filter(magasin=magasin, is_active=True, date_creation__gte=start_date).order_by('-date_creation')
+    elif periode == 'mois':
+        start_date = now - timedelta(days=30)
+        sorties = Sortie.objects.filter(magasin=magasin, is_active=True, date_creation__gte=start_date).order_by('-date_creation')
+    else:
+        sorties = Sortie.objects.filter(magasin=magasin, is_active=True).order_by('-date_creation')
     enregistrer_action(request.user, 'consultation', 'A consulté la liste des sorties de stock dans un magasin.', f"Liste des sorties du magasin #{magasin.id}")
     
-    sorties = Sortie.objects.filter(magasin=magasin, is_active=True).order_by('-date_creation')
     serializer = SortieSerializer(sorties, many=True)
     return Response(serializer.data)
 
@@ -175,16 +199,29 @@ def get_entree(request, pk):
     serializer = EntreeSerializer(entree)
     return Response(serializer.data)
 
-#Lister les entrées de stock dans le système
+#Lister les entrées de stock dans le système, on va filtrer selon les perdiodes: jour, semaine, mois, total
 @swagger_auto_schema(
     method='get',
-    operation_description="Récupérer la liste des entrées de stock",
+    operation_description="Récupérer la liste des entrées de stock selon les périodes: jour, semaine, mois, total",
     responses={200: EntreeSerializer(many=True)}
 )
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def list_entrees(request):
-    entrees = Entree.objects.filter(is_active=True).order_by('-date_creation')
+def list_entrees(request, periode=None):
+    from django.utils import timezone
+    from datetime import timedelta
+    now = timezone.now()
+    if periode == 'jour':
+        start_date = now - timedelta(days=1)
+        entrees = Entree.objects.filter(is_active=True, date_creation__gte=start_date).order_by('-date_creation')
+    elif periode == 'semaine':
+        start_date = now - timedelta(weeks=1)
+        entrees = Entree.objects.filter(is_active=True, date_creation__gte=start_date).order_by('-date_creation')
+    elif periode == 'mois':
+        start_date = now - timedelta(days=30)
+        entrees = Entree.objects.filter(is_active=True, date_creation__gte=start_date).order_by('-date_creation')
+    else:
+        entrees = Entree.objects.filter(is_active=True).order_by('-date_creation')
     enregistrer_action(request.user, 'consultation', 'A consulté la liste des entrées de stock dans le système.', "Liste des entrées de stock")
     serializer = EntreeSerializer(entrees, many=True)
     return Response(serializer.data)
@@ -192,18 +229,118 @@ def list_entrees(request):
 #Lister les entrées de stock pour un magasin
 @swagger_auto_schema(
     method='get',
-    operation_description="Récupérer la liste des entrées de stock pour un magasin spécifique",
+    operation_description="Récupérer la liste des entrées de stock pour un magasin spécifique selon les périodes: jour, semaine, mois, total",
     responses={200: EntreeSerializer, 404: 'Not Found'}
 )
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def list_entrees_magasin(request, magasin_id):
+def list_entrees_magasin(request, magasin_id, periode=None):
     try:
         magasin = Magasin.objects.get(pk=magasin_id)
     except Magasin.DoesNotExist:
         return Response({'error': 'Magasin introuvable'}, status=status.HTTP_404_NOT_FOUND)
+    now = timezone.now()
+    if periode == 'jour':
+        start_date = now - timedelta(days=1)
+        entrees = Entree.objects.filter(magasin=magasin, is_active=True, date_creation__gte=start_date).order_by('-date_creation')
+    elif periode == 'semaine':
+        start_date = now - timedelta(weeks=1)
+        entrees = Entree.objects.filter(magasin=magasin, is_active=True, date_creation__gte=start_date).order_by('-date_creation')
+    elif periode == 'mois':
+        start_date = now - timedelta(days=30)
+        entrees = Entree.objects.filter(magasin=magasin, is_active=True, date_creation__gte=start_date).order_by('-date_creation')
+    else:
+        entrees = Entree.objects.filter(magasin=magasin, is_active=True).order_by('-date_creation')
     enregistrer_action(request.user, 'consultation', 'A consulté la liste des entrées de stock dans un magasin.', f"Liste des entrées du magasin #{magasin.id}")
     
-    entrees = Entree.objects.filter(magasin=magasin, is_active=True).order_by('-date_creation')
     serializer = EntreeSerializer(entrees, many=True)
     return Response(serializer.data)
+
+#Vues pour quelques stats: nombre de livraisons, sorties et de retours dans un magasin pendant la journée, une semaine, un mois et aussi depuis le début des opérations. On doit passer le magasin_id en paramètre et la periode dans l'url qui peut prendre les valeurs 'jour', 'semaine', 'mois', 'total'
+@swagger_auto_schema(
+    method='get',
+    operation_description="Récupérer les statistiques des mouvements de stock dans un magasin pour une période donnée",
+    responses={200: openapi.Response('Statistiques des mouvements de stock', schema=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'livraisons': openapi.Schema(type=openapi.TYPE_INTEGER),
+            'sorties': openapi.Schema(type=openapi.TYPE_INTEGER),
+            'retours': openapi.Schema(type=openapi.TYPE_INTEGER),
+        }
+    )), 404: 'Not Found'}
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def stats_mouvements_magasin(request, magasin_id, periode):
+    try:
+        magasin = Magasin.objects.get(pk=magasin_id)
+    except Magasin.DoesNotExist:
+        return Response({'error': 'Magasin introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+    now = timezone.now()
+
+    if periode == 'jour':
+        start_date = now - timedelta(days=1)
+    elif periode == 'semaine':
+        start_date = now - timedelta(weeks=1)
+    elif periode == 'mois':
+        start_date = now - timedelta(days=30)
+    elif periode == 'total':
+        start_date = None
+    else:
+        return Response({'error': 'Période invalide. Utilisez "jour", "semaine", "mois" ou "total".'}, status=status.HTTP_400_BAD_REQUEST)
+
+    filter_params = {'magasin': magasin, 'is_active': True}
+    if start_date:
+        filter_params['date_creation__gte'] = start_date
+
+    livraisons = Entree.objects.filter(type='Livraison', **filter_params).count()
+    retours = Entree.objects.filter(type='Retour', **filter_params).count()
+    sorties = Sortie.objects.filter(**filter_params).count()
+
+    taux_variation = {}
+    if periode != 'total':
+        if periode == 'jour':
+            previous_start_date = now - timedelta(days=2)
+            previous_end_date = now - timedelta(days=1)
+        elif periode == 'semaine':
+            previous_start_date = now - timedelta(weeks=2)
+            previous_end_date = now - timedelta(weeks=1)
+        elif periode == 'mois':
+            previous_start_date = now - timedelta(days=60)
+            previous_end_date = now - timedelta(days=30)
+        
+        previous_livraisons = Entree.objects.filter(type='Livraison', date_creation__gte=previous_start_date, date_creation__lt=previous_end_date)
+        previous_livraisons_total = previous_livraisons.count()
+        if previous_livraisons_total > 0:
+            variation = livraisons - previous_livraisons_total
+            taux_variation['livraisons_variation'] = (variation / previous_livraisons_total) 
+        else:
+            taux_variation['livraisons_variation'] = None
+        
+        previous_sorties = Sortie.objects.filter(date_creation__gte=previous_start_date, date_creation__lt=previous_end_date)
+        previous_sorties_total = previous_sorties.count()
+        if previous_sorties_total > 0:
+            variation = sorties - previous_sorties_total
+            taux_variation['sorties_variation'] = (variation / previous_sorties_total) 
+        else:
+            taux_variation['sorties_variation'] = None
+
+        previous_retours = Entree.objects.filter(type='Retour', date_creation__gte=previous_start_date, date_creation__lt=previous_end_date)
+        previous_retours_total = previous_retours.count()
+        
+        if previous_retours_total > 0:
+            variation = retours - previous_retours_total
+            taux_variation['retours_variation'] = (variation / previous_retours_total) 
+        else:
+            taux_variation['retours_variation'] = None
+
+    stats = {
+        'livraisons': livraisons,
+        'taux_variation': taux_variation,
+        'sorties': sorties,
+
+        'retours': retours,
+    }
+
+    return Response(stats)

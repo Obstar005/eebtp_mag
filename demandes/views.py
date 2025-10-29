@@ -13,7 +13,8 @@ from drf_yasg import openapi
 from django.db import models
 from django.db.models import Max
 from app.utils import enregistrer_action
-
+from django.utils import timezone
+from datetime import timedelta
 
 #Détail d'une demande
 @swagger_auto_schema(method='get',
@@ -225,11 +226,22 @@ def liste_demandes_rejetees(request):
 
 #Liste de toutes les demandes
 @swagger_auto_schema(method='get',
-                        operation_description="Récupérer la liste de toutes les demandes")
+                        operation_description="Récupérer la liste de toutes les demandes selon une période: jour, semaine, mois, total")
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def liste_toutes_les_demandes(request):
-    demandes = Demande.objects.all().order_by('-date_creation')
+def liste_toutes_les_demandes(request, periode):
+    now = timezone.now()
+    if periode == 'jour':
+        start_date = now - timedelta(days=1)
+        demandes = Demande.objects.filter(date_creation__gte=start_date).order_by('-date_creation')
+    elif periode == 'semaine':
+        start_date = now - timedelta(weeks=1)
+        demandes = Demande.objects.filter(date_creation__gte=start_date).order_by('-date_creation')
+    elif periode == 'mois':
+        start_date = now - timedelta(days=30)
+        demandes = Demande.objects.filter(date_creation__gte=start_date).order_by('-date_creation')
+    else:
+        demandes = Demande.objects.all().order_by('-date_creation')
     serializer = DemandeSerializer(demandes, many=True)
     return Response(serializer.data)
 
@@ -246,11 +258,22 @@ def liste_demandes_livrees(request):
 #Liste des demandes en attente de validation (c-a-d soit approuvées, soit confirmées, soit émises)
 @swagger_auto_schema(method='get',
                         operation_description="Récupérer la liste des demandes en attente de validation "
-                        "(c-a-d soit soit émises, approuvées, soit confirmées)")
+                        "(c-a-d soit soit émises, approuvées, soit confirmées) selon une période: jour, semaine, mois, total")
 @api_view(['GET'])  
 @permission_classes([IsAuthenticated])
-def liste_demandes_en_attente_validation(request):
-    demandes = Demande.objects.filter(statut__in=['Emise', 'Confirmée', 'Approuvée']).order_by('-date_creation')
+def liste_demandes_en_attente_validation(request, periode):
+    now = timezone.now()
+    if periode == 'jour':
+        start_date = now - timedelta(days=1)
+        demandes = Demande.objects.filter(statut__in=['Emise', 'Confirmée', 'Approuvée'], date_creation__gte=start_date).order_by('-date_creation')
+    elif periode == 'semaine':
+        start_date = now - timedelta(weeks=1)
+        demandes = Demande.objects.filter(statut__in=['Emise', 'Confirmée', 'Approuvée'], date_creation__gte=start_date).order_by('-date_creation')
+    elif periode == 'mois':
+        start_date = now - timedelta(days=30)
+        demandes = Demande.objects.filter(statut__in=['Emise', 'Confirmée', 'Approuvée'], date_creation__gte=start_date).order_by('-date_creation')
+    else:
+        demandes = Demande.objects.filter(statut__in=['Emise', 'Confirmée', 'Approuvée']).order_by('-date_creation')
     serializer = DemandeSerializer(demandes, many=True)
     return Response(serializer.data)
 
@@ -258,19 +281,59 @@ def liste_demandes_en_attente_validation(request):
 @swagger_auto_schema(method='get',
                         operation_description="Récupérer quelques statistiques sur les demandes, Nombre total de demandes(total_demandes), " \
                         "Nombre de demandes par statut(demandes_par_statut), nombre de demandes en attente de validation(demandes_en_attente_validation)"
-                        "et les demandes traitéées (validées et rejetées)")
+                        "et les demandes traitéées (validées et rejetées) et (demandes_traitées) selon une période: jour, semaine, mois, total",
+                        manual_parameters=[
+                            openapi.Parameter('periode', openapi.IN_PATH, description="Période pour les statistiques: jour, semaine, mois, total", type=openapi.TYPE_STRING)
+                        ])
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def statistiques_demandes(request):
-    total_demandes = Demande.objects.count()
-    demandes_par_statut = Demande.objects.values('statut').order_by('statut').annotate(count=models.Count('statut'))
-    demandes_en_attente_validation = Demande.objects.filter(statut__in=['Emise', 'Confirmée', 'Approuvée']).count()
-    demandes_traitées = Demande.objects.filter(statut__in=['Validée', 'Rejetée']).count()
+def statistiques_demandes(request, periode):
+    now = timezone.now()
+    if periode == 'jour':
+        start_date = now - timedelta(days=1)
+    elif periode == 'semaine':
+        start_date = now - timedelta(weeks=1)
+    elif periode == 'mois':
+        start_date = now - timedelta(days=30)
+    else:
+        start_date = None  # Pour 'total', on ne filtre pas par date
+    if start_date:
+        filtered_demandes = Demande.objects.filter(date_creation__gte=start_date)
+    else:
+        filtered_demandes = Demande.objects.all()
+    total_demandes = filtered_demandes.count()
+    demandes_par_statut = filtered_demandes.values('statut').annotate(count=models.Count('statut'))
+    demandes_en_attente_validation = filtered_demandes.filter(statut__in=['Emise', 'Confirmée', 'Approuvée']).count()
+    demandes_traitées = filtered_demandes.filter(statut__in=['Validée', 'Rejetée']).count()
+    #Ici j'aimerais calculer les pourcentages de chaque type de resultat par rapport à la periode passé, par exemple: pour les demandes totales de la periode jour on calcule pour voir par rapport au total des demandes de 
+    # la journée précedente qui est hier pour voir si on a une augmentation ou une diminution en pourcentage donc par exemple 20 de plus que hier ou 10 de moins que hier
+    taux_variation = {}
+    if periode != 'total':
+        if periode == 'jour':
+            previous_start_date = now - timedelta(days=2)
+            previous_end_date = now - timedelta(days=1)
+        elif periode == 'semaine':
+            previous_start_date = now - timedelta(weeks=2)
+            previous_end_date = now - timedelta(weeks=1)
+        elif periode == 'mois':
+            previous_start_date = now - timedelta(days=60)
+            previous_end_date = now - timedelta(days=30)
+        
+        previous_demandes = Demande.objects.filter(date_creation__gte=previous_start_date, date_creation__lt=previous_end_date)
+        previous_total = previous_demandes.count()
+        
+        if previous_total > 0:
+            variation = total_demandes - previous_total
+            taux_variation['total_demandes_variation'] = (variation / previous_total) 
+        else:
+            taux_variation['total_demandes_variation'] = None  # Pas de données précédentes pour comparaison
+    
 
     stats = {
         'total_demandes': total_demandes,
         'demandes_par_statut': demandes_par_statut,
         'demandes_en_attente_validation': demandes_en_attente_validation,
-        'demandes_traitées': demandes_traitées
+        'demandes_traitées': demandes_traitées,
+        'taux_variation': taux_variation
     }
     return Response(stats)

@@ -18,6 +18,7 @@ schema_view = get_schema_view(
    public=True,
    permission_classes=(permissions.AllowAny,),
 )
+#URL de base de l'application: http://localhost:8000/
 
 urlpatterns = [
     path('admin/', admin.site.urls),

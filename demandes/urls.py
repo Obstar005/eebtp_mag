@@ -11,10 +11,10 @@ urlpatterns = [
     path('demandes/confirmees', views.liste_demandes_confirmees),
     path('demandes/approuvees', views.liste_demandes_approuvees),
     path('demandes/validees', views.liste_demandes_validees),
-    path('demandes/en-attente-validation', views.liste_demandes_en_attente_validation),
+    path('demandes/en-attente-validation/<str:periode>', views.liste_demandes_en_attente_validation),
     path('demandes/rejetees', views.liste_demandes_rejetees),
     path('demandes/livrees', views.liste_demandes_livrees),
-    path('demandes/toutes', views.liste_toutes_les_demandes),
+    path('demandes/toutes/<str:periode>', views.liste_toutes_les_demandes),
     path('demande/detail/<int:id>', views.detail_demande),
-    path('demandes/statistiques', views.statistiques_demandes),
+    path('demandes/statistiques/<str:periode>', views.statistiques_demandes),
 ]

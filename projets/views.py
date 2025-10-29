@@ -10,7 +10,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
 from app.utils import enregistrer_action
-
+from django.contrib.auth import get_user_model
+from users.models import CustomUser
 
 #Vue pour la création d'un projet
 @swagger_auto_schema(
@@ -433,3 +434,27 @@ def list_magasins_by_projet(request, pk):
 
     except Projet.DoesNotExist:
         return Response({'error': 'Magasin introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+    
+#Un endpoint pour renvoyé la liste des projets et magasins associés à un utilisateur
+@swagger_auto_schema(
+    method='get',
+    operation_description="Cette API permet de récupérer la liste des projets et magasins associés à l'utilisateur connecté.",
+    responses={
+        200: openapi.Response("Liste des projets et magasins de l'utilisateur", ProjetSerializer(many=True)),
+    }
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_user_projets_magasins(request):
+    print(request.user, request.user.id, request.user.is_authenticated)
+
+    # user = request.user
+    try:
+        user = request.user
+    except CustomUser.DoesNotExist:
+        return Response({'error': 'Utilisateur introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+    projets = Projet.objects.filter(comptes=user, is_active=True).order_by('-date_creation')
+    serializer = ProjetSerializer(projets, many=True)
+    enregistrer_action(request.user, 'consultation', 'A consulté la liste de ses projets et magasins associés.', "Liste des projets et magasins de l'utilisateur")
+    return Response(serializer.data)
