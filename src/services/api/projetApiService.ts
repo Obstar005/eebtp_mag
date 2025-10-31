@@ -103,7 +103,9 @@ export class ProjetApiService {
       // Si des magasins supplémentaires sont spécifiés (au-delà du premier), les créer séparément
       if (data.magasins && data.magasins.length > 1) {
         console.log(
-          `🏪 Création de ${data.magasins.length - 1} magasin(s) supplémentaire(s) pour le projet ${nouveauProjet.id}...`
+          `🏪 Création de ${
+            data.magasins.length - 1
+          } magasin(s) supplémentaire(s) pour le projet ${nouveauProjet.id}...`
         );
 
         // Créer les magasins supplémentaires (à partir du deuxième)
