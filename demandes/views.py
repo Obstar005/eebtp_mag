@@ -188,6 +188,27 @@ def liste_demandes_validees(request):
     serializer = DemandeSerializer(demandes, many=True)
     return Response(serializer.data)
 
+#Liste des demandes validées filtrer par periode
+@swagger_auto_schema(method='get',
+                        operation_description="Récupérer la liste des demandes validées selon une période: jour, semaine, mois, total")
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def liste_demandes_validees_filtrer(request, periode):
+    now = timezone.now()
+    if periode == 'jour':
+        start_date = now - timedelta(days=1)
+        demandes = Demande.objects.filter(date_creation__gte=start_date).order_by('-date_creation')
+    elif periode == 'semaine':
+        start_date = now - timedelta(weeks=1)
+        demandes = Demande.objects.filter(date_creation__gte=start_date).order_by('-date_creation')
+    elif periode == 'mois':
+        start_date = now - timedelta(days=30)
+        demandes = Demande.objects.filter(date_creation__gte=start_date).order_by('-date_creation')
+    else:
+        demandes = Demande.objects.filter(statut='Validée').order_by('-date_creation')
+    serializer = DemandeSerializer(demandes, many=True)
+    return Response(serializer.data)
+
 #Pour rejeter une demande
 @swagger_auto_schema(method='post',
                         operation_description="Rejeter une demande (par le DGA, ou le Directeur Financier (DF), ou le DG)",
@@ -224,12 +245,43 @@ def liste_demandes_rejetees(request):
     serializer = DemandeSerializer(demandes, many=True)
     return Response(serializer.data)
 
+#Liste des demandes rejetées selon une période mois, semaine, jour, total
+@swagger_auto_schema(method='get',
+                        operation_description="Récupérer la liste des demandes rejetées selon une période: jour, semaine, mois, total")
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def liste_demandes_rejetees_filtrer(request, periode):
+    now = timezone.now()
+    if periode == 'jour':
+        start_date = now - timedelta(days=1)
+        demandes = Demande.objects.filter(date_creation__gte=start_date).order_by('-date_creation')
+    elif periode == 'semaine':
+        start_date = now - timedelta(weeks=1)
+        demandes = Demande.objects.filter(date_creation__gte=start_date).order_by('-date_creation')
+    elif periode == 'mois':
+        start_date = now - timedelta(days=30)
+        demandes = Demande.objects.filter(date_creation__gte=start_date).order_by('-date_creation')
+    else:
+        demandes = Demande.objects.filter(statut='Rejetée').order_by('-date_creation')
+    serializer = DemandeSerializer(demandes, many=True)
+    return Response(serializer.data)
+
 #Liste de toutes les demandes
+@swagger_auto_schema(method='get',
+                        operation_description="Récupérer la liste de toutes les demandes")
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def liste_toutes_les_demandes(request):
+    demandes = Demande.objects.all().order_by('-date_creation')
+    serializer = DemandeSerializer(demandes, many=True)
+    return Response(serializer.data)
+
+#Liste de toutes les demandes avec filtre par période
 @swagger_auto_schema(method='get',
                         operation_description="Récupérer la liste de toutes les demandes selon une période: jour, semaine, mois, total")
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def liste_toutes_les_demandes(request, periode):
+def liste_toutes_les_demandes_filtrer(request, periode):
     now = timezone.now()
     if periode == 'jour':
         start_date = now - timedelta(days=1)
@@ -255,13 +307,45 @@ def liste_demandes_livrees(request):
     serializer = DemandeSerializer(demandes, many=True)
     return Response(serializer.data)
 
+#Liste des demandes livrées avec filtre par période
+@swagger_auto_schema(method='get',
+                        operation_description="Récupérer la liste des demandes qui ont été livrées")
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def liste_demandes_livrees_filtrer(request, periode):
+    now = timezone.now()
+    if periode == 'jour':
+        start_date = now - timedelta(days=1)
+        demandes = Demande.objects.filter(date_creation__gte=start_date).order_by('-date_creation')
+    elif periode == 'semaine':
+        start_date = now - timedelta(weeks=1)
+        demandes = Demande.objects.filter(date_creation__gte=start_date).order_by('-date_creation')
+    elif periode == 'mois':
+        start_date = now - timedelta(days=30)
+        demandes = Demande.objects.filter(date_creation__gte=start_date).order_by('-date_creation')
+    else:
+        demandes = Demande.objects.filter(statut='Livrée').order_by('-date_creation')
+    serializer = DemandeSerializer(demandes, many=True)
+    return Response(serializer.data)
+
 #Liste des demandes en attente de validation (c-a-d soit approuvées, soit confirmées, soit émises)
+@swagger_auto_schema(method='get',
+                        operation_description="Récupérer la liste des demandes en attente de validation "
+                        "(c-a-d soit soit émises, approuvées, soit confirmées)")
+@api_view(['GET'])  
+@permission_classes([IsAuthenticated])
+def liste_demandes_en_attente_validation(request):
+    demandes = Demande.objects.filter(statut__in=['Emise', 'Confirmée', 'Approuvée']).order_by('-date_creation')
+    serializer = DemandeSerializer(demandes, many=True)
+    return Response(serializer.data)
+
+#Liste des demandes en attente de validation (c-a-d soit approuvées, soit confirmées, soit émises) avec filtre par période
 @swagger_auto_schema(method='get',
                         operation_description="Récupérer la liste des demandes en attente de validation "
                         "(c-a-d soit soit émises, approuvées, soit confirmées) selon une période: jour, semaine, mois, total")
 @api_view(['GET'])  
 @permission_classes([IsAuthenticated])
-def liste_demandes_en_attente_validation(request, periode):
+def liste_demandes_en_attente_validation_filtrer(request, periode):
     now = timezone.now()
     if periode == 'jour':
         start_date = now - timedelta(days=1)

@@ -44,7 +44,7 @@ def create_sortie(request):
         return Response({'message': 'Sortie créée avec succès'}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-#Lister les sorties de stock dans le système
+#Liste toutes les sorties
 @swagger_auto_schema(
     method='get',
     operation_description="Récupérer la liste des sorties de stock",
@@ -52,7 +52,21 @@ def create_sortie(request):
 )
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def list_sorties(request, periode):
+def list_sorties(request):
+    sorties = Sortie.objects.filter(is_active=True).order_by('-date_creation')
+    enregistrer_action(request.user, 'consultation', 'A consulté la liste des sorties de stock dans le système.', "Liste des sorties de stock")
+    serializer = SortieSerializer(sorties, many=True)
+    return Response(serializer.data)
+
+#Lister les sorties de stock dans le système selon les périodes: jour, semaine, mois, total
+@swagger_auto_schema(
+    method='get',
+    operation_description="Récupérer la liste des sorties de stock selon les périodes: jour, semaine, mois, total",
+    responses={200: SortieSerializer(many=True)}
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_sorties_filtrer(request, periode):
     now = timezone.now()
     if periode == 'jour':
         start_date = now - timedelta(days=1)
@@ -69,7 +83,26 @@ def list_sorties(request, periode):
     serializer = SortieSerializer(sorties, many=True)
     return Response(serializer.data)
 
-#Récupérer la liste des sorties de stock pour un magasin
+#Récupérer la liste des sorties de stock pour un magasin 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Récupérer la liste des sorties de stock pour un magasin spécifique",
+    responses={200: SortieSerializer, 404: 'Not Found'}
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_sorties_magasin(request, magasin_id):
+    try:
+        magasin = Magasin.objects.get(pk=magasin_id)
+    except Magasin.DoesNotExist:
+        return Response({'error': 'Magasin introuvable'}, status=status.HTTP_404_NOT_FOUND)
+    sorties = Sortie.objects.filter(magasin=magasin, is_active=True).order_by('-date_creation')
+    enregistrer_action(request.user, 'consultation', 'A consulté la liste des sorties de stock dans un magasin.', f"Liste des sorties du magasin #{magasin.id}")
+    
+    serializer = SortieSerializer(sorties, many=True)
+    return Response(serializer.data)
+
+#Récupérer la liste des sorties de stock pour un magasin selon les périodes: jour, semaine, mois, total
 @swagger_auto_schema(
     method='get',
     operation_description="Récupérer la liste des sorties de stock pour un magasin spécifique selon les périodes: jour, semaine, mois, total",
@@ -77,7 +110,7 @@ def list_sorties(request, periode):
 )
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def list_sorties_magasin(request, magasin_id, periode):
+def list_sorties_magasin_filtrer(request, magasin_id, periode):
     try:
         magasin = Magasin.objects.get(pk=magasin_id)
     except Magasin.DoesNotExist:
@@ -199,6 +232,20 @@ def get_entree(request, pk):
     serializer = EntreeSerializer(entree)
     return Response(serializer.data)
 
+#Lister les entrées de stock dans le système
+@swagger_auto_schema(
+    method='get',
+    operation_description="Récupérer la liste des entrées de stock",
+    responses={200: EntreeSerializer(many=True)}
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_entrees(request):
+    entrees = Entree.objects.filter(is_active=True).order_by('-date_creation')
+    enregistrer_action(request.user, 'consultation', 'A consulté la liste des entrées de stock dans le système.', "Liste des entrées de stock")
+    serializer = EntreeSerializer(entrees, many=True)
+    return Response(serializer.data)
+
 #Lister les entrées de stock dans le système, on va filtrer selon les perdiodes: jour, semaine, mois, total
 @swagger_auto_schema(
     method='get',
@@ -207,7 +254,7 @@ def get_entree(request, pk):
 )
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def list_entrees(request, periode=None):
+def list_entrees_filtrer(request, periode=None):
     from django.utils import timezone
     from datetime import timedelta
     now = timezone.now()
@@ -229,12 +276,32 @@ def list_entrees(request, periode=None):
 #Lister les entrées de stock pour un magasin
 @swagger_auto_schema(
     method='get',
+    operation_description="Récupérer la liste des entrées de stock pour un magasin spécifique",
+    responses={200: EntreeSerializer, 404: 'Not Found'}
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_entrees_magasin(request, magasin_id):
+    try:
+        magasin = Magasin.objects.get(pk=magasin_id)
+    except Magasin.DoesNotExist:
+        return Response({'error': 'Magasin introuvable'}, status=status.HTTP_404_NOT_FOUND)
+    
+    entrees = Entree.objects.filter(magasin=magasin, is_active=True).order_by('-date_creation')
+    enregistrer_action(request.user, 'consultation', 'A consulté la liste des entrées de stock dans un magasin.', f"Liste des entrées du magasin #{magasin.id}")
+    
+    serializer = EntreeSerializer(entrees, many=True)
+    return Response(serializer.data)
+
+#Lister les entrées de stock pour un magasin avec filtre par période: jour, semaine, mois, total
+@swagger_auto_schema(
+    method='get',
     operation_description="Récupérer la liste des entrées de stock pour un magasin spécifique selon les périodes: jour, semaine, mois, total",
     responses={200: EntreeSerializer, 404: 'Not Found'}
 )
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def list_entrees_magasin(request, magasin_id, periode=None):
+def list_entrees_magasin_filtrer(request, magasin_id, periode=None):
     try:
         magasin = Magasin.objects.get(pk=magasin_id)
     except Magasin.DoesNotExist:
