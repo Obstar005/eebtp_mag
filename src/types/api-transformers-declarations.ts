@@ -40,22 +40,41 @@ export function apiEntreeToDeclaration(apiEntree: ApiEntree): Declaration {
     },
 
     // Informations spécifiques aux entrées
-    fournisseur: {
-      id: 0, // Non disponible dans l'API
-      name: apiEntree.societe,
-      telephone: apiEntree.tel_societe,
-    },
+    fournisseur: apiEntree.societe
+      ? {
+          id: 0, // Non disponible dans l'API
+          name: apiEntree.societe,
+          telephone: apiEntree.tel_societe,
+        }
+      : undefined,
 
-    deposant: {
-      name: apiEntree.nom_deposant,
-      fonction: apiEntree.fonction_deposant,
-      telephone: apiEntree.tel_deposant,
-    },
+    deposant:
+      apiEntree.nom_deposant || apiEntree.nom_livreur
+        ? {
+            name: apiEntree.nom_deposant || apiEntree.nom_livreur || "",
+            fonction: apiEntree.fonction_deposant || "",
+            telephone: apiEntree.tel_deposant || apiEntree.tel_livreur || "",
+          }
+        : undefined,
 
-    // Pour les livraisons, le livreur peut être considéré comme le déposant
-    ...(apiEntree.type === "Livraison" && {
-      motif: `Livraison par ${apiEntree.nom_livreur} (${apiEntree.tel_livreur})`,
+    // Informations supplémentaires
+    ...(apiEntree.signature_livreur && {
+      signature_livreur: apiEntree.signature_livreur,
     }),
+    ...(apiEntree.demande_source && {
+      demande_source_id: apiEntree.demande_source,
+    }),
+    ...(apiEntree.source && {
+      source_id: apiEntree.source,
+    }),
+
+    // Pour les livraisons, le livreur peut être mentionné dans le motif
+    ...(apiEntree.type === "Livraison" &&
+      apiEntree.nom_livreur && {
+        motif: `Livraison par ${apiEntree.nom_livreur}${
+          apiEntree.tel_livreur ? ` (${apiEntree.tel_livreur})` : ""
+        }`,
+      }),
   };
 }
 
@@ -111,12 +130,12 @@ export function apiDeclarationToDeclaration(
 export function createDeclarationDataToApiRequest(
   data: CreateDeclarationData
 ): ApiCreateEntreeRequest | ApiCreateSortieRequest {
-  if (data.type_enum === "entree") {
-    // Créer une entrée
+  if (data.type_enum === "entree" || data.type_enum === "retour") {
+    // Créer une entrée (avec type Livraison ou Retour)
     const request: ApiCreateEntreeRequest = {
       magasin: data.magasin_id,
       stock_item: data.stock_item_id,
-      type: "Livraison", // Par défaut
+      type: data.type_enum === "retour" ? "Retour" : "Livraison",
       quantite_m: data.quantite_float.toString(),
       nom_deposant: data.deposant?.name || "",
       tel_deposant: data.deposant?.telephone || "",

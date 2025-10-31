@@ -3,12 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Search, Eye, Edit, Trash2 } from "lucide-react";
 import { RequestStatus, RequestStatusLabels } from "../types/request";
 import { useDemandes, useDemandeStats } from "../hooks/useDemandes";
+import type { PeriodeType } from "../services/api/demandeService";
 import { getErrorMessage } from "../utils/errorHandling";
 
 export function RequestsPage() {
   const [activeTab, setActiveTab] = useState<RequestStatus>("tous");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedPeriode, setSelectedPeriode] = useState<PeriodeType>("total");
   const itemsPerPage = 10;
 
   // Récupération des demandes depuis l'API
@@ -19,10 +21,11 @@ export function RequestsPage() {
   } = useDemandes({
     status: activeTab === "tous" ? undefined : activeTab,
     search: searchQuery || undefined,
+    periode: selectedPeriode,
   });
 
   // Récupération des statistiques pour les compteurs
-  const { data: stats } = useDemandeStats();
+  const { data: stats } = useDemandeStats(selectedPeriode);
 
   // Extraire les demandes de la réponse
   const allRequests = demandesResponse?.data || [];
@@ -129,18 +132,35 @@ export function RequestsPage() {
         <h1 className="text-2xl font-bold text-gray-900">Demandes</h1>
         {/* Filtres Jour/Semaine/Mois */}
         <div className="flex bg-blue-50 rounded-full p-1 gap-1">
-          {["Jour", "Semaine", "Mois"].map((label, idx) => (
+          {[
+            {
+              label: "Jour",
+              value: "jour",
+            },
+            {
+              label: "Semaine",
+              value: "semaine",
+            },
+            {
+              label: "Mois",
+              value: "mois",
+            },
+            {
+              label: "Total",
+              value: "total",
+            },
+          ].map((period) => (
             <button
-              key={label}
+              key={period.value}
+              onClick={() => setSelectedPeriode(period.value as PeriodeType)}
               className={`px-5 py-1.5 rounded-full text-sm font-medium transition-colors focus:outline-none ${
-                idx === 0
-                  ? "bg-white text-blue-600 shadow" // Par défaut, 'Jour' sélectionné
+                selectedPeriode === period.value
+                  ? "bg-white text-blue-600 shadow"
                   : "text-gray-500 hover:text-blue-600"
               }`}
-              // TODO: Gérer l'état sélectionné si besoin
               type="button"
             >
-              {label}
+              {period.label}
             </button>
           ))}
         </div>

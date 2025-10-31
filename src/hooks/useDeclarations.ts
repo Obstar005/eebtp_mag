@@ -4,6 +4,7 @@ import type {
   CreateDeclarationData,
   UpdateDeclarationData,
   DeclarationFilter,
+  PeriodeType,
 } from "../types/declaration";
 
 // Clés de requête pour les déclarations
@@ -98,10 +99,13 @@ export function useDeleteDeclaration() {
 }
 
 // Hook pour les statistiques des déclarations
-export function useDeclarationStats(magasinId: number) {
+export function useDeclarationStats(
+  magasinId: number,
+  periode: PeriodeType = "total"
+) {
   return useQuery({
-    queryKey: declarationKeys.stats(magasinId),
-    queryFn: () => declarationService.getDeclarationStats(magasinId),
+    queryKey: [...declarationKeys.stats(magasinId), periode],
+    queryFn: () => declarationService.getDeclarationStats(magasinId, periode),
     staleTime: 2 * 60 * 1000, // 2 minutes
     enabled: !!magasinId,
   });

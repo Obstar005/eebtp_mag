@@ -18,6 +18,8 @@ import type {
   UpdateDeclarationData,
   DeclarationFilter,
   DeclarationStats,
+  ApiStatsResponse,
+  PeriodeType,
 } from "../../types/declaration";
 import type { PaginatedResponse } from "../../types/api";
 
@@ -129,7 +131,7 @@ class DeclarationApiService {
             `${this.basePath}/entree-detail/${id}`
           );
           return apiEntreeToDeclaration(entreeResponse.data);
-        } catch (entreeError) {
+        } catch {
           console.log("Pas trouvé dans les entrées, essai dans les sorties...");
         }
 
@@ -139,7 +141,7 @@ class DeclarationApiService {
             `${this.basePath}/sortie-detail/${id}`
           );
           return apiSortieToDeclaration(sortieResponse.data);
-        } catch (sortieError) {
+        } catch {
           throw new Error(`Déclaration ${id} introuvable`);
         }
       },
@@ -161,7 +163,7 @@ class DeclarationApiService {
         const apiRequest = createDeclarationDataToApiRequest(data);
 
         if (data.type_enum === "entree" || data.type_enum === "retour") {
-          // Créer une entrée
+          // Créer une entrée (les retours sont aussi des entrées avec type="Retour")
           const response = await client.post<ApiEntree>(
             `${this.basePath}/entree-create`,
             apiRequest
@@ -191,7 +193,7 @@ class DeclarationApiService {
    * Mettre à jour une déclaration
    * Note: L'API ne semble pas avoir d'endpoints pour la mise à jour
    */
-  async updateDeclaration(data: UpdateDeclarationData): Promise<Declaration> {
+  async updateDeclaration(_data: UpdateDeclarationData): Promise<Declaration> {
     // Pour l'instant, on retourne une erreur car l'API ne semble pas supporter la mise à jour
     throw new Error("Mise à jour des déclarations non supportée par l'API");
   }
@@ -200,7 +202,7 @@ class DeclarationApiService {
    * Supprimer une déclaration
    * Note: L'API ne semble pas avoir d'endpoints pour la suppression
    */
-  async deleteDeclaration(id: number): Promise<void> {
+  async deleteDeclaration(_id: number): Promise<void> {
     // Pour l'instant, on retourne une erreur car l'API ne semble pas supporter la suppression
     throw new Error("Suppression des déclarations non supportée par l'API");
   }
@@ -214,8 +216,13 @@ class DeclarationApiService {
     magasinId: number,
     filter: DeclarationFilter = {}
   ): Promise<PaginatedResponse<Declaration>> {
+    // Utiliser l'endpoint avec période si spécifiée
+    const endpoint = filter.periode
+      ? `${this.basePath}/liste-entree-magasin/${magasinId}/${filter.periode}`
+      : `${this.basePath}/liste-entree-magasin/${magasinId}`;
+
     const response = await client.get<ApiEntree[] | ApiEntreeListResponse>(
-      `${this.basePath}/liste-entree-magasin/${magasinId}`
+      endpoint
     );
 
     // Gérer différents formats de réponse API
@@ -244,8 +251,13 @@ class DeclarationApiService {
     magasinId: number,
     filter: DeclarationFilter = {}
   ): Promise<PaginatedResponse<Declaration>> {
+    // Utiliser l'endpoint avec période si spécifiée
+    const endpoint = filter.periode
+      ? `${this.basePath}/liste-sortie-magasin/${magasinId}/${filter.periode}`
+      : `${this.basePath}/liste-sortie-magasin/${magasinId}`;
+
     const response = await client.get<ApiSortie[] | ApiSortieListResponse>(
-      `${this.basePath}/liste-sortie-magasin/${magasinId}`
+      endpoint
     );
 
     // Gérer différents formats de réponse API
@@ -270,30 +282,30 @@ class DeclarationApiService {
   // ==================== STATISTIQUES ====================
 
   /**
-   * Récupérer les statistiques des déclarations
-   * Calculées côté client en l'absence d'endpoint dédié
+   * Récupérer les statistiques des déclarations en utilisant l'endpoint API dédié
    */
-  async getDeclarationStats(magasinId: number): Promise<DeclarationStats> {
+  async getDeclarationStats(
+    magasinId: number,
+    periode: PeriodeType = "total"
+  ): Promise<DeclarationStats> {
     return withApiErrorHandling(
       async () => {
-        console.log("📊 Calcul des statistiques des déclarations");
+        console.log("📊 Récupération des statistiques depuis l'API");
 
-        // Récupérer toutes les déclarations
-        const declarations = await this.getDeclarations(magasinId, {});
+        // Utiliser l'endpoint API dédié avec la période spécifiée
+        const response = await client.get<ApiStatsResponse>(
+          `${this.basePath}/stats/${magasinId}/${periode}`
+        );
 
-        // Calculer les statistiques
+        const apiStats = response.data;
+
+        // Transformer les données API vers le format frontend
         const stats: DeclarationStats = {
-          totalEntrees: declarations.data.filter(
-            (d) => d.type_enum === "entree"
-          ).length,
-          totalSorties: declarations.data.filter(
-            (d) => d.type_enum === "sortie"
-          ).length,
-          totalRetours: declarations.data.filter(
-            (d) => d.type_enum === "retour"
-          ).length,
+          totalEntrees: apiStats.livraisons, // Les livraisons correspondent aux entrées
+          totalSorties: apiStats.sorties,
+          totalRetours: apiStats.retours,
           variationVsHier: {
-            entrees: 0, // Pas de données historiques disponibles
+            entrees: 0, // L'API ne fournit pas les données de variation
             sorties: 0,
             retours: 0,
           },
@@ -301,8 +313,8 @@ class DeclarationApiService {
 
         return stats;
       },
-      "Calcul des statistiques des déclarations",
-      { magasinId }
+      "Récupération des statistiques des déclarations",
+      { magasinId, periode }
     );
   }
 }

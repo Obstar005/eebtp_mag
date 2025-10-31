@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { demandeService } from "../services/api/demandeService";
 import type {
   DemandeFilter,
+  PeriodeType,
 } from "../services/api/demandeService";
 
 // Clés de cache pour React Query
@@ -62,10 +63,10 @@ export function useDemandesByStatus(status: string) {
 /**
  * Hook pour récupérer les statistiques des demandes
  */
-export function useDemandeStats() {
+export function useDemandeStats(periode: PeriodeType = "total") {
   return useQuery({
-    queryKey: demandeKeys.stats(),
-    queryFn: () => demandeService.getDemandeStats(),
+    queryKey: [...demandeKeys.stats(), periode],
+    queryFn: () => demandeService.getDemandeStats(periode),
     staleTime: 5 * 60 * 1000, // 5 minutes pour les stats
     gcTime: 10 * 60 * 1000, // 10 minutes
   });

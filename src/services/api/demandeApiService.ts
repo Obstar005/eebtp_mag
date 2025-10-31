@@ -256,21 +256,16 @@ export class DemandeApiService {
 
   /**
    * Récupérer les statistiques des demandes
-   * GET /Demandes/demandes/statistiques
+   * GET /Demandes/demandes/statistiques/{periode}
    */
-  async getDemandeStats(): Promise<ApiDemandeStats> {
-    // Pour le développement, utiliser les statistiques mockées
-    console.log(
-      "🔄 Utilisation des statistiques mockées pour le développement"
-    );
-    return mockDemandeStats;
-
-    /* Code API réel - à réactiver une fois l'authentification configurée
+  async getDemandeStats(periode: string = "total"): Promise<ApiDemandeStats> {
     try {
-      console.log("📊 Récupération des statistiques des demandes...");
+      console.log(
+        `📊 Récupération des statistiques des demandes pour la période: ${periode}`
+      );
 
       const response = await apiClient.get<ApiDemandeStats>(
-        `${this.basePath}/demandes/statistiques`
+        `${this.basePath}/demandes/statistiques/${periode}`
       );
 
       console.log("✅ Statistiques récupérées:", response.data);
@@ -283,7 +278,6 @@ export class DemandeApiService {
       console.warn("🔄 Utilisation des statistiques mockées en fallback");
       return mockDemandeStats;
     }
-    */
   }
 
   // ==================== MÉTHODES HELPER ====================
@@ -297,9 +291,59 @@ export class DemandeApiService {
     stock_item_id?: number;
     date_from?: string;
     date_to?: string;
+    periode?: string;
   }): Promise<ApiDemande[]> {
-    // Pour l'instant, toujours récupérer toutes les demandes et filtrer côté client
-    // car les endpoints de filtrage par statut retournent des erreurs 403
+    console.log("📋 Récupération des demandes avec filtres:", filters);
+
+    // Si on a un statut et une période, utiliser l'endpoint avec période
+    if (filters.status && filters.status !== "tous" && filters.periode) {
+      try {
+        const statusEndpointMap: Record<string, string> = {
+          emis: "emises",
+          confirme: "confirmees",
+          approuve: "approuvees",
+          valide: "validees",
+          refuse: "rejetees",
+          livre: "livrees",
+        };
+
+        const endpointStatus = statusEndpointMap[filters.status];
+        if (endpointStatus) {
+          console.log(
+            `📋 Utilisation de l'endpoint avec période: ${endpointStatus}/${filters.periode}`
+          );
+          const response = await apiClient.get<ApiDemande[]>(
+            `${this.basePath}/demandes/${endpointStatus}/${filters.periode}`
+          );
+          return response.data;
+        }
+      } catch (error) {
+        console.warn(
+          "⚠️ Erreur avec l'endpoint de période, fallback vers toutes les demandes:",
+          error
+        );
+      }
+    }
+
+    // Si on a seulement une période (sans statut), utiliser l'endpoint "toutes" avec période
+    if (filters.periode && (!filters.status || filters.status === "tous")) {
+      try {
+        console.log(
+          `📋 Utilisation de l'endpoint toutes avec période: ${filters.periode}`
+        );
+        const response = await apiClient.get<ApiDemande[]>(
+          `${this.basePath}/demandes/toutes/${filters.periode}`
+        );
+        return response.data;
+      } catch (error) {
+        console.warn(
+          "⚠️ Erreur avec l'endpoint toutes/période, fallback:",
+          error
+        );
+      }
+    }
+
+    // Fallback : récupérer toutes les demandes et filtrer côté client
     console.log(
       "📋 Récupération de toutes les demandes pour filtrage côté client..."
     );

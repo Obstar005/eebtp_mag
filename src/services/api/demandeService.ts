@@ -22,7 +22,11 @@ export interface DemandeFilter {
   date_from?: string;
   date_to?: string;
   search?: string;
+  periode?: PeriodeType; // Nouveau paramètre pour les filtres de période
 }
+
+// Type pour les périodes supportées par l'API
+export type PeriodeType = "jour" | "semaine" | "mois" | "total";
 
 // Interface pour les statistiques des demandes (frontend)
 export interface DemandeStats {
@@ -280,11 +284,11 @@ export class DemandeService {
   /**
    * Récupérer les statistiques des demandes
    */
-  async getDemandeStats(): Promise<DemandeStats> {
+  async getDemandeStats(periode: PeriodeType = "total"): Promise<DemandeStats> {
     try {
       console.log("📊 Récupération des statistiques des demandes...");
 
-      const apiStats = await demandeApiService.getDemandeStats();
+      const apiStats = await demandeApiService.getDemandeStats(periode);
 
       const stats: DemandeStats = {
         total: apiStats.total_demandes,

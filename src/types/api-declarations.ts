@@ -14,18 +14,19 @@ export interface ApiEntree {
   stock_item_type: string; // ReadOnly
   type: "Livraison" | "Retour";
   quantite_m: string; // decimal format
-  nom_deposant: string;
-  tel_deposant: string;
-  fonction_deposant: string;
+  nom_deposant?: string; // nullable
+  tel_deposant?: string; // nullable
+  fonction_deposant?: string; // nullable
   date_creation: string; // ReadOnly - format date-time
   date_modif: string; // ReadOnly - format date-time
-  societe: string;
-  tel_societe: string;
-  nom_livreur: string;
-  tel_livreur: string;
+  societe?: string; // nullable
+  tel_societe?: string; // nullable
+  nom_livreur?: string; // nullable
+  tel_livreur?: string; // nullable
   signature_livreur?: string; // ReadOnly - nullable - format uri
   is_active: boolean;
   make_by?: number; // ReadOnly - nullable
+  demande_source?: number; // nullable - référence vers une demande
 }
 
 export interface ApiCreateEntreeRequest {
@@ -34,14 +35,15 @@ export interface ApiCreateEntreeRequest {
   source?: number;
   type: "Livraison" | "Retour";
   quantite_m: string;
-  nom_deposant: string;
-  tel_deposant: string;
-  fonction_deposant: string;
-  societe: string;
-  tel_societe: string;
-  nom_livreur: string;
-  tel_livreur: string;
+  nom_deposant?: string;
+  tel_deposant?: string;
+  fonction_deposant?: string;
+  societe?: string;
+  tel_societe?: string;
+  nom_livreur?: string;
+  tel_livreur?: string;
   is_active?: boolean;
+  demande_source?: number;
 }
 
 // ==================== SORTIES DE STOCK ====================

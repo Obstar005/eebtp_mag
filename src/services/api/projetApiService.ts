@@ -87,48 +87,57 @@ export class ProjetApiService {
     const apiData = createProjetDataToApiCreateProjet(data);
 
     console.log("🚀 Création du projet avec les données:", data);
+    console.log("📤 Données envoyées à l'API:", apiData);
 
-    // 1. Créer le projet
-    const response = await client.post<ApiProjet>(
-      `${this.basePath}/projet-create`,
-      apiData
-    );
-
-    const nouveauProjet = apiProjetToProjet(response.data);
-    console.log("✅ Projet créé avec succès:", nouveauProjet);
-
-    // 2. Créer les magasins associés si spécifiés
-    if (data.magasins && data.magasins.length > 0) {
-      console.log(
-        `🏪 Création de ${data.magasins.length} magasin(s) pour le projet ${nouveauProjet.id}...`
+    try {
+      // Créer le projet avec son magasin associé en un seul appel
+      const response = await client.post<ApiProjet>(
+        `${this.basePath}/projet-create`,
+        apiData
       );
 
-      for (const magasinData of data.magasins) {
-        try {
-          console.log("🏪 Création du magasin:", magasinData);
+      const nouveauProjet = apiProjetToProjet(response.data);
+      console.log("✅ Projet créé avec succès:", nouveauProjet);
 
-          const magasinPayload: CreateMagasinData = {
-            name: magasinData.name,
-            adresse: magasinData.adresse || "",
-          };
+      // Si l'API a créé automatiquement le magasin, nous n'avons plus besoin de le créer séparément
+      // Si des magasins supplémentaires sont spécifiés (au-delà du premier), les créer séparément
+      if (data.magasins && data.magasins.length > 1) {
+        console.log(
+          `🏪 Création de ${data.magasins.length - 1} magasin(s) supplémentaire(s) pour le projet ${nouveauProjet.id}...`
+        );
 
-          await this.addMagasinToProjet(
-            nouveauProjet.id,
-            magasinPayload,
-            data.creator || 1
-          );
-          console.log(`✅ Magasin "${magasinData.name}" créé avec succès`);
-        } catch (magasinError) {
-          console.error(
-            `❌ Erreur lors de la création du magasin "${magasinData.name}":`,
-            magasinError
-          );
-          // On continue même si un magasin échoue
+        // Créer les magasins supplémentaires (à partir du deuxième)
+        for (let i = 1; i < data.magasins.length; i++) {
+          const magasinData = data.magasins[i];
+          try {
+            console.log("🏪 Création du magasin supplémentaire:", magasinData);
+
+            const magasinPayload: CreateMagasinData = {
+              name: magasinData.name,
+              adresse: magasinData.adresse || "",
+            };
+
+            await this.addMagasinToProjet(
+              nouveauProjet.id,
+              magasinPayload,
+              data.creator || 1
+            );
+            console.log(`✅ Magasin "${magasinData.name}" créé avec succès`);
+          } catch (magasinError) {
+            console.error(
+              `❌ Erreur lors de la création du magasin "${magasinData.name}":`,
+              magasinError
+            );
+            // On continue même si un magasin échoue
+          }
         }
       }
-    }
 
-    return nouveauProjet;
+      return nouveauProjet;
+    } catch (error) {
+      console.error("❌ Erreur lors de la création du projet:", error);
+      throw error;
+    }
   }
 
   // Mettre à jour un projet

@@ -9,6 +9,7 @@ import { useMagasin } from "../../hooks/useMagasins";
 import type {
   DeclarationFilter,
   DeclarationType,
+  PeriodeType,
 } from "../../types/declaration";
 
 export function DeclarationsPage() {
@@ -21,6 +22,7 @@ export function DeclarationsPage() {
   const [activeTab, setActiveTab] = useState<
     "Tous" | "Entrée" | "Sortie" | "Retour"
   >("Tous");
+  const [selectedPeriode, setSelectedPeriode] = useState<PeriodeType>("total");
 
   // Synchroniser le filtre avec l'onglet actif
   useEffect(() => {
@@ -42,12 +44,13 @@ export function DeclarationsPage() {
 
   // Hooks
   const { data: magasin } = useMagasin(magasinIdNumber);
-  const { data: stats } = useDeclarationStats(magasinIdNumber);
+  const { data: stats } = useDeclarationStats(magasinIdNumber, selectedPeriode);
 
   const filter: DeclarationFilter = {
     search: searchTerm || undefined,
     type_enum: selectedType || undefined,
     magasin_id: magasinIdNumber,
+    periode: selectedPeriode,
   };
 
   const { data: declarationsResponse, isLoading } = useDeclarations(
@@ -97,7 +100,6 @@ export function DeclarationsPage() {
   // Filtrage des données
   const filteredDeclarations = useMemo(() => {
     let filtered = declarations;
-
     // Filtrage par type selon l'onglet actif
     if (activeTab !== "Tous") {
       const typeMap: Record<string, DeclarationType> = {
@@ -129,17 +131,52 @@ export function DeclarationsPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       {/* En-tête */}
-      <div className="flex items-center gap-4 mb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-          title="Retour"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Liste des déclarations du magasin N°{magasin?.name || magasinId}
-        </h1>
+      <div className="flex items-center gap-4 justify-between max-md:flex-col mb-6">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+            title="Retour"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Liste des déclarations du magasin N°{magasin?.name || magasinId}
+          </h1>
+        </div>
+        <div className="flex bg-blue-50 rounded-full p-1 gap-1">
+          {[
+            {
+              label: "Jour",
+              value: "jour" as PeriodeType,
+            },
+            {
+              label: "Semaine",
+              value: "semaine" as PeriodeType,
+            },
+            {
+              label: "Mois",
+              value: "mois" as PeriodeType,
+            },
+            {
+              label: "Total",
+              value: "total" as PeriodeType,
+            },
+          ].map((period) => (
+            <button
+              key={period.value}
+              onClick={() => setSelectedPeriode(period.value)}
+              className={`px-5 py-1.5 rounded-full text-sm font-medium transition-colors focus:outline-none ${
+                selectedPeriode === period.value
+                  ? "bg-white text-blue-600 shadow"
+                  : "text-gray-500 hover:text-blue-600"
+              }`}
+              type="button"
+            >
+              {period.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Statistiques */}
@@ -228,9 +265,9 @@ export function DeclarationsPage() {
       {/* Contenu principal */}
       <div className="bg-white rounded-lg shadow-sm">
         {/* Onglets et filtres */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 flex items-center gap-4 justify-between max-md:flex-col">
           {/* Onglets */}
-          <div className="flex space-x-8 mb-4">
+          <div className="flex space-x-8">
             {["Tous", "Entrée", "Sortie", "Retour"].map((tab) => (
               <button
                 key={tab}
@@ -273,11 +310,29 @@ export function DeclarationsPage() {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-            <div className="flex gap-2">
+            {/* <div className="flex gap-2 relative h-min">
               <button className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 <Filter className="h-4 w-4" />
               </button>
-            </div>
+              <div className="absolute top-[calc(100%+.5rem)] right-0 bg-white border border-gray-200 rounded-md shadow-md min-h-24 w-64">
+                {[
+                  { value: "", label: "Tous les types" },
+                  { value: "entree", label: "Entrée" },
+                  { value: "sortie", label: "Sortie" },
+                  { value: "retour", label: "Retour" },
+                ].map((status) => (
+                  <div
+                    key={status.value}
+                    onClick={() => setSelectedType(status.value as DeclarationType | "")}
+                    className={`px-4 py-2 cursor-pointer hover:bg-gray-100 ${
+                      selectedType === status.value ? "bg-gray-200 font-medium" : ""
+                    }`}
+                  > 
+                    {status.label}
+                  </div>
+                ))}
+              </div>
+            </div> */}
           </div>
         </div>
 
@@ -308,7 +363,7 @@ export function DeclarationsPage() {
                     Déclaration
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
+                    Date de création
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Action
@@ -316,8 +371,11 @@ export function DeclarationsPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredDeclarations.map((declaration) => (
-                  <tr key={declaration.id} className="hover:bg-gray-50">
+                {filteredDeclarations.map((declaration, index) => (
+                  <tr
+                    key={`${index}-${declaration.id}`}
+                    className="hover:bg-gray-50"
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="font-medium text-gray-900">
                         {declaration.stockItem?.name}
@@ -347,7 +405,13 @@ export function DeclarationsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-gray-900">
-                        {declaration.date_voeux_livrer_string}
+                        {declaration.date_creation.toLocaleDateString("fr-FR", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

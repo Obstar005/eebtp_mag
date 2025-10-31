@@ -6,6 +6,7 @@ import type {
   DeclarationFilter,
   DeclarationStats,
   PaginatedResponse,
+  PeriodeType,
 } from "../../types";
 
 /**
@@ -57,9 +58,15 @@ class DeclarationService {
   }
 
   // Statistiques des déclarations
-  async getDeclarationStats(magasinId: number): Promise<DeclarationStats> {
+  async getDeclarationStats(
+    magasinId: number,
+    periode: PeriodeType = "total"
+  ): Promise<DeclarationStats> {
     if (import.meta.env.VITE_ENABLE_VERIFICATION === "true") {
-      return await declarationApiService.getDeclarationStats(magasinId);
+      return await declarationApiService.getDeclarationStats(
+        magasinId,
+        periode
+      );
     }
     return mockDeclarationService.getDeclarationStats(magasinId);
   }

@@ -42,6 +42,11 @@ export interface Declaration {
     telephone?: string;
   };
   motif?: string;
+
+  // Champs supplémentaires de l'API
+  signature_livreur?: string; // URL vers la signature du livreur
+  demande_source_id?: number; // Référence vers une demande source
+  source_id?: number; // Source de l'entrée
 }
 
 export const DeclarationType = {
@@ -106,7 +111,11 @@ export interface DeclarationFilter {
   magasin_id?: number;
   dateStart?: string;
   dateEnd?: string;
+  periode?: PeriodeType; // Nouveau paramètre pour les filtres de période
 }
+
+// Type pour les périodes supportées par l'API
+export type PeriodeType = "jour" | "semaine" | "mois" | "total";
 
 export interface DeclarationStats {
   totalEntrees: number;
@@ -117,4 +126,11 @@ export interface DeclarationStats {
     sorties: number;
     retours: number;
   };
+}
+
+// Interface correspondant à la réponse API de /Mouvements/stats
+export interface ApiStatsResponse {
+  livraisons: number;
+  sorties: number;
+  retours: number;
 }

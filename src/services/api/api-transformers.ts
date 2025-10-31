@@ -573,6 +573,17 @@ export function createProjetDataToApiCreateProjet(
     comptes: userIds,
   };
 
+  // Ajouter les données du premier magasin pour création automatique
+  if (data.magasins && data.magasins.length > 0) {
+    const premierMagasin = data.magasins[0];
+    apiData.nom_magasin = premierMagasin.name;
+    apiData.adresse_magasin = premierMagasin.adresse || "";
+    console.log("🏪 Magasin ajouté à la requête de création:", {
+      nom_magasin: apiData.nom_magasin,
+      adresse_magasin: apiData.adresse_magasin,
+    });
+  }
+
   console.log("✨ Données API transformées:", apiData);
   return apiData;
 }

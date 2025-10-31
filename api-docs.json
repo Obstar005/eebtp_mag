@@ -229,6 +229,18 @@
       },
       "parameters": []
     },
+    "/Demandes/demandes/en-attente-validation/{periode}": {
+      "get": {
+        "operationId": "Demandes_demandes_en-attente-validation_read",
+        "description": "Récupérer la liste des demandes en attente de validation (c-a-d soit soit émises, approuvées, soit confirmées) selon une période: jour, semaine, mois, total",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Demandes"]
+      },
+      "parameters": [
+        { "name": "periode", "in": "path", "required": true, "type": "string" }
+      ]
+    },
     "/Demandes/demandes/livrees": {
       "get": {
         "operationId": "Demandes_demandes_livrees_list",
@@ -238,6 +250,18 @@
         "tags": ["Demandes"]
       },
       "parameters": []
+    },
+    "/Demandes/demandes/livrees/{periode}": {
+      "get": {
+        "operationId": "Demandes_demandes_livrees_read",
+        "description": "Récupérer la liste des demandes qui ont été livrées",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Demandes"]
+      },
+      "parameters": [
+        { "name": "periode", "in": "path", "required": true, "type": "string" }
+      ]
     },
     "/Demandes/demandes/rejetees": {
       "get": {
@@ -249,15 +273,37 @@
       },
       "parameters": []
     },
-    "/Demandes/demandes/statistiques": {
+    "/Demandes/demandes/rejetees/{periode}": {
       "get": {
-        "operationId": "Demandes_demandes_statistiques_list",
-        "description": "Récupérer quelques statistiques sur les demandes, Nombre total de demandes(total_demandes), Nombre de demandes par statut(demandes_par_statut), nombre de demandes en attente de validation(demandes_en_attente_validation)et les demandes traitéées (validées et rejetées)",
+        "operationId": "Demandes_demandes_rejetees_read",
+        "description": "Récupérer la liste des demandes rejetées selon une période: jour, semaine, mois, total",
         "parameters": [],
         "responses": { "200": { "description": "" } },
         "tags": ["Demandes"]
       },
-      "parameters": []
+      "parameters": [
+        { "name": "periode", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Demandes/demandes/statistiques/{periode}": {
+      "get": {
+        "operationId": "Demandes_demandes_statistiques_read",
+        "description": "Récupérer quelques statistiques sur les demandes, Nombre total de demandes(total_demandes), Nombre de demandes par statut(demandes_par_statut), nombre de demandes en attente de validation(demandes_en_attente_validation)et les demandes traitéées (validées et rejetées) et (demandes_traitées) selon une période: jour, semaine, mois, total",
+        "parameters": [
+          {
+            "name": "periode",
+            "in": "path",
+            "description": "Période pour les statistiques: jour, semaine, mois, total",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Demandes"]
+      },
+      "parameters": [
+        { "name": "periode", "in": "path", "required": true, "type": "string" }
+      ]
     },
     "/Demandes/demandes/toutes": {
       "get": {
@@ -269,6 +315,18 @@
       },
       "parameters": []
     },
+    "/Demandes/demandes/toutes/{periode}": {
+      "get": {
+        "operationId": "Demandes_demandes_toutes_read",
+        "description": "Récupérer la liste de toutes les demandes selon une période: jour, semaine, mois, total",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Demandes"]
+      },
+      "parameters": [
+        { "name": "periode", "in": "path", "required": true, "type": "string" }
+      ]
+    },
     "/Demandes/demandes/validees": {
       "get": {
         "operationId": "Demandes_demandes_validees_list",
@@ -278,6 +336,18 @@
         "tags": ["Demandes"]
       },
       "parameters": []
+    },
+    "/Demandes/demandes/validees/{periode}": {
+      "get": {
+        "operationId": "Demandes_demandes_validees_read",
+        "description": "Récupérer la liste des demandes validées selon une période: jour, semaine, mois, total",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Demandes"]
+      },
+      "parameters": [
+        { "name": "periode", "in": "path", "required": true, "type": "string" }
+      ]
     },
     "/Mouvements/entree-create": {
       "post": {
@@ -343,6 +413,30 @@
         }
       ]
     },
+    "/Mouvements/liste-entree-magasin/{magasin_id}/{periode}": {
+      "get": {
+        "operationId": "Mouvements_liste-entree-magasin_read",
+        "description": "Récupérer la liste des entrées de stock pour un magasin spécifique selon les périodes: jour, semaine, mois, total",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Entree" }
+          },
+          "404": { "description": "Not Found" }
+        },
+        "tags": ["Mouvements"]
+      },
+      "parameters": [
+        {
+          "name": "magasin_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        { "name": "periode", "in": "path", "required": true, "type": "string" }
+      ]
+    },
     "/Mouvements/liste-entrees": {
       "get": {
         "operationId": "Mouvements_liste-entrees_list",
@@ -360,6 +454,26 @@
         "tags": ["Mouvements"]
       },
       "parameters": []
+    },
+    "/Mouvements/liste-entrees/{periode}": {
+      "get": {
+        "operationId": "Mouvements_liste-entrees_read",
+        "description": "Récupérer la liste des entrées de stock selon les périodes: jour, semaine, mois, total",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/Entree" }
+            }
+          }
+        },
+        "tags": ["Mouvements"]
+      },
+      "parameters": [
+        { "name": "periode", "in": "path", "required": true, "type": "string" }
+      ]
     },
     "/Mouvements/liste-sortie-magasin/{magasin_id}": {
       "get": {
@@ -384,6 +498,30 @@
         }
       ]
     },
+    "/Mouvements/liste-sortie-magasin/{magasin_id}/{periode}": {
+      "get": {
+        "operationId": "Mouvements_liste-sortie-magasin_read",
+        "description": "Récupérer la liste des sorties de stock pour un magasin spécifique selon les périodes: jour, semaine, mois, total",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Sortie" }
+          },
+          "404": { "description": "Not Found" }
+        },
+        "tags": ["Mouvements"]
+      },
+      "parameters": [
+        {
+          "name": "magasin_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        { "name": "periode", "in": "path", "required": true, "type": "string" }
+      ]
+    },
     "/Mouvements/liste-sorties": {
       "get": {
         "operationId": "Mouvements_liste-sorties_list",
@@ -401,6 +539,26 @@
         "tags": ["Mouvements"]
       },
       "parameters": []
+    },
+    "/Mouvements/liste-sorties/{periode}": {
+      "get": {
+        "operationId": "Mouvements_liste-sorties_read",
+        "description": "Récupérer la liste des sorties de stock selon les périodes: jour, semaine, mois, total",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/Sortie" }
+            }
+          }
+        },
+        "tags": ["Mouvements"]
+      },
+      "parameters": [
+        { "name": "periode", "in": "path", "required": true, "type": "string" }
+      ]
     },
     "/Mouvements/sortie-create": {
       "post": {
@@ -441,6 +599,37 @@
       },
       "parameters": [
         { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Mouvements/stats/{magasin_id}/{periode}": {
+      "get": {
+        "operationId": "Mouvements_stats_read",
+        "description": "Récupérer les statistiques des mouvements de stock dans un magasin pour une période donnée",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Statistiques des mouvements de stock",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "livraisons": { "type": "integer" },
+                "sorties": { "type": "integer" },
+                "retours": { "type": "integer" }
+              }
+            }
+          },
+          "404": { "description": "Not Found" }
+        },
+        "tags": ["Mouvements"]
+      },
+      "parameters": [
+        {
+          "name": "magasin_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        { "name": "periode", "in": "path", "required": true, "type": "string" }
       ]
     },
     "/Notifications/notifications/test/": {
@@ -531,29 +720,6 @@
       },
       "parameters": []
     },
-    "/Projets/magasin-create": {
-      "post": {
-        "operationId": "Projets_magasin-create_create",
-        "description": "Cette API permet de créer un nouveau magasin.",
-        "parameters": [
-          {
-            "name": "data",
-            "in": "body",
-            "required": true,
-            "schema": { "$ref": "#/definitions/Magasin" }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Magasin créé avec succès",
-            "schema": { "$ref": "#/definitions/Magasin" }
-          },
-          "400": { "description": "Données invalides" }
-        },
-        "tags": ["Projets"]
-      },
-      "parameters": []
-    },
     "/Projets/magasin-delete/{id}": {
       "delete": {
         "operationId": "Projets_magasin-delete_delete",
@@ -616,7 +782,7 @@
     "/Projets/projet-create": {
       "post": {
         "operationId": "Projets_projet-create_create",
-        "description": "Cette API permet de créer un nouveau projet.",
+        "description": "Cette API permet de créer un nouveau projet ainsi que son magasin associé. (nom_magasin et adresse_magasin sont les noms deschamps du magasin).",
         "parameters": [
           {
             "name": "data",
@@ -796,6 +962,24 @@
       "parameters": [
         { "name": "id", "in": "path", "required": true, "type": "string" }
       ]
+    },
+    "/Projets/projets-by-user": {
+      "get": {
+        "operationId": "Projets_projets-by-user_list",
+        "description": "Cette API permet de récupérer la liste des projets et magasins associés à l'utilisateur connecté.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Liste des projets et magasins de l'utilisateur",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/Projet" }
+            }
+          }
+        },
+        "tags": ["Projets"]
+      },
+      "parameters": []
     },
     "/Stocks/article-create": {
       "post": {
@@ -1109,6 +1293,19 @@
           "401": { "description": "Mot de passe incorrect" },
           "404": { "description": "Utilisateur introuvable" },
           "403": { "description": "Utilisateur désactivé ou accès refusé" }
+        },
+        "tags": ["Users"]
+      },
+      "parameters": []
+    },
+    "/Users/authentication/logout/": {
+      "post": {
+        "operationId": "Users_authentication_logout_create",
+        "description": "Déconnecter un utilisateur en invalidant son token JWT",
+        "parameters": [],
+        "responses": {
+          "200": { "description": "Déconnexion réussie" },
+          "400": { "description": "Bad Request" }
         },
         "tags": ["Users"]
       },
@@ -2638,6 +2835,7 @@
           "readOnly": true
         },
         "first_login": { "title": "First login", "type": "boolean" },
+        "is_connected": { "title": "Is connected", "type": "boolean" },
         "profil": { "title": "Profil", "type": "integer", "x-nullable": true },
         "groups": {
           "description": "The groups this user belongs to. A user will get all permissions granted to each of their groups.",
