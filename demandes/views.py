@@ -75,8 +75,9 @@ def emettre_demande(request):
 @permission_classes([IsAuthenticated])
 def liste_demandes_emises(request):
     user = request.user
-    if user.profil.libelle != 'magasinier':
-        return Response({'error': 'Seul un magasinier peut voir ses demandes émises.'}, status=status.HTTP_403_FORBIDDEN)
+    # if user.profil.libelle != 'magasinier':
+    #     #Seul le magasinier qui a emis la dem
+    #     return Response({'error': 'Seul un magasinier peut voir ses demandes émises.'}, status=status.HTTP_403_FORBIDDEN)
 
     demandes = Demande.objects.filter(emis_par=user).order_by('-date_creation')
 
