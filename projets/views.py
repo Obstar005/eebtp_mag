@@ -18,7 +18,8 @@ from users.models import CustomUser
     method='post',
     operation_description="Cette API permet de créer un nouveau projet ainsi que son magasin associé. (nom_magasin et adresse_magasin sont les noms des" \
     "champs du magasin).",
-    request_body=ProjetSerializer,  # Le modèle d'entrée
+    request_body=
+        ProjetSerializer,
     responses={
         201: openapi.Response("Projet créé avec succès", ProjetSerializer),
         400: "Données invalides"
@@ -103,7 +104,7 @@ def list_projets(request):
     }
 )
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated]) 
+@permission_classes([IsAuthenticated]) 
 def get_projet(request, pk):
     try:
         projet = Projet.objects.get(pk=pk)

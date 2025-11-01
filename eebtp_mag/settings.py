@@ -96,7 +96,7 @@ DATABASES = {
         'NAME': 'eebtp_mag',
         'USER': 'postgres',
         'PASSWORD': '0201.0201.Mp#cont#xyè', #Serveur
-        # 'PASSWORD': '0201.0201.Mp#postgres', #En locale
+        # 'PASSWORD': '0201.0201.Mp#postgres', #En locale 
         'HOST': 'localhost',
         'PORT': '5432',
     }
