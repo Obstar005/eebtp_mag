@@ -66,10 +66,10 @@ def emettre_demande(request):
             date_emission=timezone.now()
         )
         enregistrer_action(user, 'creation', 'A créé une nouvelle demande', f"Demande #{new_demande_number}")
-        destinataires = CustomUser.objects.filter(profil__libelle__in=['chef_appro', 'dtx', 'dt', 'dga', 'dg'])
-        titre = "Nouvelle Demande Émise"
-        message = f"{user.username} a émis une nouvelle demande #{new_demande_number}."
-        notifier_utilisateurs([destinataires], titre, message)
+        # destinataires = CustomUser.objects.filter(profil__libelle__in=['chef_appro', 'dtx', 'dt', 'dga', 'dg'])
+        # titre = "Nouvelle Demande Émise"
+        # message = f"{user.username} a émis une nouvelle demande #{new_demande_number}."
+        # notifier_utilisateurs(destinataires, titre, message)
 
         return Response({'message': 'Demande émise avec succès'}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -114,11 +114,11 @@ def confirmer_demande(request, id):
     demande.confirme_par = user
     demande.date_confirmation = timezone.now()
     demande.save()
-    enregistrer_action(user, 'modification', 'A confirmé une demande', f"Demande #{demande.number}")
-    destinataires = CustomUser.objects.filter(profil__libelle__in=['chef_appro', 'dtx', 'dt', 'dga', 'dg'])
-    titre = "Nouvelle Demande Émise"
-    message = f"La demande #{demande.number}. a ete confirmée."
-    notifier_utilisateurs([destinataires], titre, message)
+    # enregistrer_action(user, 'modification', 'A confirmé une demande', f"Demande #{demande.number}")
+    # destinataires = CustomUser.objects.filter(profil__libelle__in=['chef_appro', 'dtx', 'dt', 'dga', 'dg'])
+    # titre = "Nouvelle Demande Émise"
+    # message = f"La demande #{demande.number}. a ete confirmée."
+    # notifier_utilisateurs([destinataires], titre, message)
 
     return Response({'message': 'Demande confirmée avec succès'}, status=status.HTTP_200_OK)
 
