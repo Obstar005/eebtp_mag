@@ -17,8 +17,11 @@ from django.core.asgi import get_asgi_application
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'eebtp_mag.settings')
 
 application = ProtocolTypeRouter({
+    
     "http": get_asgi_application(),
     "websocket": AuthMiddlewareStack(
         URLRouter(websocket_urlpatterns)
     ),
+    
 })
+print("🚀 ASGI server loaded avec Channels")

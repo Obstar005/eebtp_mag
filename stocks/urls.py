@@ -14,5 +14,5 @@ urlpatterns = [
     path('stock-item-update/<int:magasin_id>', views.update_stock_item, name='update_stock_item'),
     path('stock-item-detail/<int:stock_item_id>', views.get_stock_item, name='get_stock_item'),
     path('stock-item-delete/<int:stock_item_id>', views.delete_stock_item, name='delete_stock_item'),
-
+    path('stats/<int:magasin_id>/<str:unite>', views.stock_statistics, name='stats'),
 ]

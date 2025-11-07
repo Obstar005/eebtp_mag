@@ -17,7 +17,17 @@ from .send_sms_service import send_verification_sms
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import parser_classes
 from app.utils import enregistrer_action
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from notifications.utils import notifier_utilisateurs
 
+#Fonction pour envoyer les notifications
+# def send_notification_user(user_id, message):
+#     channel_layer = get_channel_layer()
+#     async_to_sync(channel_layer.group_send)(
+#         f"user_{user_id}",
+#         {"type": "send_notification", "message": message}
+#     )
 
 #Pour recup la liste des pays:
 @swagger_auto_schema(
@@ -408,7 +418,8 @@ def login_by_phone_web(request):
     refresh = RefreshToken.for_user(user)
     user.is_connected = True
     user.save()
-    enregistrer_action(user, 'connexion', 'S\'est connecté au système(Web)', f"Utilisateur #{user.id}, à la date {user.last_login}")
+    enregistrer_action(user,  'connexion', 'S\'est connecté au système(Web)', f"Utilisateur #{user.id}, à la date {user.last_login}")
+    notifier_utilisateurs([user], "Connexion Réussie", "Vous vous êtes connecté avec succès au système.")
 
     return Response(
         {"message": "Connexion réussie.", 'access_token': str(refresh.access_token), "first_login": first, "refresh_token": str(refresh)}, status=status.HTTP_200_OK)

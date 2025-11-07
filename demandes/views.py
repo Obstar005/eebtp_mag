@@ -15,6 +15,9 @@ from django.db.models import Max
 from app.utils import enregistrer_action
 from django.utils import timezone
 from datetime import timedelta
+from users.models import CustomUser
+from notifications.utils import notifier_utilisateurs
+from mouvements.models import Entree, Sortie
 
 #Détail d'une demande
 @swagger_auto_schema(method='get',
@@ -63,6 +66,10 @@ def emettre_demande(request):
             date_emission=timezone.now()
         )
         enregistrer_action(user, 'creation', 'A créé une nouvelle demande', f"Demande #{new_demande_number}")
+        destinataires = CustomUser.objects.filter(profil__libelle__in=['chef_appro', 'dtx', 'dt', 'dga', 'dg'])
+        titre = "Nouvelle Demande Émise"
+        message = f"{user.username} a émis une nouvelle demande #{new_demande_number}."
+        notifier_utilisateurs([destinataires], titre, message)
 
         return Response({'message': 'Demande émise avec succès'}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -108,6 +115,10 @@ def confirmer_demande(request, id):
     demande.date_confirmation = timezone.now()
     demande.save()
     enregistrer_action(user, 'modification', 'A confirmé une demande', f"Demande #{demande.number}")
+    destinataires = CustomUser.objects.filter(profil__libelle__in=['chef_appro', 'dtx', 'dt', 'dga', 'dg'])
+    titre = "Nouvelle Demande Émise"
+    message = f"La demande #{demande.number}. a ete confirmée."
+    notifier_utilisateurs([destinataires], titre, message)
 
     return Response({'message': 'Demande confirmée avec succès'}, status=status.HTTP_200_OK)
 
@@ -420,5 +431,36 @@ def statistiques_demandes(request, periode):
         'demandes_en_attente_validation': demandes_en_attente_validation,
         'demandes_traitées': demandes_traitées,
         'taux_variation': taux_variation
+    }
+    return Response(stats)
+
+#mobile
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def statistiques_mouv_mobile(request, magasin_id, periode):
+    now = timezone.now()
+    if periode == 'jour':
+        start_date = now - timedelta(days=1)
+    elif periode == 'semaine':
+        start_date = now - timedelta(weeks=1)
+    elif periode == 'mois':
+        start_date = now - timedelta(days=30)
+    else:
+        start_date = None  # Pour 'total', on ne filtre pas par date
+    if start_date:
+        filtered_entrees = Entree.objects.filter(magasin_id=magasin_id, date_creation__gte=start_date)
+        filtered_sorties = Sortie.objects.filter(magasin_id=magasin_id, date_creation__gte=start_date)
+    else:
+        filtered_entrees = Entree.objects.filter(magasin_id=magasin_id)
+        filtered_sorties = Sortie.objects.filter(magasin_id=magasin_id)
+    total_entrees = filtered_entrees.count()
+    total_sorties = filtered_sorties.count()
+    
+    #Ici j'aimerais calculer les pourcentages de chaque type de resultat par rapport à la periode passé, par exemple: pour les demandes totales de la periode jour on calcule pour voir par rapport au total des demandes de 
+    # la journée précedente qui est hier pour voir si on a une augmentation ou une diminution en pourcentage donc par exemple 20 de plus que hier ou 10 de moins que hier
+
+    stats = {
+        'total_sorties': total_entrees,
+        'total_sorties': total_sorties
     }
     return Response(stats)

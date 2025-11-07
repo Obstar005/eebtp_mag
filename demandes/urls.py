@@ -22,4 +22,5 @@ urlpatterns = [
     path('demandes/toutes/<str:periode>', views.liste_toutes_les_demandes_filtrer),
     path('demande/detail/<int:id>', views.detail_demande),
     path('demandes/statistiques/<str:periode>', views.statistiques_demandes),
+    path('stats-mouv/<int:magasin_id>/<str:periode>', views.statistiques_mouv_mobile),
 ]
