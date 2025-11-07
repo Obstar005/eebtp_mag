@@ -67,7 +67,7 @@ def list_profils(request):
     responses={201: ProfilSerializer, 400: 'Bad Request'}
 )
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def create_profil(request):
     serializer = ProfilSerializer(data=request.data)
     enregistrer_action(request.user, 'creation', 'A crée un profil dans le système.', f"Profil #{request.data.get('libelle')}")
@@ -157,7 +157,7 @@ def list_users(request):
     responses={201: CustomUserSerializer, 400: 'Bad Request'}
 )
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def create_user(request):
     serializer = CustomUserSerializer(data=request.data)
     enregistrer_action(request.user, 'creation', 'A crée un utilisateur dans le système.', f"Utilisateur #{request.data.get('username')}")
