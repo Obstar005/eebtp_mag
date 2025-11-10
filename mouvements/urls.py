@@ -19,4 +19,5 @@ urlpatterns = [
     path('liste-entree-magasin/<int:magasin_id>/<str:periode>', views.list_entrees_magasin_filtrer, name='list_entrees_magasin'),
 
     path('stats/<int:magasin_id>/<str:periode>', views.stats_mouvements_magasin, name='stats_mouvements_magasin'),
+    path('graphe-fluctuation-entree/<int:projet_id>/<str:type_entree>/<str:periode>/<str:produit_id>', views.stats_fluctuations_entrees, name='graphe_fluctuation_entree')
 ]

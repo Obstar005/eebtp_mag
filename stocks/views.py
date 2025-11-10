@@ -207,7 +207,7 @@ def delete_stock_item(request, stock_item_id):
 #Stattisques pour le mobile, pour un magasin, le nombres d'articles par unité de mesure, le nombres d'entrées, sorties, selon les periodes jour, semaine, mois et depuis le début(total)
 @swagger_auto_schema(
     method='get',
-    operation_description="Récupérer les statistiques des articles dans un magasin",
+    operation_description="Récupérer les statistiques des articles dans un magasin. Valeurs pour le champ unite: litre, kg, m3, unite, m, autre",
     responses={200: 'OK', 404: 'Not Found'}
 )
 @api_view(['GET'])
@@ -219,7 +219,7 @@ def stock_statistics(request, magasin_id, unite):
         return Response({'error': 'Magasin introuvable.'}, status=status.HTTP_404_NOT_FOUND)
     
     # Exemple de statistiques: nombre total d'articles actifs dans le magasin pour une unité donnée
-    total_articles = StockItem.objects.filter(magasin_id=magasin, sortie__unite=unite, is_active=True).count()
+    total_articles = StockItem.objects.filter(magasin_id=magasin, produit__unite=unite, is_active=True).count()
 
     # Vous pouvez ajouter d'autres statistiques selon vos besoins
 

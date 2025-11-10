@@ -419,7 +419,7 @@ def login_by_phone_web(request):
     user.is_connected = True
     user.save()
     enregistrer_action(user,  'connexion', 'S\'est connecté au système(Web)', f"Utilisateur #{user.id}, à la date {user.last_login}")
-    notifier_utilisateurs([user], "Connexion Réussie", "Vous vous êtes connecté avec succès au système.")
+    # notifier_utilisateurs([user], "Connexion Réussie", "Vous vous êtes connecté avec succès au système.")
 
     return Response(
         {"message": "Connexion réussie.", 'access_token': str(refresh.access_token), "first_login": first, "refresh_token": str(refresh)}, status=status.HTTP_200_OK)

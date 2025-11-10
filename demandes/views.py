@@ -434,33 +434,3 @@ def statistiques_demandes(request, periode):
     }
     return Response(stats)
 
-#mobile
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def statistiques_mouv_mobile(request, magasin_id, periode):
-    now = timezone.now()
-    if periode == 'jour':
-        start_date = now - timedelta(days=1)
-    elif periode == 'semaine':
-        start_date = now - timedelta(weeks=1)
-    elif periode == 'mois':
-        start_date = now - timedelta(days=30)
-    else:
-        start_date = None  # Pour 'total', on ne filtre pas par date
-    if start_date:
-        filtered_entrees = Entree.objects.filter(magasin_id=magasin_id, date_creation__gte=start_date)
-        filtered_sorties = Sortie.objects.filter(magasin_id=magasin_id, date_creation__gte=start_date)
-    else:
-        filtered_entrees = Entree.objects.filter(magasin_id=magasin_id)
-        filtered_sorties = Sortie.objects.filter(magasin_id=magasin_id)
-    total_entrees = filtered_entrees.count()
-    total_sorties = filtered_sorties.count()
-    
-    #Ici j'aimerais calculer les pourcentages de chaque type de resultat par rapport à la periode passé, par exemple: pour les demandes totales de la periode jour on calcule pour voir par rapport au total des demandes de 
-    # la journée précedente qui est hier pour voir si on a une augmentation ou une diminution en pourcentage donc par exemple 20 de plus que hier ou 10 de moins que hier
-
-    stats = {
-        'total_sorties': total_entrees,
-        'total_sorties': total_sorties
-    }
-    return Response(stats)
