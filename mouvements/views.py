@@ -16,7 +16,6 @@ from django.db.models import Sum
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncHour
 from datetime import datetime, timedelta
 from stocks.models import Produit
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 
 
 
