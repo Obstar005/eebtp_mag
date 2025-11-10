@@ -419,73 +419,13 @@ def stats_mouvements_magasin(request, magasin_id, periode): #Web
     return Response(stats)
 
 #Pour le graphe d'entrees de stock
-@extend_schema(
-    tags=["Statistiques"],
-    summary="Statistiques des fluctuations des entrées d’un article",
-    description=(
-        "Cette route permet de récupérer les fluctuations (quantités totales par période) "
-        "des **entrées** d’un article précis (lié à un `StockItem`) dans un projet donné. "
-        "On peut filtrer par **type d’entrée** et par **période** (jour, semaine, mois, projet)."
-    ),
-    parameters=[
-        OpenApiParameter(
-            name="projet_id",
-            description="Identifiant du projet concerné",
-            required=True,
-            type=int,
-            location=OpenApiParameter.PATH,
-        ),
-        OpenApiParameter(
-            name="type_entree",
-            description="Type d’entrée (ex: 'livraison', 'achat', 'don', etc.)",
-            required=True,
-            type=str,
-            location=OpenApiParameter.PATH,
-        ),
-        OpenApiParameter(
-            name="periode",
-            description="Période d’analyse : `jour`, `semaine`, `mois`, `projet`",
-            required=True,
-            type=str,
-            location=OpenApiParameter.PATH,
-            enum=["jour", "semaine", "mois", "projet"],
-        ),
-        OpenApiParameter(
-            name="produit_id",
-            description="Identifiant du StockItem (article du magasin) à analyser",
-            required=True,
-            type=int,
-            location=OpenApiParameter.PATH,
-        ),
-    ],
-    responses={
-        200: OpenApiExample(
-            "Réponse réussie",
-            value={
-                "projet": "Projet Lomé",
-                "article": "Ciment 50kg",
-                "magasin": "Magasin Central",
-                "type_entree": "livraison",
-                "periode": "semaine",
-                "fluctuations": [
-                    {"date": "2025-11-03", "quantite_totale": 150.0},
-                    {"date": "2025-11-05", "quantite_totale": 300.0}
-                ]
-            },
-            summary="Exemple de succès"
-        ),
-        400: OpenApiExample(
-            "Erreur de validation",
-            value={"error": "Période invalide."},
-            summary="Période non reconnue"
-        ),
-        404: OpenApiExample(
-            "Projet ou article introuvable",
-            value={"error": "Projet introuvable."},
-            summary="Projet inexistant"
-        ),
-    },
-)
+# @swagger_auto_schema(method='get',
+#                         operation_description="Récupérer quelques statistiques sur les demandes, Nombre total de demandes(total_demandes), " \
+#                         "Nombre de demandes par statut(demandes_par_statut), nombre de demandes en attente de validation(demandes_en_attente_validation)"
+#                         "et les demandes traitéées (validées et rejetées) et (demandes_traitées) selon une période: jour, semaine, mois, total",
+#                         manual_parameters=[
+#                             openapi.Parameter('projet_id', 'type_entree', 'periode', 'produit_id', openapi.IN_PATH, description="Id du projet, Type d'entrée:(Livraison, Retour), Période pour les statistiques: (jour, semaine, mois, projet), L'id du projet", type='Int et String',)
+#                         ])
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def stats_fluctuations_entrees(request, projet_id, type_entree, periode, produit_id):
