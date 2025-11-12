@@ -418,13 +418,73 @@ def stats_mouvements_magasin(request, magasin_id, periode): #Web
     return Response(stats)
 
 #Pour le graphe d'entrees de stock
-# @swagger_auto_schema(method='get',
-#                         operation_description="Récupérer quelques statistiques sur les demandes, Nombre total de demandes(total_demandes), " \
-#                         "Nombre de demandes par statut(demandes_par_statut), nombre de demandes en attente de validation(demandes_en_attente_validation)"
-#                         "et les demandes traitéées (validées et rejetées) et (demandes_traitées) selon une période: jour, semaine, mois, total",
-#                         manual_parameters=[
-#                             openapi.Parameter('projet_id', 'type_entree', 'periode', 'produit_id', openapi.IN_PATH, description="Id du projet, Type d'entrée:(Livraison, Retour), Période pour les statistiques: (jour, semaine, mois, projet), L'id du projet", type='Int et String',)
-#                         ])
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Obtenir les fluctuations des entrées d’un article",
+    operation_description=(
+        "Cet endpoint renvoie les **quantités totales entrées** pour un article précis "
+        "(lié à un `StockItem`) dans un projet donné. "
+        "Les résultats sont regroupés selon la **période** demandée : "
+        "`jour`, `semaine`, `mois` ou `projet` (depuis le début)."
+    ),
+    manual_parameters=[
+        openapi.Parameter(
+            'projet_id', openapi.IN_PATH,
+            description="Identifiant du projet concerné",
+            type=openapi.TYPE_INTEGER,
+            required=True,
+            example=3
+        ),
+        openapi.Parameter(
+            'type_entree', openapi.IN_PATH,
+            description="Type d’entrée (par ex. 'Livraison' ou 'Retour')",
+            type=openapi.TYPE_STRING,
+            required=True,
+            enum=["Livraison", "Retour"],
+            example="Livraison"
+        ),
+        openapi.Parameter(
+            'periode', openapi.IN_PATH,
+            description="Période d’analyse (`jour`, `semaine`, `mois`, `projet`)",
+            type=openapi.TYPE_STRING,
+            required=True,
+            enum=["jour", "semaine", "mois", "projet"],
+            example="semaine"
+        ),
+        openapi.Parameter(
+            'produit_id', openapi.IN_PATH,
+            description="Identifiant du StockItem (article du magasin à analyser)",
+            type=openapi.TYPE_INTEGER,
+            required=True,
+            example=12
+        ),
+    ],
+    responses={
+        200: openapi.Response(
+            description="Statistiques récupérées avec succès",
+            examples={
+                "application/json": {
+                    "projet": "Projet Lomé",
+                    "periode": "semaine",
+                    "article": "Ciment",
+                    "type_entree": "Livraison",
+                    "donnees": [
+                        {"date": "2025-11-01", "quantite_totale": 120.0},
+                        {"date": "2025-11-03", "quantite_totale": 80.0}
+                    ]
+                }
+            }
+        ),
+        # 400: openapi.Response(
+        #     description="Requête invalide",
+        #     examples={"application/json": {"error": "Période invalide."}}
+        # ),
+        # 404: openapi.Response(
+        #     description="Projet ou article introuvable",
+        #     examples={"application/json": {"error": "Projet introuvable."}}
+        # ),
+    }
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def stats_fluctuations_entrees(request, projet_id, type_entree, periode, produit_id):
@@ -496,8 +556,156 @@ def stats_fluctuations_entrees(request, projet_id, type_entree, periode, produit
         })
 
     response_data = {
+        'projet': projet.nom,
         'periode': periode,
+        'article': stock_item.produit.designation,
         'type': type_entree,
+        'unite': stock_item.produit.unite,
+        'donnees': data
+    }
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+#Pour le graphe des fluctuations des sorties de stocks
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Obtenir les fluctuations des entrées d’un article",
+    operation_description=(
+        "Cet endpoint renvoie les **quantités totales entrées** pour un article précis "
+        "(lié à un `StockItem`) dans un projet donné. "
+        "Les résultats sont regroupés selon la **période** demandée : "
+        "`jour`, `semaine`, `mois` ou `projet` (depuis le début)."
+    ),
+    manual_parameters=[
+        openapi.Parameter(
+            'projet_id', openapi.IN_PATH,
+            description="Identifiant du projet concerné",
+            type=openapi.TYPE_INTEGER,
+            required=True,
+            example=3
+        ),
+        openapi.Parameter(
+            'type_entree', openapi.IN_PATH,
+            description="Type d’entrée (par ex. 'Livraison' ou 'Retour')",
+            type=openapi.TYPE_STRING,
+            required=True,
+            enum=["Livraison", "Retour"],
+            example="Livraison"
+        ),
+        openapi.Parameter(
+            'periode', openapi.IN_PATH,
+            description="Période d’analyse (`jour`, `semaine`, `mois`, `projet`)",
+            type=openapi.TYPE_STRING,
+            required=True,
+            enum=["jour", "semaine", "mois", "projet"],
+            example="semaine"
+        ),
+        openapi.Parameter(
+            'produit_id', openapi.IN_PATH,
+            description="Identifiant du StockItem (article du magasin à analyser)",
+            type=openapi.TYPE_INTEGER,
+            required=True,
+            example=12
+        ),
+    ],
+    responses={
+        200: openapi.Response(
+            description="Statistiques récupérées avec succès",
+            examples={
+                "application/json": {
+                    "projet": "Projet Lomé",
+                    "periode": "semaine",
+                    "article": "Ciment",
+                    "unite": "Litre",
+                    "donnees": [
+                        {"date": "2025-11-01", "quantite_totale": 120.0},
+                        {"date": "2025-11-03", "quantite_totale": 80.0}
+                    ]
+                }
+            }
+        ),
+        # 400: openapi.Response(
+        #     description="Requête invalide",
+        #     examples={"application/json": {"error": "Période invalide."}}
+        # ),
+        # 404: openapi.Response(
+        #     description="Projet ou article introuvable",
+        #     examples={"application/json": {"error": "Projet introuvable."}}
+        # ),
+    }
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def stats_fluctuations_sorties(request, projet_id, periode, produit_id):
+    try:
+        projet = Projet.objects.get(pk=projet_id)
+    except Projet.DoesNotExist:
+        return Response({'error': 'Projet introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    try:
+        magasin_id = Magasin.objects.get(projet=projet)
+    except Magasin.DoesNotExist:
+        return Response({'error': 'Magasin introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # magasin_id = Magasin.objects.filter(projet=projet)
+    #On voit si l'article existe et s'il est dans ce magasin
+    try:
+        stock_item = StockItem.objects.select_related('produit', 'magasin').get(pk=produit_id)
+    except StockItem.DoesNotExist:
+        return Response({'error': 'Article introuvable dans le stock.'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Vérifier que le StockItem appartient bien à un magasin de ce projet
+    if stock_item.magasin.projet_id != projet.id:
+        return Response(
+            {'error': "Cet article n'appartient pas à un magasin de ce projet."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+    now = timezone.now()
+    # Choisir la fonction de regroupement selon la période
+    if periode == 'jour':
+        start_date = now - timedelta(days=1)
+        trunc = TruncDay('date_creation')
+    elif periode == 'semaine':
+        trunc = TruncDay('date_creation')
+        start_date = now - timedelta(days=7)
+    elif periode == 'mois':
+        trunc = TruncDay('date_creation')
+        start_date = now - timedelta(days=31)
+    elif periode == 'projet':
+        trunc = TruncMonth('date_creation')  # tout le projet → regrouper par mois
+        start_date = projet.date_creation
+    else:
+        return Response({'error': 'Période invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+        # Récupérer toutes les entrées du projet (tous les magasins du projet)
+    sorties = Sortie.objects.filter(
+        magasin_id=magasin_id,
+        is_active=True,
+        date_creation__gte=start_date,
+        stock_item=stock_item
+    )
+
+    # Annoter les données
+    stats = (
+        sorties.annotate(date_group=trunc)
+        .values('stock_item__produit__designation', 'date_group')
+        .annotate(total_quantite=Sum('quantite_m'))
+        .order_by('stock_item__produit__designation', 'date_group')
+    )
+
+    # Structurer la réponse
+    data = []
+    for s in stats:
+        data.append({
+            'date': s['date_group'].strftime('%Y-%m-%d'),
+            'quantite_totale': float(s['total_quantite'] or 0)
+        })
+
+    response_data = {
+        'projet': projet.nom,
+        'periode': periode,
         'article': stock_item.produit.designation,
         'unite': stock_item.produit.unite,
         'donnees': data

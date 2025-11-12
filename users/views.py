@@ -422,7 +422,7 @@ def login_by_phone_web(request):
     # notifier_utilisateurs([user], "Connexion Réussie", "Vous vous êtes connecté avec succès au système.")
 
     return Response(
-        {"message": "Connexion réussie.", 'access_token': str(refresh.access_token), "first_login": first, "refresh_token": str(refresh)}, status=status.HTTP_200_OK)
+        {"message": "Connexion réussie.", 'access_token': str(refresh.access_token), "refresh_token": str(refresh), "first_login": first, 'profil': user.profil.libelle}, status=status.HTTP_200_OK)
 
 #Vue pour authentifier un utilisateur par son numero de telephone sur mobile
 @swagger_auto_schema(

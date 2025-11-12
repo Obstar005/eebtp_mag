@@ -229,3 +229,63 @@ def stock_statistics(request, magasin_id, unite):
     }
 
     return Response(statistics, status=status.HTTP_200_OK)
+
+#Pour avoir les etats de stocks de chaque article dans un magasin
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def stats_quantite_stocks(request, projet_id, produit_id):
+    try:
+        projet = Projet.objects.get(pk=projet_id)
+    except Projet.DoesNotExist:
+        return Response({'error': 'Projet introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    try:
+        magasin_id = Magasin.objects.get(projet=projet)
+    except Magasin.DoesNotExist:
+        return Response({'error': 'Magasin introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # magasin_id = Magasin.objects.filter(projet=projet)
+    #On voit si l'article existe et s'il est dans ce magasin
+    try:
+        stock_item = StockItem.objects.select_related('produit', 'magasin').get(pk=produit_id)
+    except StockItem.DoesNotExist:
+        return Response({'error': 'Article introuvable dans le stock.'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Vérifier que le StockItem appartient bien à un magasin de ce projet
+    if stock_item.magasin.projet_id != projet.id:
+        return Response(
+            {'error': "Cet article n'appartient pas à un magasin de ce projet."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    
+        # Récupérer toutes les entrées du projet (tous les magasins du projet)
+    articles = StockItem.objects.filter(
+        magasin_id=magasin_id,
+        is_active=True,
+    )
+
+    # Annoter les données
+    stats = (
+        articles
+        .values('stock_item__produit__designation', 'date_group')
+        # .annotate(total_quantite=Sum('quantite_m'))
+        .order_by('stock_item__produit__designation', 'date_group')
+    )
+
+    # Structurer la réponse
+    data = []
+    for s in stats:
+        data.append({
+            'date': s['date_group'].strftime('%Y-%m-%d'),
+            'quantite_totale': float(s['total_quantite'] or 0)
+        })
+
+    response_data = {
+        # 'periode': periode,
+        'article': stock_item.produit.designation,
+        'unite': stock_item.produit.unite,
+        'donnees': data
+    }
+
+    return Response(response_data, status=status.HTTP_200_OK)
