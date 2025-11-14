@@ -25,7 +25,9 @@ export class MouvementsApiService {
         "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
       );
       console.log("📊 MouvementsApiService.getFluctuationEntree()");
-      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log(
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      );
 
       console.log("\n🔹 PARAMÈTRES D'APPEL:");
       console.log(`   projet_id: ${projetId} (type: ${typeof projetId})`);
@@ -47,7 +49,11 @@ export class MouvementsApiService {
       console.log("\n📋 ANALYSE DE LA STRUCTURE:");
       console.log(`   Type de response.data: ${typeof response.data}`);
       console.log(`   Est un tableau? ${Array.isArray(response.data)}`);
-      console.log(`   Longueur: ${Array.isArray(response.data) ? response.data.length : "N/A"}`);
+      console.log(
+        `   Longueur: ${
+          Array.isArray(response.data) ? response.data.length : "N/A"
+        }`
+      );
 
       if (response.data) {
         if (typeof response.data === "object") {
@@ -104,7 +110,9 @@ export class MouvementsApiService {
         if (response) {
           console.error(`   Status HTTP: ${response.status}`);
           console.error(`   Status Text: ${response.statusText}`);
-          console.error(`   Méthode: ${response.config?.method?.toUpperCase()}`);
+          console.error(
+            `   Méthode: ${response.config?.method?.toUpperCase()}`
+          );
           console.error(`   URL: ${response.config?.url}`);
           console.error(`\n   Réponse d'erreur:`);
           console.error(JSON.stringify(response.data, null, 2));
@@ -138,7 +146,9 @@ export class MouvementsApiService {
         "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
       );
       console.log("📊 MouvementsApiService.getFluctuationSortie()");
-      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log(
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      );
 
       console.log("\n🔹 PARAMÈTRES D'APPEL:");
       console.log(`   projet_id: ${projetId}`);

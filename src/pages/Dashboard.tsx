@@ -56,9 +56,13 @@ export function Dashboard() {
         );
 
         console.log("\n✨ RÉSUMÉ DE LA STRUCTURE RETOURNÉE:");
-        console.log(`   Type: ${Array.isArray(dataEntree) ? "Tableau" : "Objet"}`);
         console.log(
-          `   Éléments: ${Array.isArray(dataEntree) ? dataEntree.length : "N/A"}`
+          `   Type: ${Array.isArray(dataEntree) ? "Tableau" : "Objet"}`
+        );
+        console.log(
+          `   Éléments: ${
+            Array.isArray(dataEntree) ? dataEntree.length : "N/A"
+          }`
         );
 
         // Afficher un petit résumé de ce qu'on a
@@ -69,17 +73,19 @@ export function Dashboard() {
         } else if (typeof dataEntree === "object" && dataEntree !== null) {
           const dataKeys = Object.keys(dataEntree as Record<string, unknown>);
           console.log(
-            `   └─ Objet avec clés: [${dataKeys.join(", ")}] (voir détails ci-dessus)`
+            `   └─ Objet avec clés: [${dataKeys.join(
+              ", "
+            )}] (voir détails ci-dessus)`
           );
         }
       } catch (error) {
         console.log("\n⚠️  ERREUR LORS DU TEST");
-        console.log(
-          "   Les IDs utilisés (1, 1) n'existent probablement pas."
-        );
+        console.log("   Les IDs utilisés (1, 1) n'existent probablement pas.");
         console.log("\n� POUR CORRIGER:");
         console.log("   1. Allez à la page Projets et notez un project_id");
-        console.log("   2. Allez à la page Articles/Produits et notez un produit_id");
+        console.log(
+          "   2. Allez à la page Articles/Produits et notez un produit_id"
+        );
         console.log(
           "   3. Modifiez les constantes PROJECT_ID et PRODUIT_ID ci-dessus"
         );

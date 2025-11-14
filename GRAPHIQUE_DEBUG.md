@@ -7,22 +7,26 @@ Comprendre comment l'API retourne les données de fluctuation d'entrées/sorties
 ## 🌐 Endpoints API
 
 ### 1. Fluctuation d'Entrées
+
 ```
 GET /Mouvements/graphe-fluctuations-entrees/{projet_id}/{type_entree}/{periode}/{produit_id}
 ```
 
 **Paramètres:**
+
 - `projet_id` : ID du projet (nombre)
 - `type_entree` : Type d'entrée (string, ex: "entree", "depot")
 - `periode` : Période (string: "jour", "semaine", "mois", "total")
 - `produit_id` : ID du produit (nombre)
 
 ### 2. Fluctuation de Sorties
+
 ```
 GET /Mouvements/graphe-fluctuations-sorties/{projet_id}/{periode}/{produit_id}
 ```
 
 **Paramètres:**
+
 - `projet_id` : ID du projet
 - `periode` : Période (string)
 - `produit_id` : ID du produit
@@ -34,12 +38,14 @@ GET /Mouvements/graphe-fluctuations-sorties/{projet_id}/{periode}/{produit_id}
 ### Étape 1 : Trouver des IDs valides
 
 **Pour trouver un project_id valide:**
+
 1. Allez à la page "Projets"
 2. Ouvrez la console (F12)
 3. Cherchez les logs qui affichent les IDs des projets
 4. Notez un ID (ex: 5, 12, etc.)
 
 **Pour trouver un produit_id valide:**
+
 1. Allez à la page "Articles" ou "Produits"
 2. Ouvrez la console
 3. Cherchez les logs qui affichent les IDs
@@ -50,10 +56,10 @@ GET /Mouvements/graphe-fluctuations-sorties/{projet_id}/{periode}/{produit_id}
 Ouvrez `src/pages/Dashboard.tsx` et modifiez les constantes de test:
 
 ```typescript
-const PROJECT_ID = 5;        // ← Changez 1 par votre ID projet
+const PROJECT_ID = 5; // ← Changez 1 par votre ID projet
 const TYPE_ENTREE = "entree";
 const PERIODE = "jour";
-const PRODUIT_ID = 12;       // ← Changez 1 par votre ID produit
+const PRODUIT_ID = 12; // ← Changez 1 par votre ID produit
 ```
 
 ### Étape 3 : Rafraîchir et Observer
@@ -150,6 +156,7 @@ const PRODUIT_ID = 12;       // ← Changez 1 par votre ID produit
 Basé sur la documentation API, la réponse sera probablement:
 
 ### Format 1 : Tableau d'objets
+
 ```typescript
 [
   {
@@ -164,10 +171,11 @@ Basé sur la documentation API, la réponse sera probablement:
     type: "entree",
   },
   // ... plus d'éléments
-]
+];
 ```
 
 ### Format 2 : Objet avec labels et datasets
+
 ```typescript
 {
   labels: ["14/11", "13/11", "12/11", ...],
@@ -182,6 +190,7 @@ Basé sur la documentation API, la réponse sera probablement:
 ```
 
 ### Format 3 : Objet avec données agrégées
+
 ```typescript
 {
   total: 5000,
@@ -201,14 +210,17 @@ Basé sur la documentation API, la réponse sera probablement:
 Quand vous voyez les logs, cherchez:
 
 1. **Type de la réponse**
+
    - Tableau? → Utilisez `.map()` pour itérer
    - Objet? → Accessibilité par clés directes
 
 2. **Clés principales**
+
    - Quels noms de champs? (date, valeur, type, etc.)
    - Quels types? (string, number, boolean, etc.)
 
 3. **Nombre d'éléments**
+
    - Si c'est un tableau, combien d'éléments?
    - Représentent-ils des jours? des semaines?
 
@@ -241,15 +253,16 @@ Pour tester manuellement dans la console du navigateur:
 import { mouvementsApiService } from "./services/api";
 
 // 2. Appeler l'endpoint avec des IDs valides
-mouvementsApiService.getFluctuationEntree(5, "entree", "jour", 12)
-  .then(data => {
+mouvementsApiService
+  .getFluctuationEntree(5, "entree", "jour", 12)
+  .then((data) => {
     console.log("Succès!", data);
     console.log("Type:", Array.isArray(data) ? "Tableau" : "Objet");
     if (Array.isArray(data)) {
       console.log("Premier élément:", data[0]);
     }
   })
-  .catch(err => console.error("Erreur:", err));
+  .catch((err) => console.error("Erreur:", err));
 
 // 3. Observer les logs détaillés dans la console
 ```
@@ -278,10 +291,9 @@ export type FluctuationEntreeResponse = FluctuationData[];
 
 ## ⚠️ Problèmes Courants
 
-| Problème | Cause | Solution |
-|----------|-------|----------|
-| 404 Not Found | IDs invalides | Chercher des IDs valides dans l'app |
-| 500 Server Error | Erreur serveur | Vérifier l'API est accessible |
-| Données nulles | Pas de mouvements pour cette période | Essayer une période plus longue (mois, total) |
-| Structure différente | API retourne format inconnu | Examiner les logs en détail |
-
+| Problème             | Cause                                | Solution                                      |
+| -------------------- | ------------------------------------ | --------------------------------------------- |
+| 404 Not Found        | IDs invalides                        | Chercher des IDs valides dans l'app           |
+| 500 Server Error     | Erreur serveur                       | Vérifier l'API est accessible                 |
+| Données nulles       | Pas de mouvements pour cette période | Essayer une période plus longue (mois, total) |
+| Structure différente | API retourne format inconnu          | Examiner les logs en détail                   |
