@@ -15,6 +15,49 @@ interface SimpleAuthFlowProps {
   onAuthSuccess: () => void;
 }
 
+const RenderPopup = ({
+  message,
+  onClose,
+}: {
+  message: string;
+  onClose: () => void;
+}) => {
+  setTimeout(() => {
+    onClose();
+  }, 3000);
+
+  return (
+    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+      <div className="bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3">
+        <div className="flex-shrink-0">
+          <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              fillRule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium">{message}</p>
+        </div>
+        <button
+          onClick={onClose}
+          className="flex-shrink-0 text-red-200 hover:text-white"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              fillRule="evenodd"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export function SimpleAuthFlow({ onAuthSuccess }: SimpleAuthFlowProps) {
   const { authState, updateAuthState } = useSimpleAuthState();
   const { login, refreshUserInfo } = useAuth();
@@ -47,15 +90,11 @@ export function SimpleAuthFlow({ onAuthSuccess }: SimpleAuthFlowProps) {
 
   // Étape 2 : Connexion avec mot de passe
   const handlePasswordSubmit = async (password: string) => {
-    console.log("🔄 handlePasswordSubmit - DÉBUT");
     try {
-      console.log("🔄 handlePasswordSubmit - Avant mutateAsync");
       const response = await loginMutation.mutateAsync({
         phone,
         password,
       });
-
-      console.log("✅ handlePasswordSubmit - Réponse reçue:", response);
 
       // Récupérer les vraies informations utilisateur depuis l'API
       await login(response.user, response.token);
@@ -65,19 +104,16 @@ export function SimpleAuthFlow({ onAuthSuccess }: SimpleAuthFlowProps) {
 
       // Vérifier si c'est la première connexion (first_login = is_firstlogin de l'API)
       if (response.first_login) {
-        console.log("🔄 handlePasswordSubmit - Première connexion détectée");
         updateAuthState({
           currentStep: "change_password",
         });
       } else {
-        console.log("🔄 handlePasswordSubmit - Connexion normale, succès");
         onAuthSuccess();
       }
     } catch (error) {
       console.log("❌ handlePasswordSubmit - ERREUR CAPTURÉE:", error);
       handleAuthError(error);
     }
-    console.log("🔄 handlePasswordSubmit - FIN");
   };
 
   // Étape 3 : Changement de mot de passe (première connexion)
@@ -112,13 +148,10 @@ export function SimpleAuthFlow({ onAuthSuccess }: SimpleAuthFlowProps) {
 
   // Gestion d'erreur avec vérification d'étape
   const handleAuthError = (error: unknown) => {
-    console.log("🚨 SimpleAuthFlow handleAuthError - Début");
     const errorMessage = getAuthErrorMessage(error);
-    console.log("📝 SimpleAuthFlow handleAuthError - Message:", errorMessage);
 
     // Gérer l'erreur localement au lieu de la passer au parent
     setErrorMessage(errorMessage);
-    console.log("✅ SimpleAuthFlow handleAuthError - Erreur gérée localement");
   };
 
   // Rendu conditionnel des pages
@@ -126,34 +159,10 @@ export function SimpleAuthFlow({ onAuthSuccess }: SimpleAuthFlowProps) {
     <div className="relative">
       {/* Notification d'erreur */}
       {errorMessage && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path
-                  fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium">{errorMessage}</p>
-            </div>
-            <button
-              onClick={() => setErrorMessage("")}
-              className="flex-shrink-0 text-red-200 hover:text-white"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path
-                  fillRule="evenodd"
-                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
+        <RenderPopup
+          message={errorMessage}
+          onClose={() => setErrorMessage("")}
+        />
       )}
 
       {/* Pages d'authentification */}

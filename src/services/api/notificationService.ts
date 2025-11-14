@@ -26,6 +26,18 @@ export class NotificationApiService {
       return notifications;
     } catch (error) {
       console.error("❌ Erreur getUserNotifications:", error);
+      // Si l'endpoint n'existe pas (404), retourner une liste vide plutôt que de faire échouer
+      if (
+        error &&
+        typeof error === "object" &&
+        "status" in error &&
+        error.status === 404
+      ) {
+        console.warn(
+          "⚠️ Endpoint historique-user non disponible, retour d'une liste vide"
+        );
+        return [];
+      }
       throw new Error("Impossible de récupérer les notifications");
     }
   }

@@ -1,8 +1,97 @@
 import React from "react";
 import { MoreHorizontal } from "lucide-react";
+import { mouvementsApiService } from "../services/api";
 
 export function Dashboard() {
   const [selectedPeriod, setSelectedPeriod] = React.useState("Jour");
+
+  // 🔧 Débogage: Tester l'endpoint de fluctuation au chargement
+  React.useEffect(() => {
+    const testFluctuationEndpoint = async () => {
+      try {
+        console.log("\n");
+        console.log(
+          "╔════════════════════════════════════════════════════════════════╗"
+        );
+        console.log(
+          "║                                                                ║"
+        );
+        console.log(
+          "║       🔍 DÉBOGAGE - ENDPOINTS GRAPHIQUE DU DASHBOARD          ║"
+        );
+        console.log(
+          "║                                                                ║"
+        );
+        console.log(
+          "╚════════════════════════════════════════════════════════════════╝"
+        );
+
+        // IMPORTANT: Adapter ces IDs selon vos données!
+        // Chercher des IDs valides dans:
+        // 1. Page des Projets → noter un project ID
+        // 2. Page des Produits/Articles → noter un product ID
+        const PROJECT_ID = 1; // ← À remplacer avec un ID projet valide
+        const TYPE_ENTREE = "entree"; // Types possibles: entree, depot, etc.
+        const PERIODE = "jour"; // Périodes: jour, semaine, mois, total
+        const PRODUIT_ID = 1; // ← À remplacer avec un ID produit valide
+
+        console.log("\n📌 IDS DE TEST UTILISÉS:");
+        console.log(`   project_id: ${PROJECT_ID}`);
+        console.log(`   type_entree: ${TYPE_ENTREE}`);
+        console.log(`   periode: ${PERIODE}`);
+        console.log(`   produit_id: ${PRODUIT_ID}`);
+        console.log(
+          "\n💡 CONSEIL: Si vous obtenez 404, trouvez des IDs valides!"
+        );
+
+        console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        console.log("� TEST 1: Fluctuation d'entrées");
+        console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+        const dataEntree = await mouvementsApiService.getFluctuationEntree(
+          PROJECT_ID,
+          TYPE_ENTREE,
+          PERIODE,
+          PRODUIT_ID
+        );
+
+        console.log("\n✨ RÉSUMÉ DE LA STRUCTURE RETOURNÉE:");
+        console.log(`   Type: ${Array.isArray(dataEntree) ? "Tableau" : "Objet"}`);
+        console.log(
+          `   Éléments: ${Array.isArray(dataEntree) ? dataEntree.length : "N/A"}`
+        );
+
+        // Afficher un petit résumé de ce qu'on a
+        if (Array.isArray(dataEntree)) {
+          console.log(
+            `   └─ Tableau avec ${dataEntree.length} éléments (voir détails ci-dessus)`
+          );
+        } else if (typeof dataEntree === "object" && dataEntree !== null) {
+          const dataKeys = Object.keys(dataEntree as Record<string, unknown>);
+          console.log(
+            `   └─ Objet avec clés: [${dataKeys.join(", ")}] (voir détails ci-dessus)`
+          );
+        }
+      } catch (error) {
+        console.log("\n⚠️  ERREUR LORS DU TEST");
+        console.log(
+          "   Les IDs utilisés (1, 1) n'existent probablement pas."
+        );
+        console.log("\n� POUR CORRIGER:");
+        console.log("   1. Allez à la page Projets et notez un project_id");
+        console.log("   2. Allez à la page Articles/Produits et notez un produit_id");
+        console.log(
+          "   3. Modifiez les constantes PROJECT_ID et PRODUIT_ID ci-dessus"
+        );
+        console.log("   4. Rafraîchissez la page (F5) et vérifiez la console");
+      }
+
+      console.log("\n");
+    };
+
+    testFluctuationEndpoint();
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* Header avec titre et filtres */}

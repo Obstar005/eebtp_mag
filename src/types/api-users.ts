@@ -21,7 +21,7 @@ export interface ApiCustomUser {
   is_active: boolean;
   date_creation: string; // ISO datetime
   date_modif: string; // ISO datetime
-  profil: number;
+  profil?: number; // Peut être undefined
   groups: number[];
   user_permissions: number[];
 }

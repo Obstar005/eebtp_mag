@@ -15,7 +15,6 @@ import {
   Plus,
   User,
   LogOut,
-  Bell,
 } from "lucide-react";
 import logoPng from "../../assets/logo_eebtp.png";
 import { useAuth } from "../../contexts/AuthContext";
@@ -249,7 +248,13 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
 
             {/* Déconnexion */}
             <button
-              onClick={logout}
+              onClick={async () => {
+                try {
+                  await logout();
+                } catch (error) {
+                  console.error("❌ Erreur lors de la déconnexion:", error);
+                }
+              }}
               className="flex-shrink-0 p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
               title="Se déconnecter"
               aria-label="Se déconnecter"

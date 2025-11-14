@@ -58,6 +58,9 @@ export interface ApiUpdateProjetRequest {
   pays?: string;
   comptes?: number[];
   is_active?: boolean;
+  // Champs pour la mise à jour du magasin associé
+  nom_magasin?: string;
+  adresse_magasin?: string;
 }
 
 export interface ApiCreateMagasinRequest {

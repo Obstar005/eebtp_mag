@@ -95,17 +95,60 @@ function convertCountryNameToCode(countryName: string | undefined): string {
 export async function apiUserToAccount(
   apiUser: ApiCustomUser
 ): Promise<Account> {
-  // Vérifier et tracer les données API
-  console.log("🔍 apiUserToAccount: Données API reçues:", {
-    id: apiUser.id,
-    username: apiUser.username,
-    first_name: apiUser.first_name,
-    last_name: apiUser.last_name,
-    profil: apiUser.profil,
-  });
-
   // Convertir le nom de pays en code
   const countryCode = convertCountryNameToCode(apiUser.nationality);
+
+  // Vérifier si le profil existe avant de faire la requête
+  if (!apiUser.profil) {
+    console.warn(
+      "⚠️ apiUserToAccount: Aucun profil défini pour l'utilisateur",
+      apiUser.id
+    );
+
+    // Vérifier que l'ID de l'utilisateur existe
+    if (!apiUser.id) {
+      console.error(
+        "❌ apiUserToAccount: ID de l'utilisateur manquant",
+        apiUser
+      );
+      throw new Error("Impossible de créer un compte sans ID d'utilisateur");
+    }
+
+    // Fallback avec un profil par défaut
+    const defaultProfile: Profile = {
+      id: "0",
+      nom: "Profil non défini",
+      description: "Aucun profil assigné",
+    };
+
+    const account: Account = {
+      id: apiUser.id.toString(),
+      code: `CPT-${apiUser.id.toString().padStart(3, "0")}`,
+      nom: apiUser.last_name,
+      prenoms: apiUser.first_name,
+      nom_utilisateur: apiUser.username,
+      date_naissance: apiUser.birth_date || "",
+      nationalite: countryCode,
+      mot_de_passe: "",
+      type: apiUser.type as AccountType,
+      telephone: apiUser.telephone,
+      photo_profil: apiUser.photo_profil,
+      is_active: apiUser.is_active,
+      date_creation: apiUser.date_creation,
+      date_modification: apiUser.date_modif,
+      derniere_connexion: apiUser.last_login,
+      profile_id: "0",
+      profile: defaultProfile,
+    };
+
+    return account;
+  }
+
+  // Vérifier que l'ID de l'utilisateur existe avant de continuer
+  if (!apiUser.id) {
+    console.error("❌ apiUserToAccount: ID de l'utilisateur manquant", apiUser);
+    throw new Error("Impossible de créer un compte sans ID d'utilisateur");
+  }
 
   try {
     // Récupérer les détails du profil depuis l'API
@@ -137,12 +180,9 @@ export async function apiUserToAccount(
       date_creation: apiUser.date_creation,
       date_modification: apiUser.date_modif,
       derniere_connexion: apiUser.last_login,
-      profile_id: apiUser.profil.toString(),
+      profile_id: apiUser.profil ? apiUser.profil.toString() : "0",
       profile: profile, // Inclure l'objet profile complet
     };
-
-    // Tracer l'objet compte résultant
-    console.log("🔄 apiUserToAccount: Compte transformé:", account);
 
     return account;
   } catch (error) {
@@ -151,9 +191,18 @@ export async function apiUserToAccount(
       error
     );
 
+    // Vérifier que l'ID de l'utilisateur existe avant le fallback
+    if (!apiUser.id) {
+      console.error(
+        "❌ apiUserToAccount (fallback): ID de l'utilisateur manquant",
+        apiUser
+      );
+      throw new Error("Impossible de créer un compte sans ID d'utilisateur");
+    }
+
     // Fallback avec un profil par défaut
     const defaultProfile: Profile = {
-      id: apiUser.profil.toString(),
+      id: apiUser.profil ? apiUser.profil.toString() : "0",
       nom: "Profil non trouvé",
       description: "Profil non disponible",
     };
@@ -174,7 +223,7 @@ export async function apiUserToAccount(
       date_creation: apiUser.date_creation,
       date_modification: apiUser.date_modif,
       derniere_connexion: apiUser.last_login,
-      profile_id: apiUser.profil.toString(),
+      profile_id: apiUser.profil ? apiUser.profil.toString() : "0",
       profile: defaultProfile,
     };
 
@@ -183,6 +232,35 @@ export async function apiUserToAccount(
 }
 
 export async function apiUserToUser(apiUser: ApiCustomUser): Promise<User> {
+  // Vérifier si le profil existe avant de faire la requête
+  if (!apiUser.profil) {
+    console.warn(
+      "⚠️ apiUserToUser: Aucun profil défini pour l'utilisateur",
+      apiUser.id
+    );
+
+    // Fallback vers 'magasinier' si aucun profil n'est défini
+    const finalProfil = UserProfil.MAGASINIER;
+
+    return {
+      id: apiUser.id.toString(),
+      email: apiUser.email,
+      phone: apiUser.telephone,
+      firstName:
+        apiUser.first_name === "ADMIN" ? apiUser.surname : apiUser.first_name,
+      lastName:
+        apiUser.first_name === "ADMIN" ? apiUser.username : apiUser.last_name,
+      profil: finalProfil,
+      profileId: 0, // ID par défaut
+      isActive: apiUser.is_active || false,
+      isPhoneVerified: true, // Assumé vrai si l'utilisateur existe
+      isEmailVerified: false, // Par défaut
+      hasCompletedSetup: !!apiUser.last_login, // Si l'utilisateur s'est déjà connecté, il a terminé la configuration
+      createdAt: apiUser.date_creation || new Date().toISOString(),
+      updatedAt: apiUser.date_modif || new Date().toISOString(),
+    };
+  }
+
   try {
     // Récupérer les détails du profil depuis l'API directement
     const response = await apiClient.get<ApiProfil>(
@@ -195,12 +273,6 @@ export async function apiUserToUser(apiUser: ApiCustomUser): Promise<User> {
 
     // Fallback vers 'magasinier' si le mapping échoue
     const finalProfil = userProfil || UserProfil.MAGASINIER;
-
-    console.log("🔄 apiUserToUser: Mapping profil", {
-      profileId: apiUser.profil,
-      libelle: apiProfil.libelle,
-      mappedProfil: finalProfil,
-    });
 
     return {
       id: apiUser.id.toString(),
@@ -232,11 +304,11 @@ export async function apiUserToUser(apiUser: ApiCustomUser): Promise<User> {
       firstName: apiUser.first_name,
       lastName: apiUser.last_name,
       profil: UserProfil.MAGASINIER, // Profil par défaut en cas d'erreur
-      profileId: apiUser.profil,
+      profileId: apiUser.profil || 0, // ID par défaut si undefined
       isActive: apiUser.is_active,
       isPhoneVerified: true,
       isEmailVerified: !!apiUser.email,
-      hasCompletedSetup: true,
+      hasCompletedSetup: !!apiUser.last_login, // Si l'utilisateur s'est déjà connecté
       createdAt: apiUser.date_creation,
       updatedAt: apiUser.date_modif,
     };
@@ -643,7 +715,7 @@ export function updateProjetDataToApiUpdateProjet(
 
   console.log("👥 Utilisateurs associés au projet:", userIds);
 
-  return {
+  const apiData: ApiUpdateProjetRequest = {
     id: data.id,
     creator: data.chef_projet_user_id,
     nom: data.name,
@@ -654,6 +726,19 @@ export function updateProjetDataToApiUpdateProjet(
     comptes: userIds, // Liste de tous les IDs d'utilisateurs associés
     is_active: true,
   };
+
+  // Ajouter les données du premier magasin pour mise à jour
+  if (data.magasins && data.magasins.length > 0) {
+    const premierMagasin = data.magasins[0];
+    apiData.nom_magasin = premierMagasin.name;
+    apiData.adresse_magasin = premierMagasin.adresse || "";
+    console.log("🏪 Magasin ajouté à la requête de mise à jour:", {
+      nom_magasin: apiData.nom_magasin,
+      adresse_magasin: apiData.adresse_magasin,
+    });
+  }
+
+  return apiData;
 }
 
 // Frontend → API : Transformer CreateMagasinData vers ApiCreateMagasinRequest

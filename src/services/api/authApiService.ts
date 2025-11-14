@@ -8,6 +8,7 @@ import {
   updateAccountDataToApiUser,
   apiLoginResponseToAuthResponse,
 } from "./api-transformers";
+import { debugApiResponse, validateApiUser } from "../../utils/debugUtils";
 import type {
   ApiCustomUser,
   ApiProfil,
@@ -70,23 +71,32 @@ export class AuthApiService {
     } catch (error: unknown) {
       console.error("Erreur checkUserExists:", error);
 
-      // Gérer le cas spécifique 404 = utilisateur n'existe pas
+      // Gérer les erreurs HTTP 4xx et 5xx
       if (error && typeof error === "object" && "response" in error) {
         const axiosError = error as {
           response?: { status: number; data: Record<string, unknown> };
         };
-        if (axiosError.response?.status === 404) {
-          const errorData = axiosError.response.data;
-          if (
-            errorData?.["L'utilisateur n'existe pas dans le système"] === false
-          ) {
-            return {
-              exists: false,
-              userId: undefined,
-              message:
-                "Ce numéro de téléphone n'est pas enregistré dans le système",
-            };
-          }
+        const status = axiosError.response?.status;
+
+        // 404 ou tout autre 4xx = erreur client, ne pas continuer
+        if (status === 404) {
+          throw new Error(
+            "Ce numéro de téléphone n'est pas enregistré dans le système"
+          );
+        }
+
+        if (status && status >= 400 && status < 500) {
+          const errorMessage =
+            (axiosError.response?.data as Record<string, unknown>)?.message ||
+            `Erreur ${status}`;
+          throw new Error(errorMessage as string);
+        }
+
+        // 5xx = erreur serveur
+        if (status && status >= 500) {
+          throw new Error(
+            "Erreur serveur. Veuillez réessayer dans quelques instants."
+          );
         }
       }
 
@@ -258,6 +268,18 @@ export class AuthApiService {
     };
     return this.mockService.simpleSetupAccount(adaptedData);
   }
+
+  // Déconnecter l'utilisateur en invalidant son token JWT
+  async logout(): Promise<void> {
+    try {
+      await apiClient.post("/Users/authentication/logout/");
+    } catch (error) {
+      console.warn(
+        "⚠️ Erreur lors de la déconnexion API (non-bloquant):",
+        error
+      );
+    }
+  }
 }
 
 // Service pour la gestion des utilisateurs
@@ -347,6 +369,29 @@ export class UserApiService {
           "✅ Utilisateur créé avec succès avec image:",
           response.data
         );
+        console.log("🔍 Structure complète de la réponse API (avec image):", {
+          status: response.status,
+          hasData: !!response.data,
+          dataKeys: Object.keys(response.data || {}),
+          userId: response.data?.id,
+          userIdType: typeof response.data?.id,
+        });
+
+        // Validation de la réponse API
+        const validation = validateApiUser(response.data);
+        if (!validation.isValid) {
+          console.error(
+            "❌ Validation de l'utilisateur créé (avec image) échouée:",
+            validation
+          );
+        } else {
+          console.log(
+            "✅ Validation de l'utilisateur créé (avec image) réussie"
+          );
+        }
+
+        debugApiResponse(response.data, "Utilisateur créé (avec image)");
+
         return await apiUserToAccount(response.data);
       } else {
         // Si pas d'image, utiliser JSON standard
@@ -356,6 +401,27 @@ export class UserApiService {
         );
 
         console.log("✅ Utilisateur créé avec succès:", response.data);
+        console.log("🔍 Structure complète de la réponse API:", {
+          status: response.status,
+          hasData: !!response.data,
+          dataKeys: Object.keys(response.data || {}),
+          userId: response.data?.id,
+          userIdType: typeof response.data?.id,
+        });
+
+        // Validation de la réponse API
+        const validation = validateApiUser(response.data);
+        if (!validation.isValid) {
+          console.error(
+            "❌ Validation de l'utilisateur créé échouée:",
+            validation
+          );
+        } else {
+          console.log("✅ Validation de l'utilisateur créé réussie");
+        }
+
+        debugApiResponse(response.data, "Utilisateur créé (sans image)");
+
         return await apiUserToAccount(response.data);
       }
     } catch (error) {

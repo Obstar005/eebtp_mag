@@ -8,7 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (user: User, token: string) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshUserInfo: () => Promise<void>;
 }
 
@@ -84,12 +84,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
         "Erreur lors de la récupération des infos utilisateur:",
         error
       );
-      // En cas d'erreur, déconnecter l'utilisateur
-      logout();
+      // En cas d'erreur, déconnecter l'utilisateur localement
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("user_data");
+      setUser(null);
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Appeler l'endpoint de déconnexion sur l'API
+    await authApiService.logout();
+
+    // Supprimer le token et les données utilisateur du stockage local
     localStorage.removeItem("auth_token");
     localStorage.removeItem("user_data");
     setUser(null);

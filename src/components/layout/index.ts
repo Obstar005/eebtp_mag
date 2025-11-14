@@ -4,3 +4,4 @@ export { Sidebar } from "./Sidebar";
 export { Modal, ModalButton } from "./Modal";
 export { ConfirmationModal } from "./ConfirmationModal";
 export { FormModal } from "./FormModal";
+export { UserHistoriqueSection } from "./UserHistoriqueSection";

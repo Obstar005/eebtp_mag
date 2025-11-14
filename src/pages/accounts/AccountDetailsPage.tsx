@@ -5,10 +5,11 @@ import {
   ArrowLeft,
   Eye,
   EyeOff,
-  MoreHorizontal,
   Edit2Icon,
 } from "lucide-react";
 import { useAccount, useDeleteAccount } from "../../hooks";
+import { useAuth } from "../../contexts/AuthContext";
+import { UserHistoriqueSection } from "../../components/layout/UserHistoriqueSection";
 
 // Fonction utilitaire pour obtenir le chemin du drapeau à partir du code de pays
 const getFlagPath = (countryCode: string): string => {
@@ -40,10 +41,14 @@ export function AccountDetailsPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   const { data: account, isLoading, error } = useAccount(id!);
+  const { user: currentUser } = useAuth();
   const deleteAccountMutation = useDeleteAccount();
 
   const deleteModal = useModal();
   const editModal = useModal();
+
+  // Vérifier si c'est le profil de l'utilisateur connecté
+  const isOwnProfile = currentUser?.id === account?.id;
 
   if (isLoading) {
     return (
@@ -248,43 +253,9 @@ export function AccountDetailsPage() {
             </div>
           </div>
         </div>
-        {/* Section Activités */}
-        <div className="bg-white rounded-lg shadow flex-1">
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Activités</h3>
-              <input
-                type="date"
-                defaultValue="2025-07-10"
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-              />
-            </div>
-          </div>
-          <div className="p-6">
-            <div className="flex items-center space-x-4 p-4 bg-blue-50 rounded-lg">
-              <div className="flex-shrink-0">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs font-semibold">D</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-medium text-gray-900">
-                  Demande d'appro de ciment
-                </h4>
-                <p className="text-xs text-gray-500">Activité récente</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs font-semibold">0</span>
-                </div>
-                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                  <div className="w-6 h-6 bg-white rounded-full"></div>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Section Historique des activités - visible uniquement si c'est le profil de l'utilisateur */}
+        <div className="flex-1">
+          <UserHistoriqueSection isOwnProfile={isOwnProfile} />
         </div>
         {/* Bouton Voir le projet associé */}
         <button className="fixed bottom-10 right-10 w-max min-w-48 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 flex items-center justify-center">

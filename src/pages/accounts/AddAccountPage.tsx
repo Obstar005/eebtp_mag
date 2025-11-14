@@ -167,8 +167,6 @@ export function AddAccountPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Soumission du formulaire avec les données:", formData);
-
     // Marquer tous les champs comme touchés pour montrer toutes les erreurs
     setFieldsTouched({
       nom_utilisateur: true,
@@ -203,7 +201,6 @@ export function AddAccountPage() {
           selectedPhoneCountry.code
         );
         formData.telephone = fullPhoneNumber;
-        console.log("Numéro de téléphone formaté:", fullPhoneNumber);
       }
     } else {
       setError("Veuillez sélectionner un pays pour le téléphone");
@@ -219,14 +216,27 @@ export function AddAccountPage() {
         : "",
     };
 
-    console.log("Données préparées pour l'API:", submissionData);
-
     try {
-      const result = await createAccountMutation.mutateAsync(submissionData);
-      console.log("Compte créé avec succès:", result);
+      await createAccountMutation.mutateAsync(submissionData);
+
       navigate("/accounts");
     } catch (error) {
       console.error("Erreur lors de la création du compte:", error);
+
+      // Vérifier si l'erreur est liée à un ID manquant
+      if (
+        error instanceof Error &&
+        error.message.includes("sans ID d'utilisateur")
+      ) {
+        setError(
+          "Le compte a été créé mais l'ID est manquant. Redirection vers la liste des comptes..."
+        );
+        // Attendre un peu puis rediriger vers la liste
+        setTimeout(() => {
+          navigate("/accounts");
+        }, 2000);
+        return;
+      }
 
       // Extraction des messages d'erreur spécifiques de l'API
       // Utiliser une approche sûre au niveau du typage

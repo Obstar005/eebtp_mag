@@ -8,7 +8,7 @@
     "license": { "name": "BSD License" },
     "version": "v3.7"
   },
-  "host": "185.197.195.209:8000",
+  "host": "38.242.139.218:8001",
   "schemes": ["http"],
   "basePath": "/",
   "consumes": ["application/json"],
@@ -35,10 +35,10 @@
       },
       "parameters": []
     },
-    "/App/historique-user": {
+    "/App/historique-user/{periode}": {
       "get": {
-        "operationId": "App_historique-user_list",
-        "description": "Récupérer l'historique des actions de l'utilisateur connecté, en passant le token de l'utilisateur dans les en-têtes.",
+        "operationId": "App_historique-user_read",
+        "description": "Récupérer l'historique des actions de l'utilisateur connecté, en passant le token de l'utilisateur dans les en-têtes. Optionnellement, filtrer par période ('jour', 'semaine', 'mois', 'total').",
         "parameters": [],
         "responses": {
           "200": {
@@ -51,7 +51,9 @@
         },
         "tags": ["App"]
       },
-      "parameters": []
+      "parameters": [
+        { "name": "periode", "in": "path", "required": true, "type": "string" }
+      ]
     },
     "/Demandes/demande/approuver/{id}": {
       "post": {
@@ -388,6 +390,164 @@
       },
       "parameters": [
         { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Mouvements/graphe-fluctuations-entrees/{projet_id}/{type_entree}/{periode}/{produit_id}": {
+      "get": {
+        "operationId": "Mouvements_graphe-fluctuations-entrees_read",
+        "summary": "Obtenir les fluctuations des entrées d’un article",
+        "description": "Cet endpoint renvoie les **quantités totales entrées** pour un article précis (lié à un `StockItem`) dans un projet donné. Les résultats sont regroupés selon la **période** demandée : `jour`, `semaine`, `mois` ou `projet` (depuis le début).",
+        "parameters": [
+          {
+            "name": "projet_id",
+            "in": "path",
+            "description": "Identifiant du projet concerné",
+            "required": true,
+            "type": "integer",
+            "example": 3
+          },
+          {
+            "name": "type_entree",
+            "in": "path",
+            "description": "Type d’entrée (par ex. 'Livraison' ou 'Retour')",
+            "required": true,
+            "type": "string",
+            "enum": ["Livraison", "Retour"],
+            "example": "Livraison"
+          },
+          {
+            "name": "periode",
+            "in": "path",
+            "description": "Période d’analyse (`jour`, `semaine`, `mois`, `projet`)",
+            "required": true,
+            "type": "string",
+            "enum": ["jour", "semaine", "mois", "projet"],
+            "example": "semaine"
+          },
+          {
+            "name": "produit_id",
+            "in": "path",
+            "description": "Identifiant du StockItem (article du magasin à analyser)",
+            "required": true,
+            "type": "integer",
+            "example": 12
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Statistiques récupérées avec succès",
+            "examples": {
+              "application/json": {
+                "projet": "Projet Lomé",
+                "periode": "semaine",
+                "article": "Ciment",
+                "type_entree": "Livraison",
+                "donnees": [
+                  { "date": "2025-11-01", "quantite_totale": 120.0 },
+                  { "date": "2025-11-03", "quantite_totale": 80.0 }
+                ]
+              }
+            }
+          }
+        },
+        "tags": ["Mouvements"]
+      },
+      "parameters": [
+        {
+          "name": "projet_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "type_entree",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        { "name": "periode", "in": "path", "required": true, "type": "string" },
+        {
+          "name": "produit_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/Mouvements/graphe-fluctuations-sorties/{projet_id}/{periode}/{produit_id}": {
+      "get": {
+        "operationId": "Mouvements_graphe-fluctuations-sorties_read",
+        "summary": "Obtenir les fluctuations des entrées d’un article",
+        "description": "Cet endpoint renvoie les **quantités totales entrées** pour un article précis (lié à un `StockItem`) dans un projet donné. Les résultats sont regroupés selon la **période** demandée : `jour`, `semaine`, `mois` ou `projet` (depuis le début).",
+        "parameters": [
+          {
+            "name": "projet_id",
+            "in": "path",
+            "description": "Identifiant du projet concerné",
+            "required": true,
+            "type": "integer",
+            "example": 3
+          },
+          {
+            "name": "type_entree",
+            "in": "path",
+            "description": "Type d’entrée (par ex. 'Livraison' ou 'Retour')",
+            "required": true,
+            "type": "string",
+            "enum": ["Livraison", "Retour"],
+            "example": "Livraison"
+          },
+          {
+            "name": "periode",
+            "in": "path",
+            "description": "Période d’analyse (`jour`, `semaine`, `mois`, `projet`)",
+            "required": true,
+            "type": "string",
+            "enum": ["jour", "semaine", "mois", "projet"],
+            "example": "semaine"
+          },
+          {
+            "name": "produit_id",
+            "in": "path",
+            "description": "Identifiant du StockItem (article du magasin à analyser)",
+            "required": true,
+            "type": "integer",
+            "example": 12
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Statistiques récupérées avec succès",
+            "examples": {
+              "application/json": {
+                "projet": "Projet Lomé",
+                "periode": "semaine",
+                "article": "Ciment",
+                "unite": "Litre",
+                "donnees": [
+                  { "date": "2025-11-01", "quantite_totale": 120.0 },
+                  { "date": "2025-11-03", "quantite_totale": 80.0 }
+                ]
+              }
+            }
+          }
+        },
+        "tags": ["Mouvements"]
+      },
+      "parameters": [
+        {
+          "name": "projet_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        { "name": "periode", "in": "path", "required": true, "type": "string" },
+        {
+          "name": "produit_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
       ]
     },
     "/Mouvements/liste-entree-magasin/{magasin_id}": {
@@ -1104,6 +1264,27 @@
           "required": true,
           "type": "string"
         }
+      ]
+    },
+    "/Stocks/stats/{magasin_id}/{unite}": {
+      "get": {
+        "operationId": "Stocks_stats_read",
+        "description": "Récupérer les statistiques des articles dans un magasin. Valeurs pour le champ unite: litre, kg, m3, unite, m, autre",
+        "parameters": [],
+        "responses": {
+          "200": { "description": "OK" },
+          "404": { "description": "Not Found" }
+        },
+        "tags": ["Stocks"]
+      },
+      "parameters": [
+        {
+          "name": "magasin_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        { "name": "unite", "in": "path", "required": true, "type": "string" }
       ]
     },
     "/Stocks/stock-item-create": {

@@ -487,15 +487,11 @@ export function AddEditProjectPage() {
           ...formDataWithComptes,
         };
         await updateProjetMutation.mutateAsync(updateData);
-        console.log("✅ Projet mis à jour, ID:", projetId);
       } else {
-        console.log("🚀 Création d'un nouveau projet...");
         const newProjet = await createProjetMutation.mutateAsync(
           formDataWithComptes
         );
         console.log("📋 Réponse complète de l'API:", newProjet);
-        console.log("🔍 ID du nouveau projet:", newProjet?.id);
-        console.log("🔍 Type de l'ID:", typeof newProjet?.id);
 
         if (newProjet && newProjet.id) {
           savedProjetId = newProjet.id;

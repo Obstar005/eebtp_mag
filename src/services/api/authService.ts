@@ -125,9 +125,6 @@ export class AuthService {
     try {
       // Utiliser le service API et transformer la réponse
       const authResponse = await authApiService.loginByPhone(data);
-
-      console.log("authResponse:", authResponse);
-
       return {
         success: true,
         user: authResponse.user,
