@@ -8,6 +8,7 @@ urlpatterns = [
     path('profil-detail/<int:pk>', views.get_profil, name='get_profil'),
     path('profil-update/<int:pk>', views.update_profil, name='update_profil'),
     path('profil-delete/<int:pk>', views.delete_profil, name='delete_profil'),
+    path('profil-supp/<int:pk>', views.supp_profil, name='delete_profil'),
 
     #Pour les utilisateurs
     path('liste-users', views.list_users, name='list_users'),

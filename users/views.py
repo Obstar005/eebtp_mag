@@ -132,6 +132,22 @@ def delete_profil(request, pk):
         return Response({'message': 'Profil désactivé avec succès.'}, status=status.HTTP_200_OK)
     except Profil.DoesNotExist:
         return Response({'error': 'Profil introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+    
+@swagger_auto_schema(
+    method='delete',
+    operation_description="Supprimer un utilisateur",
+    responses={204: 'Supprimé avec succès'}
+)
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def supp_profil(request, pk):
+    try:
+        profil = Profil.objects.get(pk=pk)
+        profil.delete()
+        enregistrer_action(request.user, 'suppression', 'A désactivé un profil dans le système.', f"Profil #{profil.id}")
+        return Response({'message': 'Profil supprimé avec succès.'}, status=status.HTTP_200_OK)
+    except Profil.DoesNotExist:
+        return Response({'error': 'Profil introuvable.'}, status=status.HTTP_404_NOT_FOUND)
 
 # Users
 # Fonctionnalités CRUD pour les utilisateurs

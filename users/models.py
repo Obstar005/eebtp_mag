@@ -6,7 +6,7 @@ from datetime import timedelta
 
 
 class Profil(models.Model):
-    libelle = models.CharField(max_length=100)
+    libelle = models.CharField(max_length=100, unique=True)
     description = models.TextField()
     is_active = models.BooleanField(default=True)
     date_creation = models.DateTimeField(auto_now_add=True)
