@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ProjetService {
-  final String baseUrl = 'http://185.197.195.209:8000';
+  final String baseUrl = 'http://38.242.139.218:8001';
 
 // GET /Projets/liste-magasins-by-projet/{id}
 Future<Map<String, dynamic>> getMagasinsByProjet(int id, String token) async {
@@ -16,6 +16,10 @@ Future<Map<String, dynamic>> getMagasinsByProjet(int id, String token) async {
   return _handleResponse(response);
 }
 
+Future<dynamic> getMagasinDetail(int id) async {
+    final response = await http.get(Uri.parse('$baseUrl/Projets/magasin-detail/$id'));
+    return _handleResponse(response);
+  }
 
   // GET /Projets/liste-photos-by-projet/{id}
   Future<List<dynamic>> getPhotosByProjet(int id) async {

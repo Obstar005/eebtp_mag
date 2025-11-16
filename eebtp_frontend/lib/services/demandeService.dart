@@ -3,7 +3,7 @@ import 'package:eebtp_frontend/models/demande.dart';
 import 'package:http/http.dart' as http;
 
 class DemandeService {
-  static const String baseUrl = 'http://185.197.195.209:8000';
+  static const String baseUrl = 'http://38.242.139.218:8001';
 
   /// 🔹 Récupérer la liste des demandes émises par le magasinier connecté
 Future<List<Demande>> getDemandesEmises(String token) async {

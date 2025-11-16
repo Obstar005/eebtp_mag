@@ -9,6 +9,7 @@ import 'package:sizer/sizer.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:eebtp_frontend/providers/auth_provider.dart';
+import 'package:toastification/toastification.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -20,47 +21,149 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   late Future<Utilisateur> _futureUser;
 
- @override
-void initState() {
-  super.initState();
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (mounted) {
-      Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
-    }
-  });
-
-  final token = context.read<AuthProvider>().token;
-  if (token != null) {
-    _futureUser = UserService().getUserInfo(token);
-  } else {
+  @override
+  void initState() {
+    super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Navigator.pushReplacementNamed(context, '/login');
+      if (mounted) {
+        Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
+      }
     });
-  }
-}
 
+    final token = context.read<AuthProvider>().token;
+    if (token != null) {
+      _futureUser = UserService().getUserInfo(token);
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, '/login');
+      });
+    }
+  }
+
+  void _showToast({
+    required String message,
+    required ToastificationType type,
+  }) {
+    toastification.show(
+      context: context,
+      type: type,
+      style: ToastificationStyle.flatColored,
+      title: Text(
+        message,
+        style: GoogleFonts.poppins(
+          fontSize: 13.sp,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      autoCloseDuration: const Duration(seconds: 3),
+      alignment: Alignment.topCenter,
+      animationDuration: const Duration(milliseconds: 300),
+      animationBuilder: (context, animation, alignment, child) {
+        return ScaleTransition(
+          scale: animation,
+          child: child,
+        );
+      },
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x07000000),
+          blurRadius: 16,
+          offset: Offset(0, 16),
+          spreadRadius: 0,
+        )
+      ],
+      showProgressBar: true,
+      closeButtonShowType: CloseButtonShowType.onHover,
+      closeOnClick: false,
+      pauseOnHover: true,
+      dragToClose: true,
+      applyBlurEffect: true,
+    );
+  }
 
   Future<void> _pickImage(bool fromCamera) async {
     final token = context.read<AuthProvider>().token;
-    if (token == null) return;
+    if (token == null) {
+      _showToast(
+        message: "Session expirée, veuillez vous reconnecter",
+        type: ToastificationType.error,
+      );
+      return;
+    }
 
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(
-      source: fromCamera ? ImageSource.camera : ImageSource.gallery,
-    );
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: fromCamera ? ImageSource.camera : ImageSource.gallery,
+      );
 
-    if (pickedFile != null) {
-      final success =
-          await UserService().updateProfilePicture(token, pickedFile.path);
-      if (success && mounted) {
-        setState(() {
-          _futureUser = UserService().getUserInfo(token);
-        });
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Photo de profil mise à jour !")),
+      if (pickedFile != null) {
+        // Afficher un indicateur de chargement
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF007AFF),
+              ),
+            ),
+          );
+        }
+
+        // Récupérer l'ID utilisateur depuis AuthProvider
+        final currentUser = context.read<AuthProvider>().user;
+        
+        if (currentUser?.id == null) {
+          // Fermer l'indicateur de chargement
+          if (mounted) {
+            Navigator.pop(context);
+          }
+          _showToast(
+            message: "Erreur: ID utilisateur manquant",
+            type: ToastificationType.error,
+          );
+          return;
+        }
+
+        final success = await UserService().updateProfilePicture(
+          token,
+          currentUser!.id!,
+          pickedFile.path,
         );
+
+        // Fermer l'indicateur de chargement
+        if (mounted) {
+          Navigator.pop(context);
+        }
+
+        if (success && mounted) {
+          setState(() {
+            _futureUser = UserService().getUserInfo(token);
+          });
+          Navigator.pop(context); // Fermer le bottom sheet
+          _showToast(
+            message: "Photo de profil mise à jour avec succès",
+            type: ToastificationType.success,
+          );
+        } else {
+          _showToast(
+            message: "Erreur lors de la mise à jour de la photo",
+            type: ToastificationType.error,
+          );
+        }
       }
+    } catch (e) {
+      // Fermer l'indicateur de chargement si ouvert
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+      _showToast(
+        message: "Erreur lors de la sélection de l'image",
+        type: ToastificationType.error,
+      );
+      print('Erreur _pickImage: $e');
     }
   }
 
@@ -78,7 +181,6 @@ void initState() {
       );
     }
 
-    // --------------- Correction: Utilise MediaQuery pour la responsivité ---------------
     final screenHeight = MediaQuery.of(context).size.height;
 
     double avatarSize = 35.w;
@@ -91,7 +193,6 @@ void initState() {
       bottomSpace = 3.h;
       btnSpace = 2.h;
     }
-    // ----------------
 
     return NavContainer(
       initialIndex: 3,
@@ -246,6 +347,10 @@ void initState() {
                                   : Image.network(
                                       user.photoProfil!,
                                       fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Image.asset(
+                                        "assets/profile.png",
+                                        fit: BoxFit.cover,
+                                      ),
                                     ),
                             ),
                           ),
@@ -401,66 +506,66 @@ void initState() {
     );
   }
 
-void _showLogoutDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    barrierColor: Colors.black.withOpacity(0.5),
-    builder: (context) => BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
-      child: AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4.w),
-        ),
-        title: Center(
-          child: Text(
-            "Déconnexion",
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w700,
-              fontFamily: "Montserrat",
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4.w),
+          ),
+          title: Center(
+            child: Text(
+              "Déconnexion",
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w700,
+                fontFamily: "Montserrat",
+              ),
             ),
           ),
-        ),
-        content: Text(
-          "Souhaitez-vous vous déconnecter ?",
-          style: TextStyle(fontSize: 14.sp, fontFamily: "Montserrat"),
-        ),
-        actionsPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8), // ajustable
-        actions: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              CustomElevatedButton(
-                text: "NON",
-                backgroundColor: Colors.white,
-                textColor: const Color.fromARGB(255, 0, 0, 0),
-                onPressed: () => Navigator.pop(context),
-                width: 30.w,
-                outlined: true,
-              ),
-              SizedBox(width: 14),
-              CustomElevatedButton(
-                text: "OUI",
-                backgroundColor: const Color(0xFFFF3B30),
-                textColor: Colors.white,
-                onPressed: () {
-                  Navigator.pop(context);
-                  context.read<AuthProvider>().clear();
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/login',
-                    (route) => false,
-                  );
-                },
-                width: 30.w,
-              ),
-            ],
+          content: Text(
+            "Souhaitez-vous vous déconnecter ?",
+            style: TextStyle(fontSize: 14.sp, fontFamily: "Montserrat"),
           ),
-        ],
+          actionsPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          actions: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                CustomElevatedButton(
+                  text: "NON",
+                  backgroundColor: Colors.white,
+                  textColor: const Color.fromARGB(255, 0, 0, 0),
+                  onPressed: () => Navigator.pop(context),
+                  width: 30.w,
+                  outlined: true,
+                ),
+                SizedBox(width: 14),
+                CustomElevatedButton(
+                  text: "OUI",
+                  backgroundColor: const Color(0xFFFF3B30),
+                  textColor: Colors.white,
+                  onPressed: () {
+                    Navigator.pop(context);
+                    context.read<AuthProvider>().clear();
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/login',
+                      (route) => false,
+                    );
+                  },
+                  width: 30.w,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 // ----------- Clipper Top -----------

@@ -17,6 +17,7 @@ class Entree {
   final String nomLivreur;
   final String telLivreur;
   final String? signatureLivreur;
+  final int? demande_source;
   final bool isActive;
   final int? makeBy;
 
@@ -39,6 +40,7 @@ class Entree {
     required this.nomLivreur,
     required this.telLivreur,
     this.signatureLivreur,
+    this.demande_source,
     required this.isActive,
     this.makeBy,
   });
@@ -63,6 +65,7 @@ class Entree {
       nomLivreur: json['nom_livreur'] ?? '',
       telLivreur: json['tel_livreur'] ?? '',
       signatureLivreur: json['signature_livreur'],
+      demande_source: json['demande_source'],
       isActive: json['is_active'] ?? true,
       makeBy: json['make_by'],
     );
@@ -82,6 +85,7 @@ class Entree {
       'tel_societe': telSociete,
       'nom_livreur': nomLivreur,
       'tel_livreur': telLivreur,
+      'demande_source': demande_source,
       'is_active': isActive,
     };
   }

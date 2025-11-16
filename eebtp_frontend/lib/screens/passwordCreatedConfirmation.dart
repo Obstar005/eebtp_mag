@@ -35,31 +35,38 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     final String phone = args['phone'];
 
     // Responsive sizing based on Sizer
-    double topPad = 2.h;
+    final screenHeight = MediaQuery.of(context).size.height;
+    
+    // Ajustement dynamique selon la hauteur de l'écran
+    double topPad = screenHeight < 600 ? 1.h : 2.h;
     double fieldFont = 12.sp;
     double titleFont = 17.sp;
     double errorIcon = 16.sp;
-    double smallGap = 1.2.h;
-    double largeGap = 2.5.h;
-    double imageSize = 22.h;
+    double smallGap = screenHeight < 600 ? 0.8.h : 1.2.h;
+    double largeGap = screenHeight < 600 ? 1.5.h : 2.5.h;
+    double imageSize = screenHeight < 600 ? 12.h : 22.h; // ✅ Réduit sur petits écrans
 
     return Scaffold(
       backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.5.h),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: 50.h,
-                maxWidth: 90.w,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: 6.w,
+                vertical: 1.5.h,
               ),
-              child: IntrinsicHeight(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 3.h,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(height: topPad),
+                    
+                    // Bouton retour
                     Align(
                       alignment: Alignment.centerLeft,
                       child: IconButton(
@@ -81,6 +88,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                         },
                       ),
                     ),
+                    
+                    // Image SVG - toujours visible
                     Center(
                       child: SvgPicture.asset(
                         'assets/Floor.svg',
@@ -89,6 +98,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       ),
                     ),
                     SizedBox(height: smallGap),
+                    
+                    // Titre
                     Text(
                       "Modifier votre mot de passe",
                       style: GoogleFonts.poppins(
@@ -98,6 +109,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       ),
                     ),
                     SizedBox(height: 0.8.h),
+                    
+                    // Sous-titre
                     Text(
                       "Saisissez votre nouveau mot de passe",
                       style: GoogleFonts.poppins(
@@ -106,7 +119,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       ),
                     ),
                     SizedBox(height: smallGap),
+                    
+                    // Encadré d'instructions
                     Container(
+                      width: double.infinity,
                       padding: EdgeInsets.all(3.w),
                       decoration: BoxDecoration(
                         color: const Color(0xFFEAF2FF),
@@ -125,6 +141,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       ),
                     ),
                     SizedBox(height: largeGap),
+                    
+                    // Champs de saisie
                     CustomInputField(
                       controller: oldPassController,
                       hintText: "Ancien mot de passe",
@@ -135,6 +153,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       },
                     ),
                     SizedBox(height: smallGap),
+                    
                     CustomInputField(
                       controller: newPassController,
                       hintText: "Nouveau mot de passe",
@@ -145,6 +164,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       },
                     ),
                     SizedBox(height: smallGap),
+                    
                     CustomInputField(
                       controller: confirmPassController,
                       hintText: "Confirmer le mot de passe",
@@ -154,69 +174,89 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                         setState(() => _obscurePass = !_obscurePass);
                       },
                     ),
+                    
+                    // Message d'erreur
                     if (_errorMessage != null) ...[
                       SizedBox(height: 1.h),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(Icons.error_outline, color: Colors.red, size: errorIcon),
-                          SizedBox(width: 2.w),
-                          Expanded(
-                            child: Text(
-                              _errorMessage!,
-                              style: GoogleFonts.poppins(
-                                fontSize: fieldFont * .98,
-                                color: Colors.red,
+                      Container(
+                        width: double.infinity,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.error_outline, color: Colors.red, size: errorIcon),
+                            SizedBox(width: 2.w),
+                            Expanded(
+                              child: Text(
+                                _errorMessage!,
+                                style: GoogleFonts.poppins(
+                                  fontSize: fieldFont * .98,
+                                  color: Colors.red,
+                                ),
+                                softWrap: true,
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                     SizedBox(height: largeGap),
-                    CustomElevatedButton(
-                      text: 'Suivant',
-                      backgroundColor: const Color(0xFF007AFF),
-                      textColor: Colors.white,
-                      onPressed: () async {
-                        final oldPass = oldPassController.text.trim();
-                        final newPass = newPassController.text.trim();
-                        final confirmPass = confirmPassController.text.trim();
-                        if (!_validatePassword(newPass)) return;
-                        if (newPass != confirmPass) {
-                          setState(() {
-                            _errorMessage = "Les mots de passe ne correspondent pas";
-                          });
-                          return;
-                        }
-                        final success = await _userService.setPassword(
-                          phone: phone,
-                          oldPassword: oldPass,
-                          newPassword: newPass,
-                        );
-                        if (success) {
-                          _clearControllers();
-                          showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (BuildContext context) {
-                              return PasswordVerifiedModal(phone: phone);
-                            },
+                    
+                    // Bouton
+                    Center(
+                      child: CustomElevatedButton(
+                        text: 'Suivant',
+                        backgroundColor: const Color(0xFF007AFF),
+                        textColor: Colors.white,
+                        onPressed: () async {
+                          final oldPass = oldPassController.text.trim();
+                          final newPass = newPassController.text.trim();
+                          final confirmPass = confirmPassController.text.trim();
+                          
+                          if (!_validatePassword(newPass)) return;
+                          
+                          if (newPass != confirmPass) {
+                            setState(() {
+                              _errorMessage = "Les mots de passe ne correspondent pas";
+                            });
+                            return;
+                          }
+                          
+                          final success = await _userService.setPassword(
+                            phone: phone,
+                            oldPassword: oldPass,
+                            newPassword: newPass,
                           );
-                        } else {
-                          setState(() {
-                            _errorMessage = "Échec de la mise à jour du mot de passe";
-                          });
-                        }
-                      },
-                      width: 72.w,
+                          
+                          if (success) {
+                            _clearControllers();
+                            if (mounted) {
+                              showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (BuildContext context) {
+                                  return PasswordVerifiedModal(phone: phone);
+                                },
+                              );
+                            }
+                          } else {
+                            setState(() {
+                              _errorMessage = "Échec de la mise à jour du mot de passe";
+                            });
+                          }
+                        },
+                        width: 72.w,
+                      ),
                     ),
-                    SizedBox(height: 2.h),
+                    
+                    // Espace supplémentaire en bas
+                    SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0 
+                        ? 2.h 
+                        : 4.h),
                   ],
                 ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
@@ -224,6 +264,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
   bool _validatePassword(String password) {
     setState(() => _errorMessage = null);
+    
     if (password.isEmpty) {
       setState(() => _errorMessage = "Veuillez saisir un mot de passe");
       return false;
@@ -244,6 +285,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       setState(() => _errorMessage = "Au moins un chiffre requis");
       return false;
     }
+    
     return true;
   }
 

@@ -20,6 +20,10 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
   List<Demande> _demandes = [];
   List<Demande> _filteredDemandes = [];
   bool _isLoading = true;
+  
+  // Gestion des permissions
+  bool _hasPermissionError = false;
+  String _permissionErrorMessage = '';
 
   @override
   void initState() {
@@ -32,28 +36,117 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
     });
   }
 
- Future<void> _fetchDemandes() async {
-  final token = Provider.of<AuthProvider>(context, listen: false).token;
-  if (token == null) {
-    setState(() { _isLoading = false; });
-    return;
+  Future<void> _fetchDemandes() async {
+    final token = Provider.of<AuthProvider>(context, listen: false).token;
+    if (token == null) {
+      setState(() { _isLoading = false; });
+      return;
+    }
+
+    try {
+      final demandeService = DemandeService();
+      final demandes = await demandeService.getDemandesEmises(token);
+      
+      setState(() {
+        _demandes = demandes; 
+        _filteredDemandes = demandes;
+        _isLoading = false;
+        _hasPermissionError = false;
+      });
+    } catch (e) {
+      setState(() { _isLoading = false; });
+      print("Erreur chargement demandes: $e");
+      
+      // Vérifier si c'est une erreur de permission
+      String errorString = e.toString();
+      if (errorString.contains('permissions insuffisantes') || 
+          errorString.contains('Accès refusé') ||
+          errorString.contains('403')) {
+        setState(() {
+          _hasPermissionError = true;
+          _permissionErrorMessage = "Vous n'avez pas les permissions nécessaires pour accéder aux demandes. Contactez l'administrateur pour mettre à jour votre rôle.";
+        });
+        
+        // Afficher une boîte de dialogue informative
+        _showPermissionDialog();
+      } else {
+        _showToast(
+          message: 'Erreur lors du chargement des demandes', 
+          type: ToastificationType.error
+        );
+      }
+    }
   }
 
-  try {
-    final demandeService = DemandeService();
-    final demandes = await demandeService.getDemandesEmises(token);
-    
-    setState(() {
-      _demandes = demandes; 
-      _filteredDemandes = demandes;
-      _isLoading = false;
-    });
-  } catch (e) {
-    setState(() { _isLoading = false; });
-    print("Erreur chargement demandes: $e");
-    _showToast(message: 'Erreur lors du chargement des demandes', type: ToastificationType.error);
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.lock_outline, color: Color(0xFFFF9800), size: 28),
+              SizedBox(width: 2.w),
+              Expanded(
+                child: Text(
+                  "Accès restreint",
+                  style: GoogleFonts.poppins(
+                    fontSize: 17.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            "Vous n'avez pas les permissions nécessaires pour suivre vos demandes d'approvisionnement.\n\nVeuillez contacter l'administrateur pour mettre à jour votre rôle et obtenir les accès appropriés.",
+            style: GoogleFonts.poppins(
+              fontSize: 13.sp,
+              color: Colors.black87,
+              height: 1.4,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // Retourner à l'écran précédent
+              },
+              child: Text(
+                "Retour",
+                style: GoogleFonts.poppins(
+                  fontSize: 14.sp,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF007AFF),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                "J'ai compris",
+                style: GoogleFonts.poppins(
+                  fontSize: 14.sp,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
-}
+
   void _showToast({required String message, required ToastificationType type}) {
     toastification.show(
       context: context,
@@ -134,7 +227,6 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
     if (demande.dateValidation != null) return demande.dateValidation;
     if (demande.dateApprobation != null) return demande.dateApprobation;
     if (demande.dateConfirmation != null) return demande.dateConfirmation;
-    // if (demande.dateEmission != null) return demande.dateEmission;
     return null;
   }
 
@@ -364,6 +456,98 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
   }
 
   Widget _buildEmptyState() {
+    if (_hasPermissionError) {
+      // État spécifique pour erreur de permission
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8.w),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: EdgeInsets.all(4.w),
+                decoration: BoxDecoration(
+                  color: Color(0xFFFFF3E0),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.lock_outline, 
+                  size: 50.sp, 
+                  color: Color(0xFFFF9800)
+                ),
+              ),
+              SizedBox(height: 3.h),
+              Text(
+                "Accès restreint",
+                style: GoogleFonts.poppins(
+                  fontSize: 18.sp,
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w700,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 1.5.h),
+              Text(
+                "Vous n'avez pas les permissions nécessaires pour accéder à cette fonctionnalité.",
+                style: GoogleFonts.poppins(
+                  fontSize: 14.sp,
+                  color: Colors.grey[700],
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 2.h),
+              Container(
+                padding: EdgeInsets.all(3.w),
+                decoration: BoxDecoration(
+                  color: Color(0xFFE3F2FD),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Color(0xFF007AFF).withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Color(0xFF007AFF), size: 24),
+                    SizedBox(width: 3.w),
+                    Expanded(
+                      child: Text(
+                        "Contactez l'administrateur pour mettre à jour votre rôle et obtenir les accès appropriés.",
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.sp,
+                          color: Color(0xFF1565C0),
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 4.h),
+              ElevatedButton.icon(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: Icon(Icons.arrow_back, size: 20),
+                label: Text(
+                  "Retour",
+                  style: GoogleFonts.poppins(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF007AFF),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 1.8.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
+    // État vide normal (pas d'erreur de permission)
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

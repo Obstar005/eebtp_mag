@@ -17,14 +17,43 @@ class RequestDetailScreen extends StatefulWidget {
   State<RequestDetailScreen> createState() => _RequestDetailScreenState();
 }
 
-class _RequestDetailScreenState extends State<RequestDetailScreen> {
+class _RequestDetailScreenState extends State<RequestDetailScreen> with SingleTickerProviderStateMixin {
   String? _unite;
   bool _loadingUnite = false;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _slideAnimation;
+
+  // Couleurs modernes 2025
+  final Color _primaryBlue = const Color(0xFF0066FF);
+  final Color _surfaceColor = const Color(0xFFF8FAFF);
+  final Color _onSurface = const Color(0xFF1A1D21);
+  final Color _secondaryText = const Color(0xFF64748B);
+  final Color _successColor = const Color(0xFF10B981);
+  final Color _warningColor = const Color(0xFFF59E0B);
+  final Color _errorColor = const Color(0xFFEF4444);
 
   @override
   void initState() {
     super.initState();
     _fetchUnite();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
+    );
+    _slideAnimation = Tween<double>(begin: 30, end: 0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
+    );
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchUnite() async {
@@ -48,22 +77,20 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     }
   }
 
-  Color get primaryBlue => const Color(0xFF007AFF);
-
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'validée':
       case 'livrée':
-        return const Color(0xFF2ECC71);
+        return _successColor;
       case 'confirmée':
       case 'approuvée':
-        return primaryBlue;
+        return _primaryBlue;
       case 'emise':
-        return const Color(0xFFF59E42);
+        return _warningColor;
       case 'rejetée':
-        return const Color(0xFFFF4D4D);
+        return _errorColor;
       default:
-        return const Color(0xFF6C63FF);
+        return const Color(0xFF8B5CF6);
     }
   }
 
@@ -71,12 +98,12 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     switch (status.toLowerCase()) {
       case 'validée':
       case 'livrée':
-        return Icons.verified;
+        return Icons.verified_rounded;
       case 'confirmée':
       case 'approuvée':
         return Icons.thumb_up_alt_rounded;
       case 'emise':
-        return Icons.timelapse;
+        return Icons.pending_actions_rounded;
       case 'rejetée':
         return Icons.cancel_rounded;
       default:
@@ -86,7 +113,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
 
   String _getDisplayStatus(String status) {
     switch (status.toLowerCase()) {
-      case 'emise': return 'Emise';
+      case 'emise': return 'En attente';
       case 'confirmee': return 'Confirmée';
       case 'approuvee': return 'Approuvée';
       case 'validee': return 'Validée';
@@ -97,239 +124,468 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
   }
 
   Widget _buildAppBar(BuildContext context) {
-    return Material(
-      elevation: 0,
-      color: primaryBlue,
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.4.h),
-        child: Row(
-          children: [
-            GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _slideAnimation.value),
+          child: Opacity(
+            opacity: _fadeAnimation.value,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    _primaryBlue.withOpacity(0.95),
+                    _primaryBlue.withOpacity(0.85),
+                  ],
                 ),
-                padding: EdgeInsets.all(2.2.w),
-                child: Icon(Icons.arrow_back_ios_new, color: primaryBlue, size: 21),
+                boxShadow: [
+                  BoxShadow(
+                    color: _primaryBlue.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+                  child: Row(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(Icons.arrow_back_ios_new_rounded, 
+                              color: Colors.white, size: 18),
+                          splashRadius: 20,
+                        ),
+                      ),
+                      SizedBox(width: 3.w),
+                      Expanded(
+                        child: Text(
+                          "Détails de la demande",
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 18.sp,
+                            color: Colors.white,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          onPressed: () {},
+                          icon: Icon(Icons.share_rounded, 
+                              color: Colors.white, size: 20),
+                          splashRadius: 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-            SizedBox(width: 3.w),
-            Expanded(
-              child: Text(
-                "Détail de la demande",
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17.sp,
-                  color: Colors.white,
-                  letterSpacing: 0.16,
-                ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatusChip() {
+    final color = _getStatusColor(widget.demande.statut);
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _slideAnimation.value),
+          child: Opacity(
+            opacity: _fadeAnimation.value,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.2.h),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: color.withOpacity(0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(_getStatusIcon(widget.demande.statut), 
+                      color: color, size: 18),
+                  SizedBox(width: 2.w),
+                  Text(
+                    _getDisplayStatus(widget.demande.statut),
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12.sp,
+                      color: color,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildHeader() {
-    final color = _getStatusColor(widget.demande.statut);
-    return Container(
-      width: double.infinity,
-      color: Colors.white,
-      padding: EdgeInsets.only(top: 2.8.h, bottom: 2.h),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(_getStatusIcon(widget.demande.statut), color: color, size: 21),
-              SizedBox(width: 2.w),
-              Text(
-                _getDisplayStatus(widget.demande.statut),
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13.7.sp,
-                  color: color,
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _slideAnimation.value),
+          child: Opacity(
+            opacity: _fadeAnimation.value,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    _surfaceColor,
+                    _surfaceColor.withOpacity(0.8),
+                  ],
                 ),
               ),
-            ],
-          ),
-          SizedBox(height: 1.7.h),
-          Text(
-            widget.demande.stockItemName ?? 'Demande sans nom',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              fontSize: 19.5.sp,
-              color: Colors.black87,
-            ),
-          ),
-          SizedBox(height: 0.8.h),
-          Text(
-            "N° ${widget.demande.number}",
-            style: GoogleFonts.poppins(
-              fontSize: 12.8.sp,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow({required IconData icon, required String label, required String value, Color? color}) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 1.4.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(icon, color: color ?? primaryBlue, size: 18),
-          SizedBox(width: 3.w),
-          Expanded(
-            child: Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontSize: 12.5.sp,
-                color: Colors.grey[800],
-                fontWeight: FontWeight.w500,
+              child: Column(
+                children: [
+                  _buildStatusChip(),
+                  SizedBox(height: 2.h),
+                  Text(
+                    widget.demande.stockItemName ?? 'Demande sans nom',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 22.sp,
+                      color: _onSurface,
+                      height: 1.2,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  SizedBox(height: 1.h),
+                  Text(
+                    "Référence • ${widget.demande.number}",
+                    style: GoogleFonts.poppins(
+                      fontSize: 13.sp,
+                      color: _secondaryText,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-          SizedBox(width: 2.w),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: GoogleFonts.poppins(
-                fontSize: 13.2.sp,
-                color: Colors.black87,
-                fontWeight: FontWeight.w600,
-                height: 1.1,
-              ),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 2,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildInfoSection() {
-    final d = widget.demande;
+  Widget _buildInfoCard({required String title, required List<Widget> children}) {
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _slideAnimation.value),
+          child: Opacity(
+            opacity: _fadeAnimation.value,
+            child: Container(
+              width: double.infinity,
+              margin: EdgeInsets.only(bottom: 2.h),
+              padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.5.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 20,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15.sp,
+                      color: _onSurface,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  ...children,
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    Color? iconColor,
+    bool isLast = false,
+  }) {
     return Container(
-      width: double.infinity,
-      margin: EdgeInsets.symmetric(vertical: 2.4.h),
-      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.5.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.grey[100]!),
-        borderRadius: BorderRadius.circular(7),
-      ),
-      child: Column(
+      margin: EdgeInsets.only(bottom: isLast ? 0 : 2.h),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildInfoRow(
-            icon: Icons.event_note,
-            label: "Date d'émission",
-            value: "${d.dateCreation.day.toString().padLeft(2, '0')}/${d.dateCreation.month.toString().padLeft(2, '0')}/${d.dateCreation.year}",
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: (iconColor ?? _primaryBlue).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: iconColor ?? _primaryBlue, size: 18),
           ),
-          if (d.dateEmission != null)
-            _buildInfoRow(
-              icon: Icons.send_rounded,
-              label: "Date d'envoi",
-              value: "${d.dateEmission!.day.toString().padLeft(2, '0')}/${d.dateEmission!.month.toString().padLeft(2, '0')}/${d.dateEmission!.year}",
+          SizedBox(width: 4.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.sp,
+                    color: _secondaryText,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 0.5.h),
+                Text(
+                  value,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14.sp,
+                    color: _onSurface,
+                    fontWeight: FontWeight.w600,
+                    height: 1.3,
+                  ),
+                ),
+              ],
             ),
-          if (d.dateConfirmation != null)
-            _buildInfoRow(
-              icon: Icons.verified_rounded,
-              label: "Date de confirmation",
-              value: "${d.dateConfirmation!.day.toString().padLeft(2, '0')}/${d.dateConfirmation!.month.toString().padLeft(2, '0')}/${d.dateConfirmation!.year}",
-            ),
-          if (d.dateApprobation != null)
-            _buildInfoRow(
-              icon: Icons.thumb_up_rounded,
-              label: "Date d'approbation",
-              value: "${d.dateApprobation!.day.toString().padLeft(2, '0')}/${d.dateApprobation!.month.toString().padLeft(2, '0')}/${d.dateApprobation!.year}",
-            ),
-          if (d.dateValidation != null)
-            _buildInfoRow(
-              icon: Icons.check_circle_rounded,
-              label: "Date de validation",
-              value: "${d.dateValidation!.day.toString().padLeft(2, '0')}/${d.dateValidation!.month.toString().padLeft(2, '0')}/${d.dateValidation!.year}",
-            ),
-          if (d.dateRejet != null)
-            _buildInfoRow(
-              icon: Icons.cancel_rounded,
-              label: "Date de rejet",
-              value: "${d.dateRejet!.day.toString().padLeft(2, '0')}/${d.dateRejet!.month.toString().padLeft(2, '0')}/${d.dateRejet!.year}",
-              color: Colors.red
-            ),
-          _buildInfoRow(
-            icon: Icons.scale_rounded,
-            label: "Quantité demandée",
-            value: _loadingUnite
-              ? "..."
-              : "${d.quantite} ${_unite ?? "unités"}",
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTimelineSection() {
+    final d = widget.demande;
+    final events = <Map<String, dynamic>>[];
+
+    events.add({
+      'icon': Icons.create_rounded,
+      'label': "Créée",
+      'date': d.dateCreation,
+      'color': _primaryBlue,
+    });
+
+    if (d.dateEmission != null) {
+      events.add({
+        'icon': Icons.send_rounded,
+        'label': "Envoyée",
+        'date': d.dateEmission!,
+        'color': _primaryBlue,
+      });
+    }
+
+    if (d.dateConfirmation != null) {
+      events.add({
+        'icon': Icons.verified_rounded,
+        'label': "Confirmée",
+        'date': d.dateConfirmation!,
+        'color': _successColor,
+      });
+    }
+
+    if (d.dateApprobation != null) {
+      events.add({
+        'icon': Icons.thumb_up_rounded,
+        'label': "Approuvée",
+        'date': d.dateApprobation!,
+        'color': _successColor,
+      });
+    }
+
+    if (d.dateValidation != null) {
+      events.add({
+        'icon': Icons.check_circle_rounded,
+        'label': "Validée",
+        'date': d.dateValidation!,
+        'color': _successColor,
+      });
+    }
+
+    if (d.dateRejet != null) {
+      events.add({
+        'icon': Icons.cancel_rounded,
+        'label': "Rejetée",
+        'date': d.dateRejet!,
+        'color': _errorColor,
+      });
+    }
+
+    return _buildInfoCard(
+      title: "Historique de la demande",
+      children: [
+        Column(
+          children: events.asMap().entries.map((entry) {
+            final index = entry.key;
+            final event = entry.value;
+            final isLast = index == events.length - 1;
+            
+            return Container(
+              margin: EdgeInsets.only(bottom: isLast ? 0 : 2.h),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Column(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: event['color'].withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(event['icon'], 
+                            color: event['color'], size: 18),
+                      ),
+                      if (!isLast)
+                        Container(
+                          width: 2,
+                          height: 2.h,
+                          margin: EdgeInsets.symmetric(vertical: 0.5.h),
+                          color: _secondaryText.withOpacity(0.2),
+                        ),
+                    ],
+                  ),
+                  SizedBox(width: 4.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          event['label'],
+                          style: GoogleFonts.poppins(
+                            fontSize: 14.sp,
+                            color: _onSurface,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        SizedBox(height: 0.3.h),
+                        Text(
+                          "${event['date'].day.toString().padLeft(2, '0')}/${event['date'].month.toString().padLeft(2, '0')}/${event['date'].year}",
+                          style: GoogleFonts.poppins(
+                            fontSize: 12.sp,
+                            color: _secondaryText,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+        SizedBox(height: 1.h),
+        _buildInfoItem(
+          icon: Icons.scale_rounded,
+          label: "Quantité demandée",
+          value: _loadingUnite
+              ? "Chargement..."
+              : "${d.quantite} ${_unite ?? "unités"}",
+          isLast: true,
+        ),
+      ],
     );
   }
 
   Widget _buildPeopleSection() {
     final d = widget.demande;
-    final lines = <Widget>[
-      if (d.emisParName.isNotEmpty)
-        _buildInfoRow(
-          icon: Icons.person_rounded,
-          label: "Émis par",
-          value: d.emisParName,
-        ),
-      if (d.confirmeParName.isNotEmpty)
-        _buildInfoRow(
-          icon: Icons.verified_user_rounded,
-          label: "Confirmé par",
-          value: d.confirmeParName,
-        ),
-      if (d.approveParName.isNotEmpty)
-        _buildInfoRow(
-          icon: Icons.engineering_rounded,
-          label: "Approuvé par",
-          value: d.approveParName,
-        ),
-      if (d.valideParName.isNotEmpty)
-        _buildInfoRow(
-          icon: Icons.admin_panel_settings_rounded,
-          label: "Validé par",
-          value: d.valideParName,
-        ),
-      if (d.rejeteParName.isNotEmpty)
-        _buildInfoRow(
-          icon: Icons.do_not_disturb_rounded,
-          label: "Rejeté par",
-          value: d.rejeteParName,
-          color: Colors.red,
-        ),
-    ];
-    if (lines.isEmpty) return const SizedBox();
-    return Container(
-      width: double.infinity,
-      margin: EdgeInsets.only(bottom: 2.4.h),
-      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.2.h),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FB),
-        border: Border.all(color: Colors.grey[100]!),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: lines,
-      ),
+    final people = <Map<String, dynamic>>[];
+
+    if (d.emisParName.isNotEmpty) {
+      people.add({
+        'icon': Icons.person_rounded,
+        'label': "Émis par",
+        'value': d.emisParName,
+        'color': _primaryBlue,
+      });
+    }
+
+    if (d.confirmeParName.isNotEmpty) {
+      people.add({
+        'icon': Icons.verified_user_rounded,
+        'label': "Confirmé par",
+        'value': d.confirmeParName,
+        'color': _successColor,
+      });
+    }
+
+    if (d.approveParName.isNotEmpty) {
+      people.add({
+        'icon': Icons.engineering_rounded,
+        'label': "Approuvé par",
+        'value': d.approveParName,
+        'color': _successColor,
+      });
+    }
+
+    if (d.valideParName.isNotEmpty) {
+      people.add({
+        'icon': Icons.admin_panel_settings_rounded,
+        'label': "Validé par",
+        'value': d.valideParName,
+        'color': _successColor,
+      });
+    }
+
+    if (d.rejeteParName.isNotEmpty) {
+      people.add({
+        'icon': Icons.do_not_disturb_rounded,
+        'label': "Rejeté par",
+        'value': d.rejeteParName,
+        'color': _errorColor,
+      });
+    }
+
+    if (people.isEmpty) return const SizedBox();
+
+    return _buildInfoCard(
+      title: "Intervenants",
+      children: people.map((person) => _buildInfoItem(
+        icon: person['icon'],
+        label: person['label'],
+        value: person['value'],
+        iconColor: person['color'],
+        isLast: person == people.last,
+      )).toList(),
     );
   }
 
@@ -338,21 +594,27 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     return NavContainer(
       initialIndex: 2,
       body: Container(
-        color: const Color(0xFFF5F6FA),
+        color: _surfaceColor,
         child: Column(
           children: [
             _buildAppBar(context),
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.only(bottom: 2.h),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildHeader(),
-                    Divider(color: Colors.grey[50], thickness: 8, height: 0),
-                    _buildInfoSection(),
-                    _buildPeopleSection(),
-                    SizedBox(height: 2.5.h),
+                    SizedBox(height: 1.h),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 4.w),
+                      child: Column(
+                        children: [
+                          _buildTimelineSection(),
+                          _buildPeopleSection(),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),

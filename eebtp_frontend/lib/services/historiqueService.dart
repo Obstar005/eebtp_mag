@@ -3,11 +3,11 @@ import 'package:eebtp_frontend/models/history.dart';
 import 'package:http/http.dart' as http;
 
 class HistoryService {
-  final String baseUrl = 'http://185.197.195.209:8000';
+  final String baseUrl = 'http://38.242.139.218:8001';
 
-  /// 🔹 Récupérer l'historique des actions de l'utilisateur connecté
-  Future<List<HistoriqueAction>> getHistoriqueUser(String token) async {
-    final url = Uri.parse('$baseUrl/App/historique-user');
+  /// 🔹 Récupérer l'historique des actions de l'utilisateur connecté, filtré par période
+  Future<List<HistoriqueAction>> getHistoriqueUser(String token, String periode) async {
+    final url = Uri.parse('$baseUrl/App/historique-user/$periode');
 
     try {
       final response = await http.get(

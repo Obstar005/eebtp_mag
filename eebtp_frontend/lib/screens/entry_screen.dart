@@ -37,7 +37,7 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
   final SignatureController signatureController = SignatureController(
     penStrokeWidth: 2,
     penColor: Colors.black,
-    exportBackgroundColor: Colors.white,
+    exportBackgroundColor: Color(0x3379B7FF),
   );
 
   PhoneNumber initialSupplierPhone = PhoneNumber(isoCode: 'TG');
@@ -222,7 +222,7 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
       final champs = {
         'magasin': magasinId.toString(),
         'stock_item': selectedProduct!.id.toString(),
-        'source': selectedRequest!.id.toString(),
+        'demande_source': selectedRequest!.id.toString(),
         'type': 'Livraison',
         'quantite_m': quantityController.text.trim(),
         'societe': supplierController.text.trim(),
@@ -236,7 +236,7 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
       print('Données à envoyer :');
       print(jsonEncode(champs));
 
-      final uri = Uri.parse('http://185.197.195.209:8000/Mouvements/entree-create');
+      final uri = Uri.parse('http://38.242.139.218:8001/Mouvements/entree-create');
       final request = http.MultipartRequest('POST', uri);
 
       champs.forEach((key, value) {

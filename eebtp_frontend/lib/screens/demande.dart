@@ -39,6 +39,10 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
   // États de chargement
   bool _isLoadingProducts = true;
   bool _isLoadingUsers = true;
+  
+  // Gestion des permissions
+  bool _hasPermissionError = false;
+  String _permissionErrorMessage = '';
 
   // Cache pour les articles
   Map<int, ArticleStock?> _articleCache = {};
@@ -68,14 +72,11 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
       final stockService = StockService(token: token);
       final response = await stockService.getStockItemsByMagasin(storeId);
       
-      // CORRECTION : Vérifier le type de réponse
       List<StockItem> productsList = [];
       
       if (response is List<StockItem>) {
-        // Si le service retourne déjà List<StockItem>
         productsList = response;
       } else if (response is List) {
-        // Si le service retourne List<dynamic>
         productsList = response.map((item) {
           if (item is StockItem) {
             return item;
@@ -108,19 +109,89 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
 
     try {
       final userService = UserService();
-      final users = await userService.getAllUsers();
+      final users = await userService.getAllUsers(token); // ✅ Passage du token
       
       setState(() {
         _users = users;
         _filteredUsers = users;
         _isLoadingUsers = false;
+        _hasPermissionError = false;
       });
     } catch (e) {
       setState(() { _isLoadingUsers = false; });
-      print(e);
+      
       print("Erreur détaillée chargement utilisateurs: $e");
-      _showToast(message: 'Erreur lors du chargement des responsables: ${e.toString()}', type: ToastificationType.error);
+      
+      // Vérifier si c'est une erreur de permission
+      String errorString = e.toString();
+      if (errorString.contains('permissions insuffisantes') || 
+          errorString.contains('Accès refusé') ||
+          errorString.contains('403')) {
+        setState(() {
+          _hasPermissionError = true;
+          _permissionErrorMessage = "Vous n'avez pas les permissions nécessaires pour voir la liste des responsables. Contactez l'administrateur pour mettre à jour votre rôle.";
+        });
+        
+        // Afficher une boîte de dialogue informative
+        _showPermissionDialog();
+      } 
     }
+  }
+
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.info_outline, color: Color(0xFFFF9800), size: 28),
+              SizedBox(width: 2.w),
+              Expanded(
+                child: Text(
+                  "Permissions limitées",
+                  style: GoogleFonts.poppins(
+                    fontSize: 17.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            "Vous n'avez pas les permissions nécessaires pour accéder à la liste des responsables.\n\nVeuillez contacter l'administrateur pour mettre à jour votre rôle si vous avez besoin de cette fonctionnalité.\n\nVous pouvez continuer sans sélectionner de responsable.",
+            style: GoogleFonts.poppins(
+              fontSize: 13.sp,
+              color: Colors.black87,
+              height: 1.4,
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF007AFF),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                "J'ai compris",
+                style: GoogleFonts.poppins(
+                  fontSize: 14.sp,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<ArticleStock?> _fetchArticle(int articleId) async {
@@ -206,10 +277,11 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
       _showToast(message: 'Veuillez saisir le motif', type: ToastificationType.warning);
       return;
     }
-    if (_selectedResponsible == null) {
-      _showToast(message: 'Veuillez sélectionner un responsable', type: ToastificationType.warning);
-      return;
-    }
+    // La sélection du responsable n'est plus obligatoire
+    // if (_selectedResponsible == null) {
+    //   _showToast(message: 'Veuillez sélectionner un responsable', type: ToastificationType.warning);
+    //   return;
+    // }
 
     showDialog(
       context: context,
@@ -270,45 +342,44 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
     );
   }
 
- Future<void> _submitForm() async {
-  final token = Provider.of<AuthProvider>(context, listen: false).token;
-  final storeId = Provider.of<AuthProvider>(context, listen: false).storeId;
+  Future<void> _submitForm() async {
+    final token = Provider.of<AuthProvider>(context, listen: false).token;
+    final storeId = Provider.of<AuthProvider>(context, listen: false).storeId;
 
-  if (token == null || storeId == null) {
-    _showToast(message: 'Erreur d\'authentification', type: ToastificationType.error);
-    return;
-  }
-
-  try {
-    final quantite = int.tryParse(_quantityController.text.trim());
-    final motif = _motifController.text.trim();
-
-    if (quantite == null || motif.isEmpty || _selectedProduct == null) {
-      _showToast(message: 'Veuillez remplir tous les champs correctement', type: ToastificationType.warning);
+    if (token == null || storeId == null) {
+      _showToast(message: 'Erreur d\'authentification', type: ToastificationType.error);
       return;
     }
 
-    final demandeService = DemandeService();
-    await demandeService.emettreDemande(
-      quantite: quantite,
-      raison: motif,
-      stockItem: _selectedProduct!.id,
-      magasin: storeId,
-      token: token,
-    );
+    try {
+      final quantite = int.tryParse(_quantityController.text.trim());
+      final motif = _motifController.text.trim();
 
-    _showToast(message: 'Demande enregistrée avec succès!', type: ToastificationType.success);
-    Navigator.pop(context);
-  } catch (e) {
-    print("Erreur soumission demande: $e");
-    _showToast(
-      message: 'Erreur lors de l\'enregistrement de la demande: ${e.toString()}',
-      type: ToastificationType.error,
-    );
+      if (quantite == null || motif.isEmpty || _selectedProduct == null) {
+        _showToast(message: 'Veuillez remplir tous les champs correctement', type: ToastificationType.warning);
+        return;
+      }
+
+      final demandeService = DemandeService();
+      await demandeService.emettreDemande(
+        quantite: quantite,
+        raison: motif,
+        stockItem: _selectedProduct!.id,
+        magasin: storeId,
+        token: token,
+      );
+
+      _showToast(message: 'Demande enregistrée avec succès!', type: ToastificationType.success);
+      Navigator.pop(context);
+    } catch (e) {
+      print("Erreur soumission demande: $e");
+      _showToast(
+        message: ' ${e.toString()}',
+        type: ToastificationType.error,
+      );
+    }
   }
-}
 
-  // Les méthodes build restent identiques à la version précédente...
   Widget _buildAppBar() {
     return SafeArea(
       bottom: false,
@@ -616,9 +687,10 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
 
   Widget _buildResponsibleDropdown() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         GestureDetector(
-          onTap: () {
+          onTap: _hasPermissionError ? null : () {
             setState(() {
               _isResponsibleDropdownOpen = !_isResponsibleDropdownOpen;
               _isProductDropdownOpen = false;
@@ -627,9 +699,15 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.8.h),
             decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
+              color: _hasPermissionError 
+                  ? const Color(0xFFE0E0E0) 
+                  : const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(50),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(
+                color: _hasPermissionError 
+                    ? Colors.grey.shade400 
+                    : Colors.grey.shade300
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -646,14 +724,18 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
                       : Text(
                           _selectedResponsible != null 
                               ? "${_selectedResponsible!.firstName} ${_selectedResponsible!.lastName}"
-                              : "Sélectionner celui qui a ordonné",
+                              : _hasPermissionError
+                                  ? "Non disponible (permissions insuffisantes)"
+                                  : "Sélectionner celui qui a ordonné (optionnel)",
                           style: GoogleFonts.poppins(
                             fontSize: 14.sp,
-                            color: _selectedResponsible != null ? Colors.black87 : Colors.grey[600],
+                            color: _hasPermissionError 
+                                ? Colors.grey[500]
+                                : (_selectedResponsible != null ? Colors.black87 : Colors.grey[600]),
                           ),
                         ),
                 ),
-                if (!_isLoadingUsers)
+                if (!_isLoadingUsers && !_hasPermissionError)
                   Icon(
                     _isResponsibleDropdownOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                     color: Colors.grey[600],
@@ -662,7 +744,35 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
             ),
           ),
         ),
-        if (_isResponsibleDropdownOpen && !_isLoadingUsers)
+        if (_hasPermissionError) ...[
+          SizedBox(height: 1.h),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.5.h),
+            decoration: BoxDecoration(
+              color: Color(0xFFFFF3E0),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Color(0xFFFF9800).withOpacity(0.3)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.info_outline, color: Color(0xFFFF9800), size: 20),
+                SizedBox(width: 2.w),
+                Expanded(
+                  child: Text(
+                    "Vous n'avez pas les permissions pour accéder à cette liste. Contactez l'administrateur si nécessaire.",
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.sp,
+                      color: Color(0xFFE65100),
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        if (_isResponsibleDropdownOpen && !_isLoadingUsers && !_hasPermissionError)
           Container(
             margin: EdgeInsets.only(top: 1.h),
             decoration: BoxDecoration(

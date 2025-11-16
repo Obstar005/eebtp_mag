@@ -15,7 +15,6 @@ import 'package:provider/provider.dart';
 import 'package:eebtp_frontend/providers/auth_provider.dart';
 import 'package:toastification/toastification.dart';
 
-
 class EditProfilePage extends StatefulWidget {
   final Utilisateur user;
   const EditProfilePage({super.key, required this.user});
@@ -56,7 +55,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       if (rawPhone.startsWith('00${country.phoneCode}')) {
         _selectedCountry = country;
         _inputPhoneRawController.text =
-          rawPhone.replaceFirst('00${country.phoneCode}', '');
+            rawPhone.replaceFirst('00${country.phoneCode}', '');
         break;
       }
     }
@@ -73,134 +72,225 @@ class _EditProfilePageState extends State<EditProfilePage> {
     super.dispose();
   }
 
-  Future<void> _pickImage(bool fromCamera) async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: fromCamera ? ImageSource.camera : ImageSource.gallery,
-      imageQuality: 75,
+  void _showToast({
+    required String message,
+    required ToastificationType type,
+  }) {
+    toastification.show(
+      context: context,
+      type: type,
+      style: ToastificationStyle.flatColored,
+      title: Text(
+        message,
+        style: GoogleFonts.poppins(
+          fontSize: 13.sp,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      autoCloseDuration: const Duration(seconds: 3),
+      alignment: Alignment.topCenter,
+      animationDuration: const Duration(milliseconds: 300),
+      animationBuilder: (context, animation, alignment, child) {
+        return ScaleTransition(
+          scale: animation,
+          child: child,
+        );
+      },
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x07000000),
+          blurRadius: 16,
+          offset: Offset(0, 16),
+          spreadRadius: 0,
+        )
+      ],
+      showProgressBar: true,
+      closeButtonShowType: CloseButtonShowType.onHover,
+      closeOnClick: false,
+      pauseOnHover: true,
+      dragToClose: true,
+      applyBlurEffect: true,
     );
-    if (picked != null) {
-      setState(() => _pickedImage = File(picked.path));
-      if (Navigator.canPop(context)) Navigator.pop(context);
+  }
+
+  Future<void> _pickImage(bool fromCamera) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: fromCamera ? ImageSource.camera : ImageSource.gallery,
+        imageQuality: 75,
+      );
+      if (picked != null) {
+        setState(() => _pickedImage = File(picked.path));
+        if (Navigator.canPop(context)) Navigator.pop(context);
+      }
+    } catch (e) {
+      _showToast(
+        message: "Erreur lors de la sélection de l'image",
+        type: ToastificationType.error,
+      );
+      print('[ERROR] _pickImage: $e');
     }
   }
 
- Future<void> _saveProfile() async {
-  if (!_formKey.currentState!.validate()) return;
-  setState(() => _loading = true);
-  final userService = UserService();
-  final token = context.read<AuthProvider>().token;
-  if (token == null) {
-    setState(() => _loading = false);
-    toastification.show(
-      context: context,
-      type: ToastificationType.error,
-      title: Text("Erreur: Token non disponible"),
-      description: Text("Aucune session authentifiée."),
-    );
-    return;
-  }
-
-  final phoneRaw = _inputPhoneRawController.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
-  String fullPhone = '';
-  if (phoneRaw.isNotEmpty) {
-    fullPhone = '00${_selectedCountry.phoneCode}$phoneRaw';
-  }
-  print('[DEBUG] Numéro à envoyer : $fullPhone');
-
-  if (fullPhone.length < 10) {
-    setState(() => _loading = false);
-    toastification.show(
-      context: context,
-      type: ToastificationType.error,
-      title: Text("Numéro de téléphone invalide"),
-      description: Text("Vérifiez votre saisie et l’indicatif du pays."),
-    );
-    return;
-  }
-
-  String? finalPhotoUrl = _serverPhotoUrl ?? widget.user.photoProfil;
-  if (_pickedImage != null) {
-    final uploadSuccess = await userService.updateProfilePicture(token, _pickedImage!.path);
-    if (uploadSuccess) {
-      try {
-        final refreshed = await userService.getUserInfo(token);
-        finalPhotoUrl = refreshed.photoProfil;
-        setState(() => _serverPhotoUrl = finalPhotoUrl);
-        context.read<AuthProvider>().setUser(refreshed);
-      } catch (e) {
-        print('[ERROR] Exception after profile picture update: $e');
-      }
-    } else {
+  Future<void> _saveProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+    
+    setState(() => _loading = true);
+    
+    final userService = UserService();
+    final token = context.read<AuthProvider>().token;
+    
+    if (token == null) {
       setState(() => _loading = false);
-      toastification.show(
-        context: context,
+      _showToast(
+        message: "Session expirée, veuillez vous reconnecter",
         type: ToastificationType.error,
-        title: Text("Échec de l'upload de la photo de profil"),
-        description: Text("Veuillez réessayer ou choisir une autre image."),
       );
       return;
     }
-  }
 
-  final updatedUser = widget.user.copyWith(
-    firstName: _firstNameController.text.trim(),
-    lastName: _lastNameController.text.trim(),
-    surname: _surnameController.text.trim(),
-    email: _emailController.text.trim(),
-    telephone: fullPhone,
-    photoProfil: finalPhotoUrl,
-  );
-
-  try {
-    final resp = await userService.updateUser(widget.user.id!, updatedUser, token);
-    setState(() => _loading = false);
-    if (resp) {
-      context.read<AuthProvider>().setUser(updatedUser);
-      toastification.show(
-        context: context,
-        type: ToastificationType.success,
-        title: Text("Profil mis à jour !"),
-        description: Text("Vos modifications ont bien été enregistrées."),
-      );
-      _showSuccessDialog();
+    final phoneRaw = _inputPhoneRawController.text.trim().replaceAll(RegExp(r'[^0-9]'), '');
+    String fullPhone = '';
+    if (phoneRaw.isNotEmpty) {
+      fullPhone = '00${_selectedCountry.phoneCode}$phoneRaw';
     }
-  } catch (e) {
-    setState(() => _loading = false);
+    print('[DEBUG] Numéro à envoyer : $fullPhone');
 
-    String errorMsg = "Impossible de mettre à jour votre profil.";
-    bool showTechnicalDetail = false;
+    if (fullPhone.length < 10) {
+      setState(() => _loading = false);
+      _showToast(
+        message: "Numéro de téléphone invalide",
+        type: ToastificationType.error,
+      );
+      return;
+    }
 
-    if (e is http.Response) {
+    String? finalPhotoUrl = _serverPhotoUrl ?? widget.user.photoProfil;
+    
+    // Upload de la photo si une nouvelle image a été sélectionnée
+    if (_pickedImage != null) {
+      print('[DEBUG] Upload de la nouvelle photo de profil...');
+      
+      // Vérification de l'ID utilisateur
+      if (widget.user.id == null) {
+        setState(() => _loading = false);
+        _showToast(
+          message: "Erreur: ID utilisateur manquant",
+          type: ToastificationType.error,
+        );
+        print('[ERROR] widget.user.id est null');
+        return;
+      }
+      
       try {
-        final decoded = jsonDecode(e.body);
-        if (decoded is Map && decoded['detail'] != null) {
-          errorMsg = decoded['detail'].toString();
-        } else if (decoded is String) {
-          errorMsg = decoded;
+        final uploadSuccess = await userService.updateProfilePicture(
+          token,
+          widget.user.id!,
+          _pickedImage!.path,
+        );
+        
+        if (uploadSuccess) {
+          print('[DEBUG] Photo uploadée avec succès');
+          
+          // Récupération des informations mises à jour pour obtenir la nouvelle URL de la photo
+          try {
+            final refreshed = await userService.getUserInfo(token);
+            finalPhotoUrl = refreshed.photoProfil;
+            
+            setState(() {
+              _serverPhotoUrl = finalPhotoUrl;
+              _pickedImage = null; // Réinitialiser l'image locale
+            });
+            
+            context.read<AuthProvider>().setUser(refreshed);
+            print('[DEBUG] Nouvelle URL de la photo: $finalPhotoUrl');
+          } catch (e) {
+            print('[ERROR] Erreur lors de la récupération des infos utilisateur: $e');
+            _showToast(
+              message: "Photo uploadée mais erreur de synchronisation",
+              type: ToastificationType.warning,
+            );
+          }
         } else {
+          setState(() => _loading = false);
+          _showToast(
+            message: "Échec de l'upload de la photo de profil",
+            type: ToastificationType.error,
+          );
+          print('[ERROR] updateProfilePicture a retourné false');
+          return;
+        }
+      } catch (e) {
+        setState(() => _loading = false);
+        _showToast(
+          message: "Erreur lors de l'upload de la photo",
+          type: ToastificationType.error,
+        );
+        print('[ERROR] Exception lors de l\'upload de la photo: $e');
+        return;
+      }
+    }
+
+    // Mise à jour des autres informations du profil
+    final updatedUser = widget.user.copyWith(
+      firstName: _firstNameController.text.trim(),
+      lastName: _lastNameController.text.trim(),
+      surname: _surnameController.text.trim(),
+      email: _emailController.text.trim(),
+      telephone: fullPhone,
+      photoProfil: finalPhotoUrl,
+    );
+
+    try {
+      print('[DEBUG] Mise à jour du profil utilisateur...');
+      final resp = await userService.updateUser(widget.user.id!, updatedUser, token);
+      
+      setState(() => _loading = false);
+      
+      if (resp) {
+        context.read<AuthProvider>().setUser(updatedUser);
+        _showToast(
+          message: "Profil mis à jour avec succès",
+          type: ToastificationType.success,
+        );
+        print('[DEBUG] Profil mis à jour avec succès');
+        _showSuccessDialog();
+      } else {
+        _showToast(
+          message: "Échec de la mise à jour du profil",
+          type: ToastificationType.error,
+        );
+        print('[ERROR] updateUser a retourné false');
+      }
+    } catch (e) {
+      setState(() => _loading = false);
+
+      String errorMsg = "Impossible de mettre à jour votre profil";
+
+      if (e is http.Response) {
+        try {
+          final decoded = jsonDecode(e.body);
+          if (decoded is Map && decoded['detail'] != null) {
+            errorMsg = decoded['detail'].toString();
+          } else if (decoded is String) {
+            errorMsg = decoded;
+          } else {
+            errorMsg = e.body;
+          }
+        } catch (_) {
           errorMsg = e.body;
         }
-      } catch (_) {
-        errorMsg = e.body;
       }
-    } else {
-      // Exception non prévue, on log en console !
-      print('[EXCEPTION] $e');
-      showTechnicalDetail = true;
-    }
-    toastification.show(
-      context: context,
-      type: ToastificationType.error,
-      title: Text("Erreur lors de la mise à jour"),
-      description: Text(errorMsg),
-    );
-    // Affiche aussi le détail technique uniquement en console
-    if (showTechnicalDetail) {
-      print('[EXCEPTION/DETAIL] $e');
+      
+      _showToast(
+        message: errorMsg,
+        type: ToastificationType.error,
+      );
+      print('[ERROR] Exception lors de la mise à jour du profil: $e');
     }
   }
-}
 
   void _showImagePickerOptions(BuildContext context) {
     showModalBottomSheet(
@@ -434,16 +524,29 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                         child: _pickedImage != null
                                             ? Image.file(_pickedImage!, fit: BoxFit.cover)
                                             : (_serverPhotoUrl != null
-                                              ? Image.network(_serverPhotoUrl!, fit: BoxFit.cover)
-                                              : (widget.user.photoProfil != null
-                                                  ? Image.network(widget.user.photoProfil!, fit: BoxFit.cover)
-                                                  : Image.asset("assets/profile.png", fit: BoxFit.cover)
-                                                )
-                                              ),
+                                                ? Image.network(
+                                                    _serverPhotoUrl!,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (_, __, ___) => Image.asset(
+                                                      "assets/profile.png",
+                                                      fit: BoxFit.cover,
+                                                    ),
+                                                  )
+                                                : (widget.user.photoProfil != null
+                                                    ? Image.network(
+                                                        widget.user.photoProfil!,
+                                                        fit: BoxFit.cover,
+                                                        errorBuilder: (_, __, ___) => Image.asset(
+                                                          "assets/profile.png",
+                                                          fit: BoxFit.cover,
+                                                        ),
+                                                      )
+                                                    : Image.asset("assets/profile.png", fit: BoxFit.cover))),
                                       ),
                                     ),
                                     Positioned(
-                                      right: 3, bottom: 3,
+                                      right: 3,
+                                      bottom: 3,
                                       child: GestureDetector(
                                         onTap: () => _showImagePickerOptions(context),
                                         child: Container(
@@ -475,8 +578,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 Text(
                                   widget.user.poste ?? "Utilisateur",
                                   style: GoogleFonts.montserrat(
-                                    fontSize: 13.sp, color: const Color(0xFF8E8E93), fontWeight: FontWeight.w500
-                                  ),
+                                      fontSize: 13.sp, color: const Color(0xFF8E8E93), fontWeight: FontWeight.w500),
                                 ),
                               ],
                             ),
@@ -505,7 +607,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                   Text(
                                     "Informations personnelles",
                                     style: GoogleFonts.montserrat(
-                                      fontSize: 16.sp, fontWeight: FontWeight.w700, color: const Color(0xFF2D3748)),
+                                        fontSize: 16.sp, fontWeight: FontWeight.w700, color: const Color(0xFF2D3748)),
                                   ),
                                   SizedBox(height: 3.h),
                                   _buildTextField(
@@ -612,14 +714,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                   ),
                                   SizedBox(height: 4.h),
                                   _loading
-                                    ? Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(const Color(0xFF007AFF)), strokeWidth: 2))
-                                    : CustomElevatedButton(
-                                        text: "Enregistrer les modifications",
-                                        backgroundColor: const Color(0xFF007AFF),
-                                        textColor: Colors.white,
-                                        onPressed: _saveProfile,
-                                        width: double.infinity,
-                                      ),
+                                      ? Center(
+                                          child: CircularProgressIndicator(
+                                              valueColor: AlwaysStoppedAnimation<Color>(const Color(0xFF007AFF)), strokeWidth: 2))
+                                      : CustomElevatedButton(
+                                          text: "Enregistrer les modifications",
+                                          backgroundColor: const Color(0xFF007AFF),
+                                          textColor: Colors.white,
+                                          onPressed: _saveProfile,
+                                          width: double.infinity,
+                                        ),
                                 ],
                               ),
                             ),

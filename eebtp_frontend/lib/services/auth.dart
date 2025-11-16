@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/utilisateur.dart';
 
 class UserService {
-  final String baseUrl = 'http://185.197.195.209:8000';
+  final String baseUrl = 'http://38.242.139.218:8001';
 
   // 🔐 Authentification
   Future<String?> loginByPhone(String phone, String password) async {
@@ -99,13 +99,16 @@ class UserService {
 
 // 👥 Gestion des utilisateurs
 
-Future<List<Utilisateur>> getAllUsers() async {
+Future<List<Utilisateur>> getAllUsers(String token) async {
   final url = Uri.parse('$baseUrl/Users/liste-users');
 
   try {
     final response = await http.get(
       url,
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
     );
 
     switch (response.statusCode) {
@@ -133,7 +136,6 @@ Future<List<Utilisateur>> getAllUsers() async {
     throw Exception('Erreur réseau ou inattendue : $e');
   }
 }
-
 
   Future<Utilisateur> getUserDetail(int id) async {
     final response = await http.get(
@@ -263,22 +265,22 @@ Future<List<Utilisateur>> getAllUsers() async {
     return response.statusCode == 204;
   }
 
-  Future<bool> updateProfilePicture(String token, String filePath) async {
-    final url = Uri.parse('$baseUrl/Users/update-photo-profil/');
+  Future<bool> updateProfilePicture(String token, int userId, String filePath) async {
+  final url = Uri.parse('$baseUrl/Users/user-update-profile/$userId');
 
-    var request = http.MultipartRequest('POST', url);
-    request.headers['Authorization'] = 'Bearer $token';
-    request.files.add(
-      await http.MultipartFile.fromPath('photo_profil', filePath),
-    );
+  var request = http.MultipartRequest('PUT', url);
+  request.headers['Authorization'] = 'Bearer $token';
+  request.files.add(
+    await http.MultipartFile.fromPath('photo_profil', filePath),
+  );
 
-    final response = await request.send();
+  final response = await request.send();
 
-    if (response.statusCode == 200) {
-      return true;
-    } else {
-      print("Erreur upload photo: ${response.statusCode}");
-      return false;
-    }
+  if (response.statusCode == 200) {
+    return true;
+  } else {
+    print("Erreur upload photo: ${response.statusCode}");
+    return false;
   }
+}
 }

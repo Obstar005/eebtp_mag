@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:toastification/toastification.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:sizer/sizer.dart';
 import 'dart:convert';
 import '../models/utilisateur.dart';
+import '../services/auth.dart';
 
 class AuthProvider extends ChangeNotifier {
   String? _token;
@@ -16,20 +20,43 @@ class AuthProvider extends ChangeNotifier {
   DateTime? get expiry => _expiry;
   bool get isAuthenticated =>
       _token != null && _expiry != null && DateTime.now().isBefore(_expiry!);
+  bool get hasUser => _user != null && _user!.id != null;
 
   Future<void> loadFromStorage() async {
-    final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString('token');
-    _storeId = prefs.getInt('storeId');
-    String? userStr = prefs.getString('user');
-    if (userStr != null) {
-      _user = Utilisateur.fromJson(jsonDecode(userStr));
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _token = prefs.getString('token');
+      _storeId = prefs.getInt('storeId');
+      String? userStr = prefs.getString('user');
+      
+      if (userStr != null) {
+        try {
+          _user = Utilisateur.fromJson(jsonDecode(userStr));
+        } catch (e) {
+          print('[ERROR] Erreur de parsing utilisateur: $e');
+          _user = null;
+        }
+      }
+      
+      // Vérifier si le token est valide
+      if (_token != null) {
+        try {
+          if (JwtDecoder.isExpired(_token!)) {
+            print('[WARNING] Token expiré lors du chargement');
+            await clear();
+          } else {
+            _expiry = JwtDecoder.getExpirationDate(_token!);
+          }
+        } catch (e) {
+          print('[ERROR] Erreur de décodage du token: $e');
+          await clear();
+        }
+      }
+      
+      notifyListeners();
+    } catch (e) {
+      print('[ERROR] Erreur lors du chargement depuis le storage: $e');
     }
-    // Extraire l’expiry DU TOKEN si présent
-    if (_token != null) {
-      _expiry = JwtDecoder.getExpirationDate(_token!);
-    }
-    notifyListeners();
   }
 
   Future<void> setToken(String token) async {
@@ -54,27 +81,42 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> refreshUser(String token) async {
+    try {
+      final userService = UserService();
+      final refreshedUser = await userService.getUserInfo(token);
+      await setUser(refreshedUser);
+    } catch (e) {
+      print('[ERROR] Erreur lors du rafraîchissement de l\'utilisateur: $e');
+    }
+  }
+
   Future<void> checkTokenExpiry(BuildContext context) async {
-    // Appel recommandé avant chaque action importante, ou via un timer global
     if (_token != null && JwtDecoder.isExpired(_token!)) {
       await clear();
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (ctx) => AlertDialog(
-          title: Text('Votre session a expiré'),
-          content: Text('Reconnectez-vous pour continuer.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).pushReplacementNamed('/login');
-              },
-              child: Text('OK'),
+      
+      if (context.mounted) {
+        toastification.show(
+          context: context,
+          type: ToastificationType.error,
+          style: ToastificationStyle.flatColored,
+          title: Text(
+            "Session expirée",
+            style: GoogleFonts.poppins(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w500,
             ),
-          ],
-        ),
-      );
+          ),
+          autoCloseDuration: const Duration(seconds: 3),
+          alignment: Alignment.topCenter,
+        );
+        
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (context.mounted) {
+            Navigator.of(context).pushReplacementNamed('/login');
+          }
+        });
+      }
     }
   }
 

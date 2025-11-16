@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:toastification/toastification.dart'; // Assure-toi d'avoir ce package dans ton pubspec
+import 'package:toastification/toastification.dart';
 
 class PasswordLoginPage extends StatefulWidget {
   const PasswordLoginPage({super.key});
@@ -58,25 +58,29 @@ class _PasswordLoginPageState extends State<PasswordLoginPage> {
     final String phone = ModalRoute.of(context)!.settings.arguments as String;
 
     // Tailles et polices responsives
+    final screenHeight = MediaQuery.of(context).size.height;
+    
     double fieldFont = 13.sp;
     double mainFont = 18.sp;
     double errorIcon = 15.sp;
     double cardPad = 3.w;
-    double imageSize = 22.h;
+    double imageSize = screenHeight < 600 ? 12.h : 22.h; // ✅ Adaptatif
 
     return Scaffold(
       backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true, // ✅ Changé de false à true
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 3.5.h),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: 48.h,
-                maxWidth: 90.w,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: 7.w,
+                vertical: 3.5.h,
               ),
-              child: IntrinsicHeight(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 7.h, // ✅ Utilise les vraies contraintes
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -102,6 +106,8 @@ class _PasswordLoginPageState extends State<PasswordLoginPage> {
                         },
                       ),
                     ),
+                    
+                    // Image SVG - toujours visible
                     Center(
                       child: SvgPicture.asset(
                         'assets/illustration.svg',
@@ -110,6 +116,8 @@ class _PasswordLoginPageState extends State<PasswordLoginPage> {
                       ),
                     ),
                     SizedBox(height: 2.h),
+                    
+                    // Titre
                     Text(
                       "Bienvenue",
                       style: GoogleFonts.poppins(
@@ -119,17 +127,25 @@ class _PasswordLoginPageState extends State<PasswordLoginPage> {
                       ),
                     ),
                     SizedBox(height: .9.h),
-                    Text(
-                      "Connectez-vous avec votre nouveau mot de passe",
-                      style: GoogleFonts.poppins(
-                        fontSize: fieldFont,
-                        color: Colors.black54,
+                    
+                    // Sous-titre
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 2.w),
+                      child: Text(
+                        "Connectez-vous avec votre nouveau mot de passe",
+                        style: GoogleFonts.poppins(
+                          fontSize: fieldFont,
+                          color: Colors.black54,
+                        ),
+                        textAlign: TextAlign.center,
+                        softWrap: true, // ✅ Assure le retour à la ligne
                       ),
-                      textAlign: TextAlign.center,
                     ),
                     SizedBox(height: 2.h),
+                    
+                    // Encadré d'instructions
                     Container(
-                      width: double.infinity,
+                      width: double.infinity, // ✅ Empêche le débordement
                       padding: EdgeInsets.all(cardPad),
                       decoration: BoxDecoration(
                         color: const Color(0xFFEAF2FF),
@@ -148,7 +164,10 @@ class _PasswordLoginPageState extends State<PasswordLoginPage> {
                       ),
                     ),
                     SizedBox(height: 3.h),
+                    
+                    // Champ de mot de passe
                     Container(
+                      width: double.infinity, // ✅ Empêche le débordement
                       padding: EdgeInsets.symmetric(horizontal: 3.w),
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -181,99 +200,129 @@ class _PasswordLoginPageState extends State<PasswordLoginPage> {
                         ),
                       ),
                     ),
+                    
+                    // Message d'erreur
                     if (_errorMessage != null) ...[
                       SizedBox(height: 1.h),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(Icons.error_outline, color: Colors.red, size: errorIcon),
-                          SizedBox(width: 2.w),
-                          Expanded(
-                            child: Text(
-                              _errorMessage!,
-                              style: GoogleFonts.poppins(
-                                fontSize: fieldFont * 0.96,
-                                color: Colors.red,
+                      Container(
+                        width: double.infinity, // ✅ Empêche le débordement
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.error_outline, color: Colors.red, size: errorIcon),
+                            SizedBox(width: 2.w),
+                            Expanded(
+                              child: Text(
+                                _errorMessage!,
+                                style: GoogleFonts.poppins(
+                                  fontSize: fieldFont * 0.96,
+                                  color: Colors.red,
+                                ),
+                                softWrap: true, // ✅ Assure le retour à la ligne
                               ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    SizedBox(height: 2.h),
+                    
+                    // Checkbox "Se souvenir de moi"
+                    SizedBox(
+                      width: double.infinity, // ✅ Empêche le débordement
+                      child: Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () => setState(() => _remember = !_remember),
+                            child: Container(
+                              width: 4.2.w,
+                              height: 4.2.w,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: _remember ? Colors.blue : Colors.grey,
+                                  width: 0.32.w,
+                                ),
+                                color: _remember ? Colors.blue : Colors.transparent,
+                              ),
+                              child: _remember
+                                  ? Icon(Icons.check, size: 2.2.w, color: Colors.white)
+                                  : null,
+                            ),
+                          ),
+                          SizedBox(width: 2.w),
+                          Flexible( // ✅ Permet au texte de wrap si nécessaire
+                            child: Text(
+                              'Se souvenir de moi',
+                              style: GoogleFonts.poppins(fontSize: fieldFont),
                             ),
                           ),
                         ],
                       ),
-                    ],
-                    SizedBox(height: 2.h),
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () => setState(() => _remember = !_remember),
-                          child: Container(
-                            width: 4.2.w,
-                            height: 4.2.w,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: _remember ? Colors.blue : Colors.grey,
-                                width: 0.32.w,
-                              ),
-                              color: _remember ? Colors.blue : Colors.transparent,
-                            ),
-                            child: _remember
-                                ? Icon(Icons.check, size: 2.2.w, color: Colors.white)
-                                : null,
-                          ),
-                        ),
-                        SizedBox(width: 2.w),
-                        Text(
-                          'Se souvenir de moi',
-                          style: GoogleFonts.poppins(fontSize: fieldFont),
-                        ),
-                      ],
                     ),
-                    const Spacer(),
-                    CustomElevatedButton(
-                      text: "Se connecter",
-                      backgroundColor: const Color(0xFF007AFF),
-                      textColor: Colors.white,
-                      onPressed: () async {
-                        final password = _passController.text.trim();
-                        if (password.isEmpty) {
-                          setState(() {
-                            _errorMessage = "Veuillez entrer votre mot de passe";
-                          });
-                          return;
-                        }
-                        final result = await _userService.loginByPhone(
-                          phone,
-                          password,
-                        );
-                        if (result != null) {
-                          final data = jsonDecode(result);
-                          final String token = data['access_token'];
-                          _showToast(
-                            message: "Connexion réussie !",
-                            type: ToastificationType.success,
+                    
+                    // Spacer flexible
+                    SizedBox(height: 4.h), // ✅ Remplace Spacer par un SizedBox fixe
+                    
+                    // Bouton
+                    Center(
+                      child: CustomElevatedButton(
+                        text: "Se connecter",
+                        backgroundColor: const Color(0xFF007AFF),
+                        textColor: Colors.white,
+                        onPressed: () async {
+                          final password = _passController.text.trim();
+                          if (password.isEmpty) {
+                            setState(() {
+                              _errorMessage = "Veuillez entrer votre mot de passe";
+                            });
+                            return;
+                          }
+                          
+                          final result = await _userService.loginByPhone(
+                            phone,
+                            password,
                           );
-                          _clearController();
-                          await Future.delayed(const Duration(milliseconds: 700));
-                          Navigator.pushNamedAndRemoveUntil(
-                            context,
-                            '/store_selection',
-                            (route) => false,
-                            arguments: token,
-                          );
-                        } else {
-                          setState(() {
-                            _errorMessage = "Échec de connexion. Vérifiez votre mot de passe.";
-                          });
-                        }
-                      },
-                      width: 80.w,
+                          
+                          if (result != null) {
+                            final data = jsonDecode(result);
+                            final String token = data['access_token'];
+                            
+                            _showToast(
+                              message: "Connexion réussie !",
+                              type: ToastificationType.success,
+                            );
+                            
+                            _clearController();
+                            await Future.delayed(const Duration(milliseconds: 700));
+                            
+                            if (mounted) { // ✅ Vérification avant navigation
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                '/store_selection',
+                                (route) => false,
+                                arguments: token,
+                              );
+                            }
+                          } else {
+                            setState(() {
+                              _errorMessage = "Échec de connexion. Vérifiez votre mot de passe.";
+                            });
+                          }
+                        },
+                        width: 80.w,
+                      ),
                     ),
-                    SizedBox(height: 2.5.h),
+                    
+                    // Espace supplémentaire en bas
+                    SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0 
+                        ? 2.h 
+                        : 2.5.h), // ✅ Espace dynamique
                   ],
                 ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
