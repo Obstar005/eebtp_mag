@@ -16,7 +16,6 @@ export const historiqueService = {
       const response = await client.get<HistoriqueAction[]>(
         `${basePath}/historique-user/${periode}`
       );
-      console.log("📋 Historique utilisateur reçu:", response.data);
       return response.data || [];
     } catch (error) {
       console.error(

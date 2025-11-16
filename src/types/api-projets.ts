@@ -101,6 +101,11 @@ export interface ApiProjetStatsResponse {
   }>;
 }
 
+export interface ApiCreateProjetResponse {
+  message: string;
+  projet: ApiProjet;
+}
+
 // Types pour les photos
 export interface ApiCreatePhotoRequest {
   photo: File;

@@ -475,11 +475,6 @@ export function apiProjetToProjet(apiProjet: ApiProjet): Projet {
   // Nous ne générons plus de données simplifiées ici pour éviter la duplication
   const comptesAssocies: CompteAssocie[] = [];
 
-  if (apiProjet.comptes && apiProjet.comptes.length > 0) {
-    console.log("👥 Comptes associés au projet (API IDs):", apiProjet.comptes);
-    // Les détails des comptes seront chargés séparément via getProjetComptes
-  }
-
   return {
     id: apiProjet.id,
     nom: apiProjet.nom, // Nom principal selon l'API

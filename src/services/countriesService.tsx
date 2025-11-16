@@ -36,8 +36,6 @@ export const countriesService = {
     if (apiDataLoaded) return; // Éviter les appels multiples
 
     try {
-      console.log("🌍 Chargement des pays depuis l'API REST Countries...");
-
       const response = await fetch(
         import.meta.env.VITE_API_BASE_URL ||
           "https://restcountries.com/v3.1/region/africa"
@@ -70,7 +68,6 @@ export const countriesService = {
       countriesData = formattedCountries;
       apiDataLoaded = true;
 
-      console.log(`✅ ${formattedCountries.length} pays chargés depuis l'API`);
     } catch (error) {
       console.error(
         "❌ Erreur lors du chargement des pays depuis l'API:",
@@ -161,6 +158,45 @@ export const countriesService = {
     const apiCountryCode = countryCode.replace("+", "00");
 
     return `${apiCountryCode}${cleanNumber}`;
+  },
+
+  // Dé-formater un numéro reçu de l'API (format 00228909090900 -> "90 90 90 90")
+  parsePhoneNumberFromAPI(phoneNumber: string): { countryCode: string; localNumber: string } {
+    // Le format API est "00228909090900"
+    // On doit extraire le code pays (002 + XX pour l'abréviation)
+    
+    if (!phoneNumber.startsWith("00")) {
+      return { countryCode: "+228", localNumber: phoneNumber };
+    }
+
+    const numberWithoutPrefix = phoneNumber.substring(2); // Enlever "00"
+    
+    // Chercher le code pays en voyant lequel match
+    const countries = countriesService.getAllCountries();
+    
+    for (const country of countries) {
+      // Le code country est au format "+228"
+      const codeWithoutPlus = country.code.substring(1); // Enlever le "+"
+      
+      if (numberWithoutPrefix.startsWith(codeWithoutPlus)) {
+        const localNumber = numberWithoutPrefix.substring(codeWithoutPlus.length);
+        
+        // Formater le numéro local en groupe de 2 chiffres si possible
+        let formatted = "";
+        for (let i = 0; i < localNumber.length; i += 2) {
+          if (i > 0) formatted += " ";
+          formatted += localNumber.substring(i, i + 2);
+        }
+        
+        return {
+          countryCode: country.code,
+          localNumber: formatted.trim(),
+        };
+      }
+    }
+
+    // Par défaut, retourner le code Togo
+    return { countryCode: "+228", localNumber: numberWithoutPrefix };
   },
 
   // Ajouter/remplacer la liste des pays avec votre JSON

@@ -56,7 +56,7 @@ export function AddAccountPage() {
   const { countries } = useCountries();
   const {
     validatePhoneNumber,
-    formatPhoneNumber,
+    formatPhoneNumberForAPI,
     isLoading: countriesLoading,
   } = useCountries();
 
@@ -196,11 +196,12 @@ export function AddAccountPage() {
         setError("Format de numéro de téléphone invalide");
         return;
       } else {
-        const fullPhoneNumber = formatPhoneNumber(
+        // Formater pour l'API (format 00228909090900)
+        const apiPhoneNumber = formatPhoneNumberForAPI(
           formData.telephone,
           selectedPhoneCountry.code
         );
-        formData.telephone = fullPhoneNumber;
+        formData.telephone = apiPhoneNumber;
       }
     } else {
       setError("Veuillez sélectionner un pays pour le téléphone");
@@ -319,7 +320,7 @@ export function AddAccountPage() {
                   value={formData.nom}
                   onChange={(e) => handleInputChange("nom", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="Doe"
+                  placeholder="Ali..."
                 />
               </div>
 
@@ -361,7 +362,7 @@ export function AddAccountPage() {
                       ? "focus:ring-red-500"
                       : "focus:ring-blue-500"
                   }`}
-                  placeholder="johndoe"
+                  placeholder="ali..."
                 />
                 {fieldsTouched.nom_utilisateur &&
                   validationErrors.nom_utilisateur && (

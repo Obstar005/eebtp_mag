@@ -61,7 +61,6 @@ export const extractPaginatedData = <T>(
   }
 
   // Si rien ne correspond, retourner un tableau vide
-  console.warn("Format de réponse API non reconnu:", response);
   return {
     data: [],
     total: 0,

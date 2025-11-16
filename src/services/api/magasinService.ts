@@ -264,8 +264,6 @@ class MagasinService {
         queryString ? `?${queryString}` : ""
       }`;
 
-      console.log("📦 Récupération des articles de stock:", url);
-
       const response = await client.get<
         ApiStockItem[] | ApiStockItemListResponse
       >(url);

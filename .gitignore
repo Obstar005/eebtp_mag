@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+DASHBOARD_STRUCTURE.md
+FILTERS_FIX.md
+PHONE_FORMAT_FIX.md
+PHONE_FORMAT_SUMMARY.txt
+api-charts-responses.txt

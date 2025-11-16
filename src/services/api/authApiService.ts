@@ -293,13 +293,8 @@ export class UserApiService {
       const response = await apiClient.get<ApiCustomUser[]>(
         "/Users/liste-users"
       );
-      console.log(
-        "✅ UserApiService: Réponse API utilisateurs:",
-        response.data
-      );
 
       const accounts = await Promise.all(response.data.map(apiUserToAccount));
-      console.log("🔄 UserApiService: Utilisateurs transformés:", accounts);
 
       return accounts;
     } catch (error) {
@@ -311,9 +306,6 @@ export class UserApiService {
   // Récupérer un utilisateur par ID
   async getUserById(id: string): Promise<Account> {
     try {
-      console.log(
-        `🔍 Récupération des détails de l'utilisateur avec ID: ${id}`
-      );
       const response = await apiClient.get<ApiCustomUser>(
         `/Users/user-detail${id}`
       );
@@ -364,18 +356,6 @@ export class UserApiService {
             },
           }
         );
-
-        console.log(
-          "✅ Utilisateur créé avec succès avec image:",
-          response.data
-        );
-        console.log("🔍 Structure complète de la réponse API (avec image):", {
-          status: response.status,
-          hasData: !!response.data,
-          dataKeys: Object.keys(response.data || {}),
-          userId: response.data?.id,
-          userIdType: typeof response.data?.id,
-        });
 
         // Validation de la réponse API
         const validation = validateApiUser(response.data);
@@ -635,10 +615,7 @@ export class ProfileApiService {
         "🔍 ProfileApiService: Récupération des profils depuis l'API EEBTP..."
       );
       const response = await apiClient.get<ApiProfil[]>("/Users/liste-profils");
-      console.log("✅ ProfileApiService: Réponse API profils:", response.data);
-
       const profiles = response.data.map(apiProfilToProfile);
-      console.log("🔄 ProfileApiService: Profils transformés:", profiles);
 
       return profiles;
     } catch (error) {

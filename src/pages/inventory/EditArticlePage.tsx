@@ -14,9 +14,6 @@ interface ArticleForm {
   description: string;
   type_enum: ArticleType;
   unite: ArticleUnite;
-  quantite: number;
-  quantite_seuil: number;
-  prix_unitaire: number;
 }
 
 interface ArticleFormErrors {
@@ -25,9 +22,6 @@ interface ArticleFormErrors {
   etat?: string;
   type_enum?: string;
   unite?: string;
-  quantite?: string;
-  quantite_seuil?: string;
-  prix_unitaire?: string;
 }
 
 export default function EditArticlePage() {
@@ -40,9 +34,6 @@ export default function EditArticlePage() {
     description: "",
     type_enum: "matiere_premiere",
     unite: "unite",
-    quantite: 0,
-    quantite_seuil: 0,
-    prix_unitaire: 0,
   });
   const [errors, setErrors] = useState<ArticleFormErrors>({});
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -61,9 +52,6 @@ export default function EditArticlePage() {
         description: article.description || "",
         type_enum: article.type_enum || "matiere_premiere",
         unite: article.unite || "unite",
-        quantite: article.quantite,
-        quantite_seuil: article.quantite_seuil,
-        prix_unitaire: article.prix_unitaire || 0,
       });
       // TODO: Charger les images existantes si besoin
     }
@@ -73,12 +61,6 @@ export default function EditArticlePage() {
     const newErrors: ArticleFormErrors = {};
     if (!form.name.trim()) {
       newErrors.name = "La désignation est requise";
-    }
-    if (form.quantite < 0) {
-      newErrors.quantite = "La quantité ne peut pas être négative";
-    }
-    if (form.quantite_seuil < 0) {
-      newErrors.quantite_seuil = "Le seuil ne peut pas être négatif";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -94,9 +76,6 @@ export default function EditArticlePage() {
         description: form.description.trim(),
         type_enum: form.type_enum,
         unite: form.unite,
-        quantite: form.quantite,
-        quantite_seuil: form.quantite_seuil,
-        prix_unitaire: form.prix_unitaire,
       };
       await updateArticleMutation.mutateAsync(updateData);
       navigate("/articles");

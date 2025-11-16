@@ -35,7 +35,8 @@ export function EditAccountPage() {
   const { countries } = useCountries();
   const {
     validatePhoneNumber,
-    formatPhoneNumber,
+    formatPhoneNumberForAPI,
+    parsePhoneNumberFromAPI,
     isLoading: countriesLoading,
   } = useCountries();
 
@@ -93,12 +94,20 @@ export function EditAccountPage() {
 
       // Pays de téléphone (extraire du numéro de téléphone)
       if (account.telephone && !selectedPhoneCountry) {
-        // Essayer de trouver le pays basé sur le code téléphonique
-        const phoneCountry = countries.find((country) =>
-          account.telephone?.startsWith(country.code)
+        // Le téléphone reçu de l'API est au format "00228909090900"
+        // On doit le dé-formater pour extraire le code pays et le numéro local
+        const parsedPhone = parsePhoneNumberFromAPI(account.telephone);
+        const phoneCountry = countries.find(
+          (country) => country.code === parsedPhone.countryCode
         );
+        
         if (phoneCountry) {
           setSelectedPhoneCountry(phoneCountry);
+          // Mettre à jour le champ téléphone avec le format lisible (numéro local uniquement)
+          setFormData((prev) => ({
+            ...prev,
+            telephone: parsedPhone.localNumber,
+          }));
         } else {
           // Par défaut, utiliser le Togo
           const togoCountry = countries.find(
@@ -149,11 +158,12 @@ export function EditAccountPage() {
         setError("Format de numéro de téléphone invalide");
         return;
       } else {
-        const fullPhoneNumber = formatPhoneNumber(
+        // Formater pour l'API (format 00228909090900)
+        const apiPhoneNumber = formatPhoneNumberForAPI(
           formData.telephone,
           selectedPhoneCountry.code
         );
-        formData.telephone = fullPhoneNumber;
+        formData.telephone = apiPhoneNumber;
       }
     } else if (formData.telephone) {
       setError("Veuillez sélectionner un pays pour le téléphone");
@@ -256,7 +266,7 @@ export function EditAccountPage() {
                   value={formData.nom}
                   onChange={(e) => handleInputChange("nom", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="Doe"
+                  placeholder="Ali..."
                 />
               </div>
 
@@ -288,7 +298,7 @@ export function EditAccountPage() {
                     handleInputChange("nom_utilisateur", e.target.value)
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="johndoe"
+                  placeholder="Ali..."
                 />
               </div>
 

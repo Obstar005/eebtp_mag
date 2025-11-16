@@ -14,9 +14,6 @@ interface ArticleForm {
   description: string;
   type_enum: ArticleType;
   unite: ArticleUnite;
-  quantite: number;
-  quantite_seuil: number;
-  prix_unitaire: number;
   magasin_id: number;
 }
 
@@ -25,9 +22,6 @@ interface ArticleFormErrors {
   name?: string;
   description?: string;
   type_enum?: string;
-  quantite?: string;
-  quantite_seuil?: string;
-  prix_unitaire?: string;
   magasin_id?: string;
 }
 
@@ -40,9 +34,6 @@ export function AddArticlePage() {
     description: "",
     type_enum: "matiere_premiere",
     unite: "unite",
-    quantite: 0,
-    quantite_seuil: 0,
-    prix_unitaire: 0,
     magasin_id: 1, // Valeur par défaut, à adapter selon le contexte
   });
 
@@ -58,14 +49,6 @@ export function AddArticlePage() {
 
     if (!form.name.trim()) {
       newErrors.name = "La désignation est requise";
-    }
-
-    if (form.quantite < 0) {
-      newErrors.quantite = "La quantité ne peut pas être négative";
-    }
-
-    if (form.quantite_seuil < 0) {
-      newErrors.quantite_seuil = "Le seuil ne peut pas être négatif";
     }
 
     setErrors(newErrors);
@@ -85,9 +68,6 @@ export function AddArticlePage() {
         description: form.description.trim(),
         type_enum: form.type_enum,
         unite: form.unite,
-        quantite: form.quantite,
-        quantite_seuil: form.quantite_seuil,
-        prix_unitaire: form.prix_unitaire,
         magasin_id: form.magasin_id,
       };
       await createArticleMutation.mutateAsync(createData);
@@ -252,100 +232,6 @@ export function AddArticlePage() {
                   <option value="autre">Autre</option>
                 </select>
               </div>
-
-              {/* État */}
-              {/* <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  État
-                </label>
-                <select
-                  value={form.etat}
-                  onChange={(e) =>
-                    handleChange("etat", e.target.value as ArticleEtat)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="neuf">Neuf</option>
-                  <option value="usagé">Usagé</option>
-                  <option value="endommagé">Endommagé</option>
-                </select>
-              </div> */}
-
-              {/* Quantité et seuil */}
-              {/* <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Quantité
-                  </label>
-                  <input
-                    type="number"
-                    value={form.quantite}
-                    onChange={(e) =>
-                      handleChange("quantite", parseFloat(e.target.value) || 0)
-                    }
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.quantite ? "border-red-300" : "border-gray-300"
-                    }`}
-                    min="0"
-                    step="0.01"
-                    placeholder="0"
-                  />
-                  {errors.quantite && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.quantite}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Seuil
-                  </label>
-                  <input
-                    type="number"
-                    value={form.quantite_seuil}
-                    onChange={(e) =>
-                      handleChange(
-                        "quantite_seuil",
-                        parseFloat(e.target.value) || 0
-                      )
-                    }
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.quantite_seuil
-                        ? "border-red-300"
-                        : "border-gray-300"
-                    }`}
-                    min="0"
-                    step="0.01"
-                    placeholder="0"
-                  />
-                  {errors.quantite_seuil && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.quantite_seuil}
-                    </p>
-                  )}
-                </div>
-              </div> */}
-
-              {/* Prix unitaire */}
-              {/* <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Prix unitaire
-                </label>
-                <input
-                  type="number"
-                  value={form.prix_unitaire}
-                  onChange={(e) =>
-                    handleChange(
-                      "prix_unitaire",
-                      parseFloat(e.target.value) || 0
-                    )
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                />
-              </div> */}
 
               {/* Bouton de sauvegarde */}
               <div className="pt-4">

@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Save } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Save } from "lucide-react";
 import { useCreateAccountProfile } from "../../hooks";
+import {
+  extractApiError,
+  formatErrorForDisplay,
+} from "../../utils/apiErrorUtils";
 
 interface ProfileFormData {
   nom: string;
@@ -18,6 +22,9 @@ export function ProfileAddPage() {
     description: "",
   });
 
+  // Message d'erreur à afficher en bannière stylée
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const handleBack = () => {
     navigate("/profiles");
   };
@@ -33,7 +40,24 @@ export function ProfileAddPage() {
       await createMutation.mutateAsync(formData);
       navigate("/profiles");
     } catch (error) {
+      // Extraire et formater l'erreur API
+      const formattedError = extractApiError(error);
+      const displayMessage = formatErrorForDisplay(formattedError);
+
       console.error("Erreur lors de la création:", error);
+
+      // Détection d'un cas fréquent : profil existant
+      const isDuplicate =
+        formattedError.status === 400 &&
+        formattedError.details?.some((d) =>
+          /existe|exist|already|duplicate|conflict/i.test(d)
+        );
+
+      const userMessage = isDuplicate
+        ? "Un profil avec ce nom existe déjà. Choisissez un autre nom."
+        : displayMessage;
+
+      setErrorMessage(userMessage);
     }
   };
 
@@ -55,6 +79,22 @@ export function ProfileAddPage() {
 
       {/* Formulaire de création */}
       <div className="bg-white rounded-lg shadow p-6">
+        {/* Bannière d'erreur stylée */}
+        {errorMessage && (
+          <div className="mb-4 flex items-start gap-3 rounded-md border border-red-200 bg-red-50 p-4">
+            <AlertTriangle className="h-6 w-6 flex-shrink-0 text-red-600" />
+            <div className="flex-1 text-sm text-red-800 whitespace-pre-line">
+              {errorMessage}
+            </div>
+            <button
+              onClick={() => setErrorMessage(null)}
+              className="ml-3 rounded bg-red-100 px-2 py-1 text-xs text-red-700 hover:bg-red-200"
+              title="Fermer"
+            >
+              Fermer
+            </button>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Libellé */}
           <div>

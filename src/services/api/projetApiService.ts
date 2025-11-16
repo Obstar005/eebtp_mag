@@ -24,6 +24,7 @@ import type {
   ApiProjet,
   ApiMagasin,
   ApiProjetPhoto,
+  ApiCreateProjetResponse,
 } from "../../types/api-projets";
 import type { ApiCustomUser } from "../../types/api-users";
 
@@ -35,6 +36,9 @@ export class ProjetApiService {
   async getProjets(filters: ProjetFilters = {}): Promise<ProjetListResponse> {
     const params = new URLSearchParams();
 
+    // Note: l'API ne supporte pas directement le filtrage par 'status'
+    // Le statut est calculé côté client en fonction des dates
+
     if (filters.search) params.append("search", filters.search);
     if (filters.pays) params.append("pays", filters.pays);
     if (filters.chef_projet_id)
@@ -43,7 +47,9 @@ export class ProjetApiService {
       params.append("date_debut_from", filters.date_debut_from);
     if (filters.date_debut_to)
       params.append("date_debut_to", filters.date_debut_to);
-    if (filters.status) params.append("status", filters.status);
+    if (filters.date_fin_from)
+      params.append("date_fin_from", filters.date_fin_from);
+    if (filters.date_fin_to) params.append("date_fin_to", filters.date_fin_to);
     if (filters.page) params.append("page", filters.page.toString());
     if (filters.limit) params.append("limit", filters.limit.toString());
 
@@ -53,17 +59,39 @@ export class ProjetApiService {
         `${this.basePath}/liste-projets?${params.toString()}`
       );
 
-      console.log("Réponse API projets:", response.data);
-
       // Récupérer la liste des utilisateurs pour résoudre les noms
       const usersResponse = await client.get<ApiCustomUser[]>(
         "/Users/liste-users"
       );
       const users = usersResponse.data;
-      console.log("Utilisateurs récupérés pour les projets:", users);
+
+      let projets = response.data;
+
+      // Filtrer par statut côté client (calcul en fonction des dates)
+      if (filters.status) {
+        const now = new Date();
+        projets = projets.filter((projet) => {
+          const debut = new Date(projet.date_debut);
+          const fin = projet.date_fin
+            ? new Date(projet.date_fin)
+            : new Date(debut.getTime() + 30 * 24 * 60 * 60 * 1000); // +30 jours par défaut
+
+          if (filters.status === "planifie") {
+            return debut > now;
+          } else if (filters.status === "en_cours") {
+            return debut <= now && fin >= now;
+          } else if (filters.status === "termine") {
+            return fin < now;
+          } else if (filters.status === "annule") {
+            // Aucun projet n'est marqué comme annulé pour l'instant
+            return false;
+          }
+          return true;
+        });
+      }
 
       return apiProjetsArrayToProjetListResponse(
-        response.data,
+        projets,
         users,
         filters.page || 1,
         filters.limit || 10
@@ -91,13 +119,14 @@ export class ProjetApiService {
 
     try {
       // Créer le projet avec son magasin associé en un seul appel
-      const response = await client.post<ApiProjet>(
+      const response = await client.post<ApiCreateProjetResponse>(
         `${this.basePath}/projet-create`,
         apiData
       );
 
-      const nouveauProjet = apiProjetToProjet(response.data);
-      console.log("✅ Projet créé avec succès:", nouveauProjet);
+      // Extraire le projet de la réponse (la réponse contient { message, projet })
+      const apiProjet = response.data.projet;
+      const nouveauProjet = apiProjetToProjet(apiProjet);
 
       // Si l'API a créé automatiquement le magasin, nous n'avons plus besoin de le créer séparément
       // Si des magasins supplémentaires sont spécifiés (au-delà du premier), les créer séparément
@@ -209,17 +238,9 @@ export class ProjetApiService {
     const response = await client.get<ApiMagasin[]>(
       `${this.basePath}/liste-magasins`
     );
-    console.log(
-      `🔍 Magasins récupérés (total: ${response.data.length}):`,
-      response.data
-    );
 
     // Filtrer pour ne garder que les magasins du projet spécifié
     const magasinsFiltered = response.data.filter((m) => m.projet === projetId);
-    console.log(
-      `✅ Magasins filtrés pour le projet ${projetId} (${magasinsFiltered.length} résultats)`,
-      magasinsFiltered
-    );
 
     return magasinsFiltered.map(apiMagasinToMagasin);
   }

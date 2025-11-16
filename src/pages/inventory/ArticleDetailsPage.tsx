@@ -12,9 +12,6 @@ interface ArticleForm {
   name: string;
   description: string;
   type_enum: ArticleType;
-  quantite: number;
-  quantite_seuil: number;
-  prix_unitaire: number;
 }
 
 // Types locaux
@@ -22,9 +19,6 @@ interface ArticleFormErrors {
   name?: string;
   description?: string;
   type_enum?: string;
-  quantite?: string;
-  quantite_seuil?: string;
-  prix_unitaire?: string;
 }
 
 export default function ArticleDetailsPage() {
@@ -35,9 +29,6 @@ export default function ArticleDetailsPage() {
     name: "",
     description: "",
     type_enum: "matiere_premiere",
-    quantite: 0,
-    quantite_seuil: 0,
-    prix_unitaire: 0,
   });
 
   const [errors, setErrors] = useState<ArticleFormErrors>({});
@@ -56,9 +47,6 @@ export default function ArticleDetailsPage() {
         name: article.name || "",
         description: article.description || "",
         type_enum: article.type_enum || "matiere_premiere",
-        quantite: article.quantite,
-        quantite_seuil: article.quantite_seuil,
-        prix_unitaire: article.prix_unitaire || 0,
       });
     }
   }, [article]);
@@ -68,14 +56,6 @@ export default function ArticleDetailsPage() {
 
     if (!form.name.trim()) {
       newErrors.name = "La désignation est requise";
-    }
-
-    if (form.quantite < 0) {
-      newErrors.quantite = "La quantité ne peut pas être négative";
-    }
-
-    if (form.quantite_seuil < 0) {
-      newErrors.quantite_seuil = "Le seuil ne peut pas être négatif";
     }
 
     setErrors(newErrors);
@@ -95,9 +75,6 @@ export default function ArticleDetailsPage() {
         name: form.name.trim(),
         description: form.description.trim(),
         type_enum: form.type_enum,
-        quantite: form.quantite,
-        quantite_seuil: form.quantite_seuil,
-        prix_unitaire: form.prix_unitaire,
       };
       await updateArticleMutation.mutateAsync(updateData);
       navigate("/articles");
@@ -205,26 +182,6 @@ export default function ArticleDetailsPage() {
                 />
               </div>
 
-              {/* État */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  État
-                </label>
-                <select
-                  value={form.etat}
-                  onChange={(e) =>
-                    handleChange("etat", e.target.value as ArticleEtat)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  title="Sélectionner l'état de l'article"
-                  aria-label="État de l'article"
-                >
-                  <option value="neuf">Bon</option>
-                  <option value="usagé">Mauvais</option>
-                  <option value="abandonné">Abandonné</option>
-                </select>
-              </div>
-
               {/* Type */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -243,102 +200,6 @@ export default function ArticleDetailsPage() {
                   <option value="equipement">Matériel</option>
                   <option value="consommable">Consommable</option>
                 </select>
-              </div>
-
-              {/* Unité */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Unité
-                </label>
-                <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  defaultValue="kilogramme"
-                  title="Sélectionner l'unité de mesure"
-                  aria-label="Unité de mesure"
-                >
-                  <option value="kilogramme">Kilogramme</option>
-                  <option value="litre">Litre</option>
-                  <option value="piece">Pièce</option>
-                  <option value="metre">Mètre</option>
-                </select>
-              </div>
-
-              {/* Quantité et seuil */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Quantité
-                  </label>
-                  <input
-                    type="number"
-                    value={form.quantite}
-                    onChange={(e) =>
-                      handleChange("quantite", parseFloat(e.target.value) || 0)
-                    }
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.quantite ? "border-red-300" : "border-gray-300"
-                    }`}
-                    min="0"
-                    step="0.01"
-                    title="Saisir la quantité"
-                    aria-label="Quantité de l'article"
-                  />
-                  {errors.quantite && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.quantite}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Seuil
-                  </label>
-                  <input
-                    type="number"
-                    value={form.quantite_seuil}
-                    onChange={(e) =>
-                      handleChange(
-                        "quantite_seuil",
-                        parseFloat(e.target.value) || 0
-                      )
-                    }
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.quantite_seuil
-                        ? "border-red-300"
-                        : "border-gray-300"
-                    }`}
-                    min="0"
-                    step="0.01"
-                    title="Saisir le seuil"
-                    aria-label="Seuil de quantité"
-                  />
-                  {errors.quantite_seuil && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.quantite_seuil}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Prix unitaire */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Prix unitaire
-                </label>
-                <input
-                  type="number"
-                  value={form.prix_unitaire}
-                  onChange={(e) =>
-                    handleChange(
-                      "prix_unitaire",
-                      parseFloat(e.target.value) || 0
-                    )
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                />
               </div>
 
               {/* Dates */}

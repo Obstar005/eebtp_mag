@@ -238,7 +238,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-900 truncate capitalize">
-                  {user?.firstName || "John"} {user?.lastName || "Doe"}
+                  {user?.firstName || "-"} {user?.lastName || "-"}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
                   {user?.role === "admin" ? "Admin" : "DG"}

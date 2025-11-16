@@ -62,64 +62,7 @@ export function ReportsPage() {
 
   const projects = ["Project A", "Project B", "Project C", "Project D"];
 
-  const reportData = [
-    {
-      date: "01-01-2025 à 20h30",
-      mouvement: "Entrée",
-      article: "Ciment",
-      type: "Matériel",
-      compte: "John Doe",
-    },
-    {
-      date: "01-01-2025 à 20h30",
-      mouvement: "Sortie",
-      article: "Fer de 8",
-      type: "Matériel",
-      compte: "John Doe",
-    },
-    {
-      date: "01-01-2025 à 20h30",
-      mouvement: "Sortie",
-      article: "Sable",
-      type: "Matériaux",
-      compte: "John Doe",
-    },
-    {
-      date: "01-01-2025 à 20h30",
-      mouvement: "Entrée",
-      article: "Ciment",
-      type: "Matériel",
-      compte: "John Doe",
-    },
-    {
-      date: "01-01-2025 à 20h30",
-      mouvement: "Entrée",
-      article: "Ciment",
-      type: "Matériel",
-      compte: "John Doe",
-    },
-    {
-      date: "01-01-2025 à 20h30",
-      mouvement: "Sortie",
-      article: "Ciment",
-      type: "Matériel",
-      compte: "John Doe",
-    },
-    {
-      date: "01-01-2025 à 20h30",
-      mouvement: "Entrée",
-      article: "Ciment",
-      type: "Matériel",
-      compte: "John Doe",
-    },
-    {
-      date: "01-01-2025 à 20h30",
-      mouvement: "Entrée",
-      article: "Ciment",
-      type: "Matériel",
-      compte: "John Doe",
-    },
-  ];
+  const reportData = [];
 
   const generateReport = () => {
     setIsLoading(true);

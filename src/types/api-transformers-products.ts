@@ -107,7 +107,6 @@ export function extractPaginatedProductData(response: unknown): {
   }
 
   // Fallback : retourner un tableau vide
-  console.warn("Format de réponse API inattendu pour les produits:", response);
   return { data: [], total: 0 };
 }
 

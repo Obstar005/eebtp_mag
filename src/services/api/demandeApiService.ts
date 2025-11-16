@@ -140,10 +140,6 @@ export class DemandeApiService {
 
       // Validation de la réponse
       if (!response.data || !response.data.id) {
-        console.warn(
-          "⚠️ Réponse API incomplète pour confirmation:",
-          response.data
-        );
         // En cas de réponse incomplète, récupérer la demande mise à jour
         return await this.getDemandeById(id);
       }
@@ -174,10 +170,6 @@ export class DemandeApiService {
 
       // Validation de la réponse
       if (!response.data || !response.data.id) {
-        console.warn(
-          "⚠️ Réponse API incomplète pour approbation:",
-          response.data
-        );
         return await this.getDemandeById(id);
       }
 
@@ -207,10 +199,6 @@ export class DemandeApiService {
 
       // Validation de la réponse
       if (!response.data || !response.data.id) {
-        console.warn(
-          "⚠️ Réponse API incomplète pour validation:",
-          response.data
-        );
         return await this.getDemandeById(id);
       }
 
@@ -240,7 +228,6 @@ export class DemandeApiService {
 
       // Validation de la réponse
       if (!response.data || !response.data.id) {
-        console.warn("⚠️ Réponse API incomplète pour rejet:", response.data);
         return await this.getDemandeById(id);
       }
 

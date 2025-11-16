@@ -49,7 +49,17 @@ export function ProjectsPage() {
 
   // Réinitialiser les filtres
   const resetFilters = () => {
-    setFilters({ page: 1, limit: 10, search: "" });
+    setFilters({
+      page: 1,
+      limit: 10,
+      search: "",
+      pays: undefined,
+      status: undefined,
+      date_debut_from: undefined,
+      date_fin_to: undefined,
+      date_debut_to: undefined,
+      chef_projet_id: undefined,
+    });
     setShowFilters(false);
   };
 

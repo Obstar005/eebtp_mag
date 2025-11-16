@@ -198,12 +198,6 @@ export function extractPaginatedDeclarationData(response: unknown): {
       };
     }
   }
-
-  // Fallback : retourner un tableau vide
-  console.warn(
-    "Format de réponse API inattendu pour les déclarations:",
-    response
-  );
   return { data: [], total: 0 };
 }
 

@@ -49,8 +49,6 @@ export interface StockArticle {
   id: number;
   name: string;
   description?: string;
-  quantite: number; // Quantité disponible
-  quantite_seuil: number; // Quantité seuil
   type_enum?: ArticleType;
   unite?: ArticleUnite; // Unité de mesure
   date_creation: Date;
@@ -58,7 +56,6 @@ export interface StockArticle {
   user_id: number; // Utilisateur responsable
   magasin_id: number;
   project_id?: number;
-  prix_unitaire?: number;
 
   // Relations
   magasin?: Magasin;
@@ -76,13 +73,10 @@ export interface StockArticle {
 export interface CreateStockArticleData {
   name: string;
   description?: string;
-  quantite: number;
-  quantite_seuil: number;
   type_enum?: ArticleType;
   unite?: ArticleUnite;
   magasin_id: number;
   project_id?: number;
-  prix_unitaire?: number;
   article_id?: number;
 }
 

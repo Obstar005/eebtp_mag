@@ -1,125 +1,208 @@
-import React from "react";
+import { useState, useMemo } from "react";
 import { MoreHorizontal } from "lucide-react";
-import { mouvementsApiService } from "../services/api";
+import {
+  useFluctuationEntrees,
+  useFluctuationSorties,
+} from "../hooks/useFluctuation";
+import { useProjetsSelect } from "../hooks/useProjetsSelect";
+import { useProjetMagasins } from "../hooks/useProjets";
+import { useStockArticles } from "../hooks/useMagasins";
+import { FluctuationChart } from "../components/FluctuationChart";
+import type { FluctuationParams } from "../types/fluctuation";
 
 export function Dashboard() {
-  const [selectedPeriod, setSelectedPeriod] = React.useState("Jour");
+  // Récupérer les projets de l'API
+  const projetsQuery = useProjetsSelect();
 
-  // 🔧 Débogage: Tester l'endpoint de fluctuation au chargement
-  React.useEffect(() => {
-    const testFluctuationEndpoint = async () => {
-      try {
-        console.log("\n");
-        console.log(
-          "╔════════════════════════════════════════════════════════════════╗"
-        );
-        console.log(
-          "║                                                                ║"
-        );
-        console.log(
-          "║       🔍 DÉBOGAGE - ENDPOINTS GRAPHIQUE DU DASHBOARD          ║"
-        );
-        console.log(
-          "║                                                                ║"
-        );
-        console.log(
-          "╚════════════════════════════════════════════════════════════════╝"
-        );
+  // États pour les menus déroulants
+  const [openProjectMenu, setOpenProjectMenu] = useState(false);
+  const [openPeriodMenu, setOpenPeriodMenu] = useState(false);
+  const [openProductEntreeMenu, setOpenProductEntreeMenu] = useState(false);
+  const [openTypeEntreeMenu, setOpenTypeEntreeMenu] = useState(false);
+  const [openProductSortieMenu, setOpenProductSortieMenu] = useState(false);
 
-        // IMPORTANT: Adapter ces IDs selon vos données!
-        // Chercher des IDs valides dans:
-        // 1. Page des Projets → noter un project ID
-        // 2. Page des Produits/Articles → noter un product ID
-        const PROJECT_ID = 1; // ← À remplacer avec un ID projet valide
-        const TYPE_ENTREE = "entree"; // Types possibles: entree, depot, etc.
-        const PERIODE = "jour"; // Périodes: jour, semaine, mois, total
-        const PRODUIT_ID = 1; // ← À remplacer avec un ID produit valide
+  // Filtres globaux (affectent les deux graphiques)
+  const [selectedProject, setSelectedProject] = useState<number | null>(1);
+  const [selectedPeriod, setSelectedPeriod] = useState<
+    "jour" | "semaine" | "mois" | "total"
+  >("jour");
 
-        console.log("\n📌 IDS DE TEST UTILISÉS:");
-        console.log(`   project_id: ${PROJECT_ID}`);
-        console.log(`   type_entree: ${TYPE_ENTREE}`);
-        console.log(`   periode: ${PERIODE}`);
-        console.log(`   produit_id: ${PRODUIT_ID}`);
-        console.log(
-          "\n💡 CONSEIL: Si vous obtenez 404, trouvez des IDs valides!"
-        );
+  // Filtres spécifiques au graphique Entrées
+  const [selectedProductEntree, setSelectedProductEntree] = useState<
+    number | null
+  >(1);
+  const [selectedTypeEntree, setSelectedTypeEntree] =
+    useState<string>("entree");
 
-        console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        console.log("� TEST 1: Fluctuation d'entrées");
-        console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  // Filtres spécifiques au graphique Sorties
+  const [selectedProductSortie, setSelectedProductSortie] = useState<
+    number | null
+  >(1);
 
-        const dataEntree = await mouvementsApiService.getFluctuationEntree(
-          PROJECT_ID,
-          TYPE_ENTREE,
-          PERIODE,
-          PRODUIT_ID
-        );
+  // Récupérer les magasins du projet sélectionné
+  const magasinsQuery = useProjetMagasins(selectedProject || 0);
 
-        console.log("\n✨ RÉSUMÉ DE LA STRUCTURE RETOURNÉE:");
-        console.log(
-          `   Type: ${Array.isArray(dataEntree) ? "Tableau" : "Objet"}`
-        );
-        console.log(
-          `   Éléments: ${
-            Array.isArray(dataEntree) ? dataEntree.length : "N/A"
-          }`
-        );
+  // Récupérer le premier magasin (par défaut, la plupart des projets ont un magasin principal)
+  const firstMagasinId = magasinsQuery.data?.[0]?.id || null;
 
-        // Afficher un petit résumé de ce qu'on a
-        if (Array.isArray(dataEntree)) {
-          console.log(
-            `   └─ Tableau avec ${dataEntree.length} éléments (voir détails ci-dessus)`
-          );
-        } else if (typeof dataEntree === "object" && dataEntree !== null) {
-          const dataKeys = Object.keys(dataEntree as Record<string, unknown>);
-          console.log(
-            `   └─ Objet avec clés: [${dataKeys.join(
-              ", "
-            )}] (voir détails ci-dessus)`
-          );
-        }
-      } catch (error) {
-        console.log("\n⚠️  ERREUR LORS DU TEST");
-        console.log("   Les IDs utilisés (1, 1) n'existent probablement pas.");
-        console.log("\n� POUR CORRIGER:");
-        console.log("   1. Allez à la page Projets et notez un project_id");
-        console.log(
-          "   2. Allez à la page Articles/Produits et notez un produit_id"
-        );
-        console.log(
-          "   3. Modifiez les constantes PROJECT_ID et PRODUIT_ID ci-dessus"
-        );
-        console.log("   4. Rafraîchissez la page (F5) et vérifiez la console");
-      }
+  // Récupérer les articles du magasin associé au projet
+  const articlesQuery = useStockArticles(firstMagasinId || 0, {});
 
-      console.log("\n");
+  // Articles formatés pour les sélecteurs
+  const articlesList = useMemo(() => {
+    return (
+      articlesQuery.data?.data?.map((article) => ({
+        id: article.id,
+        name: article.name,
+      })) || []
+    );
+  }, [articlesQuery.data?.data]);
+
+  // Paramètres pour les données d'entrées
+  const fluctuationParamsEntree: FluctuationParams | null = useMemo(() => {
+    if (!selectedProject || !selectedProductEntree) return null;
+    return {
+      projetId: selectedProject,
+      produitId: selectedProductEntree,
+      periode: selectedPeriod,
+      typeEntree: selectedTypeEntree,
     };
+  }, [
+    selectedProject,
+    selectedProductEntree,
+    selectedPeriod,
+    selectedTypeEntree,
+  ]);
 
-    testFluctuationEndpoint();
-  }, []);
+  // Paramètres pour les données de sorties
+  const fluctuationParamsSortie: FluctuationParams | null = useMemo(() => {
+    if (!selectedProject || !selectedProductSortie) return null;
+    return {
+      projetId: selectedProject,
+      produitId: selectedProductSortie,
+      periode: selectedPeriod,
+    };
+  }, [selectedProject, selectedProductSortie, selectedPeriod]);
+
+  // Récupérer les données d'entrées ET sorties
+  const entreeQuery = useFluctuationEntrees(fluctuationParamsEntree);
+  const sortieQuery = useFluctuationSorties(fluctuationParamsSortie);
 
   return (
     <div className="space-y-6">
-      {/* Header avec titre et filtres */}
+      {/* Header avec titre et filtres globaux */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Statistiques</h1>
 
-        {/* Filtres Jour/Semaine/Mois */}
-        <div className="flex bg-blue-50 rounded-full p-1 gap-1">
-          {["Jour", "Semaine", "Mois"].map((label) => (
+        {/* Filtres globaux */}
+        <div className="flex gap-3">
+          {/* Sélecteur de Projet */}
+          <div className="relative">
             <button
-              key={label}
-              onClick={() => setSelectedPeriod(label)}
-              className={`px-5 py-1.5 rounded-full text-sm font-medium transition-colors focus:outline-none ${
-                selectedPeriod === label
-                  ? "bg-white text-blue-600 shadow"
-                  : "text-gray-500 hover:text-blue-600"
-              }`}
-              type="button"
+              onClick={() => setOpenProjectMenu(!openProjectMenu)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-900 rounded hover:bg-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-600"
             >
-              {label}
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  fillRule="evenodd"
+                  d="M3 6a2 2 0 0 1 2-2h5.532a2 2 0 0 1 1.536.72l1.9 2.28H3V6Zm0 3v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H3Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span>
+                {projetsQuery.data?.find((p) => p.id === selectedProject)
+                  ?.name || "Sélectionner"}
+              </span>
+              <svg
+                className={`w-4 h-4 transition-transform ${
+                  openProjectMenu ? "rotate-180" : ""
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                />
+              </svg>
             </button>
-          ))}
+            {openProjectMenu && (
+              <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded shadow-lg z-50">
+                {projetsQuery.data?.map((projet) => (
+                  <button
+                    key={projet.id}
+                    onClick={() => {
+                      setSelectedProject(projet.id);
+                      setOpenProjectMenu(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                      selectedProject === projet.id
+                        ? "bg-blue-50 text-blue-900 font-semibold"
+                        : "text-gray-900"
+                    }`}
+                  >
+                    {projet.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sélecteur de Période */}
+          <div className="relative">
+            <button
+              onClick={() => setOpenPeriodMenu(!openPeriodMenu)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-900 rounded hover:bg-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-600"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2v16h12V4H6zm1 1h2v2H7V5zm4 0h2v2h-2V5zm4 0h2v2h-2V5z" />
+              </svg>
+              <span>
+                {selectedPeriod.charAt(0).toUpperCase() +
+                  selectedPeriod.slice(1)}
+              </span>
+              <svg
+                className={`w-4 h-4 transition-transform ${
+                  openPeriodMenu ? "rotate-180" : ""
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                />
+              </svg>
+            </button>
+            {openPeriodMenu && (
+              <div className="absolute top-full left-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
+                {["jour", "semaine", "mois", "total"].map((period) => (
+                  <button
+                    key={period}
+                    onClick={() => {
+                      setSelectedPeriod(
+                        period as "jour" | "semaine" | "mois" | "total"
+                      );
+                      setOpenPeriodMenu(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                      selectedPeriod === period
+                        ? "bg-blue-50 text-blue-900 font-semibold"
+                        : "text-gray-900"
+                    }`}
+                  >
+                    {period.charAt(0).toUpperCase() + period.slice(1)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -131,7 +214,10 @@ export function Dashboard() {
             <span className="text-xs text-gray-500 font-medium">
               Utilisateurs Total
             </span>
-            <button className="text-gray-400 hover:text-gray-600">
+            <button
+              className="text-gray-400 hover:text-gray-600"
+              title="Options"
+            >
               <MoreHorizontal className="h-4 w-4" />
             </button>
           </div>
@@ -150,7 +236,10 @@ export function Dashboard() {
             <span className="text-xs text-gray-500 font-medium">
               Projets Actif
             </span>
-            <button className="text-gray-400 hover:text-gray-600">
+            <button
+              className="text-gray-400 hover:text-gray-600"
+              title="Options"
+            >
               <MoreHorizontal className="h-4 w-4" />
             </button>
           </div>
@@ -169,7 +258,10 @@ export function Dashboard() {
             <span className="text-xs text-gray-500 font-medium">
               Utilisateurs Connectés
             </span>
-            <button className="text-gray-400 hover:text-gray-600">
+            <button
+              className="text-gray-400 hover:text-gray-600"
+              title="Options"
+            >
               <MoreHorizontal className="h-4 w-4" />
             </button>
           </div>
@@ -199,285 +291,211 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Graphiques État du stock */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Graphique en barres - État du stock */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900">État du stock</h3>
-          <div className="flex items-center justify-between mt-2 mb-6">
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-2 text-sm text-gray-600">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                80K
-                <span className="text-gray-400">Unité</span>
-              </span>
-              <span className="flex items-center gap-2 text-sm text-gray-600">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                60K
-                <span className="text-gray-400">Litre</span>
-              </span>
-              <span className="flex items-center gap-2 text-sm text-gray-600">
-                <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
-                50K
-                <span className="text-gray-400">Kilogramme</span>
-              </span>
-            </div>
+      {/* Graphiques de fluctuation */}
+      <div className="grid grid-cols-1 gap-6">
+        {/* Graphique Entrées */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              État des Entrées
+            </h3>
             <div className="flex gap-2">
-              <div className="flex items-center gap-2 text-xs bg-blue-600 text-white px-3 py-2 rounded">
-                <div className="w-4 h-4 bg-white/20 rounded flex items-center justify-center">
-                  <div className="w-2 h-2 bg-white rounded"></div>
-                </div>
-                Projet A
-                <svg className="w-3 h-3" fill="white" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="flex items-center gap-2 text-xs bg-blue-600 text-white px-3 py-2 rounded">
-                <div className="w-4 h-4 bg-white/20 rounded flex items-center justify-center">
-                  <div className="w-2 h-2 bg-white rounded"></div>
-                </div>
-                Jour
-                <svg className="w-3 h-3" fill="white" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* Graphique avec axes */}
-          <div className="flex h-64 gap-2">
-            {/* Axe Y avec valeurs */}
-            <div className="flex flex-col justify-between text-xs text-gray-400 py-1">
-              <span>100K</span>
-              <span>80K</span>
-              <span>60K</span>
-              <span>40K</span>
-              <span>20K</span>
-              <span>0K</span>
-            </div>
-
-            {/* Zone de graphique */}
-            <div className="flex-1 relative">
-              {/* Grille de fond */}
-              <div className="absolute inset-0 flex flex-col justify-between">
-                {[0, 1, 2, 3, 4, 5].map((i) => (
-                  <div
-                    key={i}
-                    className="border-t border-dashed border-gray-200"
-                  ></div>
-                ))}
-              </div>
-
-              {/* Barres */}
-              <div className="h-full flex items-end justify-between gap-1 pb-4">
-                {Array.from({ length: 12 }, (_, i) => {
-                  const heights = [
-                    [35, 50, 75],
-                    [40, 75, 30],
-                    [85, 35, 55],
-                    [40, 75, 30],
-                    [25, 0, 0],
-                    [70, 25, 0],
-                    [15, 0, 0],
-                    [95, 45, 25],
-                    [35, 0, 0],
-                    [55, 25, 0],
-                    [40, 15, 0],
-                    [70, 25, 55],
-                  ];
-                  return (
-                    <div
-                      key={i}
-                      className="flex flex-col items-center gap-1 flex-1"
-                    >
-                      <div className="w-full flex flex-col max-h-52">
-                        {/* Cyan bar (Kilogramme) */}
-                        <div
-                          className="w-full bg-cyan-400 rounded-t"
-                          style={{ height: `${heights[i][2] * 1.8}px` }}
-                        ></div>
-                        {/* Blue bar (Litre) */}
-                        <div
-                          className="w-full bg-blue-500"
-                          style={{ height: `${heights[i][1] * 1.8}px` }}
-                        ></div>
-                        {/* Purple bar (Unité) */}
-                        <div
-                          className="w-full bg-purple-500"
-                          style={{ height: `${heights[i][0] * 1.8}px` }}
-                        ></div>
+              {/* Filtre Article pour Entrées */}
+              <div className="relative">
+                <button
+                  onClick={() =>
+                    setOpenProductEntreeMenu(!openProductEntreeMenu)
+                  }
+                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-blue-900 rounded hover:bg-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                >
+                  <span>Article</span>
+                  <svg
+                    className={`w-3 h-3 transition-transform ${
+                      openProductEntreeMenu ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                    />
+                  </svg>
+                </button>
+                {openProductEntreeMenu && (
+                  <div className="absolute top-full right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
+                    {articlesQuery.isLoading ? (
+                      <div className="p-4 text-center text-sm text-gray-500">
+                        Chargement...
                       </div>
-                      <span className="text-xs text-gray-400">
-                        {
-                          [
-                            "Jan",
-                            "Fév",
-                            "Mar",
-                            "Avr",
-                            "Mai",
-                            "Jul",
-                            "Jul",
-                            "Aoû",
-                            "Sep",
-                            "Oct",
-                            "Nov",
-                            "Déc",
-                          ][i]
-                        }
-                      </span>
-                    </div>
-                  );
-                })}
+                    ) : articlesQuery.isError ? (
+                      <div className="p-4 text-center text-sm text-red-500">
+                        Erreur de chargement
+                      </div>
+                    ) : articlesList.length === 0 ? (
+                      <div className="p-4 text-center text-sm text-gray-500">
+                        Aucun article
+                      </div>
+                    ) : (
+                      articlesList.map((product) => (
+                        <button
+                          key={product.id}
+                          onClick={() => {
+                            setSelectedProductEntree(product.id);
+                            setOpenProductEntreeMenu(false);
+                          }}
+                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                            selectedProductEntree === product.id
+                              ? "bg-blue-50 text-blue-900 font-semibold"
+                              : "text-gray-900"
+                          }`}
+                        >
+                          {product.name}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Filtre Type d'Entrée */}
+              <div className="relative">
+                <button
+                  onClick={() => setOpenTypeEntreeMenu(!openTypeEntreeMenu)}
+                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-blue-900 rounded hover:bg-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                >
+                  <span>Type</span>
+                  <svg
+                    className={`w-3 h-3 transition-transform ${
+                      openTypeEntreeMenu ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                    />
+                  </svg>
+                </button>
+                {openTypeEntreeMenu && (
+                  <div className="absolute top-full right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
+                    {[
+                      { value: "entree", label: "Livraison" },
+                      { value: "depot", label: "Dépôt" },
+                      { value: "retour", label: "Retour" },
+                    ].map((type) => (
+                      <button
+                        key={type.value}
+                        onClick={() => {
+                          setSelectedTypeEntree(type.value);
+                          setOpenTypeEntreeMenu(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                          selectedTypeEntree === type.value
+                            ? "bg-blue-50 text-blue-900 font-semibold"
+                            : "text-gray-900"
+                        }`}
+                      >
+                        {type.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
+          <FluctuationChart
+            title=""
+            entreeData={entreeQuery.data || null}
+            sortieData={null}
+            isLoading={entreeQuery.isLoading}
+            isError={entreeQuery.isError}
+          />
         </div>
 
-        {/* Graphique courbe - État du stock */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900">État du stock</h3>
-          <div className="flex items-center justify-between mt-2 mb-6s">
-            <div className="flex gap-4">
-              <span className="flex items-center gap-2 text-sm text-gray-600">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                80K
-                <span className="text-gray-400">Matériel</span>
-              </span>
-              <span className="flex items-center gap-2 text-sm text-gray-600">
-                <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
-                60K
-                <span className="text-gray-400">Matériaux</span>
-              </span>
-            </div>
+        {/* Graphique Sorties */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              État des Sorties
+            </h3>
             <div className="flex gap-2">
-              <div className="flex items-center gap-2 text-xs bg-blue-600 text-white px-3 py-2 rounded">
-                <div className="w-4 h-4 bg-white/20 rounded flex items-center justify-center">
-                  <div className="w-2 h-2 bg-white rounded"></div>
-                </div>
-                Projet A
-                <svg className="w-3 h-3" fill="white" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="flex items-center gap-2 text-xs bg-blue-600 text-white px-3 py-2 rounded">
-                <div className="w-4 h-4 bg-white/20 rounded flex items-center justify-center">
-                  <div className="w-2 h-2 bg-white rounded"></div>
-                </div>
-                Jour
-                <svg className="w-3 h-3" fill="white" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+              {/* Filtre Article pour Sorties */}
+              <div className="relative">
+                <button
+                  onClick={() =>
+                    setOpenProductSortieMenu(!openProductSortieMenu)
+                  }
+                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-blue-900 rounded hover:bg-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                >
+                  <span>Article</span>
+                  <svg
+                    className={`w-3 h-3 transition-transform ${
+                      openProductSortieMenu ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                    />
+                  </svg>
+                </button>
+                {openProductSortieMenu && (
+                  <div className="absolute top-full right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
+                    {articlesQuery.isLoading ? (
+                      <div className="p-4 text-center text-sm text-gray-500">
+                        Chargement...
+                      </div>
+                    ) : articlesQuery.isError ? (
+                      <div className="p-4 text-center text-sm text-red-500">
+                        Erreur de chargement
+                      </div>
+                    ) : articlesList.length === 0 ? (
+                      <div className="p-4 text-center text-sm text-gray-500">
+                        Aucun article
+                      </div>
+                    ) : (
+                      articlesList.map((product) => (
+                        <button
+                          key={product.id}
+                          onClick={() => {
+                            setSelectedProductSortie(product.id);
+                            setOpenProductSortieMenu(false);
+                          }}
+                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                            selectedProductSortie === product.id
+                              ? "bg-blue-50 text-blue-900 font-semibold"
+                              : "text-gray-900"
+                          }`}
+                        >
+                          {product.name}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
-
-          {/* Graphique avec axes */}
-          <div className="flex h-64 gap-2">
-            {/* Axe Y avec valeurs */}
-            <div className="flex flex-col justify-between text-xs text-gray-400 py-1">
-              <span>2k</span>
-              <span>2k</span>
-              <span>2k</span>
-              <span>2k</span>
-              <span>2k</span>
-              <span>0k</span>
-            </div>
-
-            {/* Zone de graphique avec dégradé */}
-            <div className="flex-1 bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 rounded-lg overflow-hidden relative">
-              {/* Courbes SVG */}
-              <svg className="w-full h-full" viewBox="0 0 400 180">
-                {/* Zone sous la courbe cyan */}
-                <path
-                  d="M0,150 Q50,120 100,110 T200,90 Q250,80 300,70 Q350,60 400,55 L400,180 L0,180 Z"
-                  fill="url(#cyanGradient)"
-                  className="opacity-30"
-                />
-                {/* Zone sous la courbe purple */}
-                <path
-                  d="M0,180 Q50,160 100,150 T200,120 Q250,100 300,80 Q350,60 400,40 L400,180 L0,180 Z"
-                  fill="url(#purpleGradient)"
-                  className="opacity-30"
-                />
-                {/* Courbe cyan */}
-                <path
-                  d="M0,150 Q50,120 100,110 T200,90 Q250,80 300,70 Q350,60 400,55"
-                  stroke="#22D3EE"
-                  strokeWidth="3"
-                  fill="none"
-                  className="opacity-80"
-                />
-                {/* Courbe purple */}
-                <path
-                  d="M0,180 Q50,160 100,150 T200,120 Q250,100 300,80 Q350,60 400,40"
-                  stroke="#8B5CF6"
-                  strokeWidth="3"
-                  fill="none"
-                  className="opacity-80"
-                />
-
-                {/* Définition des dégradés */}
-                <defs>
-                  <linearGradient
-                    id="cyanGradient"
-                    x1="0%"
-                    y1="0%"
-                    x2="0%"
-                    y2="100%"
-                  >
-                    <stop offset="0%" stopColor="#22D3EE" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#22D3EE" stopOpacity="0.1" />
-                  </linearGradient>
-                  <linearGradient
-                    id="purpleGradient"
-                    x1="0%"
-                    y1="0%"
-                    x2="0%"
-                    y2="100%"
-                  >
-                    <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0.1" />
-                  </linearGradient>
-                </defs>
-              </svg>
-
-              {/* Labels des mois */}
-              <div className="absolute bottom-1 left-0 right-0 flex justify-between px-2 text-xs text-gray-400">
-                {[
-                  "Jan",
-                  "Fév",
-                  "Mar",
-                  "Apr",
-                  "May",
-                  "Jun",
-                  "Jul",
-                  "Aug",
-                  "Sep",
-                  "Oct",
-                  "Nov",
-                  "Déc",
-                ].map((month) => (
-                  <span key={month}>{month}</span>
-                ))}
-              </div>
-            </div>
-          </div>
+          <FluctuationChart
+            title=""
+            entreeData={null}
+            sortieData={sortieQuery.data || null}
+            isLoading={sortieQuery.isLoading}
+            isError={sortieQuery.isError}
+          />
         </div>
       </div>
     </div>
