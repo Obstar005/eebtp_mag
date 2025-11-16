@@ -20,7 +20,7 @@ class Utilisateur {
   final DateTime dateCreation;
   final DateTime dateModif;
   final bool firstLogin;
-  final int? idProfil;
+  final int? profil;
   final List<int> projets;
   final List<int> groups;
   final List<int> userPermissions;
@@ -48,7 +48,7 @@ class Utilisateur {
     required this.dateCreation,
     required this.dateModif,
     required this.firstLogin,
-    this.idProfil,
+    this.profil,
    required this.projets,
     required this.groups,
     required this.userPermissions,
@@ -77,7 +77,7 @@ class Utilisateur {
     dateCreation: DateTime.parse(json['date_creation']),
     dateModif: DateTime.parse(json['date_modif']),
     firstLogin: json['first_login'] ?? true,
-    idProfil: json['id_profil'],
+    profil: json['profil'],
     projets: (json['projets'] as List<dynamic>).map((e) => int.parse(e.toString())).toList(),
     groups: json['groups'] != null ? List<int>.from(json['groups']) : [],
     userPermissions: json['user_permissions'] != null ? List<int>.from(json['user_permissions']) : [],
@@ -106,7 +106,7 @@ class Utilisateur {
     'date_creation': dateCreation.toIso8601String(),
     'date_modif': dateModif.toIso8601String(),
     'first_login': firstLogin,
-    'id_profil': idProfil,
+    'profil': profil,
     'projets': projets,
     'groups': groups,
     'user_permissions': userPermissions,
@@ -148,7 +148,7 @@ Map<String, dynamic> toUpdateJson() => {
     DateTime? dateCreation,
     DateTime? dateModif,
     bool? firstLogin,
-    int? idProfil,
+    int? profil,
     String? magasin,
     List<int>? projets,
     List<int>? groups,
@@ -177,7 +177,7 @@ Map<String, dynamic> toUpdateJson() => {
       dateCreation: dateCreation ?? this.dateCreation,
       dateModif: dateModif ?? this.dateModif,
       firstLogin: firstLogin ?? this.firstLogin,
-      idProfil: idProfil ?? this.idProfil,
+      profil: profil ?? this.profil,
       projets: projets ?? this.projets,
       groups: groups ?? this.groups,
       userPermissions: userPermissions ?? this.userPermissions,

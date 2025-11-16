@@ -43,40 +43,78 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
     });
   }
 
-  // ✅ NOUVELLE MÉTHODE : Vérifier le rôle de l'utilisateur
-  Future<void> _checkUserRole() async {
-    final token = Provider.of<AuthProvider>(context, listen: false).token;
-    if (token == null) {
-      setState(() { _isCheckingRole = false; });
+// ✅ MÉTHODE CORRIGÉE : Vérifier le libellé du profil
+Future<void> _checkUserRole() async {
+  final token = Provider.of<AuthProvider>(context, listen: false).token;
+  if (token == null) {
+    setState(() { _isCheckingRole = false; });
+    return;
+  }
+
+  try {
+    final userService = UserService();
+    
+    // 1. Récupérer les infos de l'utilisateur
+    final user = await userService.getUserInfo(token);
+    
+    setState(() {
+      _currentUser = user;
+    });
+
+    // 2. Vérifier si l'utilisateur a un profil
+    if (user.profil == null) {
+      setState(() {
+        _isMagasinier = false;
+        _isCheckingRole = false;
+      });
+      
+      if (mounted) {
+        _showNotMagasinierDialog();
+      }
       return;
     }
 
-    try {
-      final userService = UserService();
-      final user = await userService.getUserInfo(token);
-      
-      setState(() {
-        _currentUser = user;
-        // Vérifier si le poste contient "magasinier" (insensible à la casse)
-        _isMagasinier = (user.poste?.toLowerCase().contains('magasinier') ?? false);
-        _isCheckingRole = false;
-      });
+    // 3. Récupérer les détails du profil
+    final profilDetail = await userService.getProfilDetail(user.profil!, token);
+    
+    // 4. Vérifier le libellé du profil (insensible à la casse)
+    final libelle = profilDetail['libelle']?.toString().toLowerCase() ?? '';
+    final isMagasinier = libelle == 'magasinier';
+    
+    setState(() {
+      _isMagasinier = isMagasinier;
+      _isCheckingRole = false;
+    });
 
-      // Si l'utilisateur n'est pas magasinier, afficher la boîte de dialogue
-      if (!_isMagasinier && mounted) {
+    // Si l'utilisateur n'est pas magasinier, afficher la boîte de dialogue
+    if (!_isMagasinier && mounted) {
+      _showNotMagasinierDialog();
+    } else if (_isMagasinier) {
+      // Charger les demandes seulement si c'est un magasinier
+      _fetchDemandes();
+    }
+  } catch (e) {
+    setState(() { 
+      _isMagasinier = false;
+      _isCheckingRole = false; 
+    });
+    
+    print("Erreur vérification rôle: $e");
+    
+    // Si c'est une erreur de permission, afficher la boîte de dialogue
+    String errorString = e.toString();
+    if (errorString.contains('permissions insuffisantes') || 
+        errorString.contains('Accès refusé') ||
+        errorString.contains('403')) {
+      if (mounted) {
         _showNotMagasinierDialog();
-      } else if (_isMagasinier) {
-        // Charger les demandes seulement si c'est un magasinier
-        _fetchDemandes();
       }
-    } catch (e) {
-      setState(() { _isCheckingRole = false; });
-      print("Erreur vérification rôle: $e");
-      // En cas d'erreur, on essaie quand même de charger les demandes
+    } else {
+      // En cas d'autre erreur, essayer quand même de charger les demandes
       _fetchDemandes();
     }
   }
-
+}
   // ✅ NOUVELLE MÉTHODE : Boîte de dialogue pour non-magasinier
   void _showNotMagasinierDialog() {
     showDialog(
@@ -119,20 +157,20 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
               Container(
                 padding: EdgeInsets.all(3.w),
                 decoration: BoxDecoration(
-                  color: Color(0xFFE3F2FD),
+                  color: Color.fromARGB(255, 253, 227, 227),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Color(0xFF007AFF).withOpacity(0.3)),
+                  border: Border.all(color: Color.fromARGB(255, 255, 0, 4).withOpacity(0.3)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, color: Color(0xFF007AFF), size: 20),
+                    Icon(Icons.info_outline, color: Color.fromARGB(255, 255, 0, 0), size: 20),
                     SizedBox(width: 3.w),
                     Expanded(
                       child: Text(
                         "Contactez l'administrateur pour obtenir les privilèges de magasinier.",
                         style: GoogleFonts.poppins(
                           fontSize: 11.sp,
-                          color: Color(0xFF1565C0),
+                          color: Color.fromARGB(255, 6, 6, 6),
                           height: 1.3,
                         ),
                       ),
@@ -149,7 +187,7 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
                 Navigator.of(context).pop(); // Retourner à l'écran précédent
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF007AFF),
+                backgroundColor: const Color.fromARGB(255, 255, 0, 0),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -635,20 +673,20 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
               Container(
                 padding: EdgeInsets.all(3.w),
                 decoration: BoxDecoration(
-                  color: Color(0xFFE3F2FD),
+                  color: Color.fromARGB(255, 253, 227, 227),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Color(0xFF007AFF).withOpacity(0.3)),
+                  border: Border.all(color: Color.fromARGB(255, 255, 0, 0).withOpacity(0.3)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, color: Color(0xFF007AFF), size: 24),
+                    Icon(Icons.info_outline, color: Color.fromARGB(255, 255, 0, 0), size: 24),
                     SizedBox(width: 3.w),
                     Expanded(
                       child: Text(
                         "Contactez l'administrateur pour obtenir les privilèges de magasinier.",
                         style: GoogleFonts.poppins(
                           fontSize: 12.sp,
-                          color: Color(0xFF1565C0),
+                          color: Color.fromARGB(255, 8, 8, 8),
                           height: 1.3,
                         ),
                       ),

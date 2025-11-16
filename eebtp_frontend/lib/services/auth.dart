@@ -227,18 +227,25 @@ Future<List<Utilisateur>> getAllUsers(String token) async {
     }
   }
 
-  Future<Map<String, dynamic>> getProfilDetail(int id) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/Users/profil-detail/$id/'),
-      headers: {'Content-Type': 'application/json'},
-    );
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Profil non trouvé');
-    }
+  Future<Map<String, dynamic>> getProfilDetail(int id, String token) async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/Users/profil-detail/$id'),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    },
+  );
+  
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else if (response.statusCode == 403) {
+    throw Exception('Accès refusé : permissions insuffisantes');
+  } else if (response.statusCode == 404) {
+    throw Exception('Profil non trouvé');
+  } else {
+    throw Exception('Erreur lors de la récupération du profil');
   }
-
+}
   Future<bool> createProfil(Map<String, dynamic> profil) async {
     final response = await http.post(
       Uri.parse('$baseUrl/Users/profil-create/'),
