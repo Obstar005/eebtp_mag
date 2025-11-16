@@ -1,6 +1,8 @@
 import 'package:eebtp_frontend/models/demande.dart';
+import 'package:eebtp_frontend/models/utilisateur.dart';
 import 'package:eebtp_frontend/providers/auth_provider.dart';
 import 'package:eebtp_frontend/screens/RequestDetail.dart';
+import 'package:eebtp_frontend/services/auth.dart';
 import 'package:eebtp_frontend/services/demandeService.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -24,6 +26,11 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
   // Gestion des permissions
   bool _hasPermissionError = false;
   String _permissionErrorMessage = '';
+  
+  // ✅ Vérification du rôle Magasinier
+  bool _isCheckingRole = true;
+  bool _isMagasinier = false;
+  Utilisateur? _currentUser;
 
   @override
   void initState() {
@@ -31,9 +38,135 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
-        _fetchDemandes();
+        _checkUserRole(); // ✅ Vérifier le rôle en premier
       }
     });
+  }
+
+  // ✅ NOUVELLE MÉTHODE : Vérifier le rôle de l'utilisateur
+  Future<void> _checkUserRole() async {
+    final token = Provider.of<AuthProvider>(context, listen: false).token;
+    if (token == null) {
+      setState(() { _isCheckingRole = false; });
+      return;
+    }
+
+    try {
+      final userService = UserService();
+      final user = await userService.getUserInfo(token);
+      
+      setState(() {
+        _currentUser = user;
+        // Vérifier si le poste contient "magasinier" (insensible à la casse)
+        _isMagasinier = (user.poste?.toLowerCase().contains('magasinier') ?? false);
+        _isCheckingRole = false;
+      });
+
+      // Si l'utilisateur n'est pas magasinier, afficher la boîte de dialogue
+      if (!_isMagasinier && mounted) {
+        _showNotMagasinierDialog();
+      } else if (_isMagasinier) {
+        // Charger les demandes seulement si c'est un magasinier
+        _fetchDemandes();
+      }
+    } catch (e) {
+      setState(() { _isCheckingRole = false; });
+      print("Erreur vérification rôle: $e");
+      // En cas d'erreur, on essaie quand même de charger les demandes
+      _fetchDemandes();
+    }
+  }
+
+  // ✅ NOUVELLE MÉTHODE : Boîte de dialogue pour non-magasinier
+  void _showNotMagasinierDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.block, color: Color(0xFFFF5252), size: 28),
+              SizedBox(width: 2.w),
+              Expanded(
+                child: Text(
+                  "Accès non autorisé",
+                  style: GoogleFonts.poppins(
+                    fontSize: 17.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Seuls les magasiniers peuvent consulter le suivi des demandes d'approvisionnement.",
+                style: GoogleFonts.poppins(
+                  fontSize: 13.sp,
+                  color: Colors.black87,
+                  height: 1.4,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Container(
+                padding: EdgeInsets.all(3.w),
+                decoration: BoxDecoration(
+                  color: Color(0xFFE3F2FD),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Color(0xFF007AFF).withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Color(0xFF007AFF), size: 20),
+                    SizedBox(width: 3.w),
+                    Expanded(
+                      child: Text(
+                        "Contactez l'administrateur pour obtenir les privilèges de magasinier.",
+                        style: GoogleFonts.poppins(
+                          fontSize: 11.sp,
+                          color: Color(0xFF1565C0),
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Fermer la boîte de dialogue
+                Navigator.of(context).pop(); // Retourner à l'écran précédent
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF007AFF),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                "Retour",
+                style: GoogleFonts.poppins(
+                  fontSize: 14.sp,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _fetchDemandes() async {
@@ -444,7 +577,9 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
           CircularProgressIndicator(color: Color(0xFF007AFF)),
           SizedBox(height: 2.h),
           Text(
-            "Chargement des demandes...",
+            _isCheckingRole 
+                ? "Vérification des permissions..."
+                : "Chargement des demandes...",
             style: GoogleFonts.poppins(
               fontSize: 14.sp,
               color: Colors.grey[600],
@@ -456,8 +591,99 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
   }
 
   Widget _buildEmptyState() {
+    // ✅ État spécifique si l'utilisateur n'est pas magasinier
+    if (!_isMagasinier && !_isCheckingRole) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8.w),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: EdgeInsets.all(4.w),
+                decoration: BoxDecoration(
+                  color: Color(0xFFFFEBEE),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.block, 
+                  size: 50.sp, 
+                  color: Color(0xFFFF5252)
+                ),
+              ),
+              SizedBox(height: 3.h),
+              Text(
+                "Accès non autorisé",
+                style: GoogleFonts.poppins(
+                  fontSize: 18.sp,
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w700,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 1.5.h),
+              Text(
+                "Seuls les magasiniers peuvent consulter le suivi des demandes d'approvisionnement.",
+                style: GoogleFonts.poppins(
+                  fontSize: 14.sp,
+                  color: Colors.grey[700],
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 2.h),
+              Container(
+                padding: EdgeInsets.all(3.w),
+                decoration: BoxDecoration(
+                  color: Color(0xFFE3F2FD),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Color(0xFF007AFF).withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Color(0xFF007AFF), size: 24),
+                    SizedBox(width: 3.w),
+                    Expanded(
+                      child: Text(
+                        "Contactez l'administrateur pour obtenir les privilèges de magasinier.",
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.sp,
+                          color: Color(0xFF1565C0),
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 4.h),
+              ElevatedButton.icon(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: Icon(Icons.arrow_back, size: 20),
+                label: Text(
+                  "Retour",
+                  style: GoogleFonts.poppins(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF007AFF),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 1.8.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
     if (_hasPermissionError) {
-      // État spécifique pour erreur de permission
+      // État spécifique pour erreur de permission (403)
       return Center(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 8.w),
@@ -584,9 +810,9 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
         children: [
           _buildAppBar(),
           Expanded(
-            child: _isLoading
+            child: (_isLoading || _isCheckingRole) // ✅ Chargement si vérification du rôle
                 ? _buildLoadingState()
-                : _demandes.isEmpty
+                : (!_isMagasinier || _demandes.isEmpty) // ✅ État vide si pas magasinier
                     ? _buildEmptyState()
                     : ListView.builder(
                         padding: EdgeInsets.symmetric(vertical: 2.h),

@@ -39,10 +39,15 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
   // États de chargement
   bool _isLoadingProducts = true;
   bool _isLoadingUsers = true;
+  bool _isCheckingRole = true; // ✅ Nouveau
   
   // Gestion des permissions
   bool _hasPermissionError = false;
   String _permissionErrorMessage = '';
+  
+  // Vérification du rôle Magasinier
+  bool _isMagasinier = false; // ✅ Nouveau
+  Utilisateur? _currentUser; // ✅ Nouveau
 
   // Cache pour les articles
   Map<int, ArticleStock?> _articleCache = {};
@@ -53,10 +58,140 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
+        _checkUserRole(); // ✅ Vérifier le rôle en premier
         _fetchProducts();
         _fetchUsers();
       }
     });
+  }
+
+  // ✅ NOUVELLE MÉTHODE : Vérifier le rôle de l'utilisateur
+  Future<void> _checkUserRole() async {
+    final token = Provider.of<AuthProvider>(context, listen: false).token;
+    if (token == null) {
+      setState(() { _isCheckingRole = false; });
+      return;
+    }
+
+    try {
+      final userService = UserService();
+      final user = await userService.getUserInfo(token);
+      
+      setState(() {
+        _currentUser = user;
+        // Vérifier si le poste contient "magasinier" (insensible à la casse)
+        _isMagasinier = (user.poste?.toLowerCase().contains('magasinier') ?? false);
+        _isCheckingRole = false;
+      });
+
+      // Si l'utilisateur n'est pas magasinier, afficher la boîte de dialogue
+      if (!_isMagasinier && mounted) {
+        _showNotMagasinierDialog();
+      }
+    } catch (e) {
+      setState(() { _isCheckingRole = false; });
+      print("Erreur vérification rôle: $e");
+    }
+  }
+
+  // ✅ NOUVELLE MÉTHODE : Boîte de dialogue pour non-magasinier
+  void _showNotMagasinierDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.block, color: Color(0xFFFF5252), size: 28),
+              SizedBox(width: 2.w),
+              Expanded(
+                child: Text(
+                  "Accès non autorisé",
+                  style: GoogleFonts.poppins(
+                    fontSize: 17.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Seuls les magasiniers peuvent créer des demandes d'approvisionnement.",
+                style: GoogleFonts.poppins(
+                  fontSize: 13.sp,
+                  color: Colors.black87,
+                  height: 1.4,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Container(
+                padding: EdgeInsets.all(3.w),
+                decoration: BoxDecoration(
+                  color: Color.fromARGB(255, 204, 97, 97),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Color.fromARGB(255, 245, 64, 64).withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Color.fromARGB(255, 254, 6, 6), size: 20),
+                    SizedBox(width: 3.w),
+                    Expanded(
+                      child: Text(
+                        "Contactez l'administrateur pour obtenir les privilèges de magasinier.",
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.sp,
+                          color: Color.fromARGB(255, 6, 6, 6),
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Fermer la boîte de dialogue
+              //  Navigator.of(context).pop(); // Retourner à l'écran précédent
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF007AFF),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                "Ok",
+                style: GoogleFonts.poppins(
+                  fontSize: 14.sp,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ✅ NOUVELLE MÉTHODE : Afficher message quand l'utilisateur essaie de taper
+  void _showCannotEditMessage() {
+    _showToast(
+      message: 'Vous devez être magasinier pour créer une demande', 
+      type: ToastificationType.warning
+    );
   }
 
   Future<void> _fetchProducts() async {
@@ -109,7 +244,7 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
 
     try {
       final userService = UserService();
-      final users = await userService.getAllUsers(token); // ✅ Passage du token
+      final users = await userService.getAllUsers(token);
       
       setState(() {
         _users = users;
@@ -122,7 +257,6 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
       
       print("Erreur détaillée chargement utilisateurs: $e");
       
-      // Vérifier si c'est une erreur de permission
       String errorString = e.toString();
       if (errorString.contains('permissions insuffisantes') || 
           errorString.contains('Accès refusé') ||
@@ -132,7 +266,6 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
           _permissionErrorMessage = "Vous n'avez pas les permissions nécessaires pour voir la liste des responsables. Contactez l'administrateur pour mettre à jour votre rôle.";
         });
         
-        // Afficher une boîte de dialogue informative
         _showPermissionDialog();
       } 
     }
@@ -264,6 +397,12 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
   }
 
   void _showConfirmationDialog() {
+    // ✅ Vérifier si l'utilisateur est magasinier
+    if (!_isMagasinier) {
+      _showNotMagasinierDialog();
+      return;
+    }
+
     // Validation
     if (_selectedProduct == null) {
       _showToast(message: 'Veuillez sélectionner un produit', type: ToastificationType.warning);
@@ -277,11 +416,6 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
       _showToast(message: 'Veuillez saisir le motif', type: ToastificationType.warning);
       return;
     }
-    // La sélection du responsable n'est plus obligatoire
-    // if (_selectedResponsible == null) {
-    //   _showToast(message: 'Veuillez sélectionner un responsable', type: ToastificationType.warning);
-    //   return;
-    // }
 
     showDialog(
       context: context,
@@ -373,10 +507,17 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
       Navigator.pop(context);
     } catch (e) {
       print("Erreur soumission demande: $e");
-      _showToast(
-        message: ' ${e.toString()}',
-        type: ToastificationType.error,
-      );
+      
+      // ✅ Gérer spécifiquement le 403
+      String errorString = e.toString();
+      if (errorString.contains('403') || errorString.contains('Forbidden')) {
+        _showNotMagasinierDialog();
+      } else {
+        _showToast(
+          message: e.toString(),
+          type: ToastificationType.error,
+        );
+      }
     }
   }
 
@@ -510,27 +651,41 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
     String? labelText,
     int maxLines = 1,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 241, 240, 240),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Color(0xFF007AFF)),
-      ),
-      child: TextFormField(
-        controller: controller,
-        maxLines: maxLines,
-        style: GoogleFonts.poppins(fontSize: 14.sp),
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          hintText: hintText,
-          labelText: labelText,
-          hintStyle: GoogleFonts.poppins(
-            fontSize: 14.sp,
-            color: Colors.grey[600],
+    // ✅ Désactiver les champs si pas magasinier
+    final isEnabled = _isMagasinier && !_isCheckingRole;
+    
+    return GestureDetector(
+      onTap: !isEnabled ? _showCannotEditMessage : null, // ✅ Afficher message si désactivé
+      child: Container(
+        decoration: BoxDecoration(
+          color: isEnabled 
+              ? const Color.fromARGB(255, 241, 240, 240)
+              : const Color(0xFFE0E0E0), // ✅ Grisé si désactivé
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isEnabled ? Color(0xFF007AFF) : Colors.grey.shade400
           ),
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 4.w,
-            vertical: maxLines > 1 ? 2.5.h : 1.8.h,
+        ),
+        child: TextFormField(
+          controller: controller,
+          enabled: isEnabled, // ✅ Désactiver le champ
+          maxLines: maxLines,
+          style: GoogleFonts.poppins(
+            fontSize: 14.sp,
+            color: isEnabled ? Colors.black87 : Colors.grey.shade600,
+          ),
+          decoration: InputDecoration(
+            border: InputBorder.none,
+            hintText: hintText,
+            labelText: labelText,
+            hintStyle: GoogleFonts.poppins(
+              fontSize: 14.sp,
+              color: Colors.grey[600],
+            ),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 4.w,
+              vertical: maxLines > 1 ? 2.5.h : 1.8.h,
+            ),
           ),
         ),
       ),
@@ -538,21 +693,26 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
   }
 
   Widget _buildProductDropdown() {
+    // ✅ Désactiver si pas magasinier
+    final isEnabled = _isMagasinier && !_isCheckingRole;
+    
     return Column(
       children: [
         GestureDetector(
-          onTap: () {
+          onTap: isEnabled ? () {
             setState(() {
               _isProductDropdownOpen = !_isProductDropdownOpen;
               _isResponsibleDropdownOpen = false;
             });
-          },
+          } : _showCannotEditMessage, // ✅ Afficher message si désactivé
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.8.h),
             decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
+              color: isEnabled ? const Color(0xFFF5F5F5) : const Color(0xFFE0E0E0),
               borderRadius: BorderRadius.circular(50),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(
+                color: isEnabled ? Colors.grey.shade300 : Colors.grey.shade400
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -567,14 +727,17 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
                           ),
                         )
                       : Text(
-                          _selectedProduct?.produitName ?? "Sélectionner le produit",
+                          _selectedProduct?.produitName ?? 
+                              (isEnabled ? "Sélectionner le produit" : "Non disponible (accès restreint)"),
                           style: GoogleFonts.poppins(
                             fontSize: 14.sp,
-                            color: _selectedProduct != null ? Colors.black87 : Colors.grey[600],
+                            color: isEnabled 
+                                ? (_selectedProduct != null ? Colors.black87 : Colors.grey[600])
+                                : Colors.grey[500],
                           ),
                         ),
                 ),
-                if (!_isLoadingProducts)
+                if (!_isLoadingProducts && isEnabled)
                   Icon(
                     _isProductDropdownOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                     color: Colors.grey[600],
@@ -583,7 +746,7 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
             ),
           ),
         ),
-        if (_isProductDropdownOpen && !_isLoadingProducts)
+        if (_isProductDropdownOpen && !_isLoadingProducts && isEnabled)
           Container(
             margin: EdgeInsets.only(top: 1.h),
             decoration: BoxDecoration(
@@ -686,27 +849,30 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
   }
 
   Widget _buildResponsibleDropdown() {
+    // ✅ Désactiver si pas magasinier
+    final isEnabled = _isMagasinier && !_isCheckingRole && !_hasPermissionError;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         GestureDetector(
-          onTap: _hasPermissionError ? null : () {
+          onTap: isEnabled ? () {
             setState(() {
               _isResponsibleDropdownOpen = !_isResponsibleDropdownOpen;
               _isProductDropdownOpen = false;
             });
-          },
+          } : (!_isMagasinier ? _showCannotEditMessage : null),
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.8.h),
             decoration: BoxDecoration(
-              color: _hasPermissionError 
-                  ? const Color(0xFFE0E0E0) 
-                  : const Color(0xFFF5F5F5),
+              color: isEnabled 
+                  ? const Color(0xFFF5F5F5)
+                  : const Color(0xFFE0E0E0),
               borderRadius: BorderRadius.circular(50),
               border: Border.all(
-                color: _hasPermissionError 
-                    ? Colors.grey.shade400 
-                    : Colors.grey.shade300
+                color: isEnabled 
+                    ? Colors.grey.shade300
+                    : Colors.grey.shade400
               ),
             ),
             child: Row(
@@ -724,18 +890,20 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
                       : Text(
                           _selectedResponsible != null 
                               ? "${_selectedResponsible!.firstName} ${_selectedResponsible!.lastName}"
-                              : _hasPermissionError
-                                  ? "Non disponible (permissions insuffisantes)"
-                                  : "Sélectionner celui qui a ordonné (optionnel)",
+                              : !_isMagasinier
+                                  ? "Non disponible (accès restreint)"
+                                  : _hasPermissionError
+                                      ? "Non disponible (permissions insuffisantes)"
+                                      : "Sélectionner celui qui a ordonné (optionnel)",
                           style: GoogleFonts.poppins(
                             fontSize: 14.sp,
-                            color: _hasPermissionError 
-                                ? Colors.grey[500]
-                                : (_selectedResponsible != null ? Colors.black87 : Colors.grey[600]),
+                            color: isEnabled 
+                                ? (_selectedResponsible != null ? Colors.black87 : Colors.grey[600])
+                                : Colors.grey[500],
                           ),
                         ),
                 ),
-                if (!_isLoadingUsers && !_hasPermissionError)
+                if (!_isLoadingUsers && isEnabled)
                   Icon(
                     _isResponsibleDropdownOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                     color: Colors.grey[600],
@@ -744,7 +912,7 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
             ),
           ),
         ),
-        if (_hasPermissionError) ...[
+        if (_hasPermissionError && _isMagasinier) ...[
           SizedBox(height: 1.h),
           Container(
             padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.5.h),
@@ -772,7 +940,7 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
             ),
           ),
         ],
-        if (_isResponsibleDropdownOpen && !_isLoadingUsers && !_hasPermissionError)
+        if (_isResponsibleDropdownOpen && !_isLoadingUsers && isEnabled)
           Container(
             margin: EdgeInsets.only(top: 1.h),
             decoration: BoxDecoration(
@@ -887,46 +1055,100 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
         child: Column(
           children: [
             _buildAppBar(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(5.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSectionHeader("Produit", isLeftAligned: false),
-                    SizedBox(height: 2.h),
-                    _buildProductDropdown(),
-                    SizedBox(height: 2.h),
-                    _buildBasicInputField(
-                      controller: _quantityController,
-                      hintText: "Définir la quantité",
-                    ),
-                    SizedBox(height: 2.h),
-                    _buildBasicInputField(
-                      controller: _motifController,
-                      hintText: "Le motif",
-                      labelText: "Motif",
-                      maxLines: 4,
-                    ),
-                    SizedBox(height: 3.h),
-                    _buildSectionHeader("Responsable", isLeftAligned: true),
-                    SizedBox(height: 2.h),
-                    _buildResponsibleDropdown(),
-                    SizedBox(height: 12.h),
-                    Center(
-                      child: CustomElevatedButton(
-                        text: 'Enregistrer',
-                        backgroundColor: const Color(0xFF007AFF),
-                        textColor: Colors.white,
-                        onPressed: _showConfirmationDialog,
-                        width: 80.w,
+            // ✅ Afficher un indicateur de chargement pendant la vérification du rôle
+            if (_isCheckingRole)
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(color: Color(0xFF007AFF)),
+                      SizedBox(height: 2.h),
+                      Text(
+                        "Vérification des permissions...",
+                        style: GoogleFonts.poppins(
+                          fontSize: 14.sp,
+                          color: Colors.grey[600],
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 3.h),
-                  ],
+                    ],
+                  ),
+                ),
+              )
+            else
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(5.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ✅ Afficher un bandeau d'avertissement si pas magasinier
+                      if (!_isMagasinier) ...[
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(3.w),
+                          margin: EdgeInsets.only(bottom: 2.h),
+                          decoration: BoxDecoration(
+                            color: Color(0xFFFFEBEE),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Color(0xFFFF5252).withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.block, color: Color(0xFFFF5252), size: 24),
+                              SizedBox(width: 3.w),
+                              Expanded(
+                                child: Text(
+                                  "Vous n'êtes pas autorisé à créer des demandes. Seuls les magasiniers ont accès à cette fonctionnalité.",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12.sp,
+                                    color: Color(0xFFC62828),
+                                    height: 1.3,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      _buildSectionHeader("Produit", isLeftAligned: false),
+                      SizedBox(height: 2.h),
+                      _buildProductDropdown(),
+                      SizedBox(height: 2.h),
+                      _buildBasicInputField(
+                        controller: _quantityController,
+                        hintText: "Définir la quantité",
+                      ),
+                      SizedBox(height: 2.h),
+                      _buildBasicInputField(
+                        controller: _motifController,
+                        hintText: "Le motif",
+                        labelText: "Motif",
+                        maxLines: 4,
+                      ),
+                      SizedBox(height: 3.h),
+                      _buildSectionHeader("Responsable", isLeftAligned: true),
+                      SizedBox(height: 2.h),
+                      _buildResponsibleDropdown(),
+                      SizedBox(height: 12.h),
+                      Center(
+                        child: CustomElevatedButton(
+                          text: 'Enregistrer',
+                          backgroundColor: _isMagasinier 
+                              ? const Color(0xFF007AFF)
+                              : Colors.grey.shade400, // ✅ Grisé si pas magasinier
+                          textColor: Colors.white,
+                          onPressed: _isMagasinier 
+                              ? _showConfirmationDialog 
+                              : _showCannotEditMessage, // ✅ Message si pas magasinier
+                          width: 80.w,
+                        ),
+                      ),
+                      SizedBox(height: 3.h),
+                    ],
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),
