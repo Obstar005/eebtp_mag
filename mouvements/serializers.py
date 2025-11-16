@@ -15,7 +15,7 @@ class SortieSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sortie
         fields = '__all__'
-        read_only_fields = ['date_creation', 'date_modif', 'make_by']
+        read_only_fields = ['date_modif', 'make_by']
 
 class EntreeSerializer(serializers.ModelSerializer):
     magasin = serializers.PrimaryKeyRelatedField(queryset=Magasin.objects.all())
@@ -28,4 +28,4 @@ class EntreeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Entree
         fields = '__all__'
-        read_only_fields = ['date_creation', 'date_modif', 'make_by']
+        read_only_fields = ['date_modif', 'make_by']
