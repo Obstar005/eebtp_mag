@@ -453,89 +453,107 @@ class _ProfilePageState extends State<ProfilePage> {
                     SizedBox(height: bottomSpace*0.7),
 
                     // ✅ SECTION BOUTONS MODIFIÉE
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 6.w),
-                      child: Column(
-                        children: [
-                          // Bouton Modifier votre profil
-                          Container(
-                            width: double.infinity,
-                            height: 6.2.h,
-                            margin: EdgeInsets.only(bottom: btnSpace),
-                            child: CustomElevatedButton(
-                              text: "Modifier votre profil",
-                              backgroundColor: Colors.white,
-                              textColor: const Color(0xFF007AFF),
-                              onPressed: () => Navigator.pushNamed(
-                                context,
-                                '/edit_profile',
-                                arguments: {
-                                  'user': user,
-                                },
-                              ),
-                              icon: Icons.edit_outlined,
-                              iconColor: const Color(0xFF007AFF),
-                              outlined: true,
-                            ),
-                          ),
-                          
-                          // ✅ NOUVEAU BOUTON : Changer de magasin
-                          Container(
-                            width: double.infinity,
-                            height: 6.2.h,
-                            margin: EdgeInsets.only(bottom: btnSpace),
-                            child: CustomElevatedButton(
-                              text: "Changer de magasin",
-                              backgroundColor: Colors.white,
-                              textColor: const Color(0xFF34C759),
-                              onPressed: () {
-                                Navigator.pushNamed(context, '/store_selection');
-                              },
-                              icon: Icons.store_outlined,
-                              iconColor: const Color(0xFF34C759),
-                              outlined: true,
-                            ),
-                          ),
-                          
-                          // Bouton Déconnecter
-                          SizedBox(
-                            width: double.infinity,
-                            height: 6.2.h,
-                            child: CustomElevatedButton(
-                              text: "Déconnecter",
-                              backgroundColor: Colors.white,
-                              textColor: const Color(0xFFFF3B30),
-                              onPressed: () => _showLogoutDialog(context),
-                              icon: Icons.logout,
-                              iconColor: const Color(0xFFFF3B30),
-                              outlined: true,
-                            ),
-                          ),
-                          
-                          // Bouton Debug (à retirer en production)
-                        SizedBox(height: 2.h),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 6.2.h,
-                            child: CustomElevatedButton(
-                              text: "🔧 Réinitialiser l'app (Debug)",
-                              backgroundColor: Colors.orange,
-                              textColor: Colors.white,
-                              onPressed: () async {
-                                await context.read<AuthProvider>().resetApp();
-                                Navigator.pushNamedAndRemoveUntil(
-                                  context,
-                                  '/',
-                                  (route) => false,
-                                );
-                              },
-                              outlined: false,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+    // ✅ SECTION BOUTONS AVEC RECHARGEMENT
+Padding(
+  padding: EdgeInsets.symmetric(horizontal: 6.w),
+  child: Column(
+    children: [
+      // Bouton Modifier votre profil - AVEC RECHARGEMENT
+      Container(
+        width: double.infinity,
+        height: 6.2.h,
+        margin: EdgeInsets.only(bottom: btnSpace),
+        child: CustomElevatedButton(
+          text: "Modifier votre profil",
+          backgroundColor: Colors.white,
+          textColor: const Color(0xFF007AFF),
+          onPressed: () async {
+            // ✅ MODIFICATION : Attendre le résultat de la navigation
+            final result = await Navigator.pushNamed(
+              context,
+              '/edit_profile',
+              arguments: {
+                'user': user,
+              },
+            );
+            
+            // ✅ NOUVEAU : Si des modifications ont été faites, recharger
+            if (result == true && mounted) {
+              final token = context.read<AuthProvider>().token;
+              if (token != null) {
+                setState(() {
+                  _futureUser = UserService().getUserInfo(token);
+                });
+                
+                _showToast(
+                  message: "Profil rechargé avec succès",
+                  type: ToastificationType.success,
+                );
+              }
+            }
+          },
+          icon: Icons.edit_outlined,
+          iconColor: const Color(0xFF007AFF),
+          outlined: true,
+        ),
+      ),
+      
+      // Bouton Changer de magasin
+      Container(
+        width: double.infinity,
+        height: 6.2.h,
+        margin: EdgeInsets.only(bottom: btnSpace),
+        child: CustomElevatedButton(
+          text: "Changer de magasin",
+          backgroundColor: Colors.white,
+          textColor: const Color(0xFF34C759),
+          onPressed: () {
+            Navigator.pushNamed(context, '/store_selection');
+          },
+          icon: Icons.store_outlined,
+          iconColor: const Color(0xFF34C759),
+          outlined: true,
+        ),
+      ),
+      
+      // Bouton Déconnecter
+      SizedBox(
+        width: double.infinity,
+        height: 6.2.h,
+        child: CustomElevatedButton(
+          text: "Déconnecter",
+          backgroundColor: Colors.white,
+          textColor: const Color(0xFFFF3B30),
+          onPressed: () => _showLogoutDialog(context),
+          icon: Icons.logout,
+          iconColor: const Color(0xFFFF3B30),
+          outlined: true,
+        ),
+      ),
+      
+      // Bouton Debug (à retirer en production)
+      SizedBox(height: 2.h),
+      SizedBox(
+        width: double.infinity,
+        height: 6.2.h,
+        child: CustomElevatedButton(
+          text: "🔧 Réinitialiser l'app (Debug)",
+          backgroundColor: Colors.orange,
+          textColor: Colors.white,
+          onPressed: () async {
+            await context.read<AuthProvider>().resetApp();
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/',
+              (route) => false,
+            );
+          },
+          outlined: false,
+        ),
+      ),
+    ],
+  ),
+),            ],
                 ),
               ),
             ],
