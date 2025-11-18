@@ -14,6 +14,7 @@ import 'package:sizer/sizer.dart';
 import 'package:provider/provider.dart';
 import 'package:eebtp_frontend/providers/auth_provider.dart';
 import 'package:toastification/toastification.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // ✅ Ajouté
 
 class EditProfilePage extends StatefulWidget {
   final Utilisateur user;
@@ -23,6 +24,9 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
+  // ✅ AJOUT : URL du backend
+  static const String backendUrl = 'http://38.242.139.218:8001';
+  
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -70,6 +74,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _emailController.dispose();
     _inputPhoneRawController.dispose();
     super.dispose();
+  }
+
+  // ✅ NOUVELLE MÉTHODE : Construire l'URL complète de la photo
+  String? _getProfilePhotoUrl(String? photoPath) {
+    if (photoPath == null || photoPath.isEmpty) return null;
+    
+    // Si l'URL commence par '/media', ajouter le backend
+    if (photoPath.startsWith('/media')) {
+      return '$backendUrl$photoPath';
+    }
+    
+    // Sinon, retourner tel quel (URL complète déjà)
+    return photoPath;
+  }
+
+  // ✅ NOUVELLE MÉTHODE : Affichage du poste
+  String _getDisplayPoste(String? poste) {
+    if (poste == null || poste.isEmpty || poste.toLowerCase() == 'string') {
+      return 'Utilisateur';
+    }
+    return poste;
   }
 
   void _showToast({
@@ -427,6 +452,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Obtenir l'URL complète de la photo serveur
+    final serverPhotoUrlComplete = _getProfilePhotoUrl(_serverPhotoUrl);
+    final userPhotoUrlComplete = _getProfilePhotoUrl(widget.user.photoProfil);
+    
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
       body: NavContainer(
@@ -520,28 +549,55 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                           ),
                                         ],
                                       ),
+                                      // ✅ WIDGET PHOTO AMÉLIORÉ
                                       child: ClipOval(
                                         child: _pickedImage != null
                                             ? Image.file(_pickedImage!, fit: BoxFit.cover)
-                                            : (_serverPhotoUrl != null
-                                                ? Image.network(
-                                                    _serverPhotoUrl!,
+                                            : serverPhotoUrlComplete != null
+                                                ? CachedNetworkImage(
+                                                    imageUrl: serverPhotoUrlComplete,
                                                     fit: BoxFit.cover,
-                                                    errorBuilder: (_, __, ___) => Image.asset(
+                                                    placeholder: (context, url) => Container(
+                                                      color: Colors.grey[200],
+                                                      child: Center(
+                                                        child: SizedBox(
+                                                          width: 8.w,
+                                                          height: 8.w,
+                                                          child: CircularProgressIndicator(
+                                                            strokeWidth: 2,
+                                                            color: Color(0xFF007AFF),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    errorWidget: (context, url, error) => Image.asset(
                                                       "assets/profile.png",
                                                       fit: BoxFit.cover,
                                                     ),
                                                   )
-                                                : (widget.user.photoProfil != null
-                                                    ? Image.network(
-                                                        widget.user.photoProfil!,
+                                                : userPhotoUrlComplete != null
+                                                    ? CachedNetworkImage(
+                                                        imageUrl: userPhotoUrlComplete,
                                                         fit: BoxFit.cover,
-                                                        errorBuilder: (_, __, ___) => Image.asset(
+                                                        placeholder: (context, url) => Container(
+                                                          color: Colors.grey[200],
+                                                          child: Center(
+                                                            child: SizedBox(
+                                                              width: 8.w,
+                                                              height: 8.w,
+                                                              child: CircularProgressIndicator(
+                                                                strokeWidth: 2,
+                                                                color: Color(0xFF007AFF),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        errorWidget: (context, url, error) => Image.asset(
                                                           "assets/profile.png",
                                                           fit: BoxFit.cover,
                                                         ),
                                                       )
-                                                    : Image.asset("assets/profile.png", fit: BoxFit.cover))),
+                                                    : Image.asset("assets/profile.png", fit: BoxFit.cover),
                                       ),
                                     ),
                                     Positioned(
@@ -572,13 +628,26 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 SizedBox(height: 2.2.h),
                                 Text(
                                   "${widget.user.firstName ?? ""} ${widget.user.lastName ?? ""}",
-                                  style: GoogleFonts.montserrat(fontSize: 17.sp, fontWeight: FontWeight.bold, color: const Color(0xFF007AFF)),
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: 17.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF007AFF),
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 SizedBox(height: 0.5.h),
                                 Text(
-                                  widget.user.poste ?? "Utilisateur",
+                                  _getDisplayPoste(widget.user.poste), // ✅ Corrigé
                                   style: GoogleFonts.montserrat(
-                                      fontSize: 13.sp, color: const Color(0xFF8E8E93), fontWeight: FontWeight.w500),
+                                    fontSize: 13.sp,
+                                    color: const Color(0xFF8E8E93),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ),

@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:eebtp_frontend/providers/auth_provider.dart';
 import 'package:toastification/toastification.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // ✅ Ajouté
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -19,6 +20,9 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  // ✅ AJOUT : URL du backend
+  static const String backendUrl = 'http://38.242.139.218:8001';
+  
   late Future<Utilisateur> _futureUser;
 
   @override
@@ -38,6 +42,27 @@ class _ProfilePageState extends State<ProfilePage> {
         Navigator.pushReplacementNamed(context, '/login');
       });
     }
+  }
+
+  // ✅ NOUVELLE MÉTHODE : Construire l'URL complète de la photo
+  String? _getProfilePhotoUrl(String? photoPath) {
+    if (photoPath == null || photoPath.isEmpty) return null;
+    
+    // Si l'URL commence par '/media', ajouter le backend
+    if (photoPath.startsWith('/media')) {
+      return '$backendUrl$photoPath';
+    }
+    
+    // Sinon, retourner tel quel (URL complète déjà)
+    return photoPath;
+  }
+
+  // ✅ DÉPLACÉ : Méthode helper pour l'affichage du poste (était dans build())
+  String _getDisplayPoste(String? poste) {
+    if (poste == null || poste.isEmpty || poste.toLowerCase() == 'string') {
+      return 'Sans poste';
+    }
+    return poste;
   }
 
   void _showToast({
@@ -193,12 +218,7 @@ class _ProfilePageState extends State<ProfilePage> {
       bottomSpace = 3.h;
       btnSpace = 2.h;
     }
-  String _getDisplayPoste(String? poste) {
-    if (poste == null || poste.isEmpty || poste.toLowerCase() == 'string') {
-      return 'Sans poste';
-    }
-    return poste;
-  }
+
     return NavContainer(
       initialIndex: 3,
       body: FutureBuilder<Utilisateur>(
@@ -224,6 +244,9 @@ class _ProfilePageState extends State<ProfilePage> {
               context.read<AuthProvider>().setUser(user);
             });
           }
+
+          // ✅ Obtenir l'URL complète de la photo
+          final photoUrl = _getProfilePhotoUrl(user.photoProfil);
 
           return Stack(
             children: [
@@ -322,7 +345,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                     SizedBox(height: topSpace),
 
-                    // Photo profil
+                    // ✅ Photo profil AMÉLIORÉE
                     Center(
                       child: Stack(
                         children: [
@@ -344,18 +367,31 @@ class _ProfilePageState extends State<ProfilePage> {
                               ],
                             ),
                             child: ClipOval(
-                              child: user.photoProfil == null
-                                  ? Image.asset(
-                                      "assets/profile.png",
+                              child: photoUrl != null
+                                  ? CachedNetworkImage(
+                                      imageUrl: photoUrl,
                                       fit: BoxFit.cover,
-                                    )
-                                  : Image.network(
-                                      user.photoProfil!,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Image.asset(
+                                      placeholder: (context, url) => Container(
+                                        color: Colors.grey[200],
+                                        child: Center(
+                                          child: SizedBox(
+                                            width: avatarSize * 0.3,
+                                            height: avatarSize * 0.3,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 3,
+                                              color: Color(0xFF007AFF),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      errorWidget: (context, url, error) => Image.asset(
                                         "assets/profile.png",
                                         fit: BoxFit.cover,
                                       ),
+                                    )
+                                  : Image.asset(
+                                      "assets/profile.png",
+                                      fit: BoxFit.cover,
                                     ),
                             ),
                           ),
@@ -371,6 +407,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                   shape: BoxShape.circle,
                                   border:
                                       Border.all(color: Colors.white, width: 2),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
                                 child: Icon(
                                   Icons.edit,
@@ -387,25 +430,35 @@ class _ProfilePageState extends State<ProfilePage> {
                     SizedBox(height: 2.h),
 
                     // Nom complet
-                    Text(
-                      "${user.firstName} ${user.lastName} ${user.surname} ",
-                      style: GoogleFonts.montserrat(
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF007AFF),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 6.w),
+                      child: Text(
+                        "${user.firstName} ${user.lastName}${user.surname != null && user.surname!.isNotEmpty ? ' ${user.surname}' : ''}",
+                        style: GoogleFonts.montserrat(
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF007AFF),
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      textAlign: TextAlign.center,
                     ),
 
                     // Poste
-                    Text(
-                          _getDisplayPoste(user?.poste), 
-                      style: GoogleFonts.montserrat(
-                        fontSize: 15.sp,
-                        color: const Color(0xFF8E8E93),
-                        fontWeight: FontWeight.w500,
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 6.w),
+                      child: Text(
+                        _getDisplayPoste(user.poste),
+                        style: GoogleFonts.montserrat(
+                          fontSize: 15.sp,
+                          color: const Color(0xFF8E8E93),
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      textAlign: TextAlign.center,
                     ),
 
                     SizedBox(height: bottomSpace),

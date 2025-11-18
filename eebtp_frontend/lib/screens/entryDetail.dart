@@ -4,11 +4,13 @@ import 'package:eebtp_frontend/models/article.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../widgets/nav.dart';
 import 'package:provider/provider.dart';
 import 'package:eebtp_frontend/providers/auth_provider.dart';
 import 'package:eebtp_frontend/services/stockservice.dart';
 import 'package:eebtp_frontend/services/projetservice.dart';
+
 class EntryDetailPage extends StatefulWidget {
   final Entree entry;
   const EntryDetailPage({super.key, required this.entry});
@@ -88,6 +90,96 @@ class _EntryDetailContent extends StatelessWidget {
 
   static const String backendUrl = 'http://38.242.139.218:8001';
 
+  // ✅ NOUVELLE MÉTHODE : Afficher la signature en plein écran
+  void _showSignatureFullScreen(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.all(10),
+          child: Stack(
+            children: [
+              // Image interactive (zoom, pan)
+              Center(
+                child: InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: Container(
+                    padding: EdgeInsets.all(4.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: CachedNetworkImage(
+                      imageUrl: imageUrl,
+                      fit: BoxFit.contain,
+                      placeholder: (context, url) => Container(
+                        width: 60,
+                        height: 60,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF0A84FF),
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        padding: EdgeInsets.all(4.w),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.error_outline, size: 48, color: Colors.red),
+                            SizedBox(height: 2.h),
+                            Text(
+                              "Impossible de charger l'image",
+                              style: GoogleFonts.poppins(
+                                fontSize: 13.sp,
+                                color: Colors.red,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Bouton fermer
+              Positioned(
+                top: 4.h,
+                right: 4.w,
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    padding: EdgeInsets.all(2.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.close,
+                      size: 6.w,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isRetour = entry.type == "Retour";
@@ -129,7 +221,11 @@ class _EntryDetailContent extends StatelessWidget {
                       ),
                       child: Text(
                         magasinName,
-                        style: GoogleFonts.montserrat(fontSize: 15.sp, color: Color(0xFF2973E2), fontWeight: FontWeight.bold),
+                        style: GoogleFonts.montserrat(
+                          fontSize: 15.sp,
+                          color: Color(0xFF2973E2),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   SizedBox(height: 2.h),
@@ -170,6 +266,7 @@ class _EntryDetailContent extends StatelessWidget {
                     )
                   else
                     _buildLivreurCard(
+                      context: context, // ✅ Ajouté pour la modal
                       label: cardLabel,
                       name: entry.nomLivreur ?? "-",
                       phone: entry.telLivreur ?? "-",
@@ -305,10 +402,11 @@ class _EntryDetailContent extends StatelessWidget {
           child: Text(
             label,
             style: GoogleFonts.montserrat(
-                fontSize: 14.sp,
-                color: Color(0xFF0A84FF),
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5),
+              fontSize: 14.sp,
+              color: Color(0xFF0A84FF),
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
           ),
         ),
         Container(
@@ -330,9 +428,10 @@ class _EntryDetailContent extends StatelessWidget {
                       child: Text(
                         name,
                         style: GoogleFonts.montserrat(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87),
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -340,16 +439,19 @@ class _EntryDetailContent extends StatelessWidget {
                     Text(
                       role,
                       style: GoogleFonts.montserrat(
-                          fontSize: 13.sp, color: Colors.grey[600]),
+                        fontSize: 13.sp,
+                        color: Colors.grey[600],
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                     SizedBox(width: 2.w),
                     Text(
                       phone,
                       style: GoogleFonts.montserrat(
-                          fontSize: 12.sp,
-                          color: Color(0xFF34C759),
-                          fontWeight: FontWeight.w600),
+                        fontSize: 12.sp,
+                        color: Color(0xFF34C759),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -361,49 +463,104 @@ class _EntryDetailContent extends StatelessWidget {
     );
   }
 
+  // ✅ MÉTHODE AMÉLIORÉE avec cache, loading, erreur et tap pour agrandir
   Widget _buildLivreurCard({
+    required BuildContext context, // ✅ Ajouté
     required String label,
     required String name,
     required String phone,
     String? signatureUrl,
   }) {
     Widget signatureWidget = const SizedBox.shrink();
+    
     if (signatureUrl != null && signatureUrl.isNotEmpty) {
+      // ✅ Construction de l'URL complète
       String effectiveUrl = signatureUrl;
       if (signatureUrl.startsWith('/media')) {
         effectiveUrl = '$backendUrl$signatureUrl';
       }
-signatureWidget = Container(
-  width: 25.w,
-  height: 5.h,
-  margin: EdgeInsets.symmetric(horizontal: 3.w),
-  padding: EdgeInsets.symmetric(horizontal: 1.w, vertical: 0.4.h), // Ajoute du vide autour de l’image
-  decoration: BoxDecoration(
-    color: const Color(0x3379B7FF),
-    borderRadius: BorderRadius.circular(18),
-  ),
-  child: ClipRRect(
-    borderRadius: BorderRadius.circular(18),
-    child: Image.network(
-      effectiveUrl,
-      fit: BoxFit.contain, // <-- ici "contain" pour ne jamais couper la signature même si elle est + large
-      errorBuilder: (c, e, s) => const Icon(Icons.error, size: 28),
-    ),
-  ),
-);
-}
+
+      // ✅ Widget signature amélioré avec cache et tap
+      signatureWidget = GestureDetector(
+        onTap: () => _showSignatureFullScreen(context, effectiveUrl),
+        child: Container(
+          width: 25.w,
+          height: 5.h,
+          margin: EdgeInsets.symmetric(horizontal: 3.w),
+          padding: EdgeInsets.symmetric(horizontal: 1.w, vertical: 0.4.h),
+          decoration: BoxDecoration(
+            color: const Color(0x3379B7FF),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: Color(0xFF0A84FF).withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: CachedNetworkImage(
+              imageUrl: effectiveUrl,
+              fit: BoxFit.contain,
+              // ✅ Indicateur de chargement
+              placeholder: (context, url) => Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFF0A84FF),
+                  ),
+                ),
+              ),
+              // ✅ Gestion d'erreur améliorée
+              errorWidget: (context, url, error) => Center(
+                child: Icon(
+                  Icons.error_outline,
+                  size: 24,
+                  color: Colors.red[300],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: EdgeInsets.only(bottom: 0.5.h, left: 1.w),
-          child: Text(
-            label,
-            style: GoogleFonts.montserrat(
-                fontSize: 14.sp,
-                color: Color(0xFF0A84FF),
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5),
+          child: Row(
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.montserrat(
+                  fontSize: 14.sp,
+                  color: Color(0xFF0A84FF),
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              // ✅ Indicateur cliquable si signature existe
+              if (signatureUrl != null && signatureUrl.isNotEmpty) ...[
+                SizedBox(width: 2.w),
+                Icon(
+                  Icons.zoom_in,
+                  size: 16,
+                  color: Colors.grey[500],
+                ),
+                SizedBox(width: 1.w),
+                Text(
+                  "Toucher la signature pour agrandir",
+                  style: GoogleFonts.poppins(
+                    fontSize: 9.sp,
+                    color: Colors.grey[500],
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
         Container(
@@ -425,9 +582,10 @@ signatureWidget = Container(
                       child: Text(
                         name,
                         style: GoogleFonts.montserrat(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87),
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -436,9 +594,10 @@ signatureWidget = Container(
                     Text(
                       phone,
                       style: GoogleFonts.montserrat(
-                          fontSize: 12.sp,
-                          color: Color(0xFF34C759),
-                          fontWeight: FontWeight.w600),
+                        fontSize: 12.sp,
+                        color: Color(0xFF34C759),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -459,10 +618,11 @@ signatureWidget = Container(
           child: Text(
             label,
             style: GoogleFonts.montserrat(
-                fontSize: 14.sp,
-                color: Color(0xFF0A84FF),
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5),
+              fontSize: 14.sp,
+              color: Color(0xFF0A84FF),
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
           ),
         ),
         Container(
@@ -475,19 +635,25 @@ signatureWidget = Container(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                supplier,
-                style: GoogleFonts.montserrat(
+              Expanded(
+                child: Text(
+                  supplier,
+                  style: GoogleFonts.montserrat(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black),
+                    color: Colors.black,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
+              SizedBox(width: 3.w),
               Text(
                 phone,
                 style: GoogleFonts.montserrat(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black),
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
               ),
             ],
           ),

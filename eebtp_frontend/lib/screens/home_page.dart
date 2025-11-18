@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import 'package:toastification/toastification.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:eebtp_frontend/models/history.dart';
 import 'package:eebtp_frontend/models/statistiques.dart';
@@ -21,12 +22,13 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  static const String backendUrl = 'http://38.242.139.218:8001';
+  
   final TextEditingController _searchController = TextEditingController();
 
-  // ✅ FILTRES SÉPARÉS ET INDÉPENDANTS
-  String _selectedActivityFilter = "Aujourd'hui"; // Pour l'historique
-  String _selectedTimeFilter = "jour"; // Pour les mouvements (Livraison/Sortie/Retour)
-  String _selectedUnit = "kg"; // Pour les stocks
+  String _selectedActivityFilter = "Aujourd'hui";
+  String _selectedTimeFilter = "jour";
+  String _selectedUnit = "kg";
   String _selectedCardType = "Livraison";
 
   Utilisateur? _user;
@@ -34,7 +36,6 @@ class _HomePageState extends State<HomePage> {
   bool _loadingUser = true;
   bool _loadingHistory = true;
 
-  /// Gestion du "Voir plus"
   int _displayedCount = 20;
 
   final HistoryService _historyService = HistoryService();
@@ -55,6 +56,16 @@ class _HomePageState extends State<HomePage> {
       _loadStats();
       _loadStockStats();
     });
+  }
+
+  String? _getProfilePhotoUrl(String? photoPath) {
+    if (photoPath == null || photoPath.isEmpty) return null;
+    
+    if (photoPath.startsWith('/media')) {
+      return '$backendUrl$photoPath';
+    }
+    
+    return photoPath;
   }
 
   void _showToast({
@@ -110,7 +121,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // ✅ MÉTHODE CORRIGÉE : Charge uniquement l'utilisateur et l'historique
   Future<void> _loadUserAndHistory() async {
     try {
       final token = context.read<AuthProvider>().token;
@@ -151,7 +161,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // ✅ MÉTHODE CORRIGÉE : Charge uniquement les stats de mouvements avec _selectedTimeFilter
   Future<void> _loadStats() async {
     setState(() {
       _loadingStats = true;
@@ -168,7 +177,6 @@ class _HomePageState extends State<HomePage> {
         );
         return;
       }
-      // ✅ Utilise _selectedTimeFilter pour les mouvements
       final stats = await _statsService?.getMouvementsStats(storeId, _selectedTimeFilter);
       setState(() {
         _mouvementsStats = stats;
@@ -185,7 +193,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // ✅ MÉTHODE CORRIGÉE : Charge uniquement les stats de stock avec _selectedUnit
   Future<void> _loadStockStats() async {
     setState(() {
       _loadingStockStats = true;
@@ -202,7 +209,6 @@ class _HomePageState extends State<HomePage> {
         );
         return;
       }
-      // ✅ Utilise _selectedUnit pour les stocks
       final stats = await _statsService?.getStocksStats(
         storeId,
         _selectedUnit.toLowerCase(),
@@ -261,7 +267,6 @@ class _HomePageState extends State<HomePage> {
     };
   }
 
-  // ✅ MÉTHODE HELPER : Affichage du poste
   String _getDisplayPoste(String? poste) {
     if (poste == null || poste.isEmpty || poste.toLowerCase() == 'string') {
       return 'Sans poste';
@@ -272,9 +277,11 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final cardData = _getCardData();
-
     final visibleHistory = _allHistory.take(_displayedCount).toList();
     final hasMore = _allHistory.length > _displayedCount;
+    
+    final photoUrl = _getProfilePhotoUrl(_user?.photoProfil);
+    
     return NavContainer(
       initialIndex: 0,
       body: Scaffold(
@@ -294,57 +301,102 @@ class _HomePageState extends State<HomePage> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.white,
+                  border: Border.all(
+                    color: Colors.white,
+                    width: 2,
+                  ),
                 ),
                 child: ClipOval(
                   child: _loadingUser
-                      ? Container(color: Colors.white)
-                      : _user != null && _user!.photoProfil != null
-                      ? Image.network(
-                          _user!.photoProfil!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Image.asset(
-                            "assets/profile.png",
-                            fit: BoxFit.cover,
+                      ? Container(
+                          color: Colors.grey[200],
+                          child: Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFF007AFF),
+                              ),
+                            ),
                           ),
                         )
-                      : Image.asset("assets/profile.png", fit: BoxFit.cover),
+                      : photoUrl != null
+                          ? CachedNetworkImage(
+                              imageUrl: photoUrl,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                color: Colors.grey[200],
+                                child: Center(
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Color(0xFF007AFF),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => Image.asset(
+                                "assets/profile.png",
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : Image.asset(
+                              "assets/profile.png",
+                              fit: BoxFit.cover,
+                            ),
                 ),
               ),
               SizedBox(width: 2.w),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _loadingUser
-                      ? Container(
-                          width: 80,
-                          height: 14,
-                          color: Colors.white.withOpacity(0.3),
-                        )
-                      : Text(
-                          "${_user?.firstName ?? ""} ${_user?.lastName ?? ""}",
-                          style: GoogleFonts.montserrat(
-                            fontSize: 19,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+              // ✅ CORRECTION : Envelopper la Column dans Expanded pour éviter l'overflow
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _loadingUser
+                        ? Container(
+                            width: 80,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          )
+                        : Text(
+                            "${_user?.firstName ?? ""} ${_user?.lastName ?? ""}${_user?.surname != null && _user!.surname!.isNotEmpty ? ' ${_user!.surname}' : ''}",
+                            style: GoogleFonts.montserrat(
+                              fontSize: 19,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                            maxLines: 1, // ✅ Limiter à 1 ligne
+                            overflow: TextOverflow.ellipsis, // ✅ Ajouter ellipsis
                           ),
-                        ),
-                  SizedBox(height: 2),
-                  _loadingUser
-                      ? Container(
-                          width: 60,
-                          height: 12,
-                          color: Colors.white.withOpacity(0.3),
-                        )
-                      : Text(
-                          _getDisplayPoste(_user?.poste), // ✅ CORRIGÉ
-                          style: GoogleFonts.montserrat(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.white.withOpacity(0.9),
+                    SizedBox(height: 2),
+                    _loadingUser
+                        ? Container(
+                            width: 60,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          )
+                        : Text(
+                            _getDisplayPoste(_user?.poste),
+                            style: GoogleFonts.montserrat(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.white.withOpacity(0.9),
+                            ),
+                            maxLines: 1, // ✅ Limiter à 1 ligne
+                            overflow: TextOverflow.ellipsis, // ✅ Ajouter ellipsis
                           ),
-                        ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -433,7 +485,6 @@ class _HomePageState extends State<HomePage> {
                     double cardHeight = constraints.maxWidth > 340 ? 18.h : 120;
                     return Column(
                       children: [
-                        // ✅ CARTE MOUVEMENTS (utilise _selectedTimeFilter)
                         Container(
                           constraints: BoxConstraints(
                             minHeight: 110,
@@ -512,7 +563,6 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         SizedBox(height: 19),
-                        // ✅ CARTE STOCK (utilise _selectedUnit)
                         Container(
                           constraints: BoxConstraints(
                             minHeight: 110,
@@ -586,7 +636,6 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 SizedBox(height: 11),
-                // ✅ FILTRES D'HISTORIQUE (utilise _selectedActivityFilter)
                 Row(
                   children: [
                     _buildActivityFilter(
@@ -657,7 +706,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ✅ CORRIGÉ : Charge uniquement l'historique quand le filtre change
   Widget _buildActivityFilter(String text, bool isSelected) {
     return GestureDetector(
       onTap: () async {
@@ -665,7 +713,6 @@ class _HomePageState extends State<HomePage> {
           _selectedActivityFilter = text;
           _loadingHistory = true;
         });
-        // ✅ Charge uniquement l'historique, pas les stats
         await _loadUserAndHistory();
       },
       child: Container(
@@ -784,7 +831,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ✅ CORRIGÉ : Change uniquement le filtre de temps des mouvements
   void _showTimeFilterDialog() {
     showDialog(
       context: context,
@@ -805,7 +851,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ✅ CORRIGÉ : Recharge uniquement les stats de mouvements
   Widget _buildTimeFilterOption(String option) {
     return ListTile(
       title: Text(option, style: GoogleFonts.poppins()),
@@ -817,12 +862,11 @@ class _HomePageState extends State<HomePage> {
           _selectedTimeFilter = option;
         });
         Navigator.pop(context);
-        _loadStats(); // ✅ Charge uniquement les stats de mouvements
+        _loadStats();
       },
     );
   }
 
-  // ✅ CORRIGÉ : Change le type de carte et recharge les stats
   void _showCardTypeDialog() {
     showDialog(
       context: context,
@@ -853,12 +897,10 @@ class _HomePageState extends State<HomePage> {
           _selectedCardType = option;
         });
         Navigator.pop(context);
-        // Pas besoin de recharger, juste mettre à jour l'affichage
       },
     );
   }
 
-  // ✅ CORRIGÉ : Change uniquement le filtre d'unité des stocks
   void _showUnitFilterDialog() {
     showDialog(
       context: context,
@@ -901,7 +943,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ✅ CORRIGÉ : Recharge uniquement les stats de stock
   Widget _buildUnitFilterOption(String option) {
     return ListTile(
       title: Text(option, style: GoogleFonts.poppins()),
@@ -914,7 +955,7 @@ class _HomePageState extends State<HomePage> {
         });
         print("Unité sélectionnée : $option");
         Navigator.pop(context);
-        _loadStockStats(); // ✅ Charge uniquement les stats de stock
+        _loadStockStats();
       },
     );
   }
