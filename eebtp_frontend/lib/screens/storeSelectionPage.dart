@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:eebtp_frontend/services/auth.dart';
 import 'package:eebtp_frontend/models/utilisateur.dart';
 import 'package:eebtp_frontend/providers/auth_provider.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // ✅ Ajouté
 
 class StoreSelectionPage extends StatefulWidget {
   const StoreSelectionPage({super.key});
@@ -15,40 +16,78 @@ class StoreSelectionPage extends StatefulWidget {
 }
 
 class _StoreSelectionPageState extends State<StoreSelectionPage> {
+  // ✅ AJOUT : URL du backend
+  static const String backendUrl = 'http://38.242.139.218:8001';
+  
   late Future<List<Map<String, dynamic>>> _futureStores;
   late Future<Utilisateur> _futureUser;
   final UserService _userService = UserService();
   final ProjetService _projetService = ProjetService();
 
-@override
-void initState() {
-  super.initState();
-  // Vérification token expiré automatique dès ouverture
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (mounted) {
-      Provider.of<AuthProvider>(context, listen: false)
-          .checkTokenExpiry(context);
-    }
-  });
+  // ✅ AJOUT : Clé pour le RefreshIndicator
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
 
-  final token = context.read<AuthProvider>().token;
-
-  if (token != null) {
-    _futureUser = _userService.getUserInfo(token);
-    _futureStores = _loadStores(token);
-  } else {
+  @override
+  void initState() {
+    super.initState();
+    // Vérification token expiré automatique dès ouverture
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Navigator.pushReplacementNamed(context, '/login');
+      if (mounted) {
+        Provider.of<AuthProvider>(context, listen: false)
+            .checkTokenExpiry(context);
+      }
     });
-  }
-}
 
+    final token = context.read<AuthProvider>().token;
+
+    if (token != null) {
+      _futureUser = _userService.getUserInfo(token);
+      _futureStores = _loadStores(token);
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, '/login');
+      });
+    }
+  }
+
+  // ✅ NOUVELLE MÉTHODE : Construire l'URL complète de la photo
+  String? _getProfilePhotoUrl(String? photoPath) {
+    if (photoPath == null || photoPath.isEmpty) return null;
+    
+    if (photoPath.startsWith('/media')) {
+      return '$backendUrl$photoPath';
+    }
+    
+    return photoPath;
+  }
+
+  // ✅ NOUVELLE MÉTHODE : Rafraîchir les données
+  Future<void> _refreshData() async {
+    final token = context.read<AuthProvider>().token;
+    
+    if (token == null) {
+      Navigator.pushReplacementNamed(context, '/login');
+      return;
+    }
+
+    setState(() {
+      _futureUser = _userService.getUserInfo(token);
+      _futureStores = _loadStores(token);
+    });
+
+    // Attendre que les deux futures se terminent
+    try {
+      await Future.wait([_futureUser, _futureStores]);
+    } catch (e) {
+      print('❌ Erreur lors du rafraîchissement: $e');
+    }
+  }
 
   Future<List<Map<String, dynamic>>> _loadStores(String token) async {
     try {
       final Utilisateur user = await _futureUser;
 
-      // Vérification : pas de projet = empty state
+      // Vérification : pas de projet = empty state
       if (user.projets == null || user.projets.isEmpty) {
         return [];
       }
@@ -145,9 +184,14 @@ void initState() {
                     ],
                   ),
                   const Spacer(),
+                  // ✅ AMÉLIORATION : Photo de profil avec CachedNetworkImage
                   FutureBuilder<Utilisateur>(
                     future: _futureUser,
                     builder: (context, snapshot) {
+                      final photoUrl = snapshot.hasData 
+                          ? _getProfilePhotoUrl(snapshot.data!.photoProfil)
+                          : null;
+                          
                       return Container(
                         width: 14.w,
                         height: 14.w,
@@ -166,11 +210,24 @@ void initState() {
                           ],
                         ),
                         child: ClipOval(
-                          child: snapshot.hasData && snapshot.data!.photoProfil != null
-                              ? Image.network(
-                                  snapshot.data!.photoProfil!,
+                          child: photoUrl != null
+                              ? CachedNetworkImage(
+                                  imageUrl: photoUrl,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Image.asset(
+                                  placeholder: (context, url) => Container(
+                                    color: Colors.grey[200],
+                                    child: Center(
+                                      child: SizedBox(
+                                        width: 4.w,
+                                        height: 4.w,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 1.5,
+                                          color: Color(0xFF007AFF),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) => Image.asset(
                                     "assets/profile.png",
                                     fit: BoxFit.cover,
                                   ),
@@ -186,7 +243,7 @@ void initState() {
                 ],
               ),
             ),
-            // Contenu principal
+            // ✅ MODIFICATION : Contenu principal avec RefreshIndicator
             Expanded(
               child: FutureBuilder<Utilisateur>(
                 future: _futureUser,
@@ -218,96 +275,109 @@ void initState() {
                       } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                         return _buildEmptyState();
                       }
+                      
                       final stores = snapshot.data!;
-                      return CustomScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        slivers: [
-                          SliverToBoxAdapter(
-                            child: Container(
-                              margin: EdgeInsets.fromLTRB(5.w, 3.h, 5.w, 1.h),
-                              padding: EdgeInsets.all(4.w),
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFF007AFF), Color(0xFF0056CC)],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF007AFF).withOpacity(0.3),
-                                    blurRadius: 15,
-                                    offset: const Offset(0, 5),
+                      
+                      // ✅ AJOUT : Envelopper dans RefreshIndicator
+                      return RefreshIndicator(
+                        key: _refreshIndicatorKey,
+                        onRefresh: _refreshData,
+                        color: const Color(0xFF007AFF),
+                        backgroundColor: Colors.white,
+                        displacement: 40,
+                        strokeWidth: 2.5,
+                        child: CustomScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
+                          ),
+                          slivers: [
+                            SliverToBoxAdapter(
+                              child: Container(
+                                margin: EdgeInsets.fromLTRB(5.w, 3.h, 5.w, 1.h),
+                                padding: EdgeInsets.all(4.w),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFF007AFF), Color(0xFF0056CC)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
                                   ),
-                                ],
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        RichText(
-                                          text: TextSpan(
-                                            children: [
-                                              TextSpan(
-                                                text: "Bonjour ",
-                                                style: GoogleFonts.montserrat(
-                                                  fontSize: 15.sp,
-                                                  color: Colors.white.withOpacity(0.9),
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                              TextSpan(
-                                                text: userSnapshot.data?.username ?? "Utilisateur",
-                                                style: GoogleFonts.montserrat(
-                                                  fontSize: 15.sp,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: Colors.white,
-                                                  letterSpacing: -0.3,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        SizedBox(height: 1.h),
-                                        Text(
-                                          "Sélectionnez un magasin pour accéder à son espace",
-                                          style: GoogleFonts.montserrat(
-                                            fontSize: 13.sp,
-                                            color: Colors.white.withOpacity(0.8),
-                                            fontWeight: FontWeight.w400,
-                                            height: 1.4,
-                                          ),
-                                        ),
-                                      ],
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF007AFF).withOpacity(0.3),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 5),
                                     ),
-                                  ),
-                                  SizedBox(width: 3.w),
-                                  Icon(
-                                    Icons.storefront_rounded,
-                                    size: 10.w,
-                                    color: Colors.white.withOpacity(0.9),
-                                  ),
-                                ],
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          RichText(
+                                            text: TextSpan(
+                                              children: [
+                                                TextSpan(
+                                                  text: "Bonjour ",
+                                                  style: GoogleFonts.montserrat(
+                                                    fontSize: 15.sp,
+                                                    color: Colors.white.withOpacity(0.9),
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text: userSnapshot.data?.username ?? "Utilisateur",
+                                                  style: GoogleFonts.montserrat(
+                                                    fontSize: 15.sp,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: Colors.white,
+                                                    letterSpacing: -0.3,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          SizedBox(height: 1.h),
+                                          Text(
+                                            "Sélectionnez un magasin pour accéder à son espace",
+                                            style: GoogleFonts.montserrat(
+                                              fontSize: 13.sp,
+                                              color: Colors.white.withOpacity(0.8),
+                                              fontWeight: FontWeight.w400,
+                                              height: 1.4,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    SizedBox(width: 3.w),
+                                    Icon(
+                                      Icons.storefront_rounded,
+                                      size: 10.w,
+                                      color: Colors.white.withOpacity(0.9),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          SliverToBoxAdapter(child: _buildStoreHeader(stores.length)),
-                          SliverPadding(
-                            padding: EdgeInsets.fromLTRB(5.w, 2.h, 5.w, 2.h),
-                            sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                                (context, index) {
-                                  final store = stores[index];
-                                  return _buildStoreCard(store);
-                                },
-                                childCount: stores.length,
+                            SliverToBoxAdapter(child: _buildStoreHeader(stores.length)),
+                            SliverPadding(
+                              padding: EdgeInsets.fromLTRB(5.w, 2.h, 5.w, 2.h),
+                              sliver: SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                    final store = stores[index];
+                                    return _buildStoreCard(store);
+                                  },
+                                  childCount: stores.length,
+                                ),
                               ),
                             ),
-                          ),
-                          SliverToBoxAdapter(child: SizedBox(height: 4.h)),
-                        ],
+                            SliverToBoxAdapter(child: SizedBox(height: 4.h)),
+                          ],
+                        ),
                       );
                     },
                   );
@@ -320,59 +390,59 @@ void initState() {
     );
   }
 
-Widget _buildStoreHeader(int storeCount) {
-  return Container(
-    margin: EdgeInsets.fromLTRB(5.w, 2.h, 5.w, 2.h), // marge gauche/droite/haut/bas
-    padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h), // padding interne
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.03),
-          blurRadius: 6,
-          offset: const Offset(0, 2),
-        ),
-      ],
-    ),
-    child: Row(
-      children: [
-        Text(
-          "Magasins disponibles",
-          style: GoogleFonts.montserrat(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF1D1D1F),
-            letterSpacing: -0.3,
+  Widget _buildStoreHeader(int storeCount) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(5.w, 2.h, 5.w, 2.h),
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
-        ),
-        const Spacer(),
-        Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: 3.w,
-            vertical: 0.8.h,
-          ),
-          decoration: BoxDecoration(
-            color: const Color(0xFF007AFF).withOpacity(0.10),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: const Color(0xFF007AFF).withOpacity(0.18),
-              width: 1,
-            ),
-          ),
-          child: Text(
-            "$storeCount",
+        ],
+      ),
+      child: Row(
+        children: [
+          Text(
+            "Magasins disponibles",
             style: GoogleFonts.montserrat(
-              fontSize: 12.sp,
-              color: const Color(0xFF007AFF),
+              fontSize: 16.sp,
               fontWeight: FontWeight.w700,
+              color: const Color(0xFF1D1D1F),
+              letterSpacing: -0.3,
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+          const Spacer(),
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: 3.w,
+              vertical: 0.8.h,
+            ),
+            decoration: BoxDecoration(
+              color: const Color(0xFF007AFF).withOpacity(0.10),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: const Color(0xFF007AFF).withOpacity(0.18),
+                width: 1,
+              ),
+            ),
+            child: Text(
+              "$storeCount",
+              style: GoogleFonts.montserrat(
+                fontSize: 12.sp,
+                color: const Color(0xFF007AFF),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildStoreCard(Map<String, dynamic> store) {
     return Container(

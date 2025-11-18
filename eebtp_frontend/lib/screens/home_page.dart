@@ -366,7 +366,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                           )
                         : Text(
-                            "${_user?.firstName ?? ""} ${_user?.lastName ?? ""}${_user?.surname != null && _user!.surname!.isNotEmpty ? ' ${_user!.surname}' : ''}",
+                            "${_user?.firstName ?? ""} ${_user?.lastName ?? ""}",
                             style: GoogleFonts.montserrat(
                               fontSize: 19,
                               fontWeight: FontWeight.w600,
