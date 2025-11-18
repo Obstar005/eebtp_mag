@@ -14,6 +14,12 @@ class AuthProvider extends ChangeNotifier {
   int? _storeId;
   DateTime? _expiry;
 
+  // ✅ Clés pour SharedPreferences
+  static const String _tokenKey = 'token';
+  static const String _storeIdKey = 'storeId';
+  static const String _userKey = 'user';
+  static const String _isFirstTimeKey = 'is_first_time'; // ✅ Ajouté
+
   String? get token => _token;
   Utilisateur? get user => _user;
   int? get storeId => _storeId;
@@ -25,9 +31,9 @@ class AuthProvider extends ChangeNotifier {
   Future<void> loadFromStorage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      _token = prefs.getString('token');
-      _storeId = prefs.getInt('storeId');
-      String? userStr = prefs.getString('user');
+      _token = prefs.getString(_tokenKey);
+      _storeId = prefs.getInt(_storeIdKey);
+      String? userStr = prefs.getString(_userKey);
       
       if (userStr != null) {
         try {
@@ -63,21 +69,21 @@ class AuthProvider extends ChangeNotifier {
     _token = token;
     _expiry = JwtDecoder.getExpirationDate(token);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('token', token);
+    await prefs.setString(_tokenKey, token);
     notifyListeners();
   }
 
   Future<void> setStoreId(int storeId) async {
     _storeId = storeId;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('storeId', storeId);
+    await prefs.setInt(_storeIdKey, storeId);
     notifyListeners();
   }
 
   Future<void> setUser(Utilisateur user) async {
     _user = user;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user', jsonEncode(user.toJson()));
+    await prefs.setString(_userKey, jsonEncode(user.toJson()));
     notifyListeners();
   }
 
@@ -120,13 +126,48 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // ✅ NOUVELLE MÉTHODE : Vérifier si c'est la première fois
+  Future<bool> isFirstTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_isFirstTimeKey) ?? true;
+  }
+
+  // ✅ NOUVELLE MÉTHODE : Marquer que l'app a été lancée
+  Future<void> setNotFirstTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_isFirstTimeKey, false);
+  }
+
+  // ✅ MÉTHODE MODIFIÉE : Clear conserve le flag "first time"
   Future<void> clear() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    // Sauvegarder le flag first time avant de tout effacer
+    final isFirstTimeValue = prefs.getBool(_isFirstTimeKey) ?? true;
+    
     _token = null;
     _user = null;
     _storeId = null;
     _expiry = null;
+    
+    await prefs.clear();
+    
+    // Restaurer le flag first time
+    await prefs.setBool(_isFirstTimeKey, isFirstTimeValue);
+    
+    notifyListeners();
+  }
+
+  // ✅ NOUVELLE MÉTHODE : Réinitialiser complètement l'app (pour debug)
+  Future<void> resetApp() async {
+    _token = null;
+    _user = null;
+    _storeId = null;
+    _expiry = null;
+    
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+    
     notifyListeners();
   }
 }

@@ -2,9 +2,22 @@ import 'package:eebtp_frontend/widgets/button.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
+import 'package:provider/provider.dart'; // ✅ Ajouté
+import 'package:eebtp_frontend/providers/auth_provider.dart'; // ✅ Ajouté
 
 class GetStartedScreen extends StatelessWidget {
   const GetStartedScreen({super.key});
+
+  // ✅ NOUVELLE MÉTHODE : Gérer le clic sur "Commencer ici"
+  Future<void> _onGetStarted(BuildContext context) async {
+    // Marquer que ce n'est plus la première fois
+    await context.read<AuthProvider>().setNotFirstTime();
+    
+    // Naviguer vers la page de login
+    if (context.mounted) {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +100,7 @@ class GetStartedScreen extends StatelessWidget {
                       ),
                     ),
                     Positioned(
-                      top: bumpHeight * 0.55, // 👈 Décalage vers le bas augmenté
+                      top: bumpHeight * 0.55,
                       left: 0,
                       right: 0,
                       bottom: 0,
@@ -145,7 +158,7 @@ class GetStartedScreen extends StatelessWidget {
 
                                 const Spacer(),
 
-                                // Bouton centré
+                                // ✅ BOUTON MODIFIÉ : Appelle _onGetStarted
                                 Center(
                                   child: ConstrainedBox(
                                     constraints: BoxConstraints(
@@ -156,8 +169,7 @@ class GetStartedScreen extends StatelessWidget {
                                       text: 'Commencer ici',
                                       backgroundColor: Colors.white,
                                       textColor: const Color(0xFF007AFF),
-                                      onPressed: () =>
-                                          Navigator.pushNamed(context, '/login'),
+                                      onPressed: () => _onGetStarted(context), // ✅ Modifié
                                       width: constraints.maxWidth > 400
                                           ? 70.w
                                           : constraints.maxWidth * 0.8,

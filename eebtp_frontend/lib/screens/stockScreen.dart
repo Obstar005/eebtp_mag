@@ -208,167 +208,153 @@ class _StockPageState extends State<StockPage> {
 
     return NavContainer(
       initialIndex: 1,
-      body: RefreshIndicator(
-        onRefresh: _refreshData,
-        child: Column(
-          children: [
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF007AFF), Color(0xFF0056CC)],
-                ),
+      body: Column(
+        children: [
+          // ✅ Header NON-SCROLLABLE
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF007AFF), Color(0xFF0056CC)],
               ),
-              child: SafeArea(
-                bottom: false,
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 6.w,
-                        vertical: 2.h,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Stocks",
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 18.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-
-                              Text(
-                                magasinName != null ? magasinName : "Magasin",
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w400,
-                                  color: Colors.white.withOpacity(0.8),
-                                ),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              GestureDetector(
-                                onTap: _refreshData,
-                                child: Container(
-                                  padding: EdgeInsets.all(2.w),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.refresh,
-                                    size: 6.w,
-                                    color: const Color(0xFF007AFF),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 3.w),
-                              Stack(
-                                children: [
-                                  GestureDetector(
-                                    onTap: () => Navigator.pushNamed(
-                                      context,
-                                      '/notifications',
-                                    ),
-                                    child: Container(
-                                      padding: EdgeInsets.all(2.w),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        Icons.notifications_outlined,
-                                        size: 6.w,
-                                        color: const Color(0xFF007AFF),
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    right: 0,
-                                    top: 0,
-                                    child: Container(
-                                      padding: EdgeInsets.all(1.w),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.red,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Text(
-                                        "3",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10.sp,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 6.w,
+                      vertical: 2.h,
                     ),
-                    SizedBox(height: 2.h),
-                    Container(
-                      margin: EdgeInsets.symmetric(horizontal: 6.w),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 4.w,
-                        vertical: 1.5.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10.w),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.search, color: Colors.grey, size: 6.w),
-                          SizedBox(width: 3.w),
-                          Expanded(
-                            child: Text(
-                              "Recherche un produit, entrée ou sortie...",
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Stocks",
                               style: GoogleFonts.montserrat(
-                                color: Colors.grey,
-                                fontSize: 14.sp,
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 3.h),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildMainTab("Stock", 0),
-                        _buildMainTab("Entrée", 1),
-                        _buildMainTab("Sortie", 2),
+                            Text(
+                              magasinName != null ? magasinName : "Magasin",
+                              style: GoogleFonts.montserrat(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.white.withOpacity(0.8),
+                              ),
+                            ),
+                          ],
+                        ),
+                        // ✅ ICÔNE REFRESH SUPPRIMÉE - Seulement notifications
+                        Stack(
+                          children: [
+                            GestureDetector(
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                '/notifications',
+                              ),
+                              child: Container(
+                                padding: EdgeInsets.all(2.w),
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.notifications_outlined,
+                                  size: 6.w,
+                                  color: const Color(0xFF007AFF),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              right: 0,
+                              top: 0,
+                              child: Container(
+                                padding: EdgeInsets.all(1.w),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  "3",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
-                    SizedBox(height: 2.h),
-                  ],
-                ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Container(
+                    margin: EdgeInsets.symmetric(horizontal: 6.w),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 4.w,
+                      vertical: 1.5.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10.w),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.search, color: Colors.grey, size: 6.w),
+                        SizedBox(width: 3.w),
+                        Expanded(
+                          child: Text(
+                            "Recherche un produit, entrée ou sortie...",
+                            style: GoogleFonts.montserrat(
+                              color: Colors.grey,
+                              fontSize: 14.sp,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 3.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildMainTab("Stock", 0),
+                      _buildMainTab("Entrée", 1),
+                      _buildMainTab("Sortie", 2),
+                    ],
+                  ),
+                  SizedBox(height: 2.h),
+                ],
               ),
             ),
-            Expanded(
-              child: Container(
-                color: const Color(0xFFF8F9FA),
-                child: _isLoading
-                    ? _buildLoadingState()
-                    : _buildTabContent(storeId),
-              ),
+          ),
+          // ✅ CONTENU SCROLLABLE avec RefreshIndicator
+          Expanded(
+            child: Container(
+              color: const Color(0xFFF8F9FA),
+              child: _isLoading
+                  ? _buildLoadingState()
+                  : RefreshIndicator(
+                      onRefresh: _refreshData,
+                      color: const Color(0xFF007AFF),
+                      backgroundColor: Colors.white,
+                      displacement: 40,
+                      strokeWidth: 2.5,
+                      child: _buildTabContent(storeId),
+                    ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -425,6 +411,7 @@ class _StockPageState extends State<StockPage> {
         }
         return ListView.builder(
           padding: EdgeInsets.all(4.w),
+          physics: const AlwaysScrollableScrollPhysics(), // ✅ Ajouté
           itemCount: _stockItems.length,
           itemBuilder: (context, index) {
             return _buildStockItemCard(_stockItems[index]);
@@ -460,6 +447,7 @@ class _StockPageState extends State<StockPage> {
         }
         return ListView.builder(
           padding: EdgeInsets.all(4.w),
+          physics: const AlwaysScrollableScrollPhysics(), // ✅ Ajouté
           itemCount: _sorties.length,
           itemBuilder: (context, index) {
             return _buildExitCard(_sorties[index]);
@@ -511,6 +499,7 @@ class _StockPageState extends State<StockPage> {
 
     return ListView.builder(
       padding: EdgeInsets.all(4.w),
+      physics: const AlwaysScrollableScrollPhysics(), // ✅ Ajouté
       itemCount: filteredEntrees.length,
       itemBuilder: (context, index) {
         return _buildEntryCard(filteredEntrees[index]);
@@ -519,34 +508,41 @@ class _StockPageState extends State<StockPage> {
   }
 
   Widget _buildEmptyState(String message, IconData icon) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 20.w, color: Colors.grey.withOpacity(0.5)),
-          SizedBox(height: 2.h),
-          Text(
-            message,
-            style: GoogleFonts.montserrat(
-              fontSize: 16.sp,
-              color: Colors.grey,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
+    // ✅ MODIFIÉ : Envelopper dans ListView pour le pull-to-refresh
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(height: 20.h), // Espace pour centrer visuellement
+        Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 20.w, color: Colors.grey.withOpacity(0.5)),
+              SizedBox(height: 2.h),
+              Text(
+                message,
+                style: GoogleFonts.montserrat(
+                  fontSize: 16.sp,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 2.h),
+              ElevatedButton(
+                onPressed: _refreshData,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF007AFF),
+                ),
+                child: Text(
+                  "Actualiser",
+                  style: GoogleFonts.montserrat(color: Colors.white),
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 2.h),
-          ElevatedButton(
-            onPressed: _refreshData,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF007AFF),
-            ),
-            child: Text(
-              "Actualiser",
-              style: GoogleFonts.montserrat(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -727,7 +723,7 @@ class _StockPageState extends State<StockPage> {
                   ),
                   SizedBox(height: 2.2.h),
                   Text(
-                    "PRD-${entry.stockItem.toString().padLeft(3, '0')}", // remplace par id concat? selon ton besoin
+                    "PRD-${entry.stockItem.toString().padLeft(3, '0')}",
                     style: GoogleFonts.montserrat(
                       fontSize: 13.sp,
                       color: const Color.fromRGBO(147, 147, 147, 1),
@@ -738,7 +734,6 @@ class _StockPageState extends State<StockPage> {
               ),
             ),
             SizedBox(width: 3.w),
-            // Nouvelle disposition: date en haut, quantité en bas
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -812,7 +807,6 @@ class _StockPageState extends State<StockPage> {
                   SizedBox(height: 0.5.h),
                   Text(
                     exit.stockItemType ?? '',
-
                     style: GoogleFonts.montserrat(
                       fontSize: 13.sp,
                       color: Colors.grey[500],

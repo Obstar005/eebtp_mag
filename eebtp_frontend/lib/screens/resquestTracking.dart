@@ -27,7 +27,7 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
   bool _hasPermissionError = false;
   String _permissionErrorMessage = '';
   
-  // ✅ Vérification du rôle Magasinier
+  // Vérification du rôle Magasinier
   bool _isCheckingRole = true;
   bool _isMagasinier = false;
   Utilisateur? _currentUser;
@@ -38,84 +38,75 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
-        _checkUserRole(); // ✅ Vérifier le rôle en premier
+        _checkUserRole();
       }
     });
   }
 
-// ✅ MÉTHODE CORRIGÉE : Vérifier le libellé du profil
-Future<void> _checkUserRole() async {
-  final token = Provider.of<AuthProvider>(context, listen: false).token;
-  if (token == null) {
-    setState(() { _isCheckingRole = false; });
-    return;
-  }
-
-  try {
-    final userService = UserService();
-    
-    // 1. Récupérer les infos de l'utilisateur
-    final user = await userService.getUserInfo(token);
-    
-    setState(() {
-      _currentUser = user;
-    });
-
-    // 2. Vérifier si l'utilisateur a un profil
-    if (user.profil == null) {
-      setState(() {
-        _isMagasinier = false;
-        _isCheckingRole = false;
-      });
-      
-      if (mounted) {
-        _showNotMagasinierDialog();
-      }
+  Future<void> _checkUserRole() async {
+    final token = Provider.of<AuthProvider>(context, listen: false).token;
+    if (token == null) {
+      setState(() { _isCheckingRole = false; });
       return;
     }
 
-    // 3. Récupérer les détails du profil
-    final profilDetail = await userService.getProfilDetail(user.profil!, token);
-    
-    // 4. Vérifier le libellé du profil (insensible à la casse)
-    final libelle = profilDetail['libelle']?.toString().toLowerCase() ?? '';
-    final isMagasinier = libelle == 'magasinier';
-    
-    setState(() {
-      _isMagasinier = isMagasinier;
-      _isCheckingRole = false;
-    });
+    try {
+      final userService = UserService();
+      
+      final user = await userService.getUserInfo(token);
+      
+      setState(() {
+        _currentUser = user;
+      });
 
-    // Si l'utilisateur n'est pas magasinier, afficher la boîte de dialogue
-    if (!_isMagasinier && mounted) {
-      _showNotMagasinierDialog();
-    } else if (_isMagasinier) {
-      // Charger les demandes seulement si c'est un magasinier
-      _fetchDemandes();
-    }
-  } catch (e) {
-    setState(() { 
-      _isMagasinier = false;
-      _isCheckingRole = false; 
-    });
-    
-    print("Erreur vérification rôle: $e");
-    
-    // Si c'est une erreur de permission, afficher la boîte de dialogue
-    String errorString = e.toString();
-    if (errorString.contains('permissions insuffisantes') || 
-        errorString.contains('Accès refusé') ||
-        errorString.contains('403')) {
-      if (mounted) {
-        _showNotMagasinierDialog();
+      if (user.profil == null) {
+        setState(() {
+          _isMagasinier = false;
+          _isCheckingRole = false;
+        });
+        
+        if (mounted) {
+          _showNotMagasinierDialog();
+        }
+        return;
       }
-    } else {
-      // En cas d'autre erreur, essayer quand même de charger les demandes
-      _fetchDemandes();
+
+      final profilDetail = await userService.getProfilDetail(user.profil!, token);
+      
+      final libelle = profilDetail['libelle']?.toString().toLowerCase() ?? '';
+      final isMagasinier = libelle == 'magasinier';
+      
+      setState(() {
+        _isMagasinier = isMagasinier;
+        _isCheckingRole = false;
+      });
+
+      if (!_isMagasinier && mounted) {
+        _showNotMagasinierDialog();
+      } else if (_isMagasinier) {
+        _fetchDemandes();
+      }
+    } catch (e) {
+      setState(() { 
+        _isMagasinier = false;
+        _isCheckingRole = false; 
+      });
+      
+      print("Erreur vérification rôle: $e");
+      
+      String errorString = e.toString();
+      if (errorString.contains('permissions insuffisantes') || 
+          errorString.contains('Accès refusé') ||
+          errorString.contains('403')) {
+        if (mounted) {
+          _showNotMagasinierDialog();
+        }
+      } else {
+        _fetchDemandes();
+      }
     }
   }
-}
-  // ✅ NOUVELLE MÉTHODE : Boîte de dialogue pour non-magasinier
+
   void _showNotMagasinierDialog() {
     showDialog(
       context: context,
@@ -183,8 +174,8 @@ Future<void> _checkUserRole() async {
           actions: [
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Fermer la boîte de dialogue
-                Navigator.of(context).pop(); // Retourner à l'écran précédent
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 255, 0, 0),
@@ -228,7 +219,6 @@ Future<void> _checkUserRole() async {
       setState(() { _isLoading = false; });
       print("Erreur chargement demandes: $e");
       
-      // Vérifier si c'est une erreur de permission
       String errorString = e.toString();
       if (errorString.contains('permissions insuffisantes') || 
           errorString.contains('Accès refusé') ||
@@ -238,7 +228,6 @@ Future<void> _checkUserRole() async {
           _permissionErrorMessage = "Vous n'avez pas les permissions nécessaires pour accéder aux demandes. Contactez l'administrateur pour mettre à jour votre rôle.";
         });
         
-        // Afficher une boîte de dialogue informative
         _showPermissionDialog();
       } else {
         _showToast(
@@ -247,6 +236,17 @@ Future<void> _checkUserRole() async {
         );
       }
     }
+  }
+
+  // ✅ NOUVELLE MÉTHODE : Rafraîchir les données
+  Future<void> _refreshData() async {
+    // Revérifier le rôle et recharger les demandes
+    setState(() {
+      _isCheckingRole = true;
+      _hasPermissionError = false;
+    });
+    
+    await _checkUserRole();
   }
 
   void _showPermissionDialog() {
@@ -285,7 +285,7 @@ Future<void> _checkUserRole() async {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                Navigator.of(context).pop(); // Retourner à l'écran précédent
+                Navigator.of(context).pop();
               },
               child: Text(
                 "Retour",
@@ -343,14 +343,14 @@ Future<void> _checkUserRole() async {
     switch (status.toLowerCase()) {
       case 'validée':
       case 'livrée':
-        return const Color.fromRGBO(38, 161, 90, 1); // Vert
+        return const Color.fromRGBO(38, 161, 90, 1);
       case 'confirmée':
       case 'approuvée':
-        return const Color.fromRGBO(0, 122, 255, 1); // Bleu
+        return const Color.fromRGBO(0, 122, 255, 1);
       case 'emise':
-        return const Color.fromRGBO(218, 164, 0, 1); // Orange
+        return const Color.fromRGBO(218, 164, 0, 1);
       case 'rejetée':
-        return const Color.fromRGBO(206, 0, 0, 1); // Rouge
+        return const Color.fromRGBO(206, 0, 0, 1);
       default:
         return Colors.grey;
     }
@@ -393,7 +393,6 @@ Future<void> _checkUserRole() async {
   }
 
   DateTime? _getProcessDate(Demande demande) {
-    // Retourne la date la plus récente selon le statut
     if (demande.dateRejet != null) return demande.dateRejet;
     if (demande.dateValidation != null) return demande.dateValidation;
     if (demande.dateApprobation != null) return demande.dateApprobation;
@@ -628,192 +627,181 @@ Future<void> _checkUserRole() async {
     );
   }
 
+  // ✅ MÉTHODE MODIFIÉE : EmptyState scrollable pour pull-to-refresh
   Widget _buildEmptyState() {
-    // ✅ État spécifique si l'utilisateur n'est pas magasinier
+    Widget content;
+    
     if (!_isMagasinier && !_isCheckingRole) {
-      return Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8.w),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: EdgeInsets.all(4.w),
-                decoration: BoxDecoration(
-                  color: Color(0xFFFFEBEE),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.block, 
-                  size: 50.sp, 
-                  color: Color(0xFFFF5252)
-                ),
-              ),
-              SizedBox(height: 3.h),
-              Text(
-                "Accès non autorisé",
-                style: GoogleFonts.poppins(
-                  fontSize: 18.sp,
-                  color: Colors.black87,
-                  fontWeight: FontWeight.w700,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 1.5.h),
-              Text(
-                "Seuls les magasiniers peuvent consulter le suivi des demandes d'approvisionnement.",
-                style: GoogleFonts.poppins(
-                  fontSize: 14.sp,
-                  color: Colors.grey[700],
-                  height: 1.4,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 2.h),
-              Container(
-                padding: EdgeInsets.all(3.w),
-                decoration: BoxDecoration(
-                  color: Color.fromARGB(255, 253, 227, 227),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Color.fromARGB(255, 255, 0, 0).withOpacity(0.3)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, color: Color.fromARGB(255, 255, 0, 0), size: 24),
-                    SizedBox(width: 3.w),
-                    Expanded(
-                      child: Text(
-                        "Contactez l'administrateur pour obtenir les privilèges de magasinier.",
-                        style: GoogleFonts.poppins(
-                          fontSize: 12.sp,
-                          color: Color.fromARGB(255, 8, 8, 8),
-                          height: 1.3,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 4.h),
-              ElevatedButton.icon(
-                onPressed: () => Navigator.of(context).pop(),
-                icon: Icon(Icons.arrow_back, size: 20),
-                label: Text(
-                  "Retour",
-                  style: GoogleFonts.poppins(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF007AFF),
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 1.8.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ],
+      // État spécifique si l'utilisateur n'est pas magasinier
+      content = Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(4.w),
+            decoration: BoxDecoration(
+              color: Color(0xFFFFEBEE),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.block, 
+              size: 50.sp, 
+              color: Color(0xFFFF5252)
+            ),
           ),
-        ),
+          SizedBox(height: 3.h),
+          Text(
+            "Accès non autorisé",
+            style: GoogleFonts.poppins(
+              fontSize: 18.sp,
+              color: Colors.black87,
+              fontWeight: FontWeight.w700,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 1.5.h),
+          Text(
+            "Seuls les magasiniers peuvent consulter le suivi des demandes d'approvisionnement.",
+            style: GoogleFonts.poppins(
+              fontSize: 14.sp,
+              color: Colors.grey[700],
+              height: 1.4,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 2.h),
+          Container(
+            padding: EdgeInsets.all(3.w),
+            decoration: BoxDecoration(
+              color: Color.fromARGB(255, 253, 227, 227),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Color.fromARGB(255, 255, 0, 0).withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: Color.fromARGB(255, 255, 0, 0), size: 24),
+                SizedBox(width: 3.w),
+                Expanded(
+                  child: Text(
+                    "Contactez l'administrateur pour obtenir les privilèges de magasinier.",
+                    style: GoogleFonts.poppins(
+                      fontSize: 12.sp,
+                      color: Color.fromARGB(255, 8, 8, 8),
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 4.h),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: Icon(Icons.arrow_back, size: 20),
+            label: Text(
+              "Retour",
+              style: GoogleFonts.poppins(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFF007AFF),
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 1.8.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
       );
-    }
-    
-    if (_hasPermissionError) {
+    } else if (_hasPermissionError) {
       // État spécifique pour erreur de permission (403)
-      return Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8.w),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: EdgeInsets.all(4.w),
-                decoration: BoxDecoration(
-                  color: Color(0xFFFFF3E0),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.lock_outline, 
-                  size: 50.sp, 
-                  color: Color(0xFFFF9800)
-                ),
-              ),
-              SizedBox(height: 3.h),
-              Text(
-                "Accès restreint",
-                style: GoogleFonts.poppins(
-                  fontSize: 18.sp,
-                  color: Colors.black87,
-                  fontWeight: FontWeight.w700,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 1.5.h),
-              Text(
-                "Vous n'avez pas les permissions nécessaires pour accéder à cette fonctionnalité.",
-                style: GoogleFonts.poppins(
-                  fontSize: 14.sp,
-                  color: Colors.grey[700],
-                  height: 1.4,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 2.h),
-              Container(
-                padding: EdgeInsets.all(3.w),
-                decoration: BoxDecoration(
-                  color: Color(0xFFE3F2FD),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Color(0xFF007AFF).withOpacity(0.3)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, color: Color(0xFF007AFF), size: 24),
-                    SizedBox(width: 3.w),
-                    Expanded(
-                      child: Text(
-                        "Contactez l'administrateur pour mettre à jour votre rôle et obtenir les accès appropriés.",
-                        style: GoogleFonts.poppins(
-                          fontSize: 12.sp,
-                          color: Color(0xFF1565C0),
-                          height: 1.3,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 4.h),
-              ElevatedButton.icon(
-                onPressed: () => Navigator.of(context).pop(),
-                icon: Icon(Icons.arrow_back, size: 20),
-                label: Text(
-                  "Retour",
-                  style: GoogleFonts.poppins(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF007AFF),
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 1.8.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ],
+      content = Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(4.w),
+            decoration: BoxDecoration(
+              color: Color(0xFFFFF3E0),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.lock_outline, 
+              size: 50.sp, 
+              color: Color(0xFFFF9800)
+            ),
           ),
-        ),
+          SizedBox(height: 3.h),
+          Text(
+            "Accès restreint",
+            style: GoogleFonts.poppins(
+              fontSize: 18.sp,
+              color: Colors.black87,
+              fontWeight: FontWeight.w700,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 1.5.h),
+          Text(
+            "Vous n'avez pas les permissions nécessaires pour accéder à cette fonctionnalité.",
+            style: GoogleFonts.poppins(
+              fontSize: 14.sp,
+              color: Colors.grey[700],
+              height: 1.4,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 2.h),
+          Container(
+            padding: EdgeInsets.all(3.w),
+            decoration: BoxDecoration(
+              color: Color(0xFFE3F2FD),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Color(0xFF007AFF).withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: Color(0xFF007AFF), size: 24),
+                SizedBox(width: 3.w),
+                Expanded(
+                  child: Text(
+                    "Contactez l'administrateur pour mettre à jour votre rôle et obtenir les accès appropriés.",
+                    style: GoogleFonts.poppins(
+                      fontSize: 12.sp,
+                      color: Color(0xFF1565C0),
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 4.h),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: Icon(Icons.arrow_back, size: 20),
+            label: Text(
+              "Retour",
+              style: GoogleFonts.poppins(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFF007AFF),
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 1.8.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
       );
-    }
-    
-    // État vide normal (pas d'erreur de permission)
-    return Center(
-      child: Column(
+    } else {
+      // État vide normal (pas d'erreur de permission)
+      content = Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.inbox_outlined, size: 50.sp, color: Colors.grey[400]),
@@ -836,7 +824,19 @@ Future<void> _checkUserRole() async {
             textAlign: TextAlign.center,
           ),
         ],
-      ),
+      );
+    }
+
+    // ✅ Envelopper dans ListView pour le pull-to-refresh
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(height: 20.h), // Espace pour centrer visuellement
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8.w),
+          child: content,
+        ),
+      ],
     );
   }
 
@@ -848,17 +848,25 @@ Future<void> _checkUserRole() async {
         children: [
           _buildAppBar(),
           Expanded(
-            child: (_isLoading || _isCheckingRole) // ✅ Chargement si vérification du rôle
+            child: (_isLoading || _isCheckingRole)
                 ? _buildLoadingState()
-                : (!_isMagasinier || _demandes.isEmpty) // ✅ État vide si pas magasinier
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        padding: EdgeInsets.symmetric(vertical: 2.h),
-                        itemCount: _demandes.length,
-                        itemBuilder: (context, index) {
-                          return _buildRequestCard(_demandes[index]);
-                        },
-                      ),
+                : RefreshIndicator(
+                    onRefresh: _refreshData,
+                    color: const Color(0xFF007AFF),
+                    backgroundColor: Colors.white,
+                    displacement: 40,
+                    strokeWidth: 2.5,
+                    child: (!_isMagasinier || _demandes.isEmpty)
+                        ? _buildEmptyState()
+                        : ListView.builder(
+                            padding: EdgeInsets.symmetric(vertical: 2.h),
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            itemCount: _demandes.length,
+                            itemBuilder: (context, index) {
+                              return _buildRequestCard(_demandes[index]);
+                            },
+                          ),
+                  ),
           ),
         ],
       ),

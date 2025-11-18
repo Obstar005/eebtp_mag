@@ -10,7 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:eebtp_frontend/providers/auth_provider.dart';
 import 'package:toastification/toastification.dart';
-import 'package:cached_network_image/cached_network_image.dart'; // ✅ Ajouté
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -20,7 +20,6 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // ✅ AJOUT : URL du backend
   static const String backendUrl = 'http://38.242.139.218:8001';
   
   late Future<Utilisateur> _futureUser;
@@ -44,20 +43,16 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // ✅ NOUVELLE MÉTHODE : Construire l'URL complète de la photo
   String? _getProfilePhotoUrl(String? photoPath) {
     if (photoPath == null || photoPath.isEmpty) return null;
     
-    // Si l'URL commence par '/media', ajouter le backend
     if (photoPath.startsWith('/media')) {
       return '$backendUrl$photoPath';
     }
     
-    // Sinon, retourner tel quel (URL complète déjà)
     return photoPath;
   }
 
-  // ✅ DÉPLACÉ : Méthode helper pour l'affichage du poste (était dans build())
   String _getDisplayPoste(String? poste) {
     if (poste == null || poste.isEmpty || poste.toLowerCase() == 'string') {
       return 'Sans poste';
@@ -124,7 +119,6 @@ class _ProfilePageState extends State<ProfilePage> {
       );
 
       if (pickedFile != null) {
-        // Afficher un indicateur de chargement
         if (mounted) {
           showDialog(
             context: context,
@@ -137,11 +131,9 @@ class _ProfilePageState extends State<ProfilePage> {
           );
         }
 
-        // Récupérer l'ID utilisateur depuis AuthProvider
         final currentUser = context.read<AuthProvider>().user;
         
         if (currentUser?.id == null) {
-          // Fermer l'indicateur de chargement
           if (mounted) {
             Navigator.pop(context);
           }
@@ -158,7 +150,6 @@ class _ProfilePageState extends State<ProfilePage> {
           pickedFile.path,
         );
 
-        // Fermer l'indicateur de chargement
         if (mounted) {
           Navigator.pop(context);
         }
@@ -167,7 +158,7 @@ class _ProfilePageState extends State<ProfilePage> {
           setState(() {
             _futureUser = UserService().getUserInfo(token);
           });
-          Navigator.pop(context); // Fermer le bottom sheet
+          Navigator.pop(context);
           _showToast(
             message: "Photo de profil mise à jour avec succès",
             type: ToastificationType.success,
@@ -180,7 +171,6 @@ class _ProfilePageState extends State<ProfilePage> {
         }
       }
     } catch (e) {
-      // Fermer l'indicateur de chargement si ouvert
       if (mounted && Navigator.canPop(context)) {
         Navigator.pop(context);
       }
@@ -245,7 +235,6 @@ class _ProfilePageState extends State<ProfilePage> {
             });
           }
 
-          // ✅ Obtenir l'URL complète de la photo
           final photoUrl = _getProfilePhotoUrl(user.photoProfil);
 
           return Stack(
@@ -345,7 +334,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                     SizedBox(height: topSpace),
 
-                    // ✅ Photo profil AMÉLIORÉE
+                    // Photo profil
                     Center(
                       child: Stack(
                         children: [
@@ -433,7 +422,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 6.w),
                       child: Text(
-                        "${user.firstName} ${user.lastName}${user.surname != null && user.surname!.isNotEmpty ? ' ${user.surname}' : ''}",
+                        "${user.firstName} ${user.lastName}",
                         style: GoogleFonts.montserrat(
                           fontSize: 20.sp,
                           fontWeight: FontWeight.w700,
@@ -461,13 +450,14 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
 
-                    SizedBox(height: bottomSpace),
+                    SizedBox(height: bottomSpace*0.7),
 
-                    // Boutons
+                    // ✅ SECTION BOUTONS MODIFIÉE
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 6.w),
                       child: Column(
                         children: [
+                          // Bouton Modifier votre profil
                           Container(
                             width: double.infinity,
                             height: 6.2.h,
@@ -488,6 +478,26 @@ class _ProfilePageState extends State<ProfilePage> {
                               outlined: true,
                             ),
                           ),
+                          
+                          // ✅ NOUVEAU BOUTON : Changer de magasin
+                          Container(
+                            width: double.infinity,
+                            height: 6.2.h,
+                            margin: EdgeInsets.only(bottom: btnSpace),
+                            child: CustomElevatedButton(
+                              text: "Changer de magasin",
+                              backgroundColor: Colors.white,
+                              textColor: const Color(0xFF34C759),
+                              onPressed: () {
+                                Navigator.pushNamed(context, '/store_selection');
+                              },
+                              icon: Icons.store_outlined,
+                              iconColor: const Color(0xFF34C759),
+                              outlined: true,
+                            ),
+                          ),
+                          
+                          // Bouton Déconnecter
                           SizedBox(
                             width: double.infinity,
                             height: 6.2.h,
@@ -499,6 +509,27 @@ class _ProfilePageState extends State<ProfilePage> {
                               icon: Icons.logout,
                               iconColor: const Color(0xFFFF3B30),
                               outlined: true,
+                            ),
+                          ),
+                          
+                          // Bouton Debug (à retirer en production)
+                        SizedBox(height: 2.h),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 6.2.h,
+                            child: CustomElevatedButton(
+                              text: "🔧 Réinitialiser l'app (Debug)",
+                              backgroundColor: Colors.orange,
+                              textColor: Colors.white,
+                              onPressed: () async {
+                                await context.read<AuthProvider>().resetApp();
+                                Navigator.pushNamedAndRemoveUntil(
+                                  context,
+                                  '/',
+                                  (route) => false,
+                                );
+                              },
+                              outlined: false,
                             ),
                           ),
                         ],
