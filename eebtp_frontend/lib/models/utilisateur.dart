@@ -116,7 +116,9 @@ class Utilisateur {
 Map<String, dynamic> toUpdateJson() => {
   'id': id,
     'username': username,
-
+'first_name': firstName,
+'last_name': lastName,
+    'email': email,
     'telephone': telephone,
     'nationality': nationality,
     'surname': surname,
