@@ -193,7 +193,12 @@ class _ProfilePageState extends State<ProfilePage> {
       bottomSpace = 3.h;
       btnSpace = 2.h;
     }
-
+  String _getDisplayPoste(String? poste) {
+    if (poste == null || poste.isEmpty || poste.toLowerCase() == 'string') {
+      return 'Sans poste';
+    }
+    return poste;
+  }
     return NavContainer(
       initialIndex: 3,
       body: FutureBuilder<Utilisateur>(
@@ -394,7 +399,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                     // Poste
                     Text(
-                      user.poste,
+                          _getDisplayPoste(user?.poste), 
                       style: GoogleFonts.montserrat(
                         fontSize: 15.sp,
                         color: const Color(0xFF8E8E93),

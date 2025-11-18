@@ -23,10 +23,11 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final TextEditingController _searchController = TextEditingController();
 
-  String _selectedActivityFilter = "Aujourd'hui";
-  String _selectedTimeFilter = "jour";
-  String _selectedUnit = "kg";
-  String _selectedCardType = "Entrée";
+  // ✅ FILTRES SÉPARÉS ET INDÉPENDANTS
+  String _selectedActivityFilter = "Aujourd'hui"; // Pour l'historique
+  String _selectedTimeFilter = "jour"; // Pour les mouvements (Livraison/Sortie/Retour)
+  String _selectedUnit = "kg"; // Pour les stocks
+  String _selectedCardType = "Livraison";
 
   Utilisateur? _user;
   List<HistoriqueAction> _allHistory = [];
@@ -109,6 +110,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // ✅ MÉTHODE CORRIGÉE : Charge uniquement l'utilisateur et l'historique
   Future<void> _loadUserAndHistory() async {
     try {
       final token = context.read<AuthProvider>().token;
@@ -137,9 +139,6 @@ class _HomePageState extends State<HomePage> {
         _loadingUser = false;
         _loadingHistory = false;
       });
-
-      await _loadStats();
-      await _loadStockStats();
     } catch (e) {
       setState(() {
         _loadingUser = false;
@@ -152,6 +151,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // ✅ MÉTHODE CORRIGÉE : Charge uniquement les stats de mouvements avec _selectedTimeFilter
   Future<void> _loadStats() async {
     setState(() {
       _loadingStats = true;
@@ -168,8 +168,8 @@ class _HomePageState extends State<HomePage> {
         );
         return;
       }
-      String periode = _apiPeriodValue(_selectedActivityFilter);
-      final stats = await _statsService?.getMouvementsStats(storeId, periode);
+      // ✅ Utilise _selectedTimeFilter pour les mouvements
+      final stats = await _statsService?.getMouvementsStats(storeId, _selectedTimeFilter);
       setState(() {
         _mouvementsStats = stats;
         _loadingStats = false;
@@ -185,6 +185,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // ✅ MÉTHODE CORRIGÉE : Charge uniquement les stats de stock avec _selectedUnit
   Future<void> _loadStockStats() async {
     setState(() {
       _loadingStockStats = true;
@@ -201,6 +202,7 @@ class _HomePageState extends State<HomePage> {
         );
         return;
       }
+      // ✅ Utilise _selectedUnit pour les stocks
       final stats = await _statsService?.getStocksStats(
         storeId,
         _selectedUnit.toLowerCase(),
@@ -236,7 +238,7 @@ class _HomePageState extends State<HomePage> {
     String valeur = "-";
     if (_mouvementsStats != null) {
       switch (_selectedCardType) {
-        case "Entrée":
+        case "Livraison":
           valeur = _mouvementsStats?.livraisons?.toString() ?? "-";
           break;
         case "Sortie":
@@ -249,7 +251,7 @@ class _HomePageState extends State<HomePage> {
     }
     return {
       "title": _selectedCardType.toUpperCase(),
-      "icon": _selectedCardType == "Entrée"
+      "icon": _selectedCardType == "Livraison"
           ? Icons.login
           : _selectedCardType == "Sortie"
           ? Icons.logout
@@ -257,6 +259,14 @@ class _HomePageState extends State<HomePage> {
       "value": valeur,
       "color": Color.fromRGBO(67, 58, 75, 1),
     };
+  }
+
+  // ✅ MÉTHODE HELPER : Affichage du poste
+  String _getDisplayPoste(String? poste) {
+    if (poste == null || poste.isEmpty || poste.toLowerCase() == 'string') {
+      return 'Sans poste';
+    }
+    return poste;
   }
 
   @override
@@ -327,7 +337,7 @@ class _HomePageState extends State<HomePage> {
                           color: Colors.white.withOpacity(0.3),
                         )
                       : Text(
-                          _user?.poste ?? "",
+                          _getDisplayPoste(_user?.poste), // ✅ CORRIGÉ
                           style: GoogleFonts.montserrat(
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
@@ -423,6 +433,7 @@ class _HomePageState extends State<HomePage> {
                     double cardHeight = constraints.maxWidth > 340 ? 18.h : 120;
                     return Column(
                       children: [
+                        // ✅ CARTE MOUVEMENTS (utilise _selectedTimeFilter)
                         Container(
                           constraints: BoxConstraints(
                             minHeight: 110,
@@ -501,6 +512,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         SizedBox(height: 19),
+                        // ✅ CARTE STOCK (utilise _selectedUnit)
                         Container(
                           constraints: BoxConstraints(
                             minHeight: 110,
@@ -574,6 +586,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 SizedBox(height: 11),
+                // ✅ FILTRES D'HISTORIQUE (utilise _selectedActivityFilter)
                 Row(
                   children: [
                     _buildActivityFilter(
@@ -644,6 +657,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // ✅ CORRIGÉ : Charge uniquement l'historique quand le filtre change
   Widget _buildActivityFilter(String text, bool isSelected) {
     return GestureDetector(
       onTap: () async {
@@ -651,9 +665,8 @@ class _HomePageState extends State<HomePage> {
           _selectedActivityFilter = text;
           _loadingHistory = true;
         });
+        // ✅ Charge uniquement l'historique, pas les stats
         await _loadUserAndHistory();
-        await _loadStats();
-        await _loadStockStats();
       },
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.7.h),
@@ -771,6 +784,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // ✅ CORRIGÉ : Change uniquement le filtre de temps des mouvements
   void _showTimeFilterDialog() {
     showDialog(
       context: context,
@@ -783,6 +797,7 @@ class _HomePageState extends State<HomePage> {
               _buildTimeFilterOption("jour"),
               _buildTimeFilterOption("semaine"),
               _buildTimeFilterOption("mois"),
+              _buildTimeFilterOption("total")
             ],
           ),
         );
@@ -790,6 +805,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // ✅ CORRIGÉ : Recharge uniquement les stats de mouvements
   Widget _buildTimeFilterOption(String option) {
     return ListTile(
       title: Text(option, style: GoogleFonts.poppins()),
@@ -801,12 +817,12 @@ class _HomePageState extends State<HomePage> {
           _selectedTimeFilter = option;
         });
         Navigator.pop(context);
-        _loadStats();
-        _loadStockStats();
+        _loadStats(); // ✅ Charge uniquement les stats de mouvements
       },
     );
   }
 
+  // ✅ CORRIGÉ : Change le type de carte et recharge les stats
   void _showCardTypeDialog() {
     showDialog(
       context: context,
@@ -816,7 +832,7 @@ class _HomePageState extends State<HomePage> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildCardTypeOption("Entrée"),
+              _buildCardTypeOption("Livraison"),
               _buildCardTypeOption("Sortie"),
               _buildCardTypeOption("Retour"),
             ],
@@ -837,11 +853,12 @@ class _HomePageState extends State<HomePage> {
           _selectedCardType = option;
         });
         Navigator.pop(context);
-        _loadStats();
+        // Pas besoin de recharger, juste mettre à jour l'affichage
       },
     );
   }
 
+  // ✅ CORRIGÉ : Change uniquement le filtre d'unité des stocks
   void _showUnitFilterDialog() {
     showDialog(
       context: context,
@@ -854,7 +871,7 @@ class _HomePageState extends State<HomePage> {
               _buildUnitFilterOption("m3"),
               _buildUnitFilterOption("m"),
               _buildUnitFilterOption("autre"),
-              _buildUnitFilterOption("Kg"),
+              _buildUnitFilterOption("kg"),
               _buildUnitFilterOption("litre"),
               _buildUnitFilterOption("unite"),
             ],
@@ -884,6 +901,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // ✅ CORRIGÉ : Recharge uniquement les stats de stock
   Widget _buildUnitFilterOption(String option) {
     return ListTile(
       title: Text(option, style: GoogleFonts.poppins()),
@@ -896,7 +914,7 @@ class _HomePageState extends State<HomePage> {
         });
         print("Unité sélectionnée : $option");
         Navigator.pop(context);
-        _loadStockStats();
+        _loadStockStats(); // ✅ Charge uniquement les stats de stock
       },
     );
   }
