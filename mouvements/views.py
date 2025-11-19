@@ -526,7 +526,16 @@ def stats_fluctuations_entrees(request, projet_id, type_entree, periode, produit
         start_date = now - timedelta(days=31)
     elif periode == 'projet':
         trunc = TruncMonth('date_creation')  # tout le projet → regrouper par mois
-        start_date = projet.date_creation
+        premiere_entree = (
+        Entree.objects
+        .filter(magasin__projet=projet)
+        .order_by('date_creation')
+        .first()
+        )
+        if premiere_entree:
+            start_date = premiere_entree.date_creation
+        else:
+            start_date = projet.date_creation
     else:
         return Response({'error': 'Période invalide.'}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -663,6 +672,7 @@ def stats_fluctuations_sorties(request, projet_id, periode, produit_id):
 
 
     now = timezone.now()
+    # low = Sortie.objects.all()
     # Choisir la fonction de regroupement selon la période
     if periode == 'jour':
         start_date = now - timedelta(days=1)
@@ -675,7 +685,17 @@ def stats_fluctuations_sorties(request, projet_id, periode, produit_id):
         start_date = now - timedelta(days=31)
     elif periode == 'projet':
         trunc = TruncMonth('date_creation')  # tout le projet → regrouper par mois
-        start_date = projet.date_creation
+        #On va prendre la date de cration de la premier sorrtie
+        premiere_sortie = (
+        Sortie.objects
+        .filter(magasin__projet=projet)
+        .order_by('date_creation')
+        .first()
+        )
+        if premiere_sortie:
+            start_date = premiere_sortie.date_creation
+        else:
+            start_date = projet.date_creation
     else:
         return Response({'error': 'Période invalide.'}, status=status.HTTP_400_BAD_REQUEST)
     

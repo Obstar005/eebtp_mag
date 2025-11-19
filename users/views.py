@@ -476,6 +476,7 @@ def login_by_phone_mobile(request):
         return Response(
             {"error": "Votre compte a été désactivé. Veuillez contacter votre supérieur."}, status=status.HTTP_403_FORBIDDEN
         )
+    
 
     if not check_password(password, user.password):
         return Response(
