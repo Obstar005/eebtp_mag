@@ -5,6 +5,7 @@ from .models import Demande
 class DemandeSerializer(serializers.ModelSerializer):
     magasin_name = serializers.ReadOnlyField(source='magasin.nom')
     stock_item_name = serializers.ReadOnlyField(source='stock_item.produit.designation')
+    stock_item_unite = serializers.ReadOnlyField(source='stock_item.produit.unite')
     emis_par_name = serializers.ReadOnlyField(source='emis_par.username')
     confirme_par_name = serializers.ReadOnlyField(source='confirme_par.username')
     approve_par_name = serializers.ReadOnlyField(source='approve_par.username')
