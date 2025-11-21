@@ -57,7 +57,7 @@ export interface ApiLoginByPhoneResponse {
   access_token?: string; // Format réel de l'API
   refresh_token?: string;
   message: string;
-  is_firstlogin?: boolean; // Indique si c'est la première connexion de l'utilisateur
+  first_login?: boolean; // Nom exact retourné par l'API (pas is_firstlogin)
 }
 
 export interface ApiSetPasswordRequest {

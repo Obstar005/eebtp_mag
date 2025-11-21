@@ -140,5 +140,4 @@ export function showErrorMessage(error: unknown): void {
  * Fonction pour logger les erreurs de façon structurée
  */
 export function logError(context: string, error: unknown): void {
-  console.error(`❌ [${context}] Erreur:`, error);
 }

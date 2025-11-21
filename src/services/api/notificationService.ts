@@ -25,7 +25,6 @@ export class NotificationApiService {
 
       return notifications;
     } catch (error) {
-      console.error("❌ Erreur getUserNotifications:", error);
       // Si l'endpoint n'existe pas (404), retourner une liste vide plutôt que de faire échouer
       if (
         error &&
@@ -45,12 +44,10 @@ export class NotificationApiService {
   // Récupérer toutes les notifications du système (pour les administrateurs)
   async getAllNotifications(): Promise<Notification[]> {
     try {
-      console.log("🔔 Récupération de toutes les notifications...");
       const response = await apiClient.get<HistoriqueAction[]>(
         "/App/historique-toutes-actions"
       );
 
-      console.log("✅ Toutes les notifications reçues:", response.data);
 
       // Transformer en notifications avec métadonnées
       const notifications: Notification[] = response.data.map((action) => ({
@@ -62,7 +59,6 @@ export class NotificationApiService {
 
       return notifications;
     } catch (error) {
-      console.error("❌ Erreur getAllNotifications:", error);
       throw new Error("Impossible de récupérer toutes les notifications");
     }
   }
@@ -145,7 +141,6 @@ export class NotificationApiService {
         totalPages: Math.ceil(total / limit),
       };
     } catch (error) {
-      console.error("❌ Erreur getNotifications:", error);
       throw error;
     }
   }
@@ -189,7 +184,6 @@ export class NotificationApiService {
         recent,
       };
     } catch (error) {
-      console.error("❌ Erreur getNotificationStats:", error);
       throw error;
     }
   }
@@ -206,7 +200,6 @@ export class NotificationApiService {
         );
       }
     } catch (error) {
-      console.error("❌ Erreur markAsRead:", error);
     }
   }
 
@@ -224,7 +217,6 @@ export class NotificationApiService {
         JSON.stringify(updatedReadNotifications)
       );
     } catch (error) {
-      console.error("❌ Erreur markAllAsRead:", error);
     }
   }
 
@@ -234,7 +226,6 @@ export class NotificationApiService {
       const readNotifications = this.getReadNotifications();
       return readNotifications.includes(notificationId);
     } catch (error) {
-      console.error("❌ Erreur isNotificationRead:", error);
       return false;
     }
   }
@@ -245,7 +236,6 @@ export class NotificationApiService {
       const stored = localStorage.getItem("readNotifications");
       return stored ? JSON.parse(stored) : [];
     } catch (error) {
-      console.error("❌ Erreur getReadNotifications:", error);
       return [];
     }
   }
@@ -260,7 +250,6 @@ export class NotificationApiService {
     try {
       localStorage.removeItem("readNotifications");
     } catch (error) {
-      console.error("❌ Erreur clearReadNotifications:", error);
     }
   }
 }

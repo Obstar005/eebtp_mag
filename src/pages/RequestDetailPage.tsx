@@ -61,7 +61,6 @@ export default function RequestDetailPage() {
         onSuccess: () => {
           handleCloseTreatmentModal();
           // Optionnel : afficher un message de succès
-          console.log("✅ Demande traitée avec succès");
         },
         onError: (error: unknown) => {
           logError("Traitement de demande", error);

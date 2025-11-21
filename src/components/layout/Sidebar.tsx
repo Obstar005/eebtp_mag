@@ -33,12 +33,12 @@ interface NavigationSection {
 }
 
 const navigation: NavigationSection[] = [
-  // Section principale - Tableau de bord
+  // Section principale - Statistiques
   {
-    title: "Tableau de bord",
+    title: "Statistiques",
     items: [
       {
-        name: "Statistiques",
+        name: "Tableau de bord",
         href: "/dashboard",
         icon: BarChart3,
       },
@@ -47,11 +47,6 @@ const navigation: NavigationSection[] = [
         href: "/reports",
         icon: FileText,
       },
-      {
-        name: "Demande",
-        href: "/requests",
-        icon: MessageSquare,
-      },
       // {
       //   name: "Notifications",
       //   href: "/notifications",
@@ -59,18 +54,18 @@ const navigation: NavigationSection[] = [
       // },
     ],
   },
-  // Section Comptes
+  // Section Projets
   {
-    title: "Comptes",
+    title: "Projets",
     items: [
       {
-        name: "Ajouter un compte",
-        href: "/accounts/add",
-        icon: UserPlus,
+        name: "Ajouter un projet",
+        href: "/projects/add",
+        icon: Plus,
       },
       {
-        name: "Liste des comptes",
-        href: "/accounts",
+        name: "Liste des projets",
+        href: "/projects",
         icon: List,
       },
     ],
@@ -91,19 +86,30 @@ const navigation: NavigationSection[] = [
       },
     ],
   },
-  // Section Projets
+  // Section Comptes
   {
-    title: "Projets",
+    title: "Comptes",
     items: [
       {
-        name: "Ajouter un projet",
-        href: "/projects/add",
-        icon: Plus,
+        name: "Ajouter un compte",
+        href: "/accounts/add",
+        icon: UserPlus,
       },
       {
-        name: "Liste des projets",
-        href: "/projects",
+        name: "Liste des comptes",
+        href: "/accounts",
         icon: List,
+      },
+    ],
+  },
+  // Section Demandes
+  {
+    title: "Demandes",
+    items: [
+      {
+        name: "Liste des demandes",
+        href: "/requests",
+        icon: MessageSquare,
       },
     ],
   },
@@ -208,7 +214,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
             <img src={logoPng} alt="EEBTP" className="h-8 w-8 mr-3" />
             <div>
               <h1 className="text-lg font-bold text-blue-600">EEBTP_MAG</h1>
-              <p className="text-xs text-gray-500">Tableau de bord</p>
+              <p className="text-xs text-gray-500">Statistiques</p>
             </div>
           </div>
 
@@ -251,9 +257,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
               onClick={async () => {
                 try {
                   await logout();
-                } catch (error) {
-                  console.error("❌ Erreur lors de la déconnexion:", error);
-                }
+                } catch (error) {}
               }}
               className="flex-shrink-0 p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
               title="Se déconnecter"

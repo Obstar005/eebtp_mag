@@ -8,9 +8,15 @@ import {
   ListFilter,
   Search,
 } from "lucide-react";
+import { useProjets } from "../hooks/useProjets";
+import { useGenererRapportPDF } from "../hooks/useRapports";
+import { showErrorMessage } from "../utils/errorHandling";
 
 export function ReportsPage() {
-  const [selectedProject, setSelectedProject] = useState("Project A");
+  const [selectedProject, setSelectedProject] = useState<string>("");
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
+    null
+  );
   const [dateFrom, setDateFrom] = useState("10 juillet 2025");
   const [dateTo, setDateTo] = useState("10 juillet 2026");
   const [reportType, setReportType] = useState("articles");
@@ -60,16 +66,32 @@ export function ReportsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [activeField, setActiveField] = useState<"from" | "to" | null>(null);
 
-  const projects = ["Project A", "Project B", "Project C", "Project D"];
+  // Récupérer la liste des projets depuis l'API
+  const { data: projetsData, isLoading: isLoadingProjets } = useProjets({});
+  const projects = projetsData?.data || [];
 
-  const reportData = [];
+  // Mutation pour générer le rapport PDF
+  const genererRapportMutation = useGenererRapportPDF();
 
-  const generateReport = () => {
+  const reportData: any[] = [];
+
+  const generateReport = async () => {
+    if (!selectedProjectId) {
+      alert("Veuillez sélectionner un projet");
+      return;
+    }
+
     setIsLoading(true);
-    // Simuler le chargement
-    setTimeout(() => {
+    try {
+      await genererRapportMutation.mutateAsync({
+        projetId: selectedProjectId,
+        nomProjet: selectedProject,
+      });
+    } catch (error) {
+      showErrorMessage(error);
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   const getDaysInMonth = (date: Date) => {
@@ -208,7 +230,9 @@ export function ReportsPage() {
                 onClick={() => setShowProjectDropdown(!showProjectDropdown)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-between bg-white transition-colors hover:border-gray-400"
               >
-                <span className="truncate">{selectedProject}</span>
+                <span className="truncate">
+                  {selectedProject || "Sélectionner un projet"}
+                </span>
                 <ChevronDown className="h-4 w-4 text-gray-500" />
               </button>
               {showProjectDropdown && (
@@ -228,22 +252,33 @@ export function ReportsPage() {
                   </div>
                   {/* Liste des projets */}
                   <div className="max-h-48 overflow-y-auto py-1">
-                    {projects.map((project) => (
-                      <button
-                        key={project}
-                        onClick={() => {
-                          setSelectedProject(project);
-                          setShowProjectDropdown(false);
-                        }}
-                        className={`w-full text-left px-4 py-2.5 hover:bg-gray-50 transition-colors ${
-                          selectedProject === project
-                            ? "bg-blue-50 text-blue-700 font-medium"
-                            : "text-gray-700"
-                        }`}
-                      >
-                        {project}
-                      </button>
-                    ))}
+                    {isLoadingProjets ? (
+                      <div className="flex items-center justify-center py-4">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                      </div>
+                    ) : projects.length > 0 ? (
+                      projects.map((project) => (
+                        <button
+                          key={project.id}
+                          onClick={() => {
+                            setSelectedProject(project.name);
+                            setSelectedProjectId(project.id);
+                            setShowProjectDropdown(false);
+                          }}
+                          className={`w-full text-left px-4 py-2.5 hover:bg-gray-50 transition-colors ${
+                            selectedProjectId === project.id
+                              ? "bg-blue-50 text-blue-700 font-medium"
+                              : "text-gray-700"
+                          }`}
+                        >
+                          {project.name}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-4 py-2.5 text-gray-500 text-sm">
+                        Aucun projet disponible
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -511,11 +546,15 @@ export function ReportsPage() {
         <div className="flex items-center justify-end">
           <button
             onClick={generateReport}
-            disabled={isLoading}
+            disabled={
+              isLoading ||
+              genererRapportMutation.isPending ||
+              !selectedProjectId
+            }
             title="Générer le rapport"
             className="w-full sm:w-auto bg-blue-600 text-white px-6 py-3.5 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
           >
-            {isLoading ? (
+            {isLoading || genererRapportMutation.isPending ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                 Génération...

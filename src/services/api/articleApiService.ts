@@ -20,16 +20,13 @@ export class ArticleApiService {
    */
   async getArticles(): Promise<ApiProduit[]> {
     try {
-      console.log("📋 Récupération de la liste des articles...");
 
       const response = await apiClient.get<ApiProduitsListResponse>(
         `${this.baseUrl}/liste-articles`
       );
 
-      console.log("✅ Articles récupérés:", response.data.length);
       return response.data;
     } catch (error) {
-      console.error("❌ Erreur lors de la récupération des articles:", error);
       throw error;
     }
   }
@@ -40,16 +37,13 @@ export class ArticleApiService {
    */
   async getArticle(id: number): Promise<ApiProduit> {
     try {
-      console.log("📦 Récupération de l'article:", id);
 
       const response = await apiClient.get<ApiProduitResponse>(
         `${this.baseUrl}/article-detail/${id}`
       );
 
-      console.log("✅ Article récupéré:", response.data);
       return response.data;
     } catch (error) {
-      console.error("❌ Erreur lors de la récupération de l'article:", error);
       throw error;
     }
   }
@@ -62,7 +56,6 @@ export class ArticleApiService {
     articleData: ApiCreateProduitRequest
   ): Promise<ApiProduit> {
     try {
-      console.log("📦 Création de l'article:", articleData);
 
       // S'assurer que is_active est défini
       const dataWithDefaults: ApiCreateProduitRequest = {
@@ -75,10 +68,8 @@ export class ArticleApiService {
         dataWithDefaults
       );
 
-      console.log("✅ Article créé:", response.data);
       return response.data;
     } catch (error) {
-      console.error("❌ Erreur lors de la création de l'article:", error);
       throw error;
     }
   }
@@ -92,17 +83,14 @@ export class ArticleApiService {
     articleData: ApiUpdateProduitRequest
   ): Promise<ApiProduit> {
     try {
-      console.log("📝 Mise à jour de l'article:", id, articleData);
 
       const response = await apiClient.put<ApiProduitResponse>(
         `${this.baseUrl}/article-update/${id}`,
         articleData
       );
 
-      console.log("✅ Article mis à jour:", response.data);
       return response.data;
     } catch (error) {
-      console.error("❌ Erreur lors de la mise à jour de l'article:", error);
       throw error;
     }
   }
@@ -113,13 +101,10 @@ export class ArticleApiService {
    */
   async deleteArticle(id: number): Promise<void> {
     try {
-      console.log("🗑️ Suppression de l'article:", id);
 
       await apiClient.delete(`${this.baseUrl}/article-delete/${id}`);
 
-      console.log("✅ Article supprimé:", id);
     } catch (error) {
-      console.error("❌ Erreur lors de la suppression de l'article:", error);
       throw error;
     }
   }

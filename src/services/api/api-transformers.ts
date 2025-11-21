@@ -231,7 +231,10 @@ export async function apiUserToAccount(
   }
 }
 
-export async function apiUserToUser(apiUser: ApiCustomUser): Promise<User> {
+export async function apiUserToUser(
+  apiUser: ApiCustomUser,
+  isFirstLogin?: boolean
+): Promise<User> {
   // Vérifier si le profil existe avant de faire la requête
   if (!apiUser.profil) {
     console.warn(
@@ -255,7 +258,8 @@ export async function apiUserToUser(apiUser: ApiCustomUser): Promise<User> {
       isActive: apiUser.is_active || false,
       isPhoneVerified: true, // Assumé vrai si l'utilisateur existe
       isEmailVerified: false, // Par défaut
-      hasCompletedSetup: !!apiUser.last_login, // Si l'utilisateur s'est déjà connecté, il a terminé la configuration
+      hasCompletedSetup:
+        isFirstLogin !== undefined ? !isFirstLogin : !!apiUser.last_login,
       createdAt: apiUser.date_creation || new Date().toISOString(),
       updatedAt: apiUser.date_modif || new Date().toISOString(),
     };
@@ -289,7 +293,7 @@ export async function apiUserToUser(apiUser: ApiCustomUser): Promise<User> {
       isActive: apiUser.is_active,
       isPhoneVerified: true, // Assumer vérifié si dans l'API
       isEmailVerified: !!apiUser.email,
-      hasCompletedSetup: true,
+      hasCompletedSetup: isFirstLogin !== undefined ? !isFirstLogin : true,
       createdAt: apiUser.date_creation,
       updatedAt: apiUser.date_modif,
     };
@@ -308,7 +312,8 @@ export async function apiUserToUser(apiUser: ApiCustomUser): Promise<User> {
       isActive: apiUser.is_active,
       isPhoneVerified: true,
       isEmailVerified: !!apiUser.email,
-      hasCompletedSetup: !!apiUser.last_login, // Si l'utilisateur s'est déjà connecté
+      hasCompletedSetup:
+        isFirstLogin !== undefined ? !isFirstLogin : !!apiUser.last_login,
       createdAt: apiUser.date_creation,
       updatedAt: apiUser.date_modif,
     };
@@ -319,28 +324,36 @@ export async function apiUserToUser(apiUser: ApiCustomUser): Promise<User> {
 export async function apiLoginResponseToAuthResponse(
   apiResponse: ApiLoginByPhoneResponse
 ): Promise<AuthResponse> {
-  // Pour l'instant, créer un utilisateur temporaire car l'API ne retourne que le token
-  const tempUser: User = {
-    id: "temp_user",
-    email: "",
-    phone: "",
-    firstName: "Utilisateur",
-    lastName: "Connecté",
-    profil: "magasinier", // Profil par défaut sécurisé
-    isActive: true,
-    isPhoneVerified: true,
-    isEmailVerified: false,
-    hasCompletedSetup: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+  // Si on a un utilisateur dans la réponse, le transformer
+  let user: User;
+  if (apiResponse.user) {
+    user = await apiUserToUser(apiResponse.user, apiResponse.first_login);
+  } else {
+    // Pour l'instant, créer un utilisateur temporaire si l'API ne retourne que le token
+    user = {
+      id: "temp_user",
+      email: "",
+      phone: "",
+      firstName: "Utilisateur",
+      lastName: "Connecté",
+      profil: "magasinier", // Profil par défaut sécurisé
+      isActive: true,
+      isPhoneVerified: true,
+      isEmailVerified: false,
+      hasCompletedSetup: !apiResponse.first_login, // Inverser first_login
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  }
 
-  return {
-    user: apiResponse.user ? await apiUserToUser(apiResponse.user) : tempUser,
+  const authResponse: AuthResponse = {
+    user,
     token: apiResponse.access_token || "",
     refreshToken: apiResponse.refresh_token || "",
-    requiresSetup: apiResponse.is_firstlogin || false,
+    requiresSetup: apiResponse.first_login || false, // Utiliser first_login
   };
+
+  return authResponse;
 }
 
 export function apiProfilToProfile(apiProfil: ApiProfil): Profile {
@@ -418,8 +431,6 @@ export function createAccountDataToApiUser(
     id_profil: profileId,
   };
 
-  console.log("✅ Données transformées pour l'API:", apiUser);
-
   return apiUser;
 }
 
@@ -468,8 +479,6 @@ function getProjetStatus(dateDebut: string, dateFin: string): ProjetStatus {
 
 // API → Frontend : Transformer ApiProjet vers Projet
 export function apiProjetToProjet(apiProjet: ApiProjet): Projet {
-  console.log("🔄 Transformation de ApiProjet vers Projet:", apiProjet);
-
   // Les comptes associés sont maintenant gérés par getProjetComptes dans projetApiService
   // qui utilise userApiService pour récupérer les informations détaillées des utilisateurs
   // Nous ne générons plus de données simplifiées ici pour éviter la duplication
@@ -493,15 +502,10 @@ export function apiProjetToProjet(apiProjet: ApiProjet): Projet {
     chef_chantier: undefined,
     magasinier: undefined,
 
-    // Champs pour compatibilité avec l'ancien système
-    chef_projet_user_id: apiProjet.creator, // Utiliser le creator comme chef de projet par défaut
-    directeur_travaux_user_id: apiProjet.creator, // Valeur par défaut
-    coordinateur_travaux_user_id: apiProjet.creator, // Valeur par défaut
-    chef_equipe_user_id: apiProjet.creator, // Valeur par défaut
-
     images: [], // L'API simple ne gère pas les images
     comptes: apiProjet.comptes, // IDs des comptes associés selon l'API
     comptesAssocies: comptesAssocies, // Détails des comptes (chargés séparément)
+    magasin_associe: apiProjet.magasin_associe,
   };
 }
 
@@ -547,32 +551,36 @@ export function apiProjetToProjetWithDetails(
 
 // API → Frontend : Transformer ApiMagasin vers Magasin
 export function apiMagasinToMagasin(apiMagasin: ApiMagasin): Magasin {
-  return {
+  const magasin: Magasin = {
     id: apiMagasin.id,
     name: apiMagasin.nom,
     project_id: apiMagasin.projet,
     adresse: apiMagasin.adresse,
     actions: apiMagasin.actions,
   };
+
+  // Si un projet est associé, créer un objet projet basique
+  if (apiMagasin.projet) {
+    magasin.projet = {
+      id: apiMagasin.projet,
+      name: "", // Sera enrichi par le service si nécessaire
+    };
+  }
+
+  return magasin;
 }
 
 // Frontend → API : Transformer CreateProjetData vers ApiCreateProjetRequest
 export function createProjetDataToApiCreateProjet(
   data: CreateProjetData
 ): ApiCreateProjetRequest {
-  console.log(
-    "🔄 Transformation de CreateProjetData vers ApiCreateProjetRequest:",
-    data
-  );
-
   // Collecter tous les IDs d'utilisateurs associés au projet
   const userIds: number[] = [];
 
   // Ajouter les rôles principaux selon la nouvelle structure API
-  if (data.chef_projet || data.chef_projet_user_id) {
-    const chefProjetId = data.chef_projet || data.chef_projet_user_id;
-    if (chefProjetId && !userIds.includes(chefProjetId)) {
-      userIds.push(chefProjetId);
+  if (data.chef_projet) {
+    if (!userIds.includes(data.chef_projet)) {
+      userIds.push(data.chef_projet);
     }
   }
 
@@ -587,25 +595,6 @@ export function createProjetDataToApiCreateProjet(
     if (!userIds.includes(data.magasinier)) {
       userIds.push(data.magasinier);
     }
-  }
-
-  // Ajouter les autres rôles pour compatibilité
-  if (
-    data.directeur_travaux_user_id &&
-    !userIds.includes(data.directeur_travaux_user_id)
-  ) {
-    userIds.push(data.directeur_travaux_user_id);
-  }
-
-  if (
-    data.coordinateur_travaux_user_id &&
-    !userIds.includes(data.coordinateur_travaux_user_id)
-  ) {
-    userIds.push(data.coordinateur_travaux_user_id);
-  }
-
-  if (data.chef_equipe_user_id && !userIds.includes(data.chef_equipe_user_id)) {
-    userIds.push(data.chef_equipe_user_id);
   }
 
   // Ajouter les utilisateurs supplémentaires
@@ -626,11 +615,9 @@ export function createProjetDataToApiCreateProjet(
     });
   }
 
-  console.log("👥 Utilisateurs associés au projet:", userIds);
-
   // Construire l'objet API avec tous les champs requis et optionnels
   const apiData: ApiCreateProjetRequest = {
-    creator: data.creator || data.chef_projet_user_id || data.chef_projet || 1, // Créateur requis
+    creator: data.creator || data.chef_projet || 1, // Créateur requis
     nom: data.nom || data.name || "", // Nom requis
     pays: data.pays || "", // Pays requis
     date_debut: data.date_debut || "", // Date de début requise
@@ -651,7 +638,6 @@ export function createProjetDataToApiCreateProjet(
     });
   }
 
-  console.log("✨ Données API transformées:", apiData);
   return apiData;
 }
 
@@ -659,27 +645,15 @@ export function createProjetDataToApiCreateProjet(
 export function updateProjetDataToApiUpdateProjet(
   data: UpdateProjetData
 ): ApiUpdateProjetRequest {
-  console.log(
-    "🔄 Transformation de UpdateProjetData vers ApiUpdateProjetRequest:",
-    data
-  );
-
   // Collecter tous les IDs d'utilisateurs associés au projet
   const userIds: number[] = [];
 
   // Ajouter l'ID du chef de projet s'il existe
-  if (data.chef_projet_user_id) {
-    userIds.push(data.chef_projet_user_id);
+  if (data.chef_projet) {
+    userIds.push(data.chef_projet);
   }
 
-  // Ajouter les autres rôles s'ils existent et sont différents
-  if (
-    data.directeur_travaux_user_id &&
-    !userIds.includes(data.directeur_travaux_user_id)
-  ) {
-    userIds.push(data.directeur_travaux_user_id);
-  }
-
+  // Ajouter le chef de chantier s'il existe et est différent
   if (
     data.chef_chantier_user_id &&
     !userIds.includes(data.chef_chantier_user_id)
@@ -687,15 +661,12 @@ export function updateProjetDataToApiUpdateProjet(
     userIds.push(data.chef_chantier_user_id);
   }
 
-  if (
-    data.coordinateur_travaux_user_id &&
-    !userIds.includes(data.coordinateur_travaux_user_id)
-  ) {
-    userIds.push(data.coordinateur_travaux_user_id);
+  if (data.chef_chantier && !userIds.includes(data.chef_chantier)) {
+    userIds.push(data.chef_chantier);
   }
 
-  if (data.chef_equipe_user_id && !userIds.includes(data.chef_equipe_user_id)) {
-    userIds.push(data.chef_equipe_user_id);
+  if (data.magasinier && !userIds.includes(data.magasinier)) {
+    userIds.push(data.magasinier);
   }
 
   // Ajouter les utilisateurs supplémentaires s'il y en a
@@ -708,11 +679,9 @@ export function updateProjetDataToApiUpdateProjet(
     });
   }
 
-  console.log("👥 Utilisateurs associés au projet:", userIds);
-
   const apiData: ApiUpdateProjetRequest = {
     id: data.id,
-    creator: data.chef_projet_user_id,
+    creator: data.chef_projet || data.creator,
     nom: data.name,
     description: data.description,
     date_debut: data.date_debut,
@@ -727,10 +696,6 @@ export function updateProjetDataToApiUpdateProjet(
     const premierMagasin = data.magasins[0];
     apiData.nom_magasin = premierMagasin.name;
     apiData.adresse_magasin = premierMagasin.adresse || "";
-    console.log("🏪 Magasin ajouté à la requête de mise à jour:", {
-      nom_magasin: apiData.nom_magasin,
-      adresse_magasin: apiData.adresse_magasin,
-    });
   }
 
   return apiData;

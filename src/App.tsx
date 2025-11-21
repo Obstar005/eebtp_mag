@@ -61,7 +61,7 @@ function AuthPage() {
 }
 
 function AppContent() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -80,7 +80,12 @@ function AppContent() {
       <Route
         path="/auth"
         element={
-          isAuthenticated ? <Navigate to="/dashboard" replace /> : <AuthPage />
+          // Rediriger vers dashboard SEULEMENT si authentifié ET configuration complète
+          isAuthenticated && user?.hasCompletedSetup ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <AuthPage />
+          )
         }
       />
 

@@ -66,8 +66,6 @@ class MagasinService {
           queryString ? `?${queryString}` : ""
         }`;
 
-        console.log("🏪 Récupération des magasins:", url);
-
         const response = await client.get<
           ApiMagasinResponse[] | ApiMagasinListResponse
         >(url);
@@ -126,8 +124,6 @@ class MagasinService {
    */
   async getMagasin(id: number): Promise<Magasin> {
     try {
-      console.log("🏪 Récupération du magasin:", id);
-
       const response = await client.get<ApiMagasinResponse>(
         `${this.basePath}/magasin-detail/${id}`
       );
@@ -137,10 +133,6 @@ class MagasinService {
       // Si un projet est associé, récupérer ses détails complets
       if (magasin.projet?.id) {
         try {
-          console.log(
-            "📋 Récupération des détails du projet:",
-            magasin.projet.id
-          );
           const projetComplet = await projetApiService.getProjetById(
             magasin.projet.id
           );
@@ -149,9 +141,7 @@ class MagasinService {
             ...magasin.projet,
             ...projetComplet,
           };
-          console.log("✅ Détails du projet récupérés avec succès");
         } catch (error) {
-          console.warn("Impossible de récupérer les détails du projet:", error);
           // Garder les informations basiques du projet en cas d'erreur
         }
       }
@@ -170,7 +160,6 @@ class MagasinService {
 
       return magasin;
     } catch (error) {
-      console.error("❌ Erreur lors de la récupération du magasin:", error);
       throw error;
     }
   }
@@ -182,8 +171,6 @@ class MagasinService {
   async createMagasin(data: CreateMagasinData): Promise<Magasin> {
     return withApiErrorHandling(
       async () => {
-        console.log("🏪 Création du magasin:", data);
-
         // Récupérer l'utilisateur actuel pour le creator
         const currentUserId = this.getCurrentUserId();
 
@@ -207,8 +194,6 @@ class MagasinService {
    */
   async updateMagasin(data: UpdateMagasinData): Promise<Magasin> {
     try {
-      console.log("🏪 Mise à jour du magasin:", data);
-
       const apiRequest = updateMagasinDataToApiRequest(data);
 
       const response = await client.put<ApiMagasinResponse>(
@@ -218,7 +203,6 @@ class MagasinService {
 
       return apiMagasinToMagasin(response.data);
     } catch (error) {
-      console.error("❌ Erreur lors de la mise à jour du magasin:", error);
       throw error;
     }
   }
@@ -229,11 +213,8 @@ class MagasinService {
    */
   async deleteMagasin(id: number): Promise<void> {
     try {
-      console.log("🏪 Suppression du magasin:", id);
-
       await client.delete(`${this.basePath}/magasin-delete/${id}`);
     } catch (error) {
-      console.error("❌ Erreur lors de la suppression du magasin:", error);
       throw error;
     }
   }
@@ -294,7 +275,6 @@ class MagasinService {
         },
       };
     } catch (error) {
-      console.error("❌ Erreur lors de la récupération des articles:", error);
       throw error;
     }
   }
@@ -305,17 +285,12 @@ class MagasinService {
    */
   async getStockArticle(id: number): Promise<StockArticle> {
     try {
-      console.log("📦 Récupération de l'article:", id);
-
       const response = await client.get<ApiStockItem>(
         `${this.stockPath}/stock-item-detail/${id}`
       );
 
-      console.log("Article récupéré:", response.data);
-
       return apiStockItemToStockArticle(response.data);
     } catch (error) {
-      console.error("❌ Erreur lors de la récupération de l'article:", error);
       throw error;
     }
   }
@@ -328,8 +303,6 @@ class MagasinService {
     data: CreateStockArticleData
   ): Promise<StockArticle> {
     try {
-      console.log("📦 Création de l'article:", data);
-
       // Récupérer l'utilisateur actuel pour le user_id
       const currentUserId = this.getCurrentUserId();
 
@@ -345,7 +318,6 @@ class MagasinService {
 
       return apiStockItemToStockArticle(response.data);
     } catch (error) {
-      console.error("❌ Erreur lors de la création de l'article:", error);
       throw error;
     }
   }
@@ -359,8 +331,6 @@ class MagasinService {
     data: UpdateStockArticleData
   ): Promise<StockArticle> {
     try {
-      console.log("📦 Mise à jour de l'article:", data);
-
       const apiRequest = updateStockArticleDataToApiRequest(data);
 
       // L'API nécessite le magasin_id dans l'URL
@@ -376,7 +346,6 @@ class MagasinService {
 
       return apiStockItemToStockArticle(response.data);
     } catch (error) {
-      console.error("❌ Erreur lors de la mise à jour de l'article:", error);
       throw error;
     }
   }
@@ -387,11 +356,8 @@ class MagasinService {
    */
   async deleteStockArticle(id: number): Promise<void> {
     try {
-      console.log("📦 Suppression de l'article:", id);
-
       await client.delete(`${this.stockPath}/stock-item-delete/${id}`);
     } catch (error) {
-      console.error("❌ Erreur lors de la suppression de l'article:", error);
       throw error;
     }
   }
@@ -404,8 +370,6 @@ class MagasinService {
    */
   async getMagasinStats(): Promise<MagasinStats> {
     try {
-      console.log("📊 Calcul des statistiques des magasins");
-
       // Récupérer tous les magasins
       const magasinsResponse = await this.getMagasins({});
       const magasins = magasinsResponse.data;
@@ -436,7 +400,6 @@ class MagasinService {
 
       return stats;
     } catch (error) {
-      console.error("❌ Erreur lors du calcul des statistiques:", error);
       throw error;
     }
   }

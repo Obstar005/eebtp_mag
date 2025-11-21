@@ -31,17 +31,13 @@ export class DemandeApiService {
     // return mockApiDemandes;
 
     try {
-      console.log("📋 Récupération de toutes les demandes...");
 
       const response = await apiClient.get<ApiDemande[]>(
         `${this.basePath}/demandes/toutes`
       );
 
-      console.log("✅ Demandes récupérées:", response.data.length);
       return response.data;
     } catch (error) {
-      console.error("❌ Erreur lors de la récupération des demandes:", error);
-      console.warn("🔄 Utilisation des données mockées en fallback");
       return mockApiDemandes;
     }
   }
@@ -60,13 +56,11 @@ export class DemandeApiService {
       | "en-attente-validation"
   ): Promise<ApiDemande[]> {
     try {
-      console.log(`📋 Récupération des demandes ${status}...`);
 
       const response = await apiClient.get<ApiDemande[]>(
         `${this.basePath}/demandes/${status}`
       );
 
-      console.log(`✅ Demandes ${status} récupérées:`, response.data.length);
       return response.data;
     } catch (error) {
       console.error(
@@ -83,16 +77,13 @@ export class DemandeApiService {
    */
   async getDemandeById(id: number): Promise<ApiDemande> {
     try {
-      console.log("📦 Récupération de la demande:", id);
 
       const response = await apiClient.get<ApiDemande>(
         `${this.basePath}/demande/detail/${id}`
       );
 
-      console.log("✅ Demande récupérée:", response.data);
       return response.data;
     } catch (error) {
-      console.error("❌ Erreur lors de la récupération de la demande:", error);
       throw error;
     }
   }
@@ -105,17 +96,14 @@ export class DemandeApiService {
    */
   async createDemande(data: ApiCreateDemandeRequest): Promise<ApiDemande> {
     try {
-      console.log("📤 Émission d'une nouvelle demande:", data);
 
       const response = await apiClient.post<ApiDemande>(
         `${this.basePath}/demande/emettre`,
         data
       );
 
-      console.log("✅ Demande émise avec succès:", response.data);
       return response.data;
     } catch (error) {
-      console.error("❌ Erreur lors de l'émission de la demande:", error);
       throw error;
     }
   }
@@ -131,7 +119,6 @@ export class DemandeApiService {
     data?: ApiConfirmerDemandeRequest
   ): Promise<ApiDemande> {
     try {
-      console.log("✅ Confirmation de la demande:", id);
 
       const response = await apiClient.post<ApiDemande>(
         `${this.basePath}/demande/confirmer/${id}`,
@@ -144,10 +131,8 @@ export class DemandeApiService {
         return await this.getDemandeById(id);
       }
 
-      console.log("✅ Demande confirmée avec succès:", response.data);
       return response.data;
     } catch (error) {
-      console.error("❌ Erreur lors de la confirmation de la demande:", error);
       throw error;
     }
   }
@@ -161,7 +146,6 @@ export class DemandeApiService {
     data?: ApiApprouverDemandeRequest
   ): Promise<ApiDemande> {
     try {
-      console.log("✅ Approbation de la demande:", id);
 
       const response = await apiClient.post<ApiDemande>(
         `${this.basePath}/demande/approuver/${id}`,
@@ -173,10 +157,8 @@ export class DemandeApiService {
         return await this.getDemandeById(id);
       }
 
-      console.log("✅ Demande approuvée avec succès:", response.data);
       return response.data;
     } catch (error) {
-      console.error("❌ Erreur lors de l'approbation de la demande:", error);
       throw error;
     }
   }
@@ -190,7 +172,6 @@ export class DemandeApiService {
     data?: ApiValiderDemandeRequest
   ): Promise<ApiDemande> {
     try {
-      console.log("✅ Validation de la demande:", id);
 
       const response = await apiClient.post<ApiDemande>(
         `${this.basePath}/demande/valider/${id}`,
@@ -202,10 +183,8 @@ export class DemandeApiService {
         return await this.getDemandeById(id);
       }
 
-      console.log("✅ Demande validée avec succès:", response.data);
       return response.data;
     } catch (error) {
-      console.error("❌ Erreur lors de la validation de la demande:", error);
       throw error;
     }
   }
@@ -219,7 +198,6 @@ export class DemandeApiService {
     data: ApiRejeterDemandeRequest
   ): Promise<ApiDemande> {
     try {
-      console.log("❌ Rejet de la demande:", id, data);
 
       const response = await apiClient.post<ApiDemande>(
         `${this.basePath}/demande/rejeter/${id}`,
@@ -231,10 +209,8 @@ export class DemandeApiService {
         return await this.getDemandeById(id);
       }
 
-      console.log("✅ Demande rejetée avec succès:", response.data);
       return response.data;
     } catch (error) {
-      console.error("❌ Erreur lors du rejet de la demande:", error);
       throw error;
     }
   }
@@ -255,14 +231,12 @@ export class DemandeApiService {
         `${this.basePath}/demandes/statistiques/${periode}`
       );
 
-      console.log("✅ Statistiques récupérées:", response.data);
       return response.data;
     } catch (error) {
       console.error(
         "❌ Erreur lors de la récupération des statistiques:",
         error
       );
-      console.warn("🔄 Utilisation des statistiques mockées en fallback");
       return mockDemandeStats;
     }
   }
@@ -280,7 +254,6 @@ export class DemandeApiService {
     date_to?: string;
     periode?: string;
   }): Promise<ApiDemande[]> {
-    console.log("📋 Récupération des demandes avec filtres:", filters);
 
     // Si on a un statut et une période, utiliser l'endpoint avec période
     if (filters.status && filters.status !== "tous" && filters.periode) {

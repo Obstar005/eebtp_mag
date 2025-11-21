@@ -5,7 +5,6 @@ import {
   useCreateProjet,
   useUpdateProjet,
   useProjet,
-  useProjetMagasins,
   useProjetPhotos,
   useAddPhotoToProjet,
   useDeleteProjetPhoto,
@@ -26,8 +25,6 @@ export function AddEditProjectPage() {
 
   // Hooks
   const { data: projet, isLoading: isLoadingProjet } = useProjet(projetId);
-  const { data: magasins, isLoading: isLoadingMagasins } =
-    useProjetMagasins(projetId);
   const { data: photos } = useProjetPhotos(projetId);
   const { data: accounts } = useAccounts({});
   const createProjetMutation = useCreateProjet();
@@ -76,16 +73,10 @@ export function AddEditProjectPage() {
     date_fin: "",
     is_active: true,
 
-    // Rôles principaux
+    // Rôles principaux (selon API)
     chef_projet: 0,
     chef_chantier: 0,
     magasinier: 0,
-
-    // Champs pour compatibilité
-    chef_projet_user_id: 0,
-    directeur_travaux_user_id: 0,
-    coordinateur_travaux_user_id: 0,
-    chef_equipe_user_id: 0,
 
     // Champs UI
     magasins: [], // Liste vide au départ
@@ -97,7 +88,6 @@ export function AddEditProjectPage() {
   // Charger les photos existantes lors de l'édition
   useEffect(() => {
     if (isEditing && photos && photos.length > 0) {
-      console.log("📸 Chargement des photos existantes:", photos);
       setExistingPhotos(photos);
       const photoUrls = photos.map((photo) => photo.photo);
       setPreviewImages(photoUrls);
@@ -138,10 +128,8 @@ export function AddEditProjectPage() {
     };
   }, []);
 
-  // Debug: Suivre les changements de formData.magasins
-  useEffect(() => {
-    console.log("🔄 formData.magasins mis à jour:", formData.magasins);
-  }, [formData.magasins]);
+  // Suivre les changements de formData.magasins
+  useEffect(() => {}, [formData.magasins]);
 
   // Charger les données du projet en mode édition
   useEffect(() => {
@@ -165,24 +153,21 @@ export function AddEditProjectPage() {
           : "",
         is_active: projet.is_active,
 
-        // Rôles principaux
-        chef_projet: projet.chef_projet,
-        chef_chantier: projet.chef_chantier,
-        magasinier: projet.magasinier,
+        // Rôles principaux (selon API)
+        chef_projet: projet.chef_projet || 0,
+        chef_chantier: projet.chef_chantier || 0,
+        magasinier: projet.magasinier || 0,
 
-        // Champs pour compatibilité
-        chef_projet_user_id: projet.chef_projet_user_id,
-        directeur_travaux_user_id: projet.directeur_travaux_user_id,
-        coordinateur_travaux_user_id: projet.coordinateur_travaux_user_id,
-        chef_equipe_user_id: projet.chef_equipe_user_id,
-
-        // Si nous avons des magasins chargés, les inclure directement
-        magasins:
-          magasins?.map((m) => ({
-            name: m.name,
-            adresse: m.adresse || "",
-            _id: m.id, // Stocker l'ID comme propriété supplémentaire
-          })) || [],
+        // Si nous avons un magasin associé, l'inclure
+        magasins: projet.magasin_associe
+          ? [
+              {
+                name: projet.magasin_associe.nom,
+                adresse: projet.magasin_associe.adresse || "",
+                _id: projet.magasin_associe.id,
+              },
+            ]
+          : [],
         images: [],
         comptes: projetComptes,
         comptes_associes: projetComptes,
@@ -228,7 +213,7 @@ export function AddEditProjectPage() {
         setSelectedAccounts(comptesAssocies);
       }
     }
-  }, [isEditing, projet, countries, accounts?.data, magasins]);
+  }, [isEditing, projet, countries, accounts?.data]);
 
   const handleInputChange = (
     field: keyof CreateProjetData,
@@ -241,18 +226,8 @@ export function AddEditProjectPage() {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    console.log("📤 Nouvelles images sélectionnées:", files);
-    console.log(
-      "📤 État actuel de newImageFiles avant ajout:",
-      newImageFiles.length
-    );
-
     // Ajouter les nouveaux fichiers à la liste des nouvelles images
-    setNewImageFiles((prev) => {
-      const updated = [...prev, ...files];
-      console.log("📤 newImageFiles mis à jour:", updated.length, "fichiers");
-      return updated;
-    });
+    setNewImageFiles((prev) => [...prev, ...files]);
 
     // Créer des prévisualisations pour les nouvelles images
     files.forEach((file) => {
@@ -262,21 +237,20 @@ export function AddEditProjectPage() {
       };
       reader.readAsDataURL(file);
     });
+
+    // Réinitialiser l'input pour permettre de sélectionner le même fichier à nouveau
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const removeImage = (index: number) => {
-    console.log("🗑️ Suppression de l'image à l'index:", index);
-
     // Déterminer si c'est une image existante ou nouvelle
     const totalExistingPhotos = existingPhotos.length;
 
     if (index < totalExistingPhotos) {
       // C'est une image existante - la marquer pour suppression
       const photoToRemove = existingPhotos[index];
-      console.log(
-        "🗑️ Marquage pour suppression d'une photo existante:",
-        photoToRemove
-      );
 
       // Ajouter l'ID à la liste des photos à supprimer
       setDeletedPhotoIds((prev) => [...prev, photoToRemove.id]);
@@ -288,10 +262,6 @@ export function AddEditProjectPage() {
     } else {
       // C'est une nouvelle image - la retirer de la liste des nouveaux fichiers
       const newImageIndex = index - totalExistingPhotos;
-      console.log(
-        "🗑️ Suppression d'une nouvelle image à l'index:",
-        newImageIndex
-      );
 
       const newFiles = [...newImageFiles];
       newFiles.splice(newImageIndex, 1);
@@ -305,30 +275,7 @@ export function AddEditProjectPage() {
   };
 
   // Fonction simplifiée pour modifier les magasins existants (mode édition uniquement)
-  const updateMagasin = (
-    index: number,
-    field: "name" | "adresse",
-    value: string
-  ) => {
-    if (!isEditing) return; // Sécurité : seulement en mode édition
-
-    const newMagasins = [...(formData.magasins || [])];
-    const currentMagasin = newMagasins[index] || {};
-
-    // Préserver l'ID du magasin s'il existe
-    const magasinId =
-      "_id" in currentMagasin && typeof currentMagasin._id === "number"
-        ? currentMagasin._id
-        : undefined;
-
-    newMagasins[index] = {
-      ...currentMagasin,
-      [field]: value,
-      _id: magasinId,
-    };
-
-    setFormData((prev) => ({ ...prev, magasins: newMagasins }));
-  };
+  // SUPPRIMÉE - Les magasins sont maintenant en lecture seule en mode édition
 
   // Fonctions pour la gestion des comptes associés
   const toggleAccountSelection = (account: { id: string; name: string }) => {
@@ -357,7 +304,6 @@ export function AddEditProjectPage() {
     accounts: { id: string; name: string }[] = selectedAccounts
   ) => {
     const compteIds = accounts.map((account) => account.id);
-    console.log("🔄 Mise à jour des comptes associés:", compteIds);
     setFormData((prev) => ({
       ...prev,
       comptes_associes: compteIds,
@@ -389,17 +335,11 @@ export function AddEditProjectPage() {
 
   // Fonction pour gérer les images après la création/modification du projet
   const handleImages = async (projetId: number) => {
-    console.log("📸 Gestion des images pour le projet:", projetId);
-    console.log("📸 Nouvelles images à ajouter:", newImageFiles.length);
-    console.log("📸 Photos à supprimer:", deletedPhotoIds.length);
-
     // Supprimer les photos marquées pour suppression
     for (const photoId of deletedPhotoIds) {
       try {
-        console.log("🗑️ Suppression de la photo ID:", photoId);
         await deletePhotoMutation.mutateAsync({ photoId, projetId });
       } catch (error) {
-        console.error("Erreur lors de la suppression de la photo:", error);
         // On continue même si une suppression échoue
       }
     }
@@ -407,19 +347,15 @@ export function AddEditProjectPage() {
     // Ajouter les nouvelles images
     for (const imageFile of newImageFiles) {
       try {
-        console.log("📤 Ajout de la nouvelle image:", imageFile.name);
         await addPhotoMutation.mutateAsync({
           projetId,
           photo: imageFile,
           description: `Photo ajoutée le ${new Date().toLocaleDateString()}`,
         });
       } catch (error) {
-        console.error("Erreur lors de l'ajout de la photo:", error);
         // On continue même si un ajout échoue
       }
     }
-
-    console.log("✅ Gestion des images terminée");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -442,13 +378,6 @@ export function AddEditProjectPage() {
       finalMagasins.push(...(formData.magasins || []));
     }
 
-    console.log("🚀 DÉBUT handleSubmit - État complet du formulaire:", {
-      formData,
-      currentMagasin,
-      finalMagasins,
-      magasinsCount: finalMagasins.length,
-    });
-
     // Validations
     const nomValue = formData.nom || formData.name || "";
     if (!nomValue.trim()) {
@@ -466,7 +395,6 @@ export function AddEditProjectPage() {
 
     // S'assurer que les comptes associés sont inclus dans les données du formulaire
     const compteIds = selectedAccounts.map((account) => account.id);
-    console.log("💾 Enregistrement des comptes associés:", compteIds);
 
     // Créer une copie des données du formulaire avec tous les champs requis
     const formDataWithComptes = {
@@ -491,16 +419,10 @@ export function AddEditProjectPage() {
         const newProjet = await createProjetMutation.mutateAsync(
           formDataWithComptes
         );
-        console.log("📋 Réponse complète de l'API:", newProjet);
 
         if (newProjet && newProjet.id) {
           savedProjetId = newProjet.id;
-          console.log("✅ Nouveau projet créé, ID:", savedProjetId);
         } else {
-          console.error(
-            "❌ ERREUR: Le nouveau projet n'a pas d'ID!",
-            newProjet
-          );
           setError(
             "Erreur: le projet a été créé mais l'ID n'est pas disponible"
           );
@@ -509,31 +431,12 @@ export function AddEditProjectPage() {
       }
 
       // Gérer les images après l'enregistrement du projet
-      console.log("🔍 Vérification du traitement des images:");
-      console.log(
-        "📤 Nouvelles images à traiter (newImageFiles):",
-        newImageFiles.length
-      );
-      console.log(
-        "📤 Détail des fichiers:",
-        newImageFiles.map((f) => ({ name: f.name, size: f.size }))
-      );
-      console.log("🗑️ Photos à supprimer:", deletedPhotoIds.length);
-      console.log("🖼️ Preview images actuelles:", previewImages.length);
-
       if (newImageFiles.length > 0 || deletedPhotoIds.length > 0) {
-        console.log(
-          "📸 Traitement des images pour le projet ID:",
-          savedProjetId
-        );
         await handleImages(savedProjetId);
-      } else {
-        console.log("⚠️ Aucune image à traiter");
       }
 
       navigate("/projects");
     } catch (error) {
-      console.error("Erreur lors de la sauvegarde:", error);
       setError("Une erreur est survenue lors de la sauvegarde");
     }
   };
@@ -650,6 +553,7 @@ export function AddEditProjectPage() {
                         type="date"
                         required
                         value={formData.date_debut}
+                        max={formData.date_fin || undefined}
                         onChange={(e) =>
                           handleInputChange("date_debut", e.target.value)
                         }
@@ -666,6 +570,7 @@ export function AddEditProjectPage() {
                         type="date"
                         required
                         value={formData.date_fin}
+                        min={formData.date_debut || undefined}
                         onChange={(e) =>
                           handleInputChange("date_fin", e.target.value)
                         }
@@ -704,11 +609,6 @@ export function AddEditProjectPage() {
                 <h3 className="text-lg font-semibold text-gray-900">
                   Magasin du Projet
                 </h3>
-                {isEditing && (
-                  <span className="text-sm italic text-gray-600">
-                    Seule la modification du magasin existant est autorisée
-                  </span>
-                )}
               </div>
 
               <div className="space-y-4">
@@ -759,55 +659,28 @@ export function AddEditProjectPage() {
                   </div>
                 )}
 
-                {/* Liste des magasins existants - Mode édition uniquement */}
+                {/* Magasin associé - Mode édition (lecture seule) */}
                 {isEditing && (
                   <>
-                    {isLoadingMagasins ? (
-                      <div className="flex items-center justify-center h-20">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                      </div>
-                    ) : magasins && magasins.length > 0 ? (
-                      magasins.map((magasin, index) => (
-                        <div
-                          key={magasin.id}
-                          className="bg-gray-50 rounded-lg p-4"
-                        >
-                          <div className="space-y-3">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Nom du magasin #{magasin.id}
-                              </label>
-                              <input
-                                type="text"
-                                value={magasin.name}
-                                onChange={(e) =>
-                                  updateMagasin(index, "name", e.target.value)
-                                }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="Nom du magasin"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Adresse du magasin
-                              </label>
-                              <input
-                                type="text"
-                                value={magasin.adresse || ""}
-                                onChange={(e) =>
-                                  updateMagasin(
-                                    index,
-                                    "adresse",
-                                    e.target.value
-                                  )
-                                }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="Adresse du magasin"
-                              />
-                            </div>
+                    {projet?.magasin_associe ? (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Nom du magasin
+                          </label>
+                          <div className="p-3 bg-gray-100 rounded-lg">
+                            {projet.magasin_associe.nom}
                           </div>
                         </div>
-                      ))
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Adresse du magasin
+                          </label>
+                          <div className="p-3 bg-gray-100 rounded-lg">
+                            {projet.magasin_associe.adresse || "Non spécifiée"}
+                          </div>
+                        </div>
+                      </div>
                     ) : (
                       <div className="text-center p-4 border border-gray-200 rounded-md">
                         <p className="text-sm text-gray-500">

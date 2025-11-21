@@ -167,7 +167,6 @@ export function AddEditArticleModal({
       }
       onClose();
     } catch (error) {
-      console.error("Erreur lors de la sauvegarde:", error);
       setError("Une erreur est survenue lors de la sauvegarde");
     }
   };

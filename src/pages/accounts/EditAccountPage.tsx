@@ -184,7 +184,6 @@ export function EditAccountPage() {
       });
       navigate(`/accounts/${id}`);
     } catch (error) {
-      console.error("Erreur lors de la modification du compte:", error);
       setError("Erreur lors de la modification du compte");
     }
   };

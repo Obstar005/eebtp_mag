@@ -23,46 +23,17 @@ export class MouvementsApiService {
     try {
       const endpoint = `/Mouvements/graphe-fluctuations-entrees/${projetId}/${typeEntree}/${periode}/${produitId}`;
 
+      console.log(`🔍 API ENTREES: ${endpoint}`);
+
       const response = await apiClient.get(endpoint);
+
+      console.log(`✅ REPONSE:`, response.data);
+      console.log(`📊 Clés:`, Object.keys(response.data || {}));
+      console.log(`📦 Donnees:`, response.data?.donnees);
 
       return response.data;
     } catch (error) {
-      console.error(
-        "\n❌ ERREUR LORS DE L'APPEL API\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-      );
-
-      if (error && typeof error === "object" && "response" in error) {
-        const axiosError = error as {
-          response?: {
-            status: number;
-            statusText: string;
-            data: unknown;
-            config: { url: string; method: string };
-          };
-        };
-
-        const response = axiosError.response;
-        if (response) {
-          console.error(`   Status HTTP: ${response.status}`);
-          console.error(`   Status Text: ${response.statusText}`);
-          console.error(
-            `   Méthode: ${response.config?.method?.toUpperCase()}`
-          );
-          console.error(`   URL: ${response.config?.url}`);
-          console.error(`\n   Réponse d'erreur:`);
-          console.error(JSON.stringify(response.data, null, 2));
-        }
-      } else if (error instanceof Error) {
-        console.error(`   Message: ${error.message}`);
-        console.error(`   Stack: ${error.stack}`);
-      } else {
-        console.error(`   Erreur inconnue:`, error);
-      }
-
-      console.error(
-        "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-      );
-
+      console.error(`❌ ERREUR API ENTREES:`, error);
       throw error;
     }
   }
@@ -77,10 +48,16 @@ export class MouvementsApiService {
     produitId: string | number
   ): Promise<unknown> {
     try {
-
       const endpoint = `/Mouvements/graphe-fluctuations-sorties/${projetId}/${periode}/${produitId}`;
 
+      console.log(`🔍 API SORTIES: ${endpoint}`);
+
       const response = await apiClient.get(endpoint);
+
+      console.log(`✅ REPONSE:`, response.data);
+      console.log(`📊 Clés:`, Object.keys(response.data || {}));
+      console.log(`📦 Donnees:`, response.data?.donnees);
+
       return response.data;
     } catch (error) {
       console.error("❌ Erreur getFluctuationSortie:", error);

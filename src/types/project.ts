@@ -1,4 +1,5 @@
 // Types pour la gestion des projets
+import type { ApiMagasin } from "./api-projets";
 import type { User } from "./auth";
 
 export interface Projet {
@@ -19,12 +20,6 @@ export interface Projet {
   chef_chantier?: number; // ID du chef de chantier (optionnel)
   magasinier?: number; // ID du magasinier (optionnel)
 
-  // Champs pour compatibilité avec l'ancien système
-  chef_projet_user_id?: number;
-  directeur_travaux_user_id?: number;
-  coordinateur_travaux_user_id?: number;
-  chef_equipe_user_id?: number;
-
   images?: string[]; // URLs des images du projet
   comptes?: number[]; // IDs des comptes associés (selon l'API)
 
@@ -37,6 +32,7 @@ export interface Projet {
   magasins?: Magasin[];
   stockItems?: unknown[]; // TODO: Définir StockItem dans stock.ts
   comptesAssocies?: CompteAssocie[];
+  magasin_associe?: ApiMagasin;
 }
 
 // Interface pour les comptes associés à un projet
@@ -77,7 +73,15 @@ export interface Magasin {
   actions?: string; // JSON des actions possibles
 
   // Relations
-  projet?: Projet;
+  projet?: {
+    id: number;
+    name: string;
+    description?: string;
+    date_debut?: Date;
+    date_fin?: Date;
+    status?: string;
+    budget?: number;
+  };
 }
 
 // Types pour les formulaires
@@ -103,10 +107,6 @@ export interface CreateProjetData {
 
   // Champs pour compatibilité (seront mappés vers les nouveaux champs)
   name?: string; // Sera mappé vers 'nom'
-  chef_projet_user_id?: number; // Sera mappé vers 'chef_projet'
-  directeur_travaux_user_id?: number;
-  coordinateur_travaux_user_id?: number;
-  chef_equipe_user_id?: number;
   chef_chantier_user_id?: number; // Sera mappé vers 'chef_chantier'
 
   // Champs UI uniquement (non envoyés à l'API)

@@ -32,7 +32,6 @@ export const historiqueService = {
       const response = await client.get<HistoriqueAction[]>(
         `${basePath}/historique-toutes-actions`
       );
-      console.log("📋 Historique complet reçu:", response.data);
       return response.data || [];
     } catch (error) {
       console.error(

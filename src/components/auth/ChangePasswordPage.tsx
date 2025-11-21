@@ -6,12 +6,14 @@ import logoPngBg from "../../assets/logo_eebtp.png";
 interface ChangePasswordPageProps {
   phone: string;
   onSubmit: (newPassword: string) => void;
+  onBack?: () => void; // Optionnel pour permettre le retour
   isLoading: boolean;
 }
 
 export function ChangePasswordPage({
   phone,
   onSubmit,
+  onBack,
   isLoading,
 }: ChangePasswordPageProps) {
   const [newPassword, setNewPassword] = useState("");
@@ -19,12 +21,10 @@ export function ChangePasswordPage({
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setSuccess(false);
 
     if (!newPassword.trim()) {
       setError("Veuillez saisir un nouveau mot de passe");
@@ -41,8 +41,7 @@ export function ChangePasswordPage({
       return;
     }
 
-    // Affiche le succès localement pour debug, puis appelle le parent
-    setSuccess(true);
+    // Appeler directement le parent sans afficher de succès local
     onSubmit(newPassword.trim());
   };
 
@@ -54,12 +53,34 @@ export function ChangePasswordPage({
   };
 
   return (
-    <div className="min-h-screen flex max-lg:flex-col-reverse">
+    <div className="max-h-screen flex max-lg:flex-col-reverse overflow-hidden">
       {/* Partie gauche - Formulaire */}
-      <div className="flex-1 bg-gray-50 flex items-center justify-center p-8">
+      <div className="flex-1 bg-gray-50 flex items-center justify-center p-8 overflow-scroll inline-scroll">
         <div className="w-full max-w-md">
           {/* Logo en haut */}
-          <div className="mb-12">
+          <div className="my-12">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="mb-4 flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+                type="button"
+              >
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+                Retour
+              </button>
+            )}
             <img src={logoPngBg} alt="EEBTP" className="w-16 h-16 mb-6" />
           </div>
 
@@ -181,13 +202,6 @@ export function ChangePasswordPage({
               </div>
             )}
 
-            {/* Message de succès */}
-            {success && !error && (
-              <div className="text-green-700 text-sm bg-green-50 px-4 py-2 rounded-lg mb-2">
-                Mot de passe changé avec succès !
-              </div>
-            )}
-
             {/* Bouton */}
             <button
               type="submit"
@@ -212,7 +226,7 @@ export function ChangePasswordPage({
 
       {/* Partie droite - Design bleu avec logo */}
       <div
-        className="flex-1 flex items-center justify-center p-8 relative overflow-hidden"
+        className="flex-1 flex items-center justify-center p-8 relative overflow-hidden h-screen max-lg:h-64"
         style={{ backgroundColor: "#007AFF" }}
       >
         {/* Cercles décoratifs */}

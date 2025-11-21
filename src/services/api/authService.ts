@@ -130,7 +130,7 @@ export class AuthService {
         user: authResponse.user,
         token: authResponse.token,
         refreshToken: authResponse.refreshToken,
-        first_login: authResponse.requiresSetup ?? false, // Mapper requiresSetup vers first_login avec fallback
+        first_login: authResponse.requiresSetup ?? false, // Mapper requiresSetup vers first_login
       };
     } catch (error) {
       console.error("Erreur lors de la connexion simple:", error);
@@ -153,11 +153,10 @@ export class AuthService {
     }
 
     try {
-      // Pour le changement de mot de passe, on suppose que c'est pour un premier login
-      // L'API nécessite old_password, on peut utiliser une valeur par défaut ou demander à l'utilisateur
+      // Utiliser oldPassword s'il est fourni, sinon chaîne vide pour première connexion
       const setPasswordResponse = await authApiService.setPassword({
         telephone: data.phone,
-        old_password: "", // Pour les nouveaux utilisateurs, l'ancien mot de passe peut être vide
+        old_password: data.oldPassword || "", // Utiliser l'ancien mot de passe fourni
         new_password: data.newPassword,
         confirm_password: data.newPassword,
       });

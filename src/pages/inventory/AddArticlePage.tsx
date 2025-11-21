@@ -73,7 +73,6 @@ export function AddArticlePage() {
       await createArticleMutation.mutateAsync(createData);
       navigate("/articles");
     } catch (error) {
-      console.error("Erreur lors de la création:", error);
     }
   };
 

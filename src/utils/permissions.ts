@@ -93,7 +93,6 @@ export async function getAvailableTreatmentActions(
       user
     );
     if (!userPermissions) {
-      console.warn("Aucune permission trouvée pour l'utilisateur:", user);
       return [];
     }
 
@@ -188,7 +187,6 @@ export async function checkUserPermission(
   try {
     return await profilePermissionService.checkPermission(user, permission);
   } catch (error) {
-    console.error("Erreur lors de la vérification des permissions:", error);
     return false;
   }
 }
@@ -228,6 +226,11 @@ export function mapProfilLibelleToUserProfil(
 
   // Mapping des libellés possibles vers les profils EEBTP
   const mapping: Record<string, UserProfil> = {
+    // Chef Approvisionnement
+    "chef approvisionnement": UserProfil.CHEF_APPRO,
+    "chef appro": UserProfil.CHEF_APPRO,
+    chef_appro: UserProfil.CHEF_APPRO,
+
     // Directeur des Travaux
     "directeur des travaux": UserProfil.DTX,
     dtx: UserProfil.DTX,
@@ -236,9 +239,17 @@ export function mapProfilLibelleToUserProfil(
     "directeur technique": UserProfil.DT,
     dt: UserProfil.DT,
 
+    // Directeur Général
+    "directeur général": UserProfil.DG,
+    dg: UserProfil.DG,
+
     // Directeur Général Adjoint
     "directeur général adjoint": UserProfil.DGA,
     dga: UserProfil.DGA,
+
+    // Directeur Financier
+    "directeur financier": UserProfil.DF,
+    df: UserProfil.DF,
 
     // Administrateur
     administrateur: UserProfil.ADMIN,
@@ -251,18 +262,73 @@ export function mapProfilLibelleToUserProfil(
   return mapping[normalizedLibelle] || null;
 }
 
-// Mapping temporaire pour maintenir la compatibilité
-// Basé sur le processus de validation EEBTP et les profils réels
+/**
+ * ORDRE STRICT DES TRAITEMENTS:
+ * Émise (mobile) → Confirmée (Chef Appro) → Approuvée (DTX/DT) → Validée (DG/DGA/DF) → Livrée (mobile)
+ *
+ * RÈGLES:
+ * - Chaque étape ne peut être traitée QUE si l'étape précédente est complétée
+ * - Pas de saut d'étape autorisé
+ * - Chaque profil a UN SEUL rôle dans le processus
+ */
 const LEGACY_PROFILE_MAPPING: Record<
   string,
   {
-    canConfirm: boolean;
-    canApprove: boolean;
-    canValidate: boolean;
-    canReject: boolean;
+    canConfirm: boolean; // Confirmée (après Émise)
+    canApprove: boolean; // Approuvée (après Confirmée)
+    canValidate: boolean; // Validée (après Approuvée)
+    canReject: boolean; // Rejet possible
   }
 > = {
-  // Administrateur - Permissions complètes
+  // Chef Approvisionnement - SEUL autorisé à confirmer
+  chef_appro: {
+    canConfirm: true, // Confirme les demandes émises
+    canApprove: false,
+    canValidate: false,
+    canReject: true, // Peut rejeter à l'étape Émise
+  },
+
+  // Directeur des Travaux - SEUL autorisé à approuver (après confirmation)
+  dtx: {
+    canConfirm: false, // NE peut PAS confirmer
+    canApprove: true, // Approuve les demandes confirmées
+    canValidate: false,
+    canReject: true, // Peut rejeter à l'étape Confirmée
+  },
+
+  // Directeur Technique - SEUL autorisé à approuver (après confirmation)
+  dt: {
+    canConfirm: false, // NE peut PAS confirmer
+    canApprove: true, // Approuve les demandes confirmées
+    canValidate: false,
+    canReject: true, // Peut rejeter à l'étape Confirmée
+  },
+
+  // Directeur Général - SEUL autorisé à valider (après approbation)
+  dg: {
+    canConfirm: false,
+    canApprove: false,
+    canValidate: true, // Valide les demandes approuvées
+    canReject: true, // Peut rejeter à l'étape Approuvée
+  },
+
+  // Directeur Général Adjoint - SEUL autorisé à valider (après approbation)
+  dga: {
+    canConfirm: false,
+    canApprove: false,
+    canValidate: true, // Valide les demandes approuvées
+    canReject: true, // Peut rejeter à l'étape Approuvée
+  },
+
+  // Directeur Financier - SEUL autorisé à valider (après approbation)
+  df: {
+    canConfirm: false,
+    canApprove: false,
+    canValidate: true, // Valide les demandes approuvées
+    canReject: true, // Peut rejeter à l'étape Approuvée
+  },
+
+  // Administrateur - Permissions complètes pour supervision
   Admin: {
     canConfirm: true,
     canApprove: true,
@@ -270,31 +336,7 @@ const LEGACY_PROFILE_MAPPING: Record<
     canReject: true,
   },
 
-  // Directeur Général Adjoint - Toutes actions + Validation finale
-  dga: {
-    canConfirm: true,
-    canApprove: true,
-    canValidate: true,
-    canReject: true,
-  },
-
-  // Directeur des Travaux - Confirmation + Approbation
-  dtx: {
-    canConfirm: true,
-    canApprove: true,
-    canValidate: false,
-    canReject: true,
-  },
-
-  // Directeur Technique - Confirmation + Approbation
-  dt: {
-    canConfirm: true,
-    canApprove: true,
-    canValidate: false,
-    canReject: true,
-  },
-
-  // Magasinier - Gestion stocks uniquement (pas de traitement de demandes)
+  // Magasinier - AUCUN traitement de demande (seulement gestion stocks)
   magasinier: {
     canConfirm: false,
     canApprove: false,
@@ -307,44 +349,28 @@ const LEGACY_PROFILE_MAPPING: Record<
  * Version synchrone pour compatibilité avec l'ancien système
  * @deprecated Utiliser getAvailableTreatmentActions() à la place
  */
+/**
+ * Version synchrone avec RESPECT STRICT de l'ordre des traitements
+ * ORDRE: Émise → Confirmée (Chef Appro) → Approuvée (DTX/DT) → Validée (DG/DGA/DF)
+ */
 export function getAvailableTreatmentActionsSync(
   user: User | null,
   requestStatus: string
 ): AvailableAction[] {
   if (!user) {
-    console.log(
-      "🚫 getAvailableTreatmentActionsSync: Utilisateur non connecté"
-    );
     return [];
   }
-
-  console.log("🔍 getAvailableTreatmentActionsSync: Vérification permissions", {
-    userProfil: user.profil,
-    requestStatus: requestStatus,
-    availableProfiles: Object.keys(LEGACY_PROFILE_MAPPING),
-  });
 
   const legacyPermissions = LEGACY_PROFILE_MAPPING[user.profil];
   if (!legacyPermissions) {
-    console.warn(
-      "⚠️ getAvailableTreatmentActionsSync: Profil non trouvé dans LEGACY_PROFILE_MAPPING",
-      {
-        userProfil: user.profil,
-        availableProfiles: Object.keys(LEGACY_PROFILE_MAPPING),
-      }
-    );
     return [];
   }
 
-  console.log("✅ getAvailableTreatmentActionsSync: Permissions trouvées", {
-    userProfil: user.profil,
-    permissions: legacyPermissions,
-  });
-
   const actions: AvailableAction[] = [];
 
+  // ÉTAPE 1: Confirmation (UNIQUEMENT si statut = Émise)
+  // Profils autorisés: Chef Appro, Admin
   if (legacyPermissions.canConfirm && requestStatus === REQUEST_STATUS.EMISE) {
-    console.log("✅ Action CONFIRMER ajoutée");
     actions.push({
       value: TREATMENT_ACTIONS.CONFIRMER,
       label: "Confirmer la demande",
@@ -352,11 +378,13 @@ export function getAvailableTreatmentActionsSync(
     });
   }
 
+  // ÉTAPE 2: Approbation (UNIQUEMENT si statut = Confirmée)
+  // Profils autorisés: DTX, DT, Admin
+  // PAS D'ACTION POSSIBLE AVANT QUE LE STATUT SOIT "Confirmée"
   if (
     legacyPermissions.canApprove &&
     requestStatus === REQUEST_STATUS.CONFIRMEE
   ) {
-    console.log("✅ Action APPROUVER ajoutée");
     actions.push({
       value: TREATMENT_ACTIONS.APPROUVER,
       label: "Approuver la demande",
@@ -364,47 +392,48 @@ export function getAvailableTreatmentActionsSync(
     });
   }
 
+  // ÉTAPE 3: Validation (UNIQUEMENT si statut = Approuvée)
+  // Profils autorisés: DG, DGA, DF, Admin
+  // PAS D'ACTION POSSIBLE AVANT QUE LE STATUT SOIT "Approuvée"
   if (
     legacyPermissions.canValidate &&
     requestStatus === REQUEST_STATUS.APPROUVEE
   ) {
-    console.log("✅ Action VALIDER ajoutée");
     actions.push({
       value: TREATMENT_ACTIONS.VALIDER,
       label: "Valider la demande",
       requiredStatus: REQUEST_STATUS.APPROUVEE,
     });
-  } else if (legacyPermissions.canValidate) {
-    console.log("⚠️ Action VALIDER NON ajoutée - état incorrect", {
-      canValidate: legacyPermissions.canValidate,
-      currentStatus: requestStatus,
-      requiredStatus: REQUEST_STATUS.APPROUVEE,
-      statusMatch: requestStatus === REQUEST_STATUS.APPROUVEE,
-    });
   }
 
+  // Rejet possible UNIQUEMENT aux étapes non finales
+  // Et UNIQUEMENT à l'étape où le profil a le droit d'agir
   const finalStatuses = [
     REQUEST_STATUS.VALIDEE,
     REQUEST_STATUS.REJETEE,
     REQUEST_STATUS.LIVREE,
   ];
+
   if (
     legacyPermissions.canReject &&
     !finalStatuses.some((status) => status === requestStatus)
   ) {
-    console.log("✅ Action REJETER ajoutée");
-    actions.push({
-      value: TREATMENT_ACTIONS.REJETER,
-      label: "Rejeter la demande",
-    });
-  }
+    // Vérifier que l'utilisateur peut agir à cette étape
+    const canActAtThisStage =
+      (legacyPermissions.canConfirm &&
+        requestStatus === REQUEST_STATUS.EMISE) ||
+      (legacyPermissions.canApprove &&
+        requestStatus === REQUEST_STATUS.CONFIRMEE) ||
+      (legacyPermissions.canValidate &&
+        requestStatus === REQUEST_STATUS.APPROUVEE);
 
-  console.log("📋 getAvailableTreatmentActionsSync: Actions finales", {
-    userProfil: user.profil,
-    requestStatus: requestStatus,
-    actionsCount: actions.length,
-    actions: actions.map((a) => a.value),
-  });
+    if (canActAtThisStage || user.profil === "Admin") {
+      actions.push({
+        value: TREATMENT_ACTIONS.REJETER,
+        label: "Rejeter la demande",
+      });
+    }
+  }
 
   return actions;
 }

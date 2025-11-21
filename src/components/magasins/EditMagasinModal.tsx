@@ -22,7 +22,7 @@ export function EditMagasinModal({
   const [error, setError] = useState<string | null>(null);
 
   // Hooks
-  const { data: magasin } = useMagasin(magasinId);
+  const { data: magasin, isLoading: isLoadingMagasin } = useMagasin(magasinId);
   const updateMutation = useUpdateMagasin();
 
   // Initialiser le formulaire avec les données du magasin
@@ -64,7 +64,6 @@ export function EditMagasinModal({
       await updateMutation.mutateAsync(updateData);
       onClose();
     } catch (error) {
-      console.error("Erreur lors de la mise à jour:", error);
       setError("Une erreur est survenue lors de la mise à jour");
     }
   };
@@ -76,47 +75,56 @@ export function EditMagasinModal({
       isOpen={isOpen}
       onClose={onClose}
       onSubmit={handleSubmit}
-      title={`Modification du magasin N° ${magasin?.name}`}
+      title={`Modification du magasin ${magasin ? `N° ${magasin.name}` : ""}`}
       loading={isLoading}
       submitText="Enregistrer"
       size="md"
     >
-      {/* Error message */}
-      {error && (
-        <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
+      {/* Loading state */}
+      {isLoadingMagasin ? (
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
+      ) : (
+        <>
+          {/* Error message */}
+          {error && (
+            <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              {error}
+            </div>
+          )}
+
+          {/* Form Fields */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nom
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Nom du magasin"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Adresse
+              </label>
+              <input
+                type="text"
+                value={formData.adresse}
+                onChange={(e) => handleInputChange("adresse", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Adresse du magasin"
+              />
+            </div>
+          </div>
+        </>
       )}
-
-      {/* Form Fields */}
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nom
-          </label>
-          <input
-            type="text"
-            required
-            value={formData.name}
-            onChange={(e) => handleInputChange("name", e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Nom du magasin"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Adresse
-          </label>
-          <input
-            type="text"
-            value={formData.adresse}
-            onChange={(e) => handleInputChange("adresse", e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Adresse du magasin"
-          />
-        </div>
-      </div>
     </FormModal>
   );
 }

@@ -46,7 +46,6 @@ export function usePermissions() {
           ? err.message
           : "Erreur lors du chargement des permissions";
       setError(errorMessage);
-      console.error("Erreur lors du chargement des permissions:", err);
     } finally {
       setIsLoading(false);
     }
@@ -178,7 +177,6 @@ export function useTreatmentActions(requestStatus: string) {
         );
         setActions(availableActions);
       } catch (err) {
-        console.error("Erreur lors du chargement des actions:", err);
         setActions([]);
       } finally {
         setIsLoading(false);

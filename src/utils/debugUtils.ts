@@ -7,15 +7,9 @@ export function debugApiResponse(response: unknown, context: string = "API Respo
   console.group(`🔍 DEBUG: ${context}`);
   
   if (response === null) {
-    console.warn("❌ Réponse null");
   } else if (response === undefined) {
-    console.warn("❌ Réponse undefined");
   } else if (typeof response !== 'object') {
-    console.log("📝 Type:", typeof response);
-    console.log("📝 Valeur:", response);
   } else {
-    console.log("📝 Type:", typeof response);
-    console.log("📝 Clés disponibles:", Object.keys(response));
     
     // Analyser des propriétés importantes
     if ('id' in response) {
@@ -25,11 +19,9 @@ export function debugApiResponse(response: unknown, context: string = "API Respo
         exists: response.id !== null && response.id !== undefined
       });
     } else {
-      console.warn("⚠️ Propriété 'id' manquante");
     }
     
     if ('status' in response) {
-      console.log("📊 Status:", response.status);
     }
     
     if ('data' in response) {
@@ -48,7 +40,6 @@ export function debugApiResponse(response: unknown, context: string = "API Respo
       }
     }
     
-    console.log("📋 Objet complet:", response);
   }
   
   console.groupEnd();

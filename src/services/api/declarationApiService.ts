@@ -123,7 +123,6 @@ class DeclarationApiService {
   async getDeclaration(id: number): Promise<Declaration> {
     return withApiErrorHandling(
       async () => {
-        console.log("📋 Récupération de la déclaration:", id);
 
         // Essayer d'abord comme entrée
         try {
@@ -132,7 +131,6 @@ class DeclarationApiService {
           );
           return apiEntreeToDeclaration(entreeResponse.data);
         } catch {
-          console.log("Pas trouvé dans les entrées, essai dans les sorties...");
         }
 
         // Essayer comme sortie
@@ -158,7 +156,6 @@ class DeclarationApiService {
   async createDeclaration(data: CreateDeclarationData): Promise<Declaration> {
     return withApiErrorHandling(
       async () => {
-        console.log("📋 Création de la déclaration:", data);
 
         const apiRequest = createDeclarationDataToApiRequest(data);
 
@@ -290,7 +287,6 @@ class DeclarationApiService {
   ): Promise<DeclarationStats> {
     return withApiErrorHandling(
       async () => {
-        console.log("📊 Récupération des statistiques depuis l'API");
 
         // Utiliser l'endpoint API dédié avec la période spécifiée
         const response = await client.get<ApiStatsResponse>(

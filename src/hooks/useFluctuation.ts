@@ -14,7 +14,8 @@ import type {
 function processFluctuationData(
   data: FluctuationDataPoint[]
 ): ProcessedFluctuationData {
-  if (data.length === 0) {
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    console.log("⚠️ Données vides ou invalides");
     return {
       labels: [],
       values: [],
@@ -36,7 +37,7 @@ function processFluctuationData(
     });
   });
 
-  return {
+  const result = {
     labels,
     values,
     min: Math.min(...values),
@@ -45,6 +46,10 @@ function processFluctuationData(
     total: values.reduce((a, b) => a + b, 0),
     dataPoints: data,
   };
+
+  console.log(`✅ Traité: ${data.length} points, Total: ${result.total}`);
+
+  return result;
 }
 
 /**
@@ -63,7 +68,18 @@ export function useFluctuationEntrees(params: FluctuationParams | null) {
         params.produitId
       )) as FluctuationEntreeResponse;
 
-      return processFluctuationData(response.donnees);
+      // Extraire les données
+      let donnees: FluctuationDataPoint[] = [];
+
+      if (response && typeof response === "object") {
+        if ("donnees" in response && Array.isArray(response.donnees)) {
+          donnees = response.donnees;
+        } else if (Array.isArray(response)) {
+          donnees = response as unknown as FluctuationDataPoint[];
+        }
+      }
+
+      return processFluctuationData(donnees);
     },
     enabled: !!params,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -85,7 +101,18 @@ export function useFluctuationSorties(params: FluctuationParams | null) {
         params.produitId
       )) as FluctuationSortieResponse;
 
-      return processFluctuationData(response.donnees);
+      // Extraire les données
+      let donnees: FluctuationDataPoint[] = [];
+
+      if (response && typeof response === "object") {
+        if ("donnees" in response && Array.isArray(response.donnees)) {
+          donnees = response.donnees;
+        } else if (Array.isArray(response)) {
+          donnees = response as unknown as FluctuationDataPoint[];
+        }
+      }
+
+      return processFluctuationData(donnees);
     },
     enabled: !!params,
     staleTime: 5 * 60 * 1000, // 5 minutes

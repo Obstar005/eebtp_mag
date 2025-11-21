@@ -19,7 +19,6 @@ export function useCountries() {
         const errorMessage =
           err instanceof Error ? err.message : "Erreur inconnue";
         setError(errorMessage);
-        console.error("Erreur lors du chargement des pays:", err);
 
         // En cas d'erreur, utiliser les données par défaut
         setCountries(countriesService.getAllCountries());
@@ -41,6 +40,11 @@ export function useCountries() {
         country.abbreviation.toLowerCase() === abbreviation.toLowerCase()
     );
 
+  const getCountryByName = (name: string) =>
+    countries.find(
+      (country) => country.name.toLowerCase() === name.toLowerCase()
+    );
+
   const getTogoCountry = () =>
     getCountryByAbbreviation("TG") || getCountryByCode("+228");
 
@@ -57,6 +61,7 @@ export function useCountries() {
     error,
     getCountryByCode,
     getCountryByAbbreviation,
+    getCountryByName,
     getTogoCountry,
     getPopularCountries,
     searchCountries,

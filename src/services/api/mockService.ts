@@ -68,7 +68,6 @@ export class MockAuthService {
       isNewUser,
     });
 
-    console.log("🔐 Code OTP généré:", otpCode, "pour", data.phone);
 
     return {
       sessionId,
@@ -220,7 +219,6 @@ export class MockAuthService {
     // Prolonger la session
     session.expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-    console.log("🔐 Code OTP renvoyé:", session.otpCode, "pour", session.phone);
 
     return {
       success: true,
@@ -294,8 +292,6 @@ export class MockAuthService {
       .toString(36)
       .substr(2, 9)}`;
 
-    console.log("✅ Connexion réussie pour:", data.phone);
-    console.log("🔑 Première connexion:", existingUser.first_login || true);
 
     return {
       success: true,
@@ -353,7 +349,6 @@ export class MockAuthService {
       .toString(36)
       .substr(2, 9)}`;
 
-    console.log("🎉 Compte créé avec succès pour:", data.phone);
 
     return {
       success: true,
@@ -407,7 +402,6 @@ export class MockAuthService {
       .toString(36)
       .substr(2, 9)}`;
 
-    console.log("🔐 Mot de passe changé avec succès pour:", data.phone);
 
     return {
       success: true,

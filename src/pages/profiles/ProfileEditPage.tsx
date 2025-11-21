@@ -51,7 +51,6 @@ export function ProfileEditPage() {
       });
       navigate("/profiles");
     } catch (error) {
-      console.error("Erreur lors de la modification:", error);
     }
   };
 

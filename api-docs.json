@@ -16,6 +16,23 @@
   "securityDefinitions": { "Basic": { "type": "basic" } },
   "security": [{ "Basic": [] }],
   "paths": {
+    "/App/Generer-rapport-stocks-pdf/{projet_id}": {
+      "get": {
+        "operationId": "App_Generer-rapport-stocks-pdf_read",
+        "description": "",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["App"]
+      },
+      "parameters": [
+        {
+          "name": "projet_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
     "/App/historique-toutes-actions": {
       "get": {
         "operationId": "App_historique-toutes-actions_list",
@@ -1667,6 +1684,18 @@
         { "name": "id", "in": "path", "required": true, "type": "string" }
       ]
     },
+    "/Users/profil-supp/{id}": {
+      "delete": {
+        "operationId": "Users_profil-supp_delete",
+        "description": "Supprimer un utilisateur",
+        "parameters": [],
+        "responses": { "204": { "description": "Supprimé avec succès" } },
+        "tags": ["Users"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
     "/Users/profil-update/{id}": {
       "put": {
         "operationId": "Users_profil-update_update",
@@ -1854,6 +1883,11 @@
         },
         "stock_item_name": {
           "title": "Stock item name",
+          "type": "string",
+          "readOnly": true
+        },
+        "stock_item_unite": {
+          "title": "Stock item unite",
           "type": "string",
           "readOnly": true
         },
@@ -2489,6 +2523,11 @@
           "readOnly": true,
           "uniqueItems": true
         },
+        "magasin_associe": {
+          "title": "Magasin associe",
+          "type": "string",
+          "readOnly": true
+        },
         "nom": {
           "title": "Nom",
           "type": "string",
@@ -2601,6 +2640,11 @@
         },
         "produit_name": {
           "title": "Produit name",
+          "type": "string",
+          "readOnly": true
+        },
+        "produit_unite": {
+          "title": "Produit unite",
           "type": "string",
           "readOnly": true
         },

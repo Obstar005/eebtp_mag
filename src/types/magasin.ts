@@ -13,6 +13,11 @@ export interface Magasin {
   projet?: {
     id: number;
     name: string;
+    description?: string;
+    date_debut?: Date;
+    date_fin?: Date;
+    status?: string;
+    budget?: number;
   };
   stockItems?: StockArticle[];
   articlesCount?: number;

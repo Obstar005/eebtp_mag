@@ -58,7 +58,6 @@ export class ArticleService {
           },
         };
       } catch (error) {
-        console.error("❌ Erreur API, utilisation des données mock:", error);
         return mockArticleService.getArticles(magasinId, filter);
       }
     }
@@ -74,7 +73,6 @@ export class ArticleService {
         const apiArticle = await articleApiService.getArticle(id);
         return apiProduitToStockArticle(apiArticle);
       } catch (error) {
-        console.error("❌ Erreur API, utilisation des données mock:", error);
         return mockArticleService.getArticle(id);
       }
     }
@@ -96,7 +94,6 @@ export class ArticleService {
 
         return stockArticle;
       } catch (error) {
-        console.error("❌ Erreur API lors de la création:", error);
         // En cas d'erreur, utiliser le mock
       }
     }
@@ -122,7 +119,6 @@ export class ArticleService {
         stockArticle.magasin_id = data.magasin_id || stockArticle.magasin_id;
         return stockArticle;
       } catch (error) {
-        console.error("❌ Erreur API lors de la mise à jour:", error);
         // En cas d'erreur, utiliser le mock
       }
     }
@@ -140,7 +136,6 @@ export class ArticleService {
         await articleApiService.deleteArticle(id);
         return;
       } catch (error) {
-        console.error("❌ Erreur API lors de la suppression:", error);
         // En cas d'erreur, utiliser le mock
       }
     }

@@ -79,7 +79,6 @@ export default function ArticleDetailsPage() {
       await updateArticleMutation.mutateAsync(updateData);
       navigate("/articles");
     } catch (error) {
-      console.error("Erreur lors de la sauvegarde:", error);
     }
   };
 

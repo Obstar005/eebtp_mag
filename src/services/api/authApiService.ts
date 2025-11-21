@@ -128,13 +128,14 @@ export class AuthApiService {
 
       // L'API retourne toujours un message, access_token si succès
       if (response.data.access_token) {
+        // Log de la réponse brute de l'API pour débogage
         // Stocker le token pour les futures requêtes
         localStorage.setItem("auth_token", response.data.access_token);
         if (response.data.refresh_token) {
           localStorage.setItem("refresh_token", response.data.refresh_token);
         }
 
-        // Utiliser le transformateur pour inclure is_firstlogin
+        // Utiliser le transformateur pour inclure first_login
         return await apiLoginResponseToAuthResponse(response.data);
       } else {
         throw new Error(response.data.message || "Échec de la connexion");
@@ -380,15 +381,6 @@ export class UserApiService {
           apiData
         );
 
-        console.log("✅ Utilisateur créé avec succès:", response.data);
-        console.log("🔍 Structure complète de la réponse API:", {
-          status: response.status,
-          hasData: !!response.data,
-          dataKeys: Object.keys(response.data || {}),
-          userId: response.data?.id,
-          userIdType: typeof response.data?.id,
-        });
-
         // Validation de la réponse API
         const validation = validateApiUser(response.data);
         if (!validation.isValid) {
@@ -397,7 +389,6 @@ export class UserApiService {
             validation
           );
         } else {
-          console.log("✅ Validation de l'utilisateur créé réussie");
         }
 
         debugApiResponse(response.data, "Utilisateur créé (sans image)");
@@ -611,9 +602,6 @@ export class ProfileApiService {
   // Récupérer tous les profils
   async getProfiles(): Promise<Profile[]> {
     try {
-      console.log(
-        "🔍 ProfileApiService: Récupération des profils depuis l'API EEBTP..."
-      );
       const response = await apiClient.get<ApiProfil[]>("/Users/liste-profils");
       const profiles = response.data.map(apiProfilToProfile);
 

@@ -33,7 +33,6 @@ export class ProductService {
   ): Promise<PaginatedResponse<CatalogProduct>> {
     return withApiErrorHandling(
       async () => {
-        console.log("📦 Récupération du catalogue des produits");
 
         const response = await client.get<
           ApiProduit[] | ApiProductListResponse
@@ -63,7 +62,6 @@ export class ProductService {
   async getProduct(id: string): Promise<CatalogProduct> {
     return withApiErrorHandling(
       async () => {
-        console.log("📦 Récupération du produit:", id);
 
         const response = await client.get<ApiProduit>(
           `${this.basePath}/article-detail/${id}`
@@ -84,7 +82,6 @@ export class ProductService {
   }): Promise<CatalogProduct> {
     return withApiErrorHandling(
       async () => {
-        console.log("📦 Création du produit:", data);
 
         const apiRequest = createProductDataToApiRequest(data);
 
@@ -109,7 +106,6 @@ export class ProductService {
   }): Promise<CatalogProduct> {
     return withApiErrorHandling(
       async () => {
-        console.log("📦 Mise à jour du produit:", data);
 
         const apiRequest = updateProductDataToApiRequest(data);
 
@@ -128,7 +124,6 @@ export class ProductService {
   async deleteProduct(id: string): Promise<void> {
     return withApiErrorHandling(
       async () => {
-        console.log("📦 Suppression du produit:", id);
 
         await client.delete(`${this.basePath}/article-delete/${id}`);
       },

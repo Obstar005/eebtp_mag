@@ -39,7 +39,6 @@ export function ProfilesPage() {
         deleteModal.close();
         setSelectedProfile(null);
       } catch (error) {
-        console.error("Erreur lors de la suppression:", error);
       }
     }
   };

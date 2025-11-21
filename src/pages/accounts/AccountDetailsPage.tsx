@@ -27,18 +27,15 @@ const formatDate = (dateString: string | undefined): string => {
       year: "numeric",
     });
   } catch (error) {
-    console.error("Erreur lors du formatage de la date:", error);
     return "Date invalide";
   }
 };
 import { ConfirmationModal, FormModal } from "../../components/layout";
 import { useModal } from "../../hooks/useModal";
-import { useState } from "react";
 
 export function AccountDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
 
   const { data: account, isLoading, error } = useAccount(id!);
   const { user: currentUser } = useAuth();
@@ -77,21 +74,23 @@ export function AccountDetailsPage() {
       await deleteAccountMutation.mutateAsync(account.id);
       navigate("/accounts");
     } catch (error) {
-      console.error("Erreur lors de la suppression:", error);
     }
   };
+
+  console.log("Account details:", account); 
 
   return (
     <div className="space-y-6">
       {/* Header simple */}
       <div className="flex items-center space-x-4">
         <button
+          aria-label="Back"
           onClick={() => navigate("/accounts")}
           className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-xl font-semibold text-gray-900">
+        <h1 className="text-xl font-semibold text-gray-900" aria-label={`Détails du compte N°${account.code}`}>
           Détails du compte N°{account.code}
         </h1>
       </div>
@@ -228,27 +227,6 @@ export function AccountDetailsPage() {
                       ? `Profil #${account.profile_id}`
                       : "Non défini")}
                 </span>
-              </div>
-            </div>
-            {/* Mot de passe */}
-            <div className="space-y-1">
-              <label className="text-xs text-gray-500 uppercase tracking-wide">
-                Mot de passe
-              </label>
-              <div className="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50 flex items-center justify-between">
-                <span className="font-mono text-gray-900">
-                  {showPassword ? account.mot_de_passe : "••••••••••"}
-                </span>
-                <button
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
               </div>
             </div>
           </div>

@@ -95,10 +95,8 @@ export function useCreateDemande() {
       // Mettre en cache la nouvelle demande
       queryClient.setQueryData(demandeKeys.detail(newDemande.id), newDemande);
 
-      console.log("✅ Cache invalidé après création de demande");
     },
     onError: (error) => {
-      console.error("❌ Erreur lors de la création de la demande:", error);
     },
   });
 }
@@ -123,10 +121,8 @@ export function useConfirmerDemande() {
       queryClient.invalidateQueries({ queryKey: demandeKeys.lists() });
       queryClient.invalidateQueries({ queryKey: demandeKeys.stats() });
 
-      console.log("✅ Cache invalidé après confirmation de demande");
     },
     onError: (error) => {
-      console.error("❌ Erreur lors de la confirmation de la demande:", error);
     },
   });
 }
@@ -151,10 +147,8 @@ export function useApprouverDemande() {
       queryClient.invalidateQueries({ queryKey: demandeKeys.lists() });
       queryClient.invalidateQueries({ queryKey: demandeKeys.stats() });
 
-      console.log("✅ Cache invalidé après approbation de demande");
     },
     onError: (error) => {
-      console.error("❌ Erreur lors de l'approbation de la demande:", error);
     },
   });
 }
@@ -179,10 +173,8 @@ export function useValiderDemande() {
       queryClient.invalidateQueries({ queryKey: demandeKeys.lists() });
       queryClient.invalidateQueries({ queryKey: demandeKeys.stats() });
 
-      console.log("✅ Cache invalidé après validation de demande");
     },
     onError: (error) => {
-      console.error("❌ Erreur lors de la validation de la demande:", error);
     },
   });
 }
@@ -207,10 +199,8 @@ export function useRejeterDemande() {
       queryClient.invalidateQueries({ queryKey: demandeKeys.lists() });
       queryClient.invalidateQueries({ queryKey: demandeKeys.stats() });
 
-      console.log("✅ Cache invalidé après rejet de demande");
     },
     onError: (error) => {
-      console.error("❌ Erreur lors du rejet de la demande:", error);
     },
   });
 }
@@ -242,10 +232,8 @@ export function useTraiterDemande() {
       queryClient.invalidateQueries({ queryKey: demandeKeys.lists() });
       queryClient.invalidateQueries({ queryKey: demandeKeys.stats() });
 
-      console.log(`✅ Cache invalidé après ${variables.action} de demande`);
     },
     onError: (error) => {
-      console.error("❌ Erreur lors du traitement de la demande:", error);
     },
   });
 }

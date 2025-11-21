@@ -16,7 +16,6 @@ export function useSimpleVerifyPhone() {
     mutationFn: (request: SimplePhoneVerificationRequest) =>
       authService.simpleVerifyPhone(request),
     onError: (error) => {
-      console.error("Erreur lors de la vérification du téléphone:", error);
     },
   });
 }
@@ -35,7 +34,6 @@ export function useSimpleLogin() {
       queryClient.setQueryData(["user"], authResponse.user);
     },
     onError: (error) => {
-      console.error("Erreur lors de la connexion:", error);
     },
   });
 }
@@ -59,7 +57,6 @@ export function useSimpleSetupAccount() {
       queryClient.setQueryData(["user"], authResponse.user);
     },
     onError: (error) => {
-      console.error("Erreur lors de la configuration du compte:", error);
     },
   });
 }
@@ -78,7 +75,6 @@ export function useChangePassword() {
       queryClient.setQueryData(["user"], authResponse.user);
     },
     onError: (error) => {
-      console.error("Erreur lors du changement de mot de passe:", error);
     },
   });
 }

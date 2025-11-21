@@ -9,7 +9,6 @@ export function AuthPage() {
   };
 
   const handleAuthError = (error: string) => {
-    console.error("Erreur d'authentification:", error);
   };
 
   return (

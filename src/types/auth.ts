@@ -16,9 +16,12 @@ export interface User {
 }
 
 export const UserProfil = {
-  DTX: "dtx",
-  DT: "dt",
-  DGA: "dga",
+  DTX: "dtx", // Directeur des Travaux
+  DT: "dt", // Directeur Technique
+  DGA: "dga", // Directeur Général Adjoint
+  DG: "dg", // Directeur Général
+  DF: "df", // Directeur Financier
+  CHEF_APPRO: "chef_appro", // Chef Approvisionnement
   ADMIN: "Admin",
   MAGASINIER: "magasinier",
 } as const;
@@ -119,6 +122,7 @@ export interface SimpleLoginResponse {
 
 export interface ChangePasswordRequest {
   phone: string;
+  oldPassword?: string; // Ancien mot de passe (requis pour première connexion)
   newPassword: string;
 }
 

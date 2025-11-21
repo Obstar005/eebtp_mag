@@ -18,7 +18,6 @@ export function useVerifyPhone() {
     mutationFn: (request: PhoneVerificationRequest) =>
       authService.verifyPhone(request),
     onError: (error) => {
-      console.error("Erreur lors de la vérification du téléphone:", error);
     },
   });
 }
@@ -29,7 +28,6 @@ export function useVerifyOtp() {
     mutationFn: (request: OtpVerificationRequest) =>
       authService.verifyOtp(request),
     onError: (error) => {
-      console.error("Erreur lors de la vérification OTP:", error);
     },
   });
 }
@@ -49,7 +47,6 @@ export function useSetupAccount() {
       queryClient.setQueryData(authKeys.user, authResponse.user);
     },
     onError: (error) => {
-      console.error("Erreur lors de la configuration du compte:", error);
     },
   });
 }
@@ -70,7 +67,6 @@ export function useDirectLogin() {
       queryClient.setQueryData(authKeys.user, authResponse.user);
     },
     onError: (error) => {
-      console.error("Erreur lors de la connexion:", error);
     },
   });
 }
@@ -80,7 +76,6 @@ export function useResendOtp() {
   return useMutation({
     mutationFn: (sessionId: string) => authService.resendOtp(sessionId),
     onError: (error) => {
-      console.error("Erreur lors du renvoi de l'OTP:", error);
     },
   });
 }
@@ -90,7 +85,6 @@ export function useCheckPhoneExists() {
   return useMutation({
     mutationFn: (phone: string) => authService.checkPhoneExists(phone),
     onError: (error) => {
-      console.error("Erreur lors de la vérification du téléphone:", error);
     },
   });
 }

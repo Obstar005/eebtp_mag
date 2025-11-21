@@ -299,26 +299,40 @@ export function FluctuationChart({
                 })}
             </svg>
 
-            {/* Tooltip au hover */}
-            {hoveredIndex !== null && activeData && (
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-3 py-2 rounded text-sm whitespace-nowrap">
-                <div className="font-semibold">
-                  {activeData.dataPoints[hoveredIndex]?.date}
-                </div>
-                {entreeData &&
-                  entreeData.values[hoveredIndex] !== undefined && (
-                    <div className="text-purple-300 text-xs">
-                      Entrées: {formatValue(entreeData.values[hoveredIndex])}
+            {/* Tooltip au hover : positionne horizontalement au point survolé */}
+            {hoveredIndex !== null &&
+              activeData &&
+              (() => {
+                const denom = activeData.values.length - 1 || 1;
+                const leftPercent = (hoveredIndex / denom) * 100;
+                return (
+                  <div
+                    className="absolute top-4 bg-gray-900 text-white px-3 py-2 rounded text-sm whitespace-nowrap pointer-events-none"
+                    style={{
+                      left: `${leftPercent}%`,
+                      transform: "translateX(-50%)",
+                    }}
+                  >
+                    <div className="font-semibold">
+                      {activeData.dataPoints[hoveredIndex]?.date}
                     </div>
-                  )}
-                {sortieData &&
-                  sortieData.values[hoveredIndex] !== undefined && (
-                    <div className="text-cyan-300 text-xs">
-                      Sorties: {formatValue(sortieData.values[hoveredIndex])}
-                    </div>
-                  )}
-              </div>
-            )}
+                    {entreeData &&
+                      entreeData.values[hoveredIndex] !== undefined && (
+                        <div className="text-purple-300 text-xs">
+                          Entrées:{" "}
+                          {formatValue(entreeData.values[hoveredIndex])}
+                        </div>
+                      )}
+                    {sortieData &&
+                      sortieData.values[hoveredIndex] !== undefined && (
+                        <div className="text-cyan-300 text-xs">
+                          Sorties:{" "}
+                          {formatValue(sortieData.values[hoveredIndex])}
+                        </div>
+                      )}
+                  </div>
+                );
+              })()}
 
             {/* Labels de l'axe X */}
             <div className="absolute bottom-0 left-0 right-0 flex justify-between px-8 pb-1 text-xs text-gray-400">

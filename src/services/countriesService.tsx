@@ -67,13 +67,11 @@ export const countriesService = {
 
       countriesData = formattedCountries;
       apiDataLoaded = true;
-
     } catch (error) {
       console.error(
         "❌ Erreur lors du chargement des pays depuis l'API:",
         error
       );
-      console.log("📦 Utilisation des données de fallback...");
       // En cas d'erreur, on garde les données par défaut
     }
   },
@@ -99,6 +97,13 @@ export const countriesService = {
     return countriesData.find(
       (country) =>
         country.abbreviation.toLowerCase() === abbreviation.toLowerCase()
+    );
+  },
+
+  // Rechercher un pays par son nom complet
+  getCountryByName(name: string): Country | undefined {
+    return countriesData.find(
+      (country) => country.name.toLowerCase() === name.toLowerCase()
     );
   },
 
@@ -161,33 +166,38 @@ export const countriesService = {
   },
 
   // Dé-formater un numéro reçu de l'API (format 00228909090900 -> "90 90 90 90")
-  parsePhoneNumberFromAPI(phoneNumber: string): { countryCode: string; localNumber: string } {
+  parsePhoneNumberFromAPI(phoneNumber: string): {
+    countryCode: string;
+    localNumber: string;
+  } {
     // Le format API est "00228909090900"
     // On doit extraire le code pays (002 + XX pour l'abréviation)
-    
+
     if (!phoneNumber.startsWith("00")) {
       return { countryCode: "+228", localNumber: phoneNumber };
     }
 
     const numberWithoutPrefix = phoneNumber.substring(2); // Enlever "00"
-    
+
     // Chercher le code pays en voyant lequel match
     const countries = countriesService.getAllCountries();
-    
+
     for (const country of countries) {
       // Le code country est au format "+228"
       const codeWithoutPlus = country.code.substring(1); // Enlever le "+"
-      
+
       if (numberWithoutPrefix.startsWith(codeWithoutPlus)) {
-        const localNumber = numberWithoutPrefix.substring(codeWithoutPlus.length);
-        
+        const localNumber = numberWithoutPrefix.substring(
+          codeWithoutPlus.length
+        );
+
         // Formater le numéro local en groupe de 2 chiffres si possible
         let formatted = "";
         for (let i = 0; i < localNumber.length; i += 2) {
           if (i > 0) formatted += " ";
           formatted += localNumber.substring(i, i + 2);
         }
-        
+
         return {
           countryCode: country.code,
           localNumber: formatted.trim(),

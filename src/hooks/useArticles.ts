@@ -61,10 +61,8 @@ export function useCreateStockArticle() {
       // Mettre à jour le cache de l'article créé
       queryClient.setQueryData(articleKeys.detail(newArticle.id), newArticle);
 
-      console.log("✅ Article créé avec succès:", newArticle);
     },
     onError: (error) => {
-      console.error("❌ Erreur lors de la création de l'article:", error);
     },
   });
 }
@@ -90,10 +88,8 @@ export function useUpdateStockArticle() {
         updatedArticle
       );
 
-      console.log("✅ Article mis à jour avec succès:", updatedArticle);
     },
     onError: (error) => {
-      console.error("❌ Erreur lors de la mise à jour de l'article:", error);
     },
   });
 }
@@ -117,10 +113,8 @@ export function useDeleteStockArticle() {
         queryKey: articleKeys.detail(deletedId),
       });
 
-      console.log("✅ Article supprimé avec succès:", deletedId);
     },
     onError: (error) => {
-      console.error("❌ Erreur lors de la suppression de l'article:", error);
     },
   });
 }

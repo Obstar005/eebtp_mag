@@ -97,7 +97,6 @@ export class ProjetApiService {
         filters.limit || 10
       );
     } catch (error) {
-      console.error("Erreur lors de la récupération des projets:", error);
       throw error;
     }
   }
@@ -114,9 +113,6 @@ export class ProjetApiService {
   async createProjet(data: CreateProjetData): Promise<Projet> {
     const apiData = createProjetDataToApiCreateProjet(data);
 
-    console.log("🚀 Création du projet avec les données:", data);
-    console.log("📤 Données envoyées à l'API:", apiData);
-
     try {
       // Créer le projet avec son magasin associé en un seul appel
       const response = await client.post<ApiCreateProjetResponse>(
@@ -131,18 +127,10 @@ export class ProjetApiService {
       // Si l'API a créé automatiquement le magasin, nous n'avons plus besoin de le créer séparément
       // Si des magasins supplémentaires sont spécifiés (au-delà du premier), les créer séparément
       if (data.magasins && data.magasins.length > 1) {
-        console.log(
-          `🏪 Création de ${
-            data.magasins.length - 1
-          } magasin(s) supplémentaire(s) pour le projet ${nouveauProjet.id}...`
-        );
-
         // Créer les magasins supplémentaires (à partir du deuxième)
         for (let i = 1; i < data.magasins.length; i++) {
           const magasinData = data.magasins[i];
           try {
-            console.log("🏪 Création du magasin supplémentaire:", magasinData);
-
             const magasinPayload: CreateMagasinData = {
               name: magasinData.name,
               adresse: magasinData.adresse || "",
@@ -153,12 +141,7 @@ export class ProjetApiService {
               magasinPayload,
               data.creator || 1
             );
-            console.log(`✅ Magasin "${magasinData.name}" créé avec succès`);
           } catch (magasinError) {
-            console.error(
-              `❌ Erreur lors de la création du magasin "${magasinData.name}":`,
-              magasinError
-            );
             // On continue même si un magasin échoue
           }
         }
@@ -166,7 +149,6 @@ export class ProjetApiService {
 
       return nouveauProjet;
     } catch (error) {
-      console.error("❌ Erreur lors de la création du projet:", error);
       throw error;
     }
   }
@@ -234,15 +216,12 @@ export class ProjetApiService {
 
   // Récupérer les magasins d'un projet
   async getProjetMagasins(projetId: number): Promise<Magasin[]> {
-    // Récupérer tous les magasins puis filtrer côté client
+    // Utiliser l'endpoint spécifique pour récupérer les magasins d'un projet
     const response = await client.get<ApiMagasin[]>(
-      `${this.basePath}/liste-magasins`
+      `${this.basePath}/liste-magasins-by-projet/${projetId}`
     );
 
-    // Filtrer pour ne garder que les magasins du projet spécifié
-    const magasinsFiltered = response.data.filter((m) => m.projet === projetId);
-
-    return magasinsFiltered.map(apiMagasinToMagasin);
+    return response.data.map(apiMagasinToMagasin);
   }
 
   // Ajouter un magasin à un projet
@@ -275,28 +254,14 @@ export class ProjetApiService {
   async getProjetComptes(projetId: number): Promise<CompteAssocie[]> {
     try {
       // 1. Récupérer les détails du projet pour avoir la liste des IDs de comptes
-      console.log(
-        `🔍 ProjetApiService: Récupération du projet ${projetId} pour obtenir les comptes associés...`
-      );
       const projetResponse = await client.get<ApiProjet>(
         `${this.basePath}/projet-detail/${projetId}`
       );
       const projet = projetResponse.data;
 
-      // Log de la réponse complète pour déboguer
-      console.log(`📝 Projet détails complets:`, projet);
-      console.log(`📝 Type de projet.comptes:`, typeof projet.comptes);
-      console.log(`📝 Contenu de projet.comptes:`, projet.comptes);
-
       if (!projet.comptes || projet.comptes.length === 0) {
-        console.log(`⚠️ Aucun compte associé au projet ${projetId}`);
         return [];
       }
-
-      console.log(
-        `✅ Comptes associés au projet ${projetId} (IDs):`,
-        projet.comptes
-      );
 
       // 2. Récupérer les détails de chaque utilisateur associé au projet
       const comptesAssocies: CompteAssocie[] = [];
@@ -321,10 +286,6 @@ export class ProjetApiService {
             actions: ["view", "edit"],
           });
         } catch (userError) {
-          console.warn(
-            `❗ Erreur lors de la récupération des détails de l'utilisateur ${userId}:`,
-            userError
-          );
           // Ajouter une version simplifiée en cas d'erreur
           comptesAssocies.push({
             userId: userId,
@@ -338,10 +299,6 @@ export class ProjetApiService {
 
       return comptesAssocies;
     } catch (error) {
-      console.error(
-        "❌ Erreur lors de la récupération des comptes associés au projet:",
-        error
-      );
       throw new Error("Impossible de récupérer les comptes associés au projet");
     }
   }
@@ -349,17 +306,11 @@ export class ProjetApiService {
   // Récupérer les photos d'un projet
   async getProjetPhotos(projetId: number): Promise<ApiProjetPhoto[]> {
     try {
-      console.log(`🔍 Récupération des photos du projet ${projetId}...`);
       const response = await client.get<ApiProjetPhoto[]>(
         `${this.basePath}/liste-photos-by-projet/${projetId}`
       );
-      console.log(`✅ Photos du projet récupérées:`, response.data);
       return response.data;
     } catch (error) {
-      console.error(
-        "Erreur lors de la récupération des photos du projet:",
-        error
-      );
       return [];
     }
   }
@@ -387,10 +338,8 @@ export class ProjetApiService {
           },
         }
       );
-      console.log(`✅ Photo ajoutée au projet ${projetId}:`, response.data);
       return response.data;
     } catch (error) {
-      console.error("Erreur lors de l'ajout de la photo au projet:", error);
       throw new Error("Impossible d'ajouter la photo au projet");
     }
   }
@@ -399,9 +348,7 @@ export class ProjetApiService {
   async deleteProjetPhoto(photoId: number): Promise<void> {
     try {
       await client.delete(`${this.basePath}/projet-photo-delete/${photoId}`);
-      console.log(`✅ Photo ${photoId} supprimée`);
     } catch (error) {
-      console.error("Erreur lors de la suppression de la photo:", error);
       throw new Error("Impossible de supprimer la photo du projet");
     }
   }

@@ -86,7 +86,6 @@ export function AddEditMagasinPage() {
       }
       navigate("/magasins");
     } catch (error) {
-      console.error("Erreur lors de la sauvegarde:", error);
     }
   };
 

@@ -80,7 +80,6 @@ export default function EditArticlePage() {
       await updateArticleMutation.mutateAsync(updateData);
       navigate("/articles");
     } catch (error) {
-      console.error("Erreur lors de la modification:", error);
     }
   };
 

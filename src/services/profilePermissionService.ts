@@ -85,7 +85,6 @@ export class ProfilePermissionService {
       // Récupérer le profil détaillé
       const profile = await this.getProfileDetail(profileId);
       if (!profile) {
-        console.warn(`Profil non trouvé: ${profileId}`);
         return null;
       }
 
@@ -147,7 +146,6 @@ export class ProfilePermissionService {
   async getUserPermissions(user: User): Promise<ProfilePermissions | null> {
     // Utiliser l'ID du profil depuis l'utilisateur (user.profileId)
     if (!user.profileId) {
-      console.warn(`Aucun profil associé à l'utilisateur: ${user.id}`);
       return null;
     }
 

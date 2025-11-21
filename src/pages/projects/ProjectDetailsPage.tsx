@@ -4,12 +4,11 @@ import { ArrowLeft, Eye, Edit, Trash2, Upload } from "lucide-react";
 import {
   useProjet,
   useDeleteProjet,
-  useProjetMagasins,
   useProjetPhotos,
-  useAddPhotoToProjet,
   useDeleteProjetPhoto,
   useProjetComptes,
 } from "../../hooks/useProjets";
+import { useAccounts } from "../../hooks/useAccounts";
 import { useCountries } from "../../hooks/useCountries";
 import { useModal } from "../../hooks/useModal";
 import { ConfirmationModal } from "../../components/layout/ConfirmationModal";
@@ -22,33 +21,39 @@ export function ProjectDetailsPage() {
 
   // Hooks
   const { data: projet, isLoading } = useProjet(projetId);
-  const { data: magasins, isLoading: isLoadingMagasins } =
-    useProjetMagasins(projetId);
   const { data: photos, isLoading: isLoadingPhotos } =
     useProjetPhotos(projetId);
   const { data: comptes, isLoading: isLoadingComptes } =
     useProjetComptes(projetId);
+  const { data: accounts } = useAccounts({});
+
+  // Fonction pour récupérer le nom d'un utilisateur par son ID
+  const getUserNameById = (userId: number | undefined) => {
+    if (!userId || !accounts?.data) return "Non défini";
+    const account = accounts.data.find((acc) => acc.id === userId.toString());
+    return account ? `${account.prenoms} ${account.nom}` : "Non défini";
+  };
 
   // Log pour déboguer la récupération des comptes associés
-  console.log("🔍 Projet détails:", projet);
-  console.log("🔍 Comptes associés:", comptes);
-  console.log("📸 Photos récupérées:", photos);
-  console.log("📸 Nombre de photos:", photos?.length || 0);
-  console.log("📸 État de chargement des photos:", isLoadingPhotos);
-  const { getCountryByAbbreviation, getTogoCountry } = useCountries();
+  const { getCountryByAbbreviation, getCountryByName, getTogoCountry } =
+    useCountries();
   const deleteProjetMutation = useDeleteProjet();
   const confirmDeleteModal = useModal();
   const [showEditMagasinModal, setShowEditMagasinModal] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [photoDescription, setPhotoDescription] = useState("");
-  const addPhotoMutation = useAddPhotoToProjet();
   const deletePhotoMutation = useDeleteProjetPhoto();
 
   // Fonction pour obtenir le pays du projet
   const getProjectCountry = () => {
     if (!projet?.pays) return getTogoCountry(); // Fallback vers Togo
 
-    const country = getCountryByAbbreviation(projet.pays);
+    // L'API retourne le nom complet du pays (ex: "Ghana"), pas l'abréviation
+    let country = getCountryByName(projet.pays);
+
+    // Si non trouvé par nom, essayer par abréviation (pour compatibilité)
+    if (!country) {
+      country = getCountryByAbbreviation(projet.pays);
+    }
+
     return country || getTogoCountry(); // Fallback vers Togo si pays non trouvé
   };
 
@@ -70,34 +75,7 @@ export function ProjectDetailsPage() {
       await deleteProjetMutation.mutateAsync(projetId);
       confirmDeleteModal.close();
       navigate("/projects");
-    } catch (error) {
-      console.error("Erreur lors de la suppression:", error);
-    }
-  };
-
-  // Gestion des photos
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setSelectedFile(event.target.files[0]);
-    }
-  };
-
-  const handlePhotoUpload = async () => {
-    if (!selectedFile) return;
-
-    try {
-      await addPhotoMutation.mutateAsync({
-        projetId,
-        photo: selectedFile,
-        description: photoDescription,
-      });
-
-      // Réinitialiser le formulaire après succès
-      setSelectedFile(null);
-      setPhotoDescription("");
-    } catch (error) {
-      console.error("Erreur lors de l'ajout de la photo:", error);
-    }
+    } catch (error) {}
   };
 
   const handleDeletePhoto = async (photoId: number) => {
@@ -105,9 +83,7 @@ export function ProjectDetailsPage() {
 
     try {
       await deletePhotoMutation.mutateAsync({ photoId, projetId });
-    } catch (error) {
-      console.error("Erreur lors de la suppression de la photo:", error);
-    }
+    } catch (error) {}
   };
 
   if (isLoading) {
@@ -203,7 +179,9 @@ export function ProjectDetailsPage() {
                     Date de fin
                   </label>
                   <div className="p-3 bg-gray-50 rounded-lg">
-                    {formatDate(projet.date_fin)}
+                    {projet.date_fin
+                      ? formatDate(projet.date_fin)
+                      : "Non définie"}
                   </div>
                 </div>
               </div>
@@ -214,8 +192,8 @@ export function ProjectDetailsPage() {
                     Date de création
                   </label>
                   <div className="p-3 bg-gray-50 rounded-lg">
-                    {projet.date_debut
-                      ? formatDate(projet.date_debut)
+                    {projet.date_creation
+                      ? formatDate(projet.date_creation)
                       : "Non définie"}
                   </div>
                 </div>
@@ -224,8 +202,8 @@ export function ProjectDetailsPage() {
                     Date de mise à jour
                   </label>
                   <div className="p-3 bg-gray-50 rounded-lg">
-                    {projet.date_fin
-                      ? formatDate(projet.date_fin)
+                    {projet.date_modification
+                      ? formatDate(projet.date_modification)
                       : "Non définie"}
                   </div>
                 </div>
@@ -253,6 +231,42 @@ export function ProjectDetailsPage() {
             </div>
           </div>
 
+          {/* Rôles du Projet */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              Rôles du Projet
+            </h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Chef de projet
+                </label>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  {getUserNameById(projet.chef_projet)}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Magasinier
+                </label>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  {getUserNameById(projet.magasinier)}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Chef de chantier
+                </label>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  {getUserNameById(projet.chef_chantier)}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Magasins Associés */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
@@ -260,48 +274,49 @@ export function ProjectDetailsPage() {
             </h2>
 
             <div className="space-y-3">
-              {isLoadingMagasins ? (
+              {isLoading ? (
                 <div className="flex items-center justify-center h-20">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                 </div>
-              ) : magasins && magasins.length > 0 ? (
+              ) : projet && projet.magasin_associe ? (
                 <>
-                  {magasins.map((magasin) => (
-                    <div
-                      key={magasin.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-                    >
-                      <div>
-                        <span className="text-sm font-medium text-gray-900">
-                          {magasin.name}
-                        </span>
-                        <div className="text-xs text-gray-500">
-                          {magasin.adresse || "Adresse non définie"}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() =>
-                            navigate(`/projects/magasins/${magasin.id}`)
-                          }
-                          className="bg-green-600 text-white p-1 rounded text-xs"
-                          title="Voir le magasin"
-                        >
-                          <Eye className="h-3 w-3" />
-                        </button>
-                        <button
-                          onClick={() => setShowEditMagasinModal(true)}
-                          className="bg-yellow-500 text-white p-1 rounded text-xs"
-                          title="Modifier le magasin"
-                        >
-                          <Edit className="h-3 w-3" />
-                        </button>
+                  <div
+                    key={projet.magasin_associe.id}
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                  >
+                    <div>
+                      <span className="text-sm font-medium text-gray-900">
+                        {projet.magasin_associe.nom}
+                      </span>
+                      <div className="text-xs text-gray-500">
+                        {projet.magasin_associe.adresse ||
+                          "Adresse non définie"}
                       </div>
                     </div>
-                  ))}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() =>
+                          navigate(
+                            `/projects/magasins/${projet.magasin_associe?.id}`
+                          )
+                        }
+                        className="bg-green-600 text-white p-1 rounded text-xs"
+                        title="Voir le magasin"
+                      >
+                        <Eye className="h-3 w-3" />
+                      </button>
+                      <button
+                        onClick={() => setShowEditMagasinModal(true)}
+                        className="bg-yellow-500 text-white p-1 rounded text-xs"
+                        title="Modifier le magasin"
+                      >
+                        <Edit className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
                   <button className="w-max p-3 text-blue-600 hover:bg-blue-50 transition-colors">
-                    {magasins.length}{" "}
-                    {magasins.length > 1 ? "Magasins" : "Magasin"}
+                    {projet.magasin_associe ? 1 : 0}{" "}
+                    {projet.magasin_associe ? "Magasin" : "Magasins"}
                   </button>
                 </>
               ) : (
@@ -451,11 +466,13 @@ export function ProjectDetailsPage() {
       />
 
       {/* Modal d'édition de magasin */}
-      <EditMagasinModal
-        isOpen={showEditMagasinModal}
-        onClose={() => setShowEditMagasinModal(false)}
-        magasinId={1}
-      />
+      {projet.magasin_associe && (
+        <EditMagasinModal
+          isOpen={showEditMagasinModal}
+          onClose={() => setShowEditMagasinModal(false)}
+          magasinId={projet.magasin_associe.id}
+        />
+      )}
     </div>
   );
 }

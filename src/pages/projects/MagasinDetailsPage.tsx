@@ -86,6 +86,7 @@ export function MagasinDetailsPage() {
   const confirmDeleteModal = useModal();
 
   const articles = articlesResponse?.data || [];
+  console.log("Articles loaded", articles);
 
   const handleDeleteArticle = (articleId: number) => {
     setSelectedArticleId(articleId);
@@ -98,9 +99,7 @@ export function MagasinDetailsPage() {
         await deleteArticleMutation.mutateAsync(selectedArticleId);
         confirmDeleteModal.close();
         setSelectedArticleId(null);
-      } catch (error) {
-        console.error("Erreur lors de la suppression:", error);
-      }
+      } catch (error) {}
     }
   };
 
@@ -240,7 +239,7 @@ export function MagasinDetailsPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Quantité
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -251,15 +250,14 @@ export function MagasinDetailsPage() {
                         <td className="px-6 py-3 whitespace-nowrap">
                           <div className="font-medium text-gray-900">
                             {article.name}
+                            <span className="text-gray-400">
+                              {" "}
+                              ({article.type_enum})
+                            </span>
                           </div>
                         </td>
                         <td className="px-6 py-3 whitespace-nowrap">
-                          <div className="text-gray-900">
-                            {article.quantite} t
-                          </div>
-                        </td>
-                        <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                          {/* Colonne état supprimée */}
+                          <div className="text-gray-900">- t</div>
                         </td>
                         <td className="px-6 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-2">
@@ -415,7 +413,7 @@ export function MagasinDetailsPage() {
                       {magasin.projet.name}
                     </div>
                     {/* Description du projet si disponible */}
-                    {magasin.projet.description && (
+                    {magasin.projet?.description && (
                       <div className="text-sm text-gray-600 mt-1">
                         {magasin.projet.description}
                       </div>
@@ -425,7 +423,7 @@ export function MagasinDetailsPage() {
                     </div>
                     {/* Dates du projet si disponibles */}
                     <div className="flex flex-wrap gap-4 mt-2 text-xs text-gray-500">
-                      {magasin.projet.date_debut && (
+                      {magasin.projet?.date_debut && (
                         <span>
                           Début:{" "}
                           {new Date(
@@ -433,7 +431,7 @@ export function MagasinDetailsPage() {
                           ).toLocaleDateString("fr-FR")}
                         </span>
                       )}
-                      {magasin.projet.date_fin && (
+                      {magasin.projet?.date_fin && (
                         <span>
                           Fin prévue:{" "}
                           {new Date(magasin.projet.date_fin).toLocaleDateString(
@@ -445,19 +443,19 @@ export function MagasinDetailsPage() {
                     <div className="flex items-center gap-2 mt-2">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          magasin.projet.status === "En cours"
+                          magasin.projet?.status === "En cours"
                             ? "bg-green-100 text-green-800"
-                            : magasin.projet.status === "Terminé"
+                            : magasin.projet?.status === "Terminé"
                             ? "bg-blue-100 text-blue-800"
-                            : magasin.projet.status === "En attente"
+                            : magasin.projet?.status === "En attente"
                             ? "bg-yellow-100 text-yellow-800"
                             : "bg-gray-100 text-gray-800"
                         }`}
                       >
-                        {magasin.projet.status || "En cours"}
+                        {magasin.projet?.status || "En cours"}
                       </span>
                       {/* Budget si disponible */}
-                      {magasin.projet.budget && (
+                      {magasin.projet?.budget && (
                         <span className="text-xs text-gray-500">
                           Budget:{" "}
                           {magasin.projet.budget?.toLocaleString("fr-FR")} €

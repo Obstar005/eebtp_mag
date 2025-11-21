@@ -222,7 +222,6 @@ export function AddAccountPage() {
 
       navigate("/accounts");
     } catch (error) {
-      console.error("Erreur lors de la création du compte:", error);
 
       // Vérifier si l'erreur est liée à un ID manquant
       if (

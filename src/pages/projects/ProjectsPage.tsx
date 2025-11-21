@@ -82,7 +82,6 @@ export function ProjectsPage() {
       confirmDeleteModal.close();
       setSelectedProjetId(null);
     } catch (error) {
-      console.error("Erreur lors de la suppression:", error);
     }
   };
 

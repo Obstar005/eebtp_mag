@@ -328,23 +328,19 @@ export function useUpdateUserRoleInProjet() {
         // Mettre à jour le champ approprié selon le rôle
         switch (newRole) {
           case "chef_projet":
-            updateData.chef_projet_user_id = userId;
-            break;
-          case "directeur_travaux":
-            updateData.directeur_travaux_user_id = userId;
+            updateData.chef_projet = userId;
             break;
           case "chef_chantier":
-            updateData.chef_chantier_user_id = userId;
+            updateData.chef_chantier = userId;
             break;
+          case "magasinier":
+            updateData.magasinier = userId;
+            break;
+          // Les autres rôles ne sont pas supportés par l'API actuelle
+          case "directeur_travaux":
           case "coordinateur_travaux":
-            updateData.coordinateur_travaux_user_id = userId;
-            break;
-          case "chef_equipe":
-            updateData.chef_equipe_user_id = userId;
-            break;
-          case "magasinier": {
-            // Pour les magasiniers, s'assurer qu'ils sont dans la liste des comptes associés
-            // mais ne pas leur attribuer un rôle spécifique dans les champs du projet
+          case "chef_equipe": {
+            // Pour ces rôles, simplement s'assurer qu'ils sont dans la liste des comptes associés
             const comptesIds =
               projet.comptesAssocies?.map((c) => c.userId) || [];
             if (!comptesIds.includes(userId)) {

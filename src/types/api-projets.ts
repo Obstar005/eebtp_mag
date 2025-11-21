@@ -11,6 +11,7 @@ export interface ApiProjet {
   date_debut: string; // Format: YYYY-MM-DD
   date_fin?: string; // Format: YYYY-MM-DD
   is_active: boolean;
+  magasin_associe?: ApiMagasin
 }
 
 export interface ApiMagasin {

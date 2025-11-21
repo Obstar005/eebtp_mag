@@ -7,9 +7,11 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  userInfoError: string | null;
   login: (user: User, token: string) => void;
   logout: () => Promise<void>;
   refreshUserInfo: () => Promise<void>;
+  clearUserInfoError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -29,6 +31,7 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [userInfoError, setUserInfoError] = useState<string | null>(null);
 
   // Vérifier si l'authentification est désactivée pour le débogage
   const isAuthDisabled = import.meta.env.VITE_ENABLE_VERIFICATION === "false";
@@ -71,6 +74,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Récupérer les informations utilisateur depuis l'API
   const refreshUserInfo = async () => {
     try {
+      setUserInfoError(null); // Réinitialiser l'erreur
       const token = localStorage.getItem("auth_token");
       if (!token) {
         throw new Error("Aucun token d'authentification");
@@ -80,15 +84,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       localStorage.setItem("user_data", JSON.stringify(userInfo));
       setUser(userInfo);
     } catch (error) {
-      console.error(
-        "Erreur lors de la récupération des infos utilisateur:",
-        error
-      );
-      // En cas d'erreur, déconnecter l'utilisateur localement
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("user_data");
-      setUser(null);
+      // Stocker l'erreur pour affichage dans le modal
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Impossible de récupérer vos informations utilisateur";
+      setUserInfoError(errorMessage);
+
+      // NE PAS déconnecter automatiquement, laisser l'utilisateur décider
+      throw error; // Propager l'erreur pour gestion dans les composants
     }
+  };
+
+  const clearUserInfoError = () => {
+    setUserInfoError(null);
   };
 
   const logout = async () => {
@@ -105,9 +114,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     user,
     isAuthenticated: !!user,
     isLoading,
+    userInfoError,
     login,
     logout,
     refreshUserInfo,
+    clearUserInfoError,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

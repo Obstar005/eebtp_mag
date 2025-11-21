@@ -60,14 +60,13 @@ export class DemandeService {
     filter: DemandeFilter = {}
   ): Promise<PaginatedResponse<MaterialRequest>> {
     try {
-      console.log("📋 Récupération des demandes avec filtres:", filter);
 
       // Récupérer les demandes de l'API
       const apiDemandes = await demandeApiService.getDemandesFiltered(filter);
+      console.log("Api data", apiDemandes);
 
       // Transformer en format frontend
       let demandes = apiDemandes.map(apiDemandeToMaterialRequest);
-
       // Filtrage côté client pour les champs non supportés par l'API
       if (filter.search) {
         const searchLower = filter.search.toLowerCase();
@@ -79,7 +78,6 @@ export class DemandeService {
         );
       }
 
-      console.log("✅ Demandes récupérées et transformées:", demandes.length);
 
       return {
         data: demandes,
@@ -91,7 +89,6 @@ export class DemandeService {
         },
       };
     } catch (error) {
-      console.error("❌ Erreur lors de la récupération des demandes:", error);
       throw error;
     }
   }
@@ -101,15 +98,12 @@ export class DemandeService {
    */
   async getDemande(id: string): Promise<MaterialRequest> {
     try {
-      console.log("📦 Récupération de la demande:", id);
 
       const apiDemande = await demandeApiService.getDemandeById(parseInt(id));
       const demande = apiDemandeToMaterialRequest(apiDemande);
 
-      console.log("✅ Demande récupérée et transformée:", demande);
       return demande;
     } catch (error) {
-      console.error("❌ Erreur lors de la récupération de la demande:", error);
       throw error;
     }
   }
@@ -119,7 +113,6 @@ export class DemandeService {
    */
   async getDemandesByStatus(status: string): Promise<MaterialRequest[]> {
     try {
-      console.log("📋 Récupération des demandes par statut:", status);
 
       const demandes = await this.getDemandes({ status });
       return demandes.data;
@@ -144,7 +137,6 @@ export class DemandeService {
     raison: string;
   }): Promise<MaterialRequest> {
     try {
-      console.log("📤 Création d'une nouvelle demande:", data);
 
       const apiData: ApiCreateDemandeRequest = {
         stock_item: data.stock_item_id,
@@ -156,10 +148,8 @@ export class DemandeService {
       const apiDemande = await demandeApiService.createDemande(apiData);
       const demande = apiDemandeToMaterialRequest(apiDemande);
 
-      console.log("✅ Demande créée avec succès:", demande);
       return demande;
     } catch (error) {
-      console.error("❌ Erreur lors de la création de la demande:", error);
       throw error;
     }
   }
@@ -174,7 +164,6 @@ export class DemandeService {
     data?: { motif?: string }
   ): Promise<MaterialRequest> {
     try {
-      console.log("✅ Confirmation de la demande:", id);
 
       const apiData: ApiConfirmerDemandeRequest = {
         confirmed: true,
@@ -187,10 +176,8 @@ export class DemandeService {
       );
       const demande = apiDemandeToMaterialRequest(apiDemande);
 
-      console.log("✅ Demande confirmée avec succès:", demande);
       return demande;
     } catch (error) {
-      console.error("❌ Erreur lors de la confirmation de la demande:", error);
       throw error;
     }
   }
@@ -203,7 +190,6 @@ export class DemandeService {
     data?: { motif?: string }
   ): Promise<MaterialRequest> {
     try {
-      console.log("✅ Approbation de la demande:", id);
 
       const apiData: ApiApprouverDemandeRequest = {
         approved: true,
@@ -216,10 +202,8 @@ export class DemandeService {
       );
       const demande = apiDemandeToMaterialRequest(apiDemande);
 
-      console.log("✅ Demande approuvée avec succès:", demande);
       return demande;
     } catch (error) {
-      console.error("❌ Erreur lors de l'approbation de la demande:", error);
       throw error;
     }
   }
@@ -232,7 +216,6 @@ export class DemandeService {
     data?: { motif?: string }
   ): Promise<MaterialRequest> {
     try {
-      console.log("✅ Validation de la demande:", id);
 
       const apiData: ApiValiderDemandeRequest = {
         validated: true,
@@ -245,10 +228,8 @@ export class DemandeService {
       );
       const demande = apiDemandeToMaterialRequest(apiDemande);
 
-      console.log("✅ Demande validée avec succès:", demande);
       return demande;
     } catch (error) {
-      console.error("❌ Erreur lors de la validation de la demande:", error);
       throw error;
     }
   }
@@ -258,7 +239,6 @@ export class DemandeService {
    */
   async rejeterDemande(id: string, motif: string): Promise<MaterialRequest> {
     try {
-      console.log("❌ Rejet de la demande:", id, motif);
 
       const apiData: ApiRejeterDemandeRequest = {
         rejected: true,
@@ -271,10 +251,8 @@ export class DemandeService {
       );
       const demande = apiDemandeToMaterialRequest(apiDemande);
 
-      console.log("✅ Demande rejetée avec succès:", demande);
       return demande;
     } catch (error) {
-      console.error("❌ Erreur lors du rejet de la demande:", error);
       throw error;
     }
   }
@@ -286,7 +264,6 @@ export class DemandeService {
    */
   async getDemandeStats(periode: PeriodeType = "total"): Promise<DemandeStats> {
     try {
-      console.log("📊 Récupération des statistiques des demandes...");
 
       const apiStats = await demandeApiService.getDemandeStats(periode);
 
@@ -300,7 +277,6 @@ export class DemandeService {
         livrees: apiStats.demandes_livrees,
       };
 
-      console.log("✅ Statistiques récupérées:", stats);
       return stats;
     } catch (error) {
       console.error(

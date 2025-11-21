@@ -44,7 +44,6 @@ export function ProfileAddPage() {
       const formattedError = extractApiError(error);
       const displayMessage = formatErrorForDisplay(formattedError);
 
-      console.error("Erreur lors de la création:", error);
 
       // Détection d'un cas fréquent : profil existant
       const isDuplicate =

@@ -49,11 +49,9 @@ class ApiClient {
         const username = import.meta.env.VITE_API_USERNAME;
         const password = import.meta.env.VITE_API_PASSWORD;
         if (username && password && username !== "your_username") {
-          console.log("🔑 Authentification avec Basic Auth");
           const basicAuth = btoa(`${username}:${password}`);
           config.headers.Authorization = `Basic ${basicAuth}`;
         } else {
-          console.warn("⚠️ Aucune méthode d'authentification disponible");
         }
 
         return config;
@@ -98,7 +96,6 @@ class ApiClient {
               originalRequest.headers.Authorization = `Bearer ${token}`;
               return this.axiosInstance.request(originalRequest);
             } catch (refreshError) {
-              console.error("Échec du refresh token:", refreshError);
               // Échec du refresh, déconnexion complète
               this.clearAuthAndRedirect();
             }

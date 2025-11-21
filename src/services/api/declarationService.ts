@@ -202,7 +202,6 @@ const mockDeclarationService = {
   createDeclaration: async (
     data: CreateDeclarationData
   ): Promise<Declaration> => {
-    console.log("Création déclaration:", data);
     return {
       id: Date.now(),
       type_enum: data.type_enum,
@@ -226,7 +225,6 @@ const mockDeclarationService = {
   updateDeclaration: async (
     data: UpdateDeclarationData
   ): Promise<Declaration> => {
-    console.log("Mise à jour déclaration:", data);
     return {
       id: data.id,
       type_enum: data.type_enum || "entree",
@@ -249,7 +247,6 @@ const mockDeclarationService = {
 
   // Supprimer une déclaration
   deleteDeclaration: async (id: number): Promise<void> => {
-    console.log("Suppression déclaration:", id);
   },
 
   // Statistiques des déclarations

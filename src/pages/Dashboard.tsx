@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { MoreHorizontal } from "lucide-react";
 import {
   useFluctuationEntrees,
@@ -7,12 +7,20 @@ import {
 import { useProjetsSelect } from "../hooks/useProjetsSelect";
 import { useProjetMagasins } from "../hooks/useProjets";
 import { useStockArticles } from "../hooks/useMagasins";
-import { FluctuationChart } from "../components/FluctuationChart";
+import { FluctuationChartJS } from "../components/FluctuationChartJS";
 import type { FluctuationParams } from "../types/fluctuation";
 
 export function Dashboard() {
   // Récupérer les projets de l'API
   const projetsQuery = useProjetsSelect();
+
+  // Si aucun projet sélectionné, prendre le premier renvoyé par l'API
+  useEffect(() => {
+    if (!selectedProject && projetsQuery.data && projetsQuery.data.length > 0) {
+      setSelectedProject(projetsQuery.data[0].id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projetsQuery.data]);
 
   // États pour les menus déroulants
   const [openProjectMenu, setOpenProjectMenu] = useState(false);
@@ -22,22 +30,22 @@ export function Dashboard() {
   const [openProductSortieMenu, setOpenProductSortieMenu] = useState(false);
 
   // Filtres globaux (affectent les deux graphiques)
-  const [selectedProject, setSelectedProject] = useState<number | null>(1);
+  const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<
     "jour" | "semaine" | "mois" | "total"
-  >("jour");
+  >("mois");
 
   // Filtres spécifiques au graphique Entrées
   const [selectedProductEntree, setSelectedProductEntree] = useState<
     number | null
-  >(1);
+  >(null);
   const [selectedTypeEntree, setSelectedTypeEntree] =
     useState<string>("entree");
 
   // Filtres spécifiques au graphique Sorties
   const [selectedProductSortie, setSelectedProductSortie] = useState<
     number | null
-  >(1);
+  >(null);
 
   // Récupérer les magasins du projet sélectionné
   const magasinsQuery = useProjetMagasins(selectedProject || 0);
@@ -58,15 +66,32 @@ export function Dashboard() {
     );
   }, [articlesQuery.data?.data]);
 
+  // S'assurer que le produit sélectionné existe dans la liste des articles
+  useEffect(() => {
+    if (articlesList.length === 0) return;
+
+    const ids = articlesList.map((a) => a.id);
+
+    if (!ids.includes(selectedProductEntree as number)) {
+      setSelectedProductEntree(articlesList[0].id);
+    }
+    if (!ids.includes(selectedProductSortie as number)) {
+      setSelectedProductSortie(articlesList[0].id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [articlesList]);
+
   // Paramètres pour les données d'entrées
   const fluctuationParamsEntree: FluctuationParams | null = useMemo(() => {
     if (!selectedProject || !selectedProductEntree) return null;
-    return {
+    const params = {
       projetId: selectedProject,
       produitId: selectedProductEntree,
       periode: selectedPeriod,
       typeEntree: selectedTypeEntree,
     };
+    console.log("📋 PARAMS ENTREES:", params);
+    return params;
   }, [
     selectedProject,
     selectedProductEntree,
@@ -77,11 +102,13 @@ export function Dashboard() {
   // Paramètres pour les données de sorties
   const fluctuationParamsSortie: FluctuationParams | null = useMemo(() => {
     if (!selectedProject || !selectedProductSortie) return null;
-    return {
+    const params = {
       projetId: selectedProject,
       produitId: selectedProductSortie,
       periode: selectedPeriod,
     };
+    console.log("📋 PARAMS SORTIES:", params);
+    return params;
   }, [selectedProject, selectedProductSortie, selectedPeriod]);
 
   // Récupérer les données d'entrées ET sorties
@@ -308,7 +335,10 @@ export function Dashboard() {
                   }
                   className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-blue-900 rounded hover:bg-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 >
-                  <span>Article</span>
+                  <span>
+                    {articlesList.find((a) => a.id === selectedProductEntree)
+                      ?.name || "Article"}
+                  </span>
                   <svg
                     className={`w-3 h-3 transition-transform ${
                       openProductEntreeMenu ? "rotate-180" : ""
@@ -371,7 +401,7 @@ export function Dashboard() {
                   <svg
                     className={`w-3 h-3 transition-transform ${
                       openTypeEntreeMenu ? "rotate-180" : ""
-                    }`}
+                  }`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -411,7 +441,7 @@ export function Dashboard() {
               </div>
             </div>
           </div>
-          <FluctuationChart
+          <FluctuationChartJS
             title=""
             entreeData={entreeQuery.data || null}
             sortieData={null}
@@ -435,7 +465,10 @@ export function Dashboard() {
                   }
                   className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-blue-900 rounded hover:bg-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 >
-                  <span>Article</span>
+                  <span>
+                    {articlesList.find((a) => a.id === selectedProductSortie)
+                      ?.name || "Article"}
+                  </span>
                   <svg
                     className={`w-3 h-3 transition-transform ${
                       openProductSortieMenu ? "rotate-180" : ""
@@ -489,7 +522,7 @@ export function Dashboard() {
               </div>
             </div>
           </div>
-          <FluctuationChart
+          <FluctuationChartJS
             title=""
             entreeData={null}
             sortieData={sortieQuery.data || null}

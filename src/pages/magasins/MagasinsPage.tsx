@@ -39,7 +39,6 @@ export default function MagasinsPage() {
         confirmDeleteModal.close();
         setSelectedMagasinId(null);
       } catch (error) {
-        console.error("Erreur lors de la suppression:", error);
       }
     }
   };
@@ -75,8 +74,6 @@ export default function MagasinsPage() {
 
       {/* Section principale */}
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">Liste</h2>
-
         {magasins.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500">Aucun magasin disponible</p>
@@ -88,7 +85,7 @@ export default function MagasinsPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
             {magasins.map((magasin) => (
               <div
                 key={magasin.id}

@@ -120,18 +120,13 @@ export function logApiError(
   context?: Record<string, unknown>
 ): void {
   console.group(`❌ Erreur API - ${operation}`);
-  console.error("Message:", error.message);
   if (error.status) {
-    console.error("Status:", error.status);
   }
   if (error.code) {
-    console.error("Code:", error.code);
   }
   if (error.details) {
-    console.error("Détails:", error.details);
   }
   if (context) {
-    console.error("Contexte:", context);
   }
   console.groupEnd();
 }

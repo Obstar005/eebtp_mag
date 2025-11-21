@@ -125,7 +125,6 @@ export async function apiUserToUser(apiUser: ApiCustomUser): Promise<User> {
       updatedAt: apiUser.date_modif,
     };
   } catch (error) {
-    console.error("Erreur lors de la récupération du profil:", error);
 
     // Fallback en cas d'erreur
     return {

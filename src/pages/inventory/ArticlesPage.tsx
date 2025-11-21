@@ -78,7 +78,6 @@ export function ArticlesPage() {
         confirmDeleteModal.close();
         setSelectedArticleId(null);
       } catch (error) {
-        console.error("Erreur lors de la suppression:", error);
       }
     }
   };
