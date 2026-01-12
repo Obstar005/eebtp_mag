@@ -18,6 +18,7 @@ urlpatterns = [
     path('user-update-profile/<int:pk>', views.update_user_photo, name='update_user_profile'),
     path('user-delete/<int:pk>', views.delete_user, name='delete_user'),
     path('countries/', views.get_countries, name='get_countries'),
+    path('Profiles-stats', views.get_user_profile_stats, name='supp_user'),
 
     #Authentification et vérification
     path('authentication/check-user-exists/', views.check_user_by_phone, name='check_user_by_phone'),
