@@ -12,6 +12,7 @@ from rest_framework.decorators import parser_classes
 from app.utils import enregistrer_action
 from django.contrib.auth import get_user_model
 from users.models import CustomUser
+from .models import StockItem
 
 #Vue pour la création d'un projet
 @swagger_auto_schema(
@@ -280,38 +281,6 @@ def delete_photo(request, pk):
     except photo.DoesNotExist:
         return Response({'error': 'Photo introuvable.'}, status=status.HTTP_404_NOT_FOUND)
     
-#MASGASINS
-# @swagger_auto_schema(
-#     method='post',
-#     operation_description="Cette API permet de créer un nouveau magasin.",
-#     request_body=MagasinSerializer,
-#     responses={
-#         201: openapi.Response("Magasin créé avec succès", MagasinSerializer),
-#         400: "Données invalides"
-#     }
-# )
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def create_magasin(request):
-#     data = request.data
-   
-#     projet_id = data.get('projet')  
-#     # Vérifier si le magasin existe déjà pour ce projet
-#     if Magasin.objects.filter(projet_id=projet_id).exists():
-#         return Response(
-#             {'error': f'Il existe déjà un magasin pour ce projet.'},
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
-
-#     # Assigner l'utilisateur connecté comme créateur du magasin
-#     data['creator'] = request.user.id  
-#     # enregistrer_action(request.user, 'creation', 'A crée un magasin.', f"Magasin #{pro.id}")
-
-#     serializer = MagasinSerializer(data=request.data)
-#     if serializer.is_valid():
-#         serializer.save()
-#         return Response({'message': 'Magasin créé avec succès'}, status=status.HTTP_201_CREATED)    
-#     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 #Vue pour la liste des magasins
@@ -459,3 +428,63 @@ def list_user_projets_magasins(request):
     serializer = ProjetSerializer(projets, many=True)
     enregistrer_action(request.user, 'consultation', 'A consulté la liste de ses projets et magasins associés.', "Liste des projets et magasins de l'utilisateur")
     return Response(serializer.data)
+
+#Vue pour le graphe d'histogramme, il va renvoyer les quantités actuelles des stocks par projet dans chaque magasin
+@swagger_auto_schema(
+    method='get',
+    operation_description="Cette API permet de récupérer les données pour le graphe d'histogramme des stocks par projet et magasin.",
+    manual_parameters=[
+        openapi.Parameter(
+            'projet_id', openapi.IN_PATH,
+            description="Identifiant du projet concerné",
+            type=openapi.TYPE_INTEGER,
+            required=True,
+            example=3
+        ),    ],
+    responses={
+        200: "Données du graphe récupérées avec succès",
+    }
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def stats_quantites_articles_magasin(request, projet_id):
+    # 1️ Vérifier le projet
+    try:
+        projet = Projet.objects.get(pk=projet_id, is_active=True)
+    except Projet.DoesNotExist:
+        return Response({"error": "Projet introuvable."}, status=status.HTTP_404_NOT_FOUND)
+
+    # 2️ Récupérer le magasin du projet
+    try:
+        magasin = Magasin.objects.get(projet=projet)
+    except Magasin.DoesNotExist:
+        return Response({'error': 'Magasin introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+    # 3️ Récupérer les stocks du magasin
+    stocks = (
+        StockItem.objects
+        .select_related('produit')
+        .filter(
+            magasin=magasin,
+            is_active=True
+        )
+    )
+
+    # 4️ Construire les données pour l’histogramme
+    articles_data = []
+    for stock in stocks:
+        articles_data.append({
+            "stock_item_id": stock.id,
+            "designation": stock.produit.designation,
+            "type": stock.produit.type,
+            "unite": stock.produit.unite,
+            "quantite": float(stock.quantite)
+        })
+
+    response_data = {
+        "projet": projet.nom,
+        "magasin": magasin.nom,
+        "articles": articles_data
+    }
+
+    return Response(response_data, status=status.HTTP_200_OK)

@@ -26,4 +26,5 @@ urlpatterns = [
     path('magasin-delete/<int:pk>', views.delete_magasin, name='delete_magasin'),
     path('liste-magasins-by-projet/<int:pk>', views.list_magasins_by_projet, name='list_magasins_by_projet'),
     path('projets-by-user', views.list_user_projets_magasins, name='projets_by_user'),
+    path('stats-quantites-articles/<int:projet_id>', views.stats_quantites_articles_magasin, name='stats_quantites_articles_magasin'),
 ]
