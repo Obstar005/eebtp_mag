@@ -21,7 +21,7 @@ from app.utils import enregistrer_action
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from notifications.utils import notifier_utilisateurs
-from celery import shared_task
+# from celery import shared_task
 from django.utils import timezone
 
 #Fonction pour envoyer les notifications
