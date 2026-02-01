@@ -578,9 +578,9 @@ def stats_fluctuations_entrees(request, projet_id, type_entree, periode, produit
 #Pour le graphe des fluctuations des sorties de stocks
 @swagger_auto_schema(
     method='get',
-    operation_summary="Obtenir les fluctuations des entrées d’un article",
+    operation_summary="Obtenir les fluctuations de sorties d’un article",
     operation_description=(
-        "Cet endpoint renvoie les **quantités totales entrées** pour un article précis "
+        "Cet endpoint renvoie les **quantités totales sorties** pour un article précis "
         "(lié à un `StockItem`) dans un projet donné. "
         "Les résultats sont regroupés selon la **période** demandée : "
         "`jour`, `semaine`, `mois` ou `projet` (depuis le début)."
@@ -593,14 +593,14 @@ def stats_fluctuations_entrees(request, projet_id, type_entree, periode, produit
             required=True,
             example=3
         ),
-        openapi.Parameter(
-            'type_entree', openapi.IN_PATH,
-            description="Type d’entrée (par ex. 'Livraison' ou 'Retour')",
-            type=openapi.TYPE_STRING,
-            required=True,
-            enum=["Livraison", "Retour"],
-            example="Livraison"
-        ),
+        # openapi.Parameter(
+        #     'type_entree', openapi.IN_PATH,
+        #     description="Type d’entrée (par ex. 'Livraison' ou 'Retour')",
+        #     type=openapi.TYPE_STRING,
+        #     required=True,
+        #     enum=["Livraison", "Retour"],
+        #     example="Livraison"
+        # ),
         openapi.Parameter(
             'periode', openapi.IN_PATH,
             description="Période d’analyse (`jour`, `semaine`, `mois`, `projet`)",

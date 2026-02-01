@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.shortcuts import render
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -20,6 +21,8 @@ from app.utils import enregistrer_action
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from notifications.utils import notifier_utilisateurs
+from celery import shared_task
+from django.utils import timezone
 
 #Fonction pour envoyer les notifications
 # def send_notification_user(user_id, message):
@@ -352,8 +355,13 @@ def change_password(request):
     responses={200: openapi.Response(description='Mot de passe créé avec succès'), 400: 'Bad Request', 404: 'Utilisateur introuvable'}
 )
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def set_password(request):
+    user= request.user
+    if not user.profil.libelle == "admin" and not user.profil.libelle == "superadmin":
+        return Response(
+            {"error": "Accès refusé! Vous n'êtes pas autorisé à effectuer cette action."},status=status.HTTP_403_FORBIDDEN
+        )
     phone = request.data.get('telephone')
     password = request.data.get('password')
 
@@ -433,6 +441,7 @@ def login_by_phone_web(request):
     # Générer un token JWT
     refresh = RefreshToken.for_user(user)
     user.is_connected = True
+    user.last_login = timezone.now()
     user.save()
     enregistrer_action(user,  'connexion', 'S\'est connecté au système(Web)', f"Utilisateur #{user.id}, à la date {user.last_login}")
     # notifier_utilisateurs([user], "Connexion Réussie", "Vous vous êtes connecté avec succès au système.")
@@ -491,6 +500,7 @@ def login_by_phone_mobile(request):
     # Générer un token JWT
     refresh = RefreshToken.for_user(user)
     user.is_connected = True
+    user.last_login = timezone.now()
     user.save()
     enregistrer_action(user, 'connexion', 'S\'est connecté au système(mobile)', f"Utilisateur #{user.id}, à la date {user.last_login}")
 
@@ -625,3 +635,15 @@ def get_user_profile_stats(request):
         'total_profiles': total_profiles
     }
     return Response(data, status=status.HTTP_200_OK)
+
+#Je veux une fonction qui va remettre à False le champ is_connected des utilisateurs qui se sont connectés depuis plus de 5 heures.
+# @shared_task
+# def reset_stale_connections():
+#     stale_time = timezone.now() - timedelta(hours=5)
+
+#     updated = CustomUser.objects.filter(
+#         is_connected=True,
+#         last_login__lt=stale_time
+#     ).update(is_connected=False)
+
+#     return f"{updated} utilisateurs déconnectés automatiquement."

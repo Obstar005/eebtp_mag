@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'rest_framework_simplejwt.token_blacklist',
     'rest_framework_simplejwt',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -171,6 +172,10 @@ SIMPLE_JWT = {
 }
 # Channels
 ASGI_APPLICATION = 'eebtp_mag.asgi.application'
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
 
 # CHANNEL_LAYERS = {
 #     # "default": {
