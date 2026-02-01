@@ -24,7 +24,8 @@ class Utilisateur {
   final List<int> projets;
   final List<int> groups;
   final List<int> userPermissions;
-  final String? password; // Attention, à ne jamais exposer côté client si api safe
+  final String?
+  password; // Attention, à ne jamais exposer côté client si api safe
 
   Utilisateur({
     required this.id,
@@ -49,7 +50,7 @@ class Utilisateur {
     required this.dateModif,
     required this.firstLogin,
     this.profil,
-   required this.projets,
+    required this.projets,
     required this.groups,
     required this.userPermissions,
     this.password,
@@ -72,16 +73,23 @@ class Utilisateur {
     isActive: json['is_active'] ?? false,
     isStaff: json['is_staff'] ?? false,
     isSuperuser: json['is_superuser'] ?? false,
-    lastLogin: json['last_login'] != null ? DateTime.tryParse(json['last_login']) : null,
+    lastLogin: json['last_login'] != null
+        ? DateTime.tryParse(json['last_login'])
+        : null,
     dateJoined: DateTime.parse(json['date_joined']),
     dateCreation: DateTime.parse(json['date_creation']),
     dateModif: DateTime.parse(json['date_modif']),
     firstLogin: json['first_login'] ?? true,
     profil: json['profil'],
-    projets: (json['projets'] as List<dynamic>).map((e) => int.parse(e.toString())).toList(),
+    projets: (json['projets'] as List<dynamic>)
+        .map((e) => int.parse(e.toString()))
+        .toList(),
     groups: json['groups'] != null ? List<int>.from(json['groups']) : [],
-    userPermissions: json['user_permissions'] != null ? List<int>.from(json['user_permissions']) : [],
-    password: json['password'], // attention ici, généralement non envoyé côté client
+    userPermissions: json['user_permissions'] != null
+        ? List<int>.from(json['user_permissions'])
+        : [],
+    password:
+        json['password'], // attention ici, généralement non envoyé côté client
   );
 
   Map<String, dynamic> toJson() => {
@@ -112,12 +120,12 @@ class Utilisateur {
     'user_permissions': userPermissions,
     'password': password,
   };
-// Ne renvoie que les champs attendus pour le PUT profil utilisateur
-Map<String, dynamic> toUpdateJson() => {
-  'id': id,
+  // Ne renvoie que les champs attendus pour le PUT profil utilisateur
+  Map<String, dynamic> toUpdateJson() => {
+    'id': id,
     'username': username,
-'first_name': firstName,
-'last_name': lastName,
+    'first_name': firstName,
+    'last_name': lastName,
     'email': email,
     'telephone': telephone,
     'nationality': nationality,
@@ -125,8 +133,7 @@ Map<String, dynamic> toUpdateJson() => {
     'type': type,
     'titre': titre,
     'poste': poste,
- 
-};
+  };
 
   Utilisateur copyWith({
     int? id,

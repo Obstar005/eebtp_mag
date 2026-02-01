@@ -25,7 +25,7 @@ class EditProfilePage extends StatefulWidget {
 
 class _EditProfilePageState extends State<EditProfilePage> {
   // ✅ AJOUT : URL du backend
-  static const String backendUrl = 'http://38.242.139.218:8001';
+  static const String backendUrl = 'http://38.242.139.218:8000';
   
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();

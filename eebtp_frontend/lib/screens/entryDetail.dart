@@ -88,7 +88,7 @@ class _EntryDetailContent extends StatelessWidget {
     required this.article,
   });
 
-  static const String backendUrl = 'http://38.242.139.218:8001';
+  static const String backendUrl = 'http://38.242.139.218:8000';
 
   // ✅ NOUVELLE MÉTHODE : Afficher la signature en plein écran
   void _showSignatureFullScreen(BuildContext context, String imageUrl) {

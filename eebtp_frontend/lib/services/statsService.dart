@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:eebtp_frontend/models/statistiques.dart';
 
 class StatsService {
-  final String baseUrl = 'http://38.242.139.218:8001';
+  final String baseUrl = 'http://38.242.139.218:8000';
   final String? token;
 
   StatsService({this.token});

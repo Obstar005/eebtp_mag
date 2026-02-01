@@ -236,7 +236,7 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
       print('Données à envoyer :');
       print(jsonEncode(champs));
 
-      final uri = Uri.parse('http://38.242.139.218:8001/Mouvements/entree-create');
+      final uri = Uri.parse('http://38.242.139.218:8000/Mouvements/entree-create');
       final request = http.MultipartRequest('POST', uri);
 
       champs.forEach((key, value) {

@@ -17,7 +17,7 @@ class StoreSelectionPage extends StatefulWidget {
 
 class _StoreSelectionPageState extends State<StoreSelectionPage> {
   // ✅ AJOUT : URL du backend
-  static const String backendUrl = 'http://38.242.139.218:8001';
+  static const String backendUrl = 'http://38.242.139.218:8000';
   
   late Future<List<Map<String, dynamic>>> _futureStores;
   late Future<Utilisateur> _futureUser;

@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/utilisateur.dart';
 
 class UserService {
-  final String baseUrl = 'http://38.242.139.218:8001';
+  final String baseUrl = 'http://38.242.139.218:8000';
 
   // 🔐 Authentification
   Future<String?> loginByPhone(String phone, String password) async {

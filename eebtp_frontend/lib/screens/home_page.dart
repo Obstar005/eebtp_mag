@@ -22,7 +22,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  static const String backendUrl = 'http://38.242.139.218:8001';
+  static const String backendUrl = 'http://38.242.139.218:8000';
   
   final TextEditingController _searchController = TextEditingController();
 

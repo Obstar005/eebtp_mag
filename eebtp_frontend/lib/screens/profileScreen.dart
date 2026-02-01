@@ -20,7 +20,7 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  static const String backendUrl = 'http://38.242.139.218:8001';
+  static const String backendUrl = 'http://38.242.139.218:8000';
   
   late Future<Utilisateur> _futureUser;
 

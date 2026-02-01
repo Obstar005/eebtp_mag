@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class MouvementsService {
-  final String baseUrl = 'http://38.242.139.218:8001';
+  final String baseUrl = 'http://38.242.139.218:8000';
   final String token;
 
   MouvementsService({required this.token});
