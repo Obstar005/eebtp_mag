@@ -372,8 +372,17 @@ export class ProjetApiService {
 
   // Récupérer les statistiques de quantités d'articles pour un projet
   async getStatsQuantitesArticles(
-    projetId: number
-  ): Promise<{ projet: string; magasin: string; articles: Array<{ stock_item_id: number; designation: string; unite: string; quantite: number }> }> {
+    projetId: number,
+  ): Promise<{
+    projet: string;
+    magasin: string;
+    articles: Array<{
+      stock_item_id: number;
+      designation: string;
+      unite: string;
+      quantite: number;
+    }>;
+  }> {
     try {
       const response = await client.get<{
         projet: string;

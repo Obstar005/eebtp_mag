@@ -48,18 +48,18 @@ export const projetService = {
   addMagasinToProjet: (
     projetId: number,
     magasinData: CreateMagasinData,
-    creatorId?: number
+    creatorId?: number,
   ): Promise<Magasin> => {
     return projetApiService.addMagasinToProjet(
       projetId,
       magasinData,
-      creatorId
+      creatorId,
     );
   },
 
   removeMagasinFromProjet: (
     projetId: number,
-    magasinId: number
+    magasinId: number,
   ): Promise<void> => {
     return projetApiService.removeMagasinFromProjet(projetId, magasinId);
   },
@@ -77,7 +77,7 @@ export const projetService = {
   addPhotoToProjet: (
     projetId: number,
     photo: File,
-    description?: string
+    description?: string,
   ): Promise<ApiProjetPhoto> => {
     return projetApiService.addPhotoToProjet(projetId, photo, description);
   },
@@ -88,7 +88,7 @@ export const projetService = {
 
   // Méthode pour les statistiques de quantités d'articles
   getStatsQuantitesArticles: (
-    projetId: number
+    projetId: number,
   ): Promise<StatsQuantitesArticlesResponse> => {
     return projetApiService.getStatsQuantitesArticles(projetId);
   },

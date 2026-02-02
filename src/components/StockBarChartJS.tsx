@@ -19,7 +19,7 @@ ChartJS.register(
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
 );
 
 interface StockBarChartJSProps {
@@ -36,7 +36,7 @@ interface StockBarChartJSProps {
 function generateGradientColors(
   count: number,
   startColor: [number, number, number],
-  endColor: [number, number, number]
+  endColor: [number, number, number],
 ): string[] {
   if (count <= 0) return [];
   if (count === 1) return [`rgb(${startColor.join(",")})`];
@@ -75,14 +75,14 @@ export function StockBarChartJS({
     const backgroundColors = generateGradientColors(
       articles.length,
       [147, 51, 234], // purple-600
-      [6, 182, 212] // cyan-500
+      [6, 182, 212], // cyan-500
     );
 
     // Couleurs de bordure légèrement plus foncées
     const borderColors = generateGradientColors(
       articles.length,
       [126, 34, 206], // purple-700
-      [8, 145, 178] // cyan-600
+      [8, 145, 178], // cyan-600
     );
 
     return {
@@ -92,7 +92,7 @@ export function StockBarChartJS({
           label: "Quantité en stock",
           data: articles.map((article) => article.quantite),
           backgroundColor: backgroundColors.map((color) =>
-            color.replace("rgb", "rgba").replace(")", ", 0.8)")
+            color.replace("rgb", "rgba").replace(")", ", 0.8)"),
           ),
           borderColor: borderColors,
           borderWidth: 2,
@@ -187,7 +187,7 @@ export function StockBarChartJS({
         },
       },
     }),
-    [title, articles]
+    [title, articles],
   );
 
   // État de chargement

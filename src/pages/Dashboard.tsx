@@ -5,7 +5,10 @@ import {
   useFluctuationSorties,
 } from "../hooks/useFluctuation";
 import { useProjetsSelect } from "../hooks/useProjetsSelect";
-import { useProjetMagasins, useStatsQuantitesArticles } from "../hooks/useProjets";
+import {
+  useProjetMagasins,
+  useStatsQuantitesArticles,
+} from "../hooks/useProjets";
 import { useStockArticles } from "../hooks/useMagasins";
 import { useDashboardStats } from "../hooks/useDashboard";
 import { FluctuationChartJS } from "../components/FluctuationChartJS";
@@ -433,9 +436,7 @@ export function Dashboard() {
             <div className="bg-white rounded-lg shadow p-4 h-[300px] flex items-center justify-center">
               <div className="text-center">
                 <div className="text-gray-400 text-4xl mb-2">📊</div>
-                <p className="text-sm text-gray-500">
-                  Graphique à venir
-                </p>
+                <p className="text-sm text-gray-500">Graphique à venir</p>
                 <p className="text-xs text-gray-400 mt-1">
                   En attente de configuration
                 </p>
