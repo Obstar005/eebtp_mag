@@ -99,7 +99,7 @@ def liste_demandes_emises(request):
 @permission_classes([IsAuthenticated])
 def confirmer_demande(request, id):
     user = request.user
-    if user.profil.libelle not in ['chef_appro', 'dga', 'dt']:
+    if user.profil.libelle not in ['chef_appro', 'dga', 'dt', 'admin']:
         return Response({'error': 'Vous n\'êtes pas autorisé à confirmer cette demande.'}, status=status.HTTP_403_FORBIDDEN)
 
     try:
@@ -114,7 +114,7 @@ def confirmer_demande(request, id):
     demande.confirme_par = user
     demande.date_confirmation = timezone.now()
     demande.save()
-    # enregistrer_action(user, 'modification', 'A confirmé une demande', f"Demande #{demande.number}")
+    enregistrer_action(user, 'modification', 'A confirmé une demande', f"Demande #{demande.number}")
     # destinataires = CustomUser.objects.filter(profil__libelle__in=['chef_appro', 'dtx', 'dt', 'dga', 'dg'])
     # titre = "Nouvelle Demande Émise"
     # message = f"La demande #{demande.number}. a ete confirmée."
@@ -140,7 +140,7 @@ def liste_demandes_confirmees(request):
 @permission_classes([IsAuthenticated])
 def approuver_demande(request, id):
     user = request.user
-    if user.profil.libelle not in ['chef_appro','dtx', 'dt']:
+    if user.profil.libelle not in ['chef_appro','dtx', 'dt', 'admin']:
         return Response({'error': 'Vous n\'êtes pas autorisé à approuver cette demande.'}, status=status.HTTP_403_FORBIDDEN)
     try:
         demande = Demande.objects.get(pk=id)
@@ -433,4 +433,3 @@ def statistiques_demandes(request, periode):
         'taux_variation': taux_variation
     }
     return Response(stats)
-

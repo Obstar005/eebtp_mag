@@ -343,7 +343,7 @@ def change_password(request):
 #Documentation Swagger pour la création du mot de passe
 @swagger_auto_schema(
     method='post',
-    operation_description="Créer un mot de passe pour un nouveau utilisateur",
+    operation_description="Réinitialiser un mot de passe pour un utilisateur existant (par un administrateur)",
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         required=['telephone', 'password'],
@@ -352,7 +352,7 @@ def change_password(request):
             'password': openapi.Schema(type=openapi.TYPE_STRING, description='Mot de passe à définir')
         }
     ),
-    responses={200: openapi.Response(description='Mot de passe créé avec succès'), 400: 'Bad Request', 404: 'Utilisateur introuvable'}
+    responses={200: openapi.Response(description='Mot de passe réinitialisé avec succès'), 400: 'Bad Request', 404: 'Utilisateur introuvable'}
 )
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -379,10 +379,10 @@ def set_password(request):
 
     user.password = make_password(password)
     user.save()
-    enregistrer_action(user, 'modification', 'A créé son mot de passe dans le système.', f"Utilisateur #{user.id}")
+    enregistrer_action(user, 'modification', 'A réinitialisé le mot de passe d\'un utilisateur dans le système.', f"Utilisateur #{user.id}")
 
     return Response(
-        {"message": "Mot de passe créé avec succès."}, status=status.HTTP_200_OK
+        {"message": "Mot de passe réinitialisé avec succès."}, status=status.HTTP_200_OK
     )
 
 # Fonction pour authentifier un utilisateur par son numero de telephone sur le web
