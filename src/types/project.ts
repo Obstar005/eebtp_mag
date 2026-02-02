@@ -209,3 +209,17 @@ export interface ProjetListResponse {
   limit: number;
   totalPages: number;
 }
+
+// Types pour les statistiques de quantités d'articles
+export interface StatsArticleItem {
+  stock_item_id: number;
+  designation: string;
+  unite: string;
+  quantite: number;
+}
+
+export interface StatsQuantitesArticlesResponse {
+  projet: string;
+  magasin: string;
+  articles: StatsArticleItem[];
+}

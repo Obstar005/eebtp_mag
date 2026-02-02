@@ -31,7 +31,7 @@ export function MagasinDetailsPage() {
   const [showEditArticleModal, setShowEditArticleModal] = useState(false);
   const [showEditMagasinModal, setShowEditMagasinModal] = useState(false);
   const [selectedArticleId, setSelectedArticleId] = useState<number | null>(
-    null
+    null,
   );
 
   // Hooks
@@ -48,7 +48,7 @@ export function MagasinDetailsPage() {
     const foundCountry = countries.find((country) => {
       const nameMatch = addressLower.includes(country.name.toLowerCase());
       const abbrevMatch = addressLower.includes(
-        country.abbreviation.toLowerCase()
+        country.abbreviation.toLowerCase(),
       );
 
       // Recherche spéciale pour certains pays
@@ -65,7 +65,7 @@ export function MagasinDetailsPage() {
       };
 
       const specialMatch = Object.entries(specialMatches).some(
-        ([key, condition]) => addressLower.includes(key) && condition
+        ([key, condition]) => addressLower.includes(key) && condition,
       );
 
       return nameMatch || abbrevMatch || specialMatch;
@@ -73,8 +73,6 @@ export function MagasinDetailsPage() {
 
     return foundCountry || getTogoCountry(); // Fallback vers Togo
   };
-
-  const currentCountry = getCountryFromAddress(magasin?.adresse);
 
   const filter: StockArticleFilter = {
     search: searchTerm || undefined,
@@ -239,6 +237,9 @@ export function MagasinDetailsPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Quantité
                       </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Quantité seuil
+                      </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
@@ -257,7 +258,14 @@ export function MagasinDetailsPage() {
                           </div>
                         </td>
                         <td className="px-6 py-3 whitespace-nowrap">
-                          <div className="text-gray-900">- t</div>
+                          <div className="text-gray-900">
+                            {article.quantite}
+                          </div>
+                        </td>
+                        <td className="px-6 py-3 whitespace-nowrap">
+                          <div className="text-gray-900">
+                            {article.quantite_seuil}
+                          </div>
                         </td>
                         <td className="px-6 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-2">
@@ -333,7 +341,7 @@ export function MagasinDetailsPage() {
                   <div className="p-3 bg-gray-50 rounded-lg text-sm">
                     {magasin.date_creation
                       ? new Date(magasin.date_creation).toLocaleDateString(
-                          "fr-FR"
+                          "fr-FR",
                         )
                       : "-"}
                   </div>
@@ -345,7 +353,7 @@ export function MagasinDetailsPage() {
                   <div className="p-3 bg-gray-50 rounded-lg text-sm">
                     {magasin.date_mise_a_jour
                       ? new Date(magasin.date_mise_a_jour).toLocaleDateString(
-                          "fr-FR"
+                          "fr-FR",
                         )
                       : "-"}
                   </div>
@@ -357,7 +365,7 @@ export function MagasinDetailsPage() {
                   Adresse
                 </label>
                 <div className="p-3 bg-gray-50 rounded-lg flex items-center gap-2">
-                  {currentCountry?.flag ? (
+                  {/* {currentCountry?.flag ? (
                     // Si le flag est une URL (commence par http), utiliser img, sinon afficher l'emoji
                     currentCountry.flag.startsWith("http") ? (
                       <img
@@ -385,7 +393,22 @@ export function MagasinDetailsPage() {
                         e.currentTarget.style.display = "none";
                       }}
                     />
-                  )}
+                  )} */}
+                  {/* svg for location */}
+                  <svg
+                    className="w-8 h-8 text-red-400 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 11c0-1.657-1.343-3-3-3S6 9.343 6 11s1.343 3 3 3 3-1.343 3-3zM12 11c0 4.418-4 8-4 8s-4-3.582-4-8a4 4 0 118 0z"
+                    />
+                  </svg>
+
                   <span className="text-gray-900">
                     {magasin.adresse || "Non spécifiée"}
                   </span>
@@ -427,7 +450,7 @@ export function MagasinDetailsPage() {
                         <span>
                           Début:{" "}
                           {new Date(
-                            magasin.projet.date_debut
+                            magasin.projet.date_debut,
                           ).toLocaleDateString("fr-FR")}
                         </span>
                       )}
@@ -435,7 +458,7 @@ export function MagasinDetailsPage() {
                         <span>
                           Fin prévue:{" "}
                           {new Date(magasin.projet.date_fin).toLocaleDateString(
-                            "fr-FR"
+                            "fr-FR",
                           )}
                         </span>
                       )}
@@ -446,10 +469,10 @@ export function MagasinDetailsPage() {
                           magasin.projet?.status === "En cours"
                             ? "bg-green-100 text-green-800"
                             : magasin.projet?.status === "Terminé"
-                            ? "bg-blue-100 text-blue-800"
-                            : magasin.projet?.status === "En attente"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-gray-100 text-gray-800"
+                              ? "bg-blue-100 text-blue-800"
+                              : magasin.projet?.status === "En attente"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-gray-100 text-gray-800"
                         }`}
                       >
                         {magasin.projet?.status || "En cours"}

@@ -51,6 +51,6 @@ export interface ProcessedFluctuationData {
 export interface FluctuationParams {
   projetId: number;
   produitId: number;
-  periode: "jour" | "semaine" | "mois" | "total";
+  periode: "jour" | "semaine" | "mois" | "projet";
   typeEntree?: string; // Pour les entrées uniquement
 }

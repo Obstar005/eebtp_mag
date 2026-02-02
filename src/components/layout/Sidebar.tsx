@@ -54,22 +54,6 @@ const navigation: NavigationSection[] = [
       // },
     ],
   },
-  // Section Projets
-  {
-    title: "Projets",
-    items: [
-      {
-        name: "Ajouter un projet",
-        href: "/projects/add",
-        icon: Plus,
-      },
-      {
-        name: "Liste des projets",
-        href: "/projects",
-        icon: List,
-      },
-    ],
-  },
   // Section Profils
   {
     title: "Profils",
@@ -102,14 +86,19 @@ const navigation: NavigationSection[] = [
       },
     ],
   },
-  // Section Demandes
+  // Section Projets
   {
-    title: "Demandes",
+    title: "Projets",
     items: [
       {
-        name: "Liste des demandes",
-        href: "/requests",
-        icon: MessageSquare,
+        name: "Ajouter un projet",
+        href: "/projects/add",
+        icon: Plus,
+      },
+      {
+        name: "Liste des projets",
+        href: "/projects",
+        icon: List,
       },
     ],
   },
@@ -131,6 +120,17 @@ const navigation: NavigationSection[] = [
         name: "Liste des magasins",
         href: "/magasins",
         icon: Store,
+      },
+    ],
+  },
+  // Section Demandes
+  {
+    title: "Demandes",
+    items: [
+      {
+        name: "Liste des demandes",
+        href: "/requests",
+        icon: MessageSquare,
       },
     ],
   },
@@ -214,7 +214,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
             <img src={logoPng} alt="EEBTP" className="h-8 w-8 mr-3" />
             <div>
               <h1 className="text-lg font-bold text-blue-600">EEBTP_MAG</h1>
-              <p className="text-xs text-gray-500">Statistiques</p>
+              <p className="text-xs text-gray-500">Gestionnaire</p>
             </div>
           </div>
 

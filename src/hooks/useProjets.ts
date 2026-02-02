@@ -428,3 +428,14 @@ export function useDeleteProjetPhoto() {
     },
   });
 }
+
+// Hook pour récupérer les statistiques de quantités d'articles d'un projet
+export function useStatsQuantitesArticles(projetId: number | null) {
+  return useQuery({
+    queryKey: ["stats-quantites-articles", projetId],
+    queryFn: () => projetService.getStatsQuantitesArticles(projetId!),
+    enabled: !!projetId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+}

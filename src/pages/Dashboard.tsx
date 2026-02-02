@@ -5,35 +5,43 @@ import {
   useFluctuationSorties,
 } from "../hooks/useFluctuation";
 import { useProjetsSelect } from "../hooks/useProjetsSelect";
-import { useProjetMagasins } from "../hooks/useProjets";
+import { useProjetMagasins, useStatsQuantitesArticles } from "../hooks/useProjets";
 import { useStockArticles } from "../hooks/useMagasins";
+import { useDashboardStats } from "../hooks/useDashboard";
 import { FluctuationChartJS } from "../components/FluctuationChartJS";
+import { StockBarChartJS } from "../components/StockBarChartJS";
+import { SearchableSelect } from "../components/ui/SearchableSelect";
 import type { FluctuationParams } from "../types/fluctuation";
 
 export function Dashboard() {
+  // Récupérer les statistiques du dashboard
+  const statsQuery = useDashboardStats();
+
   // Récupérer les projets de l'API
   const projetsQuery = useProjetsSelect();
+
+  // États pour les menus déroulants
+  const [openPeriodMenu, setOpenPeriodMenu] = useState(false);
+  const [openTypeEntreeMenu, setOpenTypeEntreeMenu] = useState(false);
+
+  // Filtres globaux (affectent les deux graphiques)
+  const [selectedProject, setSelectedProject] = useState<number | null>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState<
+    "jour" | "semaine" | "mois" | "projet"
+  >("mois");
 
   // Si aucun projet sélectionné, prendre le premier renvoyé par l'API
   useEffect(() => {
     if (!selectedProject && projetsQuery.data && projetsQuery.data.length > 0) {
       setSelectedProject(projetsQuery.data[0].id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projetsQuery.data]);
+  }, [projetsQuery.data, selectedProject]);
 
-  // États pour les menus déroulants
-  const [openProjectMenu, setOpenProjectMenu] = useState(false);
-  const [openPeriodMenu, setOpenPeriodMenu] = useState(false);
-  const [openProductEntreeMenu, setOpenProductEntreeMenu] = useState(false);
-  const [openTypeEntreeMenu, setOpenTypeEntreeMenu] = useState(false);
-  const [openProductSortieMenu, setOpenProductSortieMenu] = useState(false);
-
-  // Filtres globaux (affectent les deux graphiques)
-  const [selectedProject, setSelectedProject] = useState<number | null>(null);
-  const [selectedPeriod, setSelectedPeriod] = useState<
-    "jour" | "semaine" | "mois" | "total"
-  >("mois");
+  // Reset les articles sélectionnés quand le projet change
+  useEffect(() => {
+    setSelectedProductEntree(null);
+    setSelectedProductSortie(null);
+  }, [selectedProject]);
 
   // Filtres spécifiques au graphique Entrées
   const [selectedProductEntree, setSelectedProductEntree] = useState<
@@ -51,19 +59,20 @@ export function Dashboard() {
   const magasinsQuery = useProjetMagasins(selectedProject || 0);
 
   // Récupérer le premier magasin (par défaut, la plupart des projets ont un magasin principal)
-  const firstMagasinId = magasinsQuery.data?.[0]?.id || null;
+  const firstMagasinId = useMemo(() => {
+    return magasinsQuery.data?.[0]?.id ?? null;
+  }, [magasinsQuery.data]);
 
   // Récupérer les articles du magasin associé au projet
-  const articlesQuery = useStockArticles(firstMagasinId || 0, {});
+  const articlesQuery = useStockArticles(firstMagasinId ?? 0, {});
 
   // Articles formatés pour les sélecteurs
   const articlesList = useMemo(() => {
-    return (
-      articlesQuery.data?.data?.map((article) => ({
-        id: article.id,
-        name: article.name,
-      })) || []
-    );
+    const articles = articlesQuery.data?.data || [];
+    return articles.map((article: any) => ({
+      id: article.id,
+      name: article.name || article.produit_name || `Article #${article.id}`,
+    }));
   }, [articlesQuery.data?.data]);
 
   // S'assurer que le produit sélectionné existe dans la liste des articles
@@ -84,14 +93,12 @@ export function Dashboard() {
   // Paramètres pour les données d'entrées
   const fluctuationParamsEntree: FluctuationParams | null = useMemo(() => {
     if (!selectedProject || !selectedProductEntree) return null;
-    const params = {
+    return {
       projetId: selectedProject,
       produitId: selectedProductEntree,
       periode: selectedPeriod,
       typeEntree: selectedTypeEntree,
     };
-    console.log("📋 PARAMS ENTREES:", params);
-    return params;
   }, [
     selectedProject,
     selectedProductEntree,
@@ -102,18 +109,19 @@ export function Dashboard() {
   // Paramètres pour les données de sorties
   const fluctuationParamsSortie: FluctuationParams | null = useMemo(() => {
     if (!selectedProject || !selectedProductSortie) return null;
-    const params = {
+    return {
       projetId: selectedProject,
       produitId: selectedProductSortie,
       periode: selectedPeriod,
     };
-    console.log("📋 PARAMS SORTIES:", params);
-    return params;
   }, [selectedProject, selectedProductSortie, selectedPeriod]);
 
   // Récupérer les données d'entrées ET sorties
   const entreeQuery = useFluctuationEntrees(fluctuationParamsEntree);
   const sortieQuery = useFluctuationSorties(fluctuationParamsSortie);
+
+  // Récupérer les statistiques de quantités d'articles
+  const statsArticlesQuery = useStatsQuantitesArticles(selectedProject);
 
   return (
     <div className="space-y-6">
@@ -123,60 +131,15 @@ export function Dashboard() {
 
         {/* Filtres globaux */}
         <div className="flex gap-3">
-          {/* Sélecteur de Projet */}
-          <div className="relative">
-            <button
-              onClick={() => setOpenProjectMenu(!openProjectMenu)}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-900 rounded hover:bg-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path
-                  fillRule="evenodd"
-                  d="M3 6a2 2 0 0 1 2-2h5.532a2 2 0 0 1 1.536.72l1.9 2.28H3V6Zm0 3v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H3Z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>
-                {projetsQuery.data?.find((p) => p.id === selectedProject)
-                  ?.name || "Sélectionner"}
-              </span>
-              <svg
-                className={`w-4 h-4 transition-transform ${
-                  openProjectMenu ? "rotate-180" : ""
-                }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                />
-              </svg>
-            </button>
-            {openProjectMenu && (
-              <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded shadow-lg z-50">
-                {projetsQuery.data?.map((projet) => (
-                  <button
-                    key={projet.id}
-                    onClick={() => {
-                      setSelectedProject(projet.id);
-                      setOpenProjectMenu(false);
-                    }}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                      selectedProject === projet.id
-                        ? "bg-blue-50 text-blue-900 font-semibold"
-                        : "text-gray-900"
-                    }`}
-                  >
-                    {projet.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Sélecteur de Projet avec Recherche */}
+          <SearchableSelect
+            options={projetsQuery.data || []}
+            value={selectedProject}
+            onChange={setSelectedProject}
+            placeholder="Sélectionner un projet"
+            labelKey="name"
+            valueKey="id"
+          />
 
           {/* Sélecteur de Période */}
           <div className="relative">
@@ -209,12 +172,12 @@ export function Dashboard() {
             </button>
             {openPeriodMenu && (
               <div className="absolute top-full left-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
-                {["jour", "semaine", "mois", "total"].map((period) => (
+                {["jour", "semaine", "mois", "projet"].map((period) => (
                   <button
                     key={period}
                     onClick={() => {
                       setSelectedPeriod(
-                        period as "jour" | "semaine" | "mois" | "total"
+                        period as "jour" | "semaine" | "mois" | "projet",
                       );
                       setOpenPeriodMenu(false);
                     }}
@@ -249,19 +212,22 @@ export function Dashboard() {
             </button>
           </div>
           <div className="flex items-end gap-2">
-            <span className="text-3xl font-bold text-gray-900">2,420</span>
-            <span className="text-green-600 text-xs font-semibold bg-green-100 px-2 py-0.5 rounded-full">
-              +20%
+            <span className="text-3xl font-bold text-gray-900">
+              {statsQuery.isLoading ? (
+                <span className="animate-pulse bg-gray-200 rounded w-16 h-8 inline-block" />
+              ) : (
+                (statsQuery.data?.total_users ?? 0)
+              )}
             </span>
           </div>
-          <span className="text-xs text-gray-400">vs. Hier</span>
+          <span className="text-xs text-gray-400">Comptes enregistrés</span>
         </div>
 
-        {/* Projets Actif */}
+        {/* Profils Total */}
         <div className="bg-white rounded-lg shadow p-6 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500 font-medium">
-              Projets Actif
+              Profils Total
             </span>
             <button
               className="text-gray-400 hover:text-gray-600"
@@ -271,12 +237,15 @@ export function Dashboard() {
             </button>
           </div>
           <div className="flex items-end gap-2">
-            <span className="text-3xl font-bold text-gray-900">2,420</span>
-            <span className="text-red-600 text-xs font-semibold bg-red-100 px-2 py-0.5 rounded-full">
-              -20%
+            <span className="text-3xl font-bold text-gray-900">
+              {statsQuery.isLoading ? (
+                <span className="animate-pulse bg-gray-200 rounded w-16 h-8 inline-block" />
+              ) : (
+                (statsQuery.data?.total_profiles ?? 0)
+              )}
             </span>
           </div>
-          <span className="text-xs text-gray-400">vs. Hier</span>
+          <span className="text-xs text-gray-400">Profils configurés</span>
         </div>
 
         {/* Utilisateurs Connectés */}
@@ -293,242 +262,186 @@ export function Dashboard() {
             </button>
           </div>
           <div className="flex items-center gap-2 justify-between">
-            <span className="text-3xl font-bold text-gray-900">316</span>
-            <div className="flex -space-x-2">
-              <img
-                src="/vite.svg"
-                alt="avatar"
-                className="w-6 h-6 rounded-full border-2 border-white"
-              />
-              <img
-                src="/vite.svg"
-                alt="avatar"
-                className="w-6 h-6 rounded-full border-2 border-white"
-              />
-              <img
-                src="/vite.svg"
-                alt="avatar"
-                className="w-6 h-6 rounded-full border-2 border-white"
-              />
-              <span className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-600 border-2 border-white">
-                +6
+            <span className="text-3xl font-bold text-gray-900">
+              {statsQuery.isLoading ? (
+                <span className="animate-pulse bg-gray-200 rounded w-16 h-8 inline-block" />
+              ) : (
+                (statsQuery.data?.connected_users ?? 0)
+              )}
+            </span>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-xs text-green-600 font-medium">
+                En ligne
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Graphiques de fluctuation */}
-      <div className="grid grid-cols-1 gap-6">
-        {/* Graphique Entrées */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              État des Entrées
-            </h3>
-            <div className="flex gap-2">
-              {/* Filtre Article pour Entrées */}
-              <div className="relative">
-                <button
-                  onClick={() =>
-                    setOpenProductEntreeMenu(!openProductEntreeMenu)
+      {/* Graphiques de fluctuation - Layout responsive 3/5 + 2/5 */}
+      <div className="space-y-6">
+        {/* Ligne 1: Graphique Entrées (courbe) + Stock Articles (bâtonnets) */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Graphique Entrées - 3/5 */}
+          <div className="lg:col-span-3">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                État des Entrées
+              </h3>
+              <div className="flex gap-2">
+                {/* Filtre Article pour Entrées avec Recherche */}
+                <SearchableSelect
+                  options={articlesList}
+                  value={selectedProductEntree}
+                  onChange={setSelectedProductEntree}
+                  placeholder="Article"
+                  labelKey="name"
+                  valueKey="id"
+                  buttonClassName="px-3 py-2 text-xs"
+                  isLoading={articlesQuery.isLoading || magasinsQuery.isLoading}
+                  emptyMessage={
+                    !firstMagasinId
+                      ? "Sélectionnez un projet"
+                      : "Aucun article disponible"
                   }
-                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-blue-900 rounded hover:bg-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                >
-                  <span>
-                    {articlesList.find((a) => a.id === selectedProductEntree)
-                      ?.name || "Article"}
-                  </span>
-                  <svg
-                    className={`w-3 h-3 transition-transform ${
-                      openProductEntreeMenu ? "rotate-180" : ""
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                />
+
+                {/* Filtre Type d'Entrée */}
+                <div className="relative">
+                  <button
+                    onClick={() => setOpenTypeEntreeMenu(!openTypeEntreeMenu)}
+                    className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-blue-900 rounded hover:bg-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-600"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                    />
-                  </svg>
-                </button>
-                {openProductEntreeMenu && (
-                  <div className="absolute top-full right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
-                    {articlesQuery.isLoading ? (
-                      <div className="p-4 text-center text-sm text-gray-500">
-                        Chargement...
-                      </div>
-                    ) : articlesQuery.isError ? (
-                      <div className="p-4 text-center text-sm text-red-500">
-                        Erreur de chargement
-                      </div>
-                    ) : articlesList.length === 0 ? (
-                      <div className="p-4 text-center text-sm text-gray-500">
-                        Aucun article
-                      </div>
-                    ) : (
-                      articlesList.map((product) => (
+                    <span>Type</span>
+                    <svg
+                      className={`w-3 h-3 transition-transform ${
+                        openTypeEntreeMenu ? "rotate-180" : ""
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                      />
+                    </svg>
+                  </button>
+                  {openTypeEntreeMenu && (
+                    <div className="absolute top-full right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
+                      {[
+                        { value: "entree", label: "Livraison" },
+                        { value: "depot", label: "Dépôt" },
+                        { value: "retour", label: "Retour" },
+                      ].map((type) => (
                         <button
-                          key={product.id}
+                          key={type.value}
                           onClick={() => {
-                            setSelectedProductEntree(product.id);
-                            setOpenProductEntreeMenu(false);
+                            setSelectedTypeEntree(type.value);
+                            setOpenTypeEntreeMenu(false);
                           }}
                           className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                            selectedProductEntree === product.id
+                            selectedTypeEntree === type.value
                               ? "bg-blue-50 text-blue-900 font-semibold"
                               : "text-gray-900"
                           }`}
                         >
-                          {product.name}
+                          {type.label}
                         </button>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Filtre Type d'Entrée */}
-              <div className="relative">
-                <button
-                  onClick={() => setOpenTypeEntreeMenu(!openTypeEntreeMenu)}
-                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-blue-900 rounded hover:bg-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                >
-                  <span>Type</span>
-                  <svg
-                    className={`w-3 h-3 transition-transform ${
-                      openTypeEntreeMenu ? "rotate-180" : ""
-                  }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                    />
-                  </svg>
-                </button>
-                {openTypeEntreeMenu && (
-                  <div className="absolute top-full right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
-                    {[
-                      { value: "entree", label: "Livraison" },
-                      { value: "depot", label: "Dépôt" },
-                      { value: "retour", label: "Retour" },
-                    ].map((type) => (
-                      <button
-                        key={type.value}
-                        onClick={() => {
-                          setSelectedTypeEntree(type.value);
-                          setOpenTypeEntreeMenu(false);
-                        }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                          selectedTypeEntree === type.value
-                            ? "bg-blue-50 text-blue-900 font-semibold"
-                            : "text-gray-900"
-                        }`}
-                      >
-                        {type.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
+            <FluctuationChartJS
+              title=""
+              entreeData={entreeQuery.data || null}
+              sortieData={null}
+              isLoading={entreeQuery.isLoading}
+              isError={entreeQuery.isError}
+            />
           </div>
-          <FluctuationChartJS
-            title=""
-            entreeData={entreeQuery.data || null}
-            sortieData={null}
-            isLoading={entreeQuery.isLoading}
-            isError={entreeQuery.isError}
-          />
+
+          {/* Graphique Stock Articles - 2/5 */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Stock par Article
+              </h3>
+            </div>
+            <StockBarChartJS
+              title=""
+              articles={statsArticlesQuery.data?.articles || null}
+              isLoading={statsArticlesQuery.isLoading}
+              isError={statsArticlesQuery.isError}
+              emptyMessage={
+                !selectedProject
+                  ? "Sélectionnez un projet"
+                  : "Aucun article en stock"
+              }
+            />
+          </div>
         </div>
 
-        {/* Graphique Sorties */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              État des Sorties
-            </h3>
-            <div className="flex gap-2">
-              {/* Filtre Article pour Sorties */}
-              <div className="relative">
-                <button
-                  onClick={() =>
-                    setOpenProductSortieMenu(!openProductSortieMenu)
+        {/* Ligne 2: Graphique Sorties (courbe) + Graphique Réservé (bâtonnets) */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Graphique Sorties - 3/5 */}
+          <div className="lg:col-span-3">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                État des Sorties
+              </h3>
+              <div className="flex gap-2">
+                {/* Filtre Article pour Sorties avec Recherche */}
+                <SearchableSelect
+                  options={articlesList}
+                  value={selectedProductSortie}
+                  onChange={setSelectedProductSortie}
+                  placeholder="Article"
+                  labelKey="name"
+                  valueKey="id"
+                  buttonClassName="px-3 py-2 text-xs"
+                  isLoading={articlesQuery.isLoading || magasinsQuery.isLoading}
+                  emptyMessage={
+                    !firstMagasinId
+                      ? "Sélectionnez un projet"
+                      : "Aucun article disponible"
                   }
-                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-blue-900 rounded hover:bg-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                >
-                  <span>
-                    {articlesList.find((a) => a.id === selectedProductSortie)
-                      ?.name || "Article"}
-                  </span>
-                  <svg
-                    className={`w-3 h-3 transition-transform ${
-                      openProductSortieMenu ? "rotate-180" : ""
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                    />
-                  </svg>
-                </button>
-                {openProductSortieMenu && (
-                  <div className="absolute top-full right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
-                    {articlesQuery.isLoading ? (
-                      <div className="p-4 text-center text-sm text-gray-500">
-                        Chargement...
-                      </div>
-                    ) : articlesQuery.isError ? (
-                      <div className="p-4 text-center text-sm text-red-500">
-                        Erreur de chargement
-                      </div>
-                    ) : articlesList.length === 0 ? (
-                      <div className="p-4 text-center text-sm text-gray-500">
-                        Aucun article
-                      </div>
-                    ) : (
-                      articlesList.map((product) => (
-                        <button
-                          key={product.id}
-                          onClick={() => {
-                            setSelectedProductSortie(product.id);
-                            setOpenProductSortieMenu(false);
-                          }}
-                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                            selectedProductSortie === product.id
-                              ? "bg-blue-50 text-blue-900 font-semibold"
-                              : "text-gray-900"
-                          }`}
-                        >
-                          {product.name}
-                        </button>
-                      ))
-                    )}
-                  </div>
-                )}
+                />
+              </div>
+            </div>
+            <FluctuationChartJS
+              title=""
+              entreeData={null}
+              sortieData={sortieQuery.data || null}
+              isLoading={sortieQuery.isLoading}
+              isError={sortieQuery.isError}
+            />
+          </div>
+
+          {/* Graphique Réservé (à compléter) - 2/5 */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Statistiques
+              </h3>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4 h-[300px] flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-gray-400 text-4xl mb-2">📊</div>
+                <p className="text-sm text-gray-500">
+                  Graphique à venir
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  En attente de configuration
+                </p>
               </div>
             </div>
           </div>
-          <FluctuationChartJS
-            title=""
-            entreeData={null}
-            sortieData={sortieQuery.data || null}
-            isLoading={sortieQuery.isLoading}
-            isError={sortieQuery.isError}
-          />
         </div>
       </div>
     </div>

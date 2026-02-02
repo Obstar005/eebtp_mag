@@ -10,6 +10,7 @@ import type {
   Magasin,
   CreateMagasinData,
   CompteAssocie,
+  StatsQuantitesArticlesResponse,
 } from "../../types/project";
 
 // Service principal pour les projets - utilise l'API EEBTP
@@ -83,6 +84,13 @@ export const projetService = {
 
   deleteProjetPhoto: (photoId: number): Promise<void> => {
     return projetApiService.deleteProjetPhoto(photoId);
+  },
+
+  // Méthode pour les statistiques de quantités d'articles
+  getStatsQuantitesArticles: (
+    projetId: number
+  ): Promise<StatsQuantitesArticlesResponse> => {
+    return projetApiService.getStatsQuantitesArticles(projetId);
   },
 };
 

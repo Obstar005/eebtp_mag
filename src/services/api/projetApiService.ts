@@ -56,13 +56,12 @@ export class ProjetApiService {
     try {
       // L'API retourne directement un tableau de projets, pas un objet avec pagination
       const response = await client.get<ApiProjet[]>(
-        `${this.basePath}/liste-projets?${params.toString()}`
+        `${this.basePath}/liste-projets?${params.toString()}`,
       );
 
       // Récupérer la liste des utilisateurs pour résoudre les noms
-      const usersResponse = await client.get<ApiCustomUser[]>(
-        "/Users/liste-users"
-      );
+      const usersResponse =
+        await client.get<ApiCustomUser[]>("/Users/liste-users");
       const users = usersResponse.data;
 
       let projets = response.data;
@@ -94,7 +93,7 @@ export class ProjetApiService {
         projets,
         users,
         filters.page || 1,
-        filters.limit || 10
+        filters.limit || 10,
       );
     } catch (error) {
       throw error;
@@ -104,7 +103,7 @@ export class ProjetApiService {
   // Récupérer un projet par ID
   async getProjetById(id: number): Promise<Projet> {
     const response = await client.get<ApiProjet>(
-      `${this.basePath}/projet-detail/${id}`
+      `${this.basePath}/projet-detail/${id}`,
     );
     return apiProjetToProjet(response.data);
   }
@@ -117,7 +116,7 @@ export class ProjetApiService {
       // Créer le projet avec son magasin associé en un seul appel
       const response = await client.post<ApiCreateProjetResponse>(
         `${this.basePath}/projet-create`,
-        apiData
+        apiData,
       );
 
       // Extraire le projet de la réponse (la réponse contient { message, projet })
@@ -139,7 +138,7 @@ export class ProjetApiService {
             await this.addMagasinToProjet(
               nouveauProjet.id,
               magasinPayload,
-              data.creator || 1
+              data.creator || 1,
             );
           } catch (magasinError) {
             // On continue même si un magasin échoue
@@ -159,7 +158,7 @@ export class ProjetApiService {
 
     const response = await client.put<ApiProjet>(
       `${this.basePath}/projet-update/${data.id}`,
-      apiData
+      apiData,
     );
     return apiProjetToProjet(response.data);
   }
@@ -173,7 +172,7 @@ export class ProjetApiService {
   async getProjetStats(): Promise<ProjetStats> {
     // L'API ne semble pas avoir d'endpoint de stats, on simule avec la liste
     const response = await client.get<ApiProjet[]>(
-      `${this.basePath}/liste-projets`
+      `${this.basePath}/liste-projets`,
     );
 
     // Calculer les stats à partir de la liste complète
@@ -217,27 +216,45 @@ export class ProjetApiService {
   // Récupérer les magasins d'un projet
   async getProjetMagasins(projetId: number): Promise<Magasin[]> {
     // Utiliser l'endpoint spécifique pour récupérer les magasins d'un projet
-    const response = await client.get<ApiMagasin[]>(
-      `${this.basePath}/liste-magasins-by-projet/${projetId}`
-    );
+    const response = await client.get<
+      | ApiMagasin[]
+      | { data?: ApiMagasin[]; results?: ApiMagasin[]; magasins?: ApiMagasin[] }
+    >(`${this.basePath}/liste-magasins-by-projet/${projetId}`);
 
-    return response.data.map(apiMagasinToMagasin);
+    // Gérer différents formats de réponse API
+    let magasins: ApiMagasin[];
+
+    if (Array.isArray(response.data)) {
+      // Si c'est directement un tableau
+      magasins = response.data;
+    } else if (response.data && typeof response.data === "object") {
+      // Si c'est un objet, chercher le tableau dans les clés communes
+      magasins =
+        response.data.data ||
+        response.data.results ||
+        response.data.magasins ||
+        [];
+    } else {
+      magasins = [];
+    }
+
+    return magasins.map(apiMagasinToMagasin);
   }
 
   // Ajouter un magasin à un projet
   async addMagasinToProjet(
     projetId: number,
     magasinData: CreateMagasinData,
-    creatorId?: number
+    creatorId?: number,
   ): Promise<Magasin> {
     const apiData = createMagasinDataToApiCreateMagasin(
       magasinData,
       projetId,
-      creatorId
+      creatorId,
     );
     const response = await client.post<ApiMagasin>(
       `${this.basePath}/magasin-create`,
-      apiData
+      apiData,
     );
     return apiMagasinToMagasin(response.data);
   }
@@ -245,7 +262,7 @@ export class ProjetApiService {
   // Supprimer un magasin d'un projet
   async removeMagasinFromProjet(
     _projetId: number,
-    magasinId: number
+    magasinId: number,
   ): Promise<void> {
     await client.delete(`${this.basePath}/magasin-delete/${magasinId}`);
   }
@@ -255,7 +272,7 @@ export class ProjetApiService {
     try {
       // 1. Récupérer les détails du projet pour avoir la liste des IDs de comptes
       const projetResponse = await client.get<ApiProjet>(
-        `${this.basePath}/projet-detail/${projetId}`
+        `${this.basePath}/projet-detail/${projetId}`,
       );
       const projet = projetResponse.data;
 
@@ -307,7 +324,7 @@ export class ProjetApiService {
   async getProjetPhotos(projetId: number): Promise<ApiProjetPhoto[]> {
     try {
       const response = await client.get<ApiProjetPhoto[]>(
-        `${this.basePath}/liste-photos-by-projet/${projetId}`
+        `${this.basePath}/liste-photos-by-projet/${projetId}`,
       );
       return response.data;
     } catch (error) {
@@ -319,7 +336,7 @@ export class ProjetApiService {
   async addPhotoToProjet(
     projetId: number,
     photo: File,
-    description?: string
+    description?: string,
   ): Promise<ApiProjetPhoto> {
     const formData = new FormData();
     formData.append("photo", photo);
@@ -336,7 +353,7 @@ export class ProjetApiService {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
       return response.data;
     } catch (error) {
@@ -350,6 +367,27 @@ export class ProjetApiService {
       await client.delete(`${this.basePath}/projet-photo-delete/${photoId}`);
     } catch (error) {
       throw new Error("Impossible de supprimer la photo du projet");
+    }
+  }
+
+  // Récupérer les statistiques de quantités d'articles pour un projet
+  async getStatsQuantitesArticles(
+    projetId: number
+  ): Promise<{ projet: string; magasin: string; articles: Array<{ stock_item_id: number; designation: string; unite: string; quantite: number }> }> {
+    try {
+      const response = await client.get<{
+        projet: string;
+        magasin: string;
+        articles: Array<{
+          stock_item_id: number;
+          designation: string;
+          unite: string;
+          quantite: number;
+        }>;
+      }>(`${this.basePath}/stats-quantites-articles/${projetId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error("Impossible de récupérer les statistiques des articles");
     }
   }
 }

@@ -8,7 +8,7 @@
     "license": { "name": "BSD License" },
     "version": "v3.7"
   },
-  "host": "38.242.139.218:8001",
+  "host": "38.242.139.218:8000",
   "schemes": ["http"],
   "basePath": "/",
   "consumes": ["application/json"],
@@ -494,8 +494,8 @@
     "/Mouvements/graphe-fluctuations-sorties/{projet_id}/{periode}/{produit_id}": {
       "get": {
         "operationId": "Mouvements_graphe-fluctuations-sorties_read",
-        "summary": "Obtenir les fluctuations des entrées d’un article",
-        "description": "Cet endpoint renvoie les **quantités totales entrées** pour un article précis (lié à un `StockItem`) dans un projet donné. Les résultats sont regroupés selon la **période** demandée : `jour`, `semaine`, `mois` ou `projet` (depuis le début).",
+        "summary": "Obtenir les fluctuations de sorties d’un article",
+        "description": "Cet endpoint renvoie les **quantités totales sorties** pour un article précis (lié à un `StockItem`) dans un projet donné. Les résultats sont regroupés selon la **période** demandée : `jour`, `semaine`, `mois` ou `projet` (depuis le début).",
         "parameters": [
           {
             "name": "projet_id",
@@ -504,15 +504,6 @@
             "required": true,
             "type": "integer",
             "example": 3
-          },
-          {
-            "name": "type_entree",
-            "in": "path",
-            "description": "Type d’entrée (par ex. 'Livraison' ou 'Retour')",
-            "required": true,
-            "type": "string",
-            "enum": ["Livraison", "Retour"],
-            "example": "Livraison"
           },
           {
             "name": "periode",
@@ -1158,6 +1149,34 @@
       },
       "parameters": []
     },
+    "/Projets/stats-quantites-articles/{projet_id}": {
+      "get": {
+        "operationId": "Projets_stats-quantites-articles_read",
+        "description": "Cette API permet de récupérer les données pour le graphe d'histogramme des stocks par projet et magasin.",
+        "parameters": [
+          {
+            "name": "projet_id",
+            "in": "path",
+            "description": "Identifiant du projet concerné",
+            "required": true,
+            "type": "integer",
+            "example": 3
+          }
+        ],
+        "responses": {
+          "200": { "description": "Données du graphe récupérées avec succès" }
+        },
+        "tags": ["Projets"]
+      },
+      "parameters": [
+        {
+          "name": "projet_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
     "/Stocks/article-create": {
       "post": {
         "operationId": "Stocks_article-create_create",
@@ -1395,6 +1414,18 @@
         }
       ]
     },
+    "/Users/Profiles-stats": {
+      "get": {
+        "operationId": "Users_Profiles-stats_list",
+        "description": "Récupérer les statistiques des utilisateurs et profils",
+        "parameters": [],
+        "responses": {
+          "200": { "description": "Statistiques récupérées avec succès" }
+        },
+        "tags": ["Users"]
+      },
+      "parameters": []
+    },
     "/Users/authentication/check-user-exists/": {
       "post": {
         "operationId": "Users_authentication_check-user-exists_create",
@@ -1512,27 +1543,22 @@
     "/Users/authentication/set-password/": {
       "post": {
         "operationId": "Users_authentication_set-password_create",
-        "description": "Pour modifier le mot de passe d'un utilisateur que ce soit lors de la première connexion ou indéfiniement",
+        "description": "Créer un mot de passe pour un nouveau utilisateur",
         "parameters": [
           {
             "name": "data",
             "in": "body",
             "required": true,
             "schema": {
-              "required": ["telephone", "old_password", "new_password"],
+              "required": ["telephone", "password"],
               "type": "object",
               "properties": {
                 "telephone": {
                   "description": "Numéro de téléphone de l'utilisateur",
-                  "type": "string",
-                  "example": "0022890099009"
-                },
-                "old_password": {
-                  "description": "Ancien mot de passe de l'utilisateur",
                   "type": "string"
                 },
-                "new_password": {
-                  "description": "Nouveau mot de passe de l'utilisateur",
+                "password": {
+                  "description": "Mot de passe à définir",
                   "type": "string"
                 }
               }
@@ -1540,10 +1566,9 @@
           }
         ],
         "responses": {
-          "200": { "description": "Mot de passe modifié avec succès" },
+          "200": { "description": "Mot de passe créé avec succès" },
           "400": { "description": "Bad Request" },
-          "404": { "description": "Utilisateur introuvable" },
-          "403": { "description": "Accès refusé" }
+          "404": { "description": "Utilisateur introuvable" }
         },
         "tags": ["Users"]
       },
