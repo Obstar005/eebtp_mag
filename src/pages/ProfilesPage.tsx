@@ -38,8 +38,7 @@ export function ProfilesPage() {
         await deleteMutation.mutateAsync(selectedProfile.id);
         deleteModal.close();
         setSelectedProfile(null);
-      } catch (error) {
-      }
+      } catch (error) {}
     }
   };
 
@@ -97,12 +96,12 @@ export function ProfilesPage() {
                 {profiles && profiles.length > 0 ? (
                   profiles.map((profile) => (
                     <tr key={profile.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 max-w-64 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900 flex flex-col">
-                          <span>{profile.nom}</span>
-                          <span className="text-gray-500 text-sm">
+                          <h5 className="font-semibold">{profile.nom}</h5>
+                          <p className="text-gray-500 text-sm line-clamp-1 w-full">
                             {profile.description}
-                          </span>
+                          </p>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

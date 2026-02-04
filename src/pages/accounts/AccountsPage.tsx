@@ -290,7 +290,7 @@ export function AccountsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                    {account.telephone}
+                    {account.telephone.replace("00", "+")}
                   </td>
                   <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                     {account.profile.nom}
