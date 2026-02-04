@@ -216,6 +216,7 @@ export interface StatsArticleItem {
   designation: string;
   unite: string;
   quantite: number;
+  type?: "materiau" | "materiel"; // Type d'article: matériau ou matériel
 }
 
 export interface StatsQuantitesArticlesResponse {

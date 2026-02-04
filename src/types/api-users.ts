@@ -19,6 +19,8 @@ export interface ApiCustomUser {
   photo_profil?: string; // URI
   telephone: string;
   is_active: boolean;
+  is_connected?: boolean;
+  first_login?: boolean;
   date_creation: string; // ISO datetime
   date_modif: string; // ISO datetime
   profil?: number; // Peut être undefined
@@ -105,7 +107,6 @@ export interface ApiCreateProfilRequest {
   description: string;
 }
 
-export interface ApiUpdateProfilRequest
-  extends Partial<ApiCreateProfilRequest> {
+export interface ApiUpdateProfilRequest extends Partial<ApiCreateProfilRequest> {
   id: number;
 }

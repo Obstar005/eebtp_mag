@@ -77,17 +77,20 @@ export function DeclarationSortieDetailPage() {
                   Désignation
                 </label>
                 <div className="p-3 bg-gray-50 rounded-lg">
-                  {declaration.stockItem?.name}
+                  {declaration.stockItem?.name || "Non spécifié"}
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Quantité
+                  Quantité sortie
                 </label>
                 <div className="p-3 bg-gray-50 rounded-lg flex items-center justify-between gap-2">
-                  <span>Quantité sortie</span>
+                  <span>
+                    {declaration.quantite_float}{" "}
+                    {declaration.stockItem?.description || "unité(s)"}
+                  </span>
                   <span className="inline-flex px-2 py-1 text-xs font-medium text-white bg-red-500 rounded">
-                    Urgent
+                    Sortie
                   </span>
                 </div>
               </div>
@@ -96,7 +99,18 @@ export function DeclarationSortieDetailPage() {
                   Date de déclaration
                 </label>
                 <div className="p-3 bg-gray-50 rounded-lg">
-                  {declaration.date_voeux_livrer_string}
+                  {declaration.date_creation
+                    ? new Date(declaration.date_creation).toLocaleDateString(
+                        "fr-FR",
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        },
+                      )
+                    : declaration.date_voeux_livrer_string || "Non spécifiée"}
                 </div>
               </div>
               <div>
@@ -104,7 +118,7 @@ export function DeclarationSortieDetailPage() {
                   Motif
                 </label>
                 <div className="p-3 bg-gray-50 rounded-lg min-h-[80px]">
-                  {declaration.motif || "Motif"}
+                  {declaration.motif || "Aucun motif spécifié"}
                 </div>
               </div>
             </div>

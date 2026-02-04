@@ -37,6 +37,7 @@ export function AddEditArticleModal({
     description: string;
     quantite: number;
     quantite_seuil: number;
+    etat: string;
     type_enum: ArticleType;
     magasin_id: number;
     prix_unitaire: number;
@@ -45,6 +46,7 @@ export function AddEditArticleModal({
     description: "",
     quantite: 0,
     quantite_seuil: 0,
+    etat: "neuf",
     type_enum: "matiere_premiere",
     magasin_id: magasinId,
     prix_unitaire: 0,
@@ -65,6 +67,7 @@ export function AddEditArticleModal({
         description: article.description || "",
         quantite: article.quantite,
         quantite_seuil: article.quantite_seuil,
+        etat: article.etat?.toLowerCase() || "neuf",
         type_enum: article.type_enum || "matiere_premiere",
         magasin_id: article.magasin_id,
         prix_unitaire: article.prix_unitaire || 0,
@@ -80,6 +83,7 @@ export function AddEditArticleModal({
         description: "",
         quantite: 0,
         quantite_seuil: 0,
+        etat: "neuf",
         type_enum: "matiere_premiere",
         magasin_id: magasinId,
         prix_unitaire: 0,
@@ -106,7 +110,7 @@ export function AddEditArticleModal({
 
   const handleInputChange = (
     field: keyof typeof formData,
-    value: string | number
+    value: string | number,
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -147,7 +151,7 @@ export function AddEditArticleModal({
         await updateMutation.mutateAsync(updateData);
       } else {
         const selectedProduct = productsList?.data.find(
-          (p) => p.id === String(formData.articleId)
+          (p) => p.id === String(formData.articleId),
         );
         const createData: CreateStockArticleData & {
           article_id: number;
@@ -167,6 +171,7 @@ export function AddEditArticleModal({
       }
       onClose();
     } catch (error) {
+      console.error("Error saving article:", error);
       setError("Une erreur est survenue lors de la sauvegarde");
     }
   };
@@ -212,10 +217,10 @@ export function AddEditArticleModal({
           options={[
             { value: "neuf", label: "Neuf" },
             { value: "usagé", label: "Usagé" },
-            { value: "endommagé", label: "Endommagé" },
+            { value: "abandonné", label: "Abandonné" },
           ]}
           value={formData.etat}
-          onChange={(v) => handleInputChange("etat", v as ArticleEtat)}
+          onChange={(v) => handleInputChange("etat", v as string)}
           placeholder="Sélectionner l'état de l'article"
         />
 
@@ -250,7 +255,7 @@ export function AddEditArticleModal({
             onChange={(e) =>
               handleInputChange(
                 "quantite_seuil",
-                parseFloat(e.target.value) || 0
+                parseFloat(e.target.value) || 0,
               )
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"

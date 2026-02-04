@@ -26,7 +26,7 @@ import type {
  * Gère les différents formats de réponse possibles
  */
 export const extractPaginatedData = <T>(
-  response: unknown
+  response: unknown,
 ): { data: T[]; total: number } => {
   // Si c'est déjà un tableau
   if (Array.isArray(response)) {
@@ -70,7 +70,7 @@ export const extractPaginatedData = <T>(
 // ===== TRANSFORMATEURS MAGASIN =====
 
 export const apiMagasinToMagasin = (
-  apiMagasin: ApiMagasinResponse
+  apiMagasin: ApiMagasinResponse,
 ): Magasin => {
   return {
     id: apiMagasin.id,
@@ -100,7 +100,7 @@ export const apiMagasinToMagasin = (
 };
 
 export const createMagasinDataToApiRequest = (
-  data: CreateMagasinData
+  data: CreateMagasinData,
 ): ApiCreateMagasinRequest => {
   return {
     name: data.name,
@@ -112,7 +112,7 @@ export const createMagasinDataToApiRequest = (
 };
 
 export const updateMagasinDataToApiRequest = (
-  data: UpdateMagasinData
+  data: UpdateMagasinData,
 ): ApiUpdateMagasinRequest => {
   return {
     id: data.id,
@@ -125,7 +125,7 @@ export const updateMagasinDataToApiRequest = (
 // ===== TRANSFORMATEURS STOCK ARTICLE =====
 
 export const apiStockItemToStockArticle = (
-  apiItem: ApiStockItem
+  apiItem: ApiStockItem,
 ): StockArticle => {
   return {
     id: apiItem.id,
@@ -169,14 +169,14 @@ export const apiStockItemToStockArticle = (
 };
 
 export const stockArticleToApiRequest = (
-  article: StockArticle
+  article: StockArticle,
 ): ApiCreateStockItemRequest => {
   return {
     produit: 1, // Valeur par défaut - à améliorer selon le contexte
     magasin: article.magasin_id,
     quantite: article.quantite,
     quantite_seuil: article.quantite_seuil,
-    etat: "Neuf", // Valeur par défaut pour compatibilité API
+    etat: article.etat || "neuf",
     type_enum: article.type_enum,
     prix_unitaire: article.prix_unitaire,
     description: article.description,
@@ -185,7 +185,7 @@ export const stockArticleToApiRequest = (
 };
 
 export const stockArticleToApiUpdateRequest = (
-  article: Partial<StockArticle>
+  article: Partial<StockArticle>,
 ): ApiUpdateStockItemRequest => {
   return {
     id: article.id,
@@ -193,7 +193,7 @@ export const stockArticleToApiUpdateRequest = (
     magasin: article.magasin_id,
     quantite: article.quantite,
     quantite_seuil: article.quantite_seuil,
-    etat: "Neuf", // Valeur par défaut pour compatibilité API
+    etat: article.etat || "neuf",
     type_enum: article.type_enum,
     prix_unitaire: article.prix_unitaire,
     description: article.description,
@@ -202,14 +202,14 @@ export const stockArticleToApiUpdateRequest = (
 };
 
 export const createStockArticleDataToApiRequest = (
-  data: CreateStockArticleData
+  data: CreateStockArticleData,
 ): ApiCreateStockItemRequest => {
   return {
     produit: data.article_id || 1,
     magasin: data.magasin_id,
     quantite: data.quantite,
     quantite_seuil: data.quantite_seuil,
-    etat: "Neuf", // Valeur par défaut pour compatibilité API
+    etat: data.etat || "neuf",
     type_enum: mapFrontendTypeToApi(data.type_enum || "matiere_premiere"),
     prix_unitaire: data.prix_unitaire,
     description: data.description,
@@ -217,7 +217,7 @@ export const createStockArticleDataToApiRequest = (
 };
 
 export const updateStockArticleDataToApiRequest = (
-  data: UpdateStockArticleData
+  data: UpdateStockArticleData,
 ): ApiUpdateStockItemRequest => {
   return {
     id: data.id,
@@ -225,7 +225,7 @@ export const updateStockArticleDataToApiRequest = (
     magasin: data.magasin_id,
     quantite: data.quantite,
     quantite_seuil: data.quantite_seuil,
-    etat: "Neuf", // Valeur par défaut pour compatibilité API
+    etat: data.etat || "neuf",
     type_enum: data.type_enum
       ? mapFrontendTypeToApi(data.type_enum)
       : undefined,

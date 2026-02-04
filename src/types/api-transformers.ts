@@ -25,12 +25,12 @@ import { mapProfilLibelleToUserProfil } from "../utils/permissions";
 import { apiClient } from "../services/api/client";
 
 export async function apiUserToAccount(
-  apiUser: ApiCustomUser
+  apiUser: ApiCustomUser,
 ): Promise<Account> {
   try {
     // Récupérer les détails du profil depuis l'API
     const response = await apiClient.get<ApiProfil>(
-      `/Users/profil-detail/${apiUser.profil}`
+      `/Users/profil-detail/${apiUser.profil}`,
     );
     const apiProfil = response.data;
 
@@ -41,7 +41,7 @@ export async function apiUserToAccount(
       description: apiProfil.description,
     };
 
-    return {
+    const account = {
       id: apiUser.id.toString(),
       code: `CPT-${apiUser.id.toString().padStart(3, "0")}`, // Générer un code
       nom: apiUser.last_name,
@@ -54,16 +54,19 @@ export async function apiUserToAccount(
       telephone: apiUser.telephone,
       photo_profil: apiUser.photo_profil,
       is_active: apiUser.is_active,
+      is_connected: apiUser.is_connected,
       date_creation: apiUser.date_creation,
       date_modification: apiUser.date_modif,
       derniere_connexion: apiUser.last_login,
       profile_id: apiUser.profil.toString(),
       profile: profile,
     };
+
+    return account;
   } catch (error) {
     console.error(
       "Erreur lors de la récupération du profil pour le compte:",
-      error
+      error,
     );
 
     // Fallback avec un profil par défaut
@@ -86,6 +89,7 @@ export async function apiUserToAccount(
       telephone: apiUser.telephone,
       photo_profil: apiUser.photo_profil,
       is_active: apiUser.is_active,
+      is_connected: apiUser.is_connected,
       date_creation: apiUser.date_creation,
       date_modification: apiUser.date_modif,
       derniere_connexion: apiUser.last_login,
@@ -99,7 +103,7 @@ export async function apiUserToUser(apiUser: ApiCustomUser): Promise<User> {
   try {
     // Récupérer les détails du profil depuis l'API directement
     const response = await apiClient.get<ApiProfil>(
-      `/Users/profil-detail/${apiUser.profil}`
+      `/Users/profil-detail/${apiUser.profil}`,
     );
     const apiProfil = response.data;
 
@@ -125,7 +129,6 @@ export async function apiUserToUser(apiUser: ApiCustomUser): Promise<User> {
       updatedAt: apiUser.date_modif,
     };
   } catch (error) {
-
     // Fallback en cas d'erreur
     return {
       id: apiUser.id.toString(),
@@ -154,7 +157,7 @@ export function apiProfilToProfile(apiProfil: ApiProfil): Profile {
 }
 
 export function accountToApiUser(
-  account: Account
+  account: Account,
 ): Partial<ApiCreateUserRequest> {
   return {
     username: account.nom_utilisateur,
@@ -242,7 +245,7 @@ export function apiProduitToProduct(apiProduit: ApiProduit): Product {
 
 // Transformer un CreateProductData frontend vers API
 export function productToApiCreateProduit(
-  product: CreateProductData
+  product: CreateProductData,
 ): ApiCreateProduitRequest {
   return {
     designation: product.name,
@@ -254,7 +257,7 @@ export function productToApiCreateProduit(
 
 // Transformer un UpdateProductData frontend vers API
 export function productToApiUpdateProduit(
-  product: UpdateProductData
+  product: UpdateProductData,
 ): ApiUpdateProduitRequest {
   const updates: ApiUpdateProduitRequest = {};
 

@@ -56,6 +56,10 @@ export interface StockArticle {
   description?: string;
   type_enum?: ArticleType;
   unite?: ArticleUnite; // Unité de mesure
+  etat?: string; // État de l'article (neuf, usagé, abandonné)
+  quantite?: number;
+  quantite_seuil?: number;
+  prix_unitaire?: number;
   date_creation: Date;
   date_modif: Date;
   user_id: number; // Utilisateur responsable
@@ -80,6 +84,10 @@ export interface CreateStockArticleData {
   description?: string;
   type_enum?: ArticleType;
   unite?: ArticleUnite;
+  etat?: string;
+  quantite?: number;
+  quantite_seuil?: number;
+  prix_unitaire?: number;
   magasin_id: number;
   project_id?: number;
   article_id?: number;
@@ -93,6 +101,7 @@ export interface UpdateStockArticleData {
   quantite_seuil?: number;
   type_enum?: ArticleType;
   unite?: ArticleUnite;
+  etat?: string;
   prix_unitaire?: number;
   magasin_id?: number;
   article_id?: number;

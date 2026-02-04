@@ -12,6 +12,7 @@ export interface Account {
   telephone: string;
   photo_profil?: string; // URL de la photo de profil
   is_active: boolean;
+  is_connected?: boolean;
   date_creation: string; // ISO string
   date_modification: string; // ISO string
   derniere_connexion?: string; // ISO string
@@ -48,10 +49,9 @@ export interface CreateAccountData {
   profile_id: string;
 }
 
-export interface UpdateAccountData
-  extends Partial<
-    Omit<CreateAccountData, "mot_de_passe" | "confirm_mot_de_passe">
-  > {
+export interface UpdateAccountData extends Partial<
+  Omit<CreateAccountData, "mot_de_passe" | "confirm_mot_de_passe">
+> {
   mot_de_passe?: string;
   confirm_mot_de_passe?: string;
 }

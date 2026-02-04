@@ -8,7 +8,7 @@ import type {
 
 // Clés de cache pour React Query
 export const accountKeys = {
-  all: ["accounts"] as const,
+  all: ["accounts_v2"] as const, // v2 pour forcer un refetch avec le nouveau mapping
   lists: () => [...accountKeys.all, "list"] as const,
   list: (filters?: AccountFilters, page?: number, limit?: number) =>
     [...accountKeys.lists(), { filters, page, limit }] as const,
@@ -26,7 +26,7 @@ export const profileKeys = {
 export function useAccounts(
   filters?: AccountFilters,
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
 ) {
   return useQuery({
     queryKey: accountKeys.list(filters, page, limit),
@@ -39,6 +39,8 @@ export function useAccount(id: string) {
     queryKey: accountKeys.detail(id),
     queryFn: () => accountService.getAccountById(id),
     enabled: !!id,
+    staleTime: 0, // Forcer le refetch à chaque fois
+    gcTime: 0, // Ne pas garder en cache
   });
 }
 
@@ -74,7 +76,7 @@ export function useUpdateAccount() {
       queryClient.invalidateQueries({ queryKey: accountKeys.stats() });
       queryClient.setQueryData(
         accountKeys.detail(updatedAccount.id),
-        updatedAccount
+        updatedAccount,
       );
     },
   });
@@ -102,7 +104,7 @@ export function useToggleAccountStatus() {
       queryClient.invalidateQueries({ queryKey: accountKeys.stats() });
       queryClient.setQueryData(
         accountKeys.detail(updatedAccount.id),
-        updatedAccount
+        updatedAccount,
       );
     },
   });

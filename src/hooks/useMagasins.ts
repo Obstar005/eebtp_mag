@@ -94,7 +94,7 @@ export function useMagasinStats() {
 // Hooks pour les articles de stock
 export function useStockArticles(
   magasinId: number,
-  filter: StockArticleFilter = {}
+  filter: StockArticleFilter = {},
 ) {
   return useQuery({
     queryKey: magasinKeys.articlesList(magasinId, filter),
@@ -119,10 +119,15 @@ export function useCreateStockArticle() {
   return useMutation({
     mutationFn: (data: CreateStockArticleData) =>
       magasinService.createStockArticle(data),
-    onSuccess: (newArticle) => {
-      // Invalider la liste des articles du magasin
+    onSuccess: (newArticle, variables) => {
+      // Invalider la liste des articles du magasin (utilise le magasinId des variables si newArticle n'a pas la valeur)
+      const magasinId = newArticle.magasin_id || variables.magasin_id;
       queryClient.invalidateQueries({
-        queryKey: magasinKeys.articles(newArticle.magasin_id),
+        queryKey: magasinKeys.articles(magasinId),
+      });
+      // Invalider aussi toutes les listes d'articles (au cas où)
+      queryClient.invalidateQueries({
+        queryKey: [...magasinKeys.all, "articles"],
       });
       queryClient.invalidateQueries({ queryKey: magasinKeys.stats() });
     },
@@ -135,10 +140,17 @@ export function useUpdateStockArticle() {
   return useMutation({
     mutationFn: (data: UpdateStockArticleData) =>
       magasinService.updateStockArticle(data),
-    onSuccess: (updatedArticle) => {
-      // Invalider la liste des articles
+    onSuccess: (updatedArticle, variables) => {
+      // Invalider la liste des articles (utilise le magasinId des variables si updatedArticle n'a pas la valeur)
+      const magasinId = updatedArticle.magasin_id || variables.magasin_id;
+      if (magasinId) {
+        queryClient.invalidateQueries({
+          queryKey: magasinKeys.articles(magasinId),
+        });
+      }
+      // Invalider aussi toutes les listes d'articles (au cas où)
       queryClient.invalidateQueries({
-        queryKey: magasinKeys.articles(updatedArticle.magasin_id),
+        queryKey: [...magasinKeys.all, "articles"],
       });
       queryClient.invalidateQueries({
         queryKey: magasinKeys.articleDetail(updatedArticle.id),

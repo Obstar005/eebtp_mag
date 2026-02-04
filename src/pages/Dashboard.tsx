@@ -126,6 +126,17 @@ export function Dashboard() {
   // Récupérer les statistiques de quantités d'articles
   const statsArticlesQuery = useStatsQuantitesArticles(selectedProject);
 
+  // Filtrer les articles par type: matériaux et matériels
+  const articlesMateriaux = useMemo(() => {
+    const articles = statsArticlesQuery.data?.articles || [];
+    return articles.filter((article) => article.type === "materiau");
+  }, [statsArticlesQuery.data?.articles]);
+
+  const articlesMateriels = useMemo(() => {
+    const articles = statsArticlesQuery.data?.articles || [];
+    return articles.filter((article) => article.type === "materiel");
+  }, [statsArticlesQuery.data?.articles]);
+
   return (
     <div className="space-y-6">
       {/* Header avec titre et filtres globaux */}
@@ -373,24 +384,24 @@ export function Dashboard() {
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
-                Stock par Article
+                Stock Matériaux
               </h3>
             </div>
             <StockBarChartJS
               title=""
-              articles={statsArticlesQuery.data?.articles || null}
+              articles={articlesMateriaux.length > 0 ? articlesMateriaux : null}
               isLoading={statsArticlesQuery.isLoading}
               isError={statsArticlesQuery.isError}
               emptyMessage={
                 !selectedProject
                   ? "Sélectionnez un projet"
-                  : "Aucun article en stock"
+                  : "Aucun matériau en stock"
               }
             />
           </div>
         </div>
 
-        {/* Ligne 2: Graphique Sorties (courbe) + Graphique Réservé (bâtonnets) */}
+        {/* Ligne 2: Graphique Sorties (courbe) + Graphique Matériels (bâtonnets) */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Graphique Sorties - 3/5 */}
           <div className="lg:col-span-3">
@@ -426,22 +437,24 @@ export function Dashboard() {
             />
           </div>
 
-          {/* Graphique Réservé (à compléter) - 2/5 */}
+          {/* Graphique Stock Matériels - 2/5 */}
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
-                Statistiques
+                Stock Matériels
               </h3>
             </div>
-            <div className="bg-white rounded-lg shadow p-4 h-[300px] flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-gray-400 text-4xl mb-2">📊</div>
-                <p className="text-sm text-gray-500">Graphique à venir</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  En attente de configuration
-                </p>
-              </div>
-            </div>
+            <StockBarChartJS
+              title=""
+              articles={articlesMateriels.length > 0 ? articlesMateriels : null}
+              isLoading={statsArticlesQuery.isLoading}
+              isError={statsArticlesQuery.isError}
+              emptyMessage={
+                !selectedProject
+                  ? "Sélectionnez un projet"
+                  : "Aucun matériel en stock"
+              }
+            />
           </div>
         </div>
       </div>

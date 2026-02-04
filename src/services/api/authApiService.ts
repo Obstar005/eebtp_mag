@@ -44,7 +44,7 @@ export class AuthApiService {
 
   // Vérifier si un utilisateur existe par téléphone
   async checkUserExists(
-    phone: string
+    phone: string,
   ): Promise<{ exists: boolean; userId?: number; message: string }> {
     try {
       // Appel sans authentification car cet endpoint est public
@@ -57,7 +57,7 @@ export class AuthApiService {
           headers: {
             "X-No-Auth": "true", // Flag pour désactiver l'authentification
           },
-        }
+        },
       );
       return {
         exists: response.data.Verifié, // Adapter au format réel de l'API
@@ -81,7 +81,7 @@ export class AuthApiService {
         // 404 ou tout autre 4xx = erreur client, ne pas continuer
         if (status === 404) {
           throw new Error(
-            "Ce numéro de téléphone n'est pas enregistré dans le système"
+            "Ce numéro de téléphone n'est pas enregistré dans le système",
           );
         }
 
@@ -95,21 +95,21 @@ export class AuthApiService {
         // 5xx = erreur serveur
         if (status && status >= 500) {
           throw new Error(
-            "Erreur serveur. Veuillez réessayer dans quelques instants."
+            "Erreur serveur. Veuillez réessayer dans quelques instants.",
           );
         }
       }
 
       // Pour les autres erreurs, relancer avec un message générique
       throw new Error(
-        "Impossible de vérifier le numéro de téléphone. Veuillez réessayer."
+        "Impossible de vérifier le numéro de téléphone. Veuillez réessayer.",
       );
     }
   }
 
   // Connexion par téléphone et mot de passe
   async loginByPhone(
-    credentials: DirectLoginCredentials
+    credentials: DirectLoginCredentials,
   ): Promise<AuthResponse> {
     try {
       // Utiliser Basic Auth admin pour cette requête, credentials utilisateur dans le body
@@ -123,7 +123,7 @@ export class AuthApiService {
           headers: {
             "X-No-Auth": "true", // Désactiver auto-auth pour utiliser Basic Auth admin
           },
-        }
+        },
       );
 
       // L'API retourne toujours un message, access_token si succès
@@ -159,12 +159,12 @@ export class AuthApiService {
 
   // Définir ou changer le mot de passe
   async setPassword(
-    data: ApiSetPasswordRequest
+    data: ApiSetPasswordRequest,
   ): Promise<{ success: boolean; message: string }> {
     try {
       const response = await apiClient.post<ApiSetPasswordResponse>(
         "/Users/authentication/set-password/",
-        data
+        data,
       );
       return {
         success: response.data.success,
@@ -178,7 +178,7 @@ export class AuthApiService {
 
   // Implémentation des méthodes legacy pour compatibilité
   async verifyPhone(
-    data: PhoneVerificationRequest
+    data: PhoneVerificationRequest,
   ): Promise<PhoneVerificationResponse> {
     try {
       const result = await this.checkUserExists(data.phone);
@@ -197,13 +197,13 @@ export class AuthApiService {
   async getUserInfo(): Promise<User> {
     try {
       const response = await apiClient.get<ApiCustomUser>(
-        "/Users/authentication/user-info/"
+        "/Users/authentication/user-info/",
       );
       return await apiUserToUser(response.data);
     } catch (error) {
       console.error(
         "Erreur lors de la récupération des infos utilisateur:",
-        error
+        error,
       );
       throw error;
     }
@@ -277,7 +277,7 @@ export class AuthApiService {
     } catch (error) {
       console.warn(
         "⚠️ Erreur lors de la déconnexion API (non-bloquant):",
-        error
+        error,
       );
     }
   }
@@ -289,11 +289,10 @@ export class UserApiService {
   async getUsers(): Promise<Account[]> {
     try {
       console.log(
-        "🔍 UserApiService: Récupération des utilisateurs depuis l'API EEBTP..."
+        "🔍 UserApiService: Récupération des utilisateurs depuis l'API EEBTP...",
       );
-      const response = await apiClient.get<ApiCustomUser[]>(
-        "/Users/liste-users"
-      );
+      const response =
+        await apiClient.get<ApiCustomUser[]>("/Users/liste-users");
 
       const accounts = await Promise.all(response.data.map(apiUserToAccount));
 
@@ -308,9 +307,23 @@ export class UserApiService {
   async getUserById(id: string): Promise<Account> {
     try {
       const response = await apiClient.get<ApiCustomUser>(
-        `/Users/user-detail${id}`
+        `/Users/user-detail${id}`,
       );
-      return await apiUserToAccount(response.data);
+      const account = await apiUserToAccount(response.data);
+
+      // PATCH: S'assurer que is_connected est bien présent
+      if (
+        account.is_connected === undefined &&
+        response.data.is_connected !== undefined
+      ) {
+        account.is_connected = response.data.is_connected;
+        console.log(
+          "⚠️ PATCH appliqué - is_connected ajouté:",
+          account.is_connected,
+        );
+      }
+
+      return account;
     } catch (error) {
       console.error("Erreur getUserById:", error);
       throw new Error("Impossible de récupérer l'utilisateur");
@@ -355,7 +368,7 @@ export class UserApiService {
             headers: {
               "Content-Type": "multipart/form-data",
             },
-          }
+          },
         );
 
         // Validation de la réponse API
@@ -363,11 +376,11 @@ export class UserApiService {
         if (!validation.isValid) {
           console.error(
             "❌ Validation de l'utilisateur créé (avec image) échouée:",
-            validation
+            validation,
           );
         } else {
           console.log(
-            "✅ Validation de l'utilisateur créé (avec image) réussie"
+            "✅ Validation de l'utilisateur créé (avec image) réussie",
           );
         }
 
@@ -378,7 +391,7 @@ export class UserApiService {
         // Si pas d'image, utiliser JSON standard
         const response = await apiClient.post<ApiCustomUser>(
           "/Users/user-create",
-          apiData
+          apiData,
         );
 
         // Validation de la réponse API
@@ -386,7 +399,7 @@ export class UserApiService {
         if (!validation.isValid) {
           console.error(
             "❌ Validation de l'utilisateur créé échouée:",
-            validation
+            validation,
           );
         } else {
         }
@@ -438,7 +451,7 @@ export class UserApiService {
       const apiData = updateAccountDataToApiUser(data);
       const response = await apiClient.put<ApiCustomUser>(
         `/Users/user-update/${data.id}`,
-        apiData
+        apiData,
       );
       return await apiUserToAccount(response.data);
     } catch (error) {
@@ -472,7 +485,7 @@ export class UserApiService {
       // 3. Mettre à jour l'utilisateur
       const response = await apiClient.put<ApiCustomUser>(
         `/Users/user-update/${id}`,
-        updateData
+        updateData,
       );
 
       // 4. Retourner l'utilisateur mis à jour
@@ -487,7 +500,7 @@ export class UserApiService {
   async getAccounts(
     filters?: AccountFilters,
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
   ): Promise<AccountListResponse> {
     try {
       const accounts = await this.getUsers();
@@ -502,13 +515,13 @@ export class UserApiService {
             account.nom.toLowerCase().includes(search) ||
             account.prenoms.toLowerCase().includes(search) ||
             account.nom_utilisateur.toLowerCase().includes(search) ||
-            account.telephone.includes(search)
+            account.telephone.includes(search),
         );
       }
 
       if (filters?.type) {
         filteredAccounts = filteredAccounts.filter(
-          (account) => account.type === filters.type
+          (account) => account.type === filters.type,
         );
       }
 
@@ -579,7 +592,7 @@ export class UserApiService {
             profile_name: profile?.nom || "Profil inconnu",
             count,
           };
-        }
+        },
       );
 
       return {
@@ -616,7 +629,7 @@ export class ProfileApiService {
   async getProfileById(id: number): Promise<Profile> {
     try {
       const response = await apiClient.get<ApiProfil>(
-        `/Users/profil-detail/${id}`
+        `/Users/profil-detail/${id}`,
       );
       return apiProfilToProfile(response.data);
     } catch (error) {
@@ -638,7 +651,7 @@ export class ProfileApiService {
       });
       const response = await apiClient.post<ApiProfil>(
         "/Users/profil-create",
-        apiData
+        apiData,
       );
       return apiProfilToProfile(response.data);
     } catch (error) {
@@ -650,7 +663,7 @@ export class ProfileApiService {
   // Mettre à jour un profil
   async updateProfile(
     id: string,
-    data: { nom: string; description?: string }
+    data: { nom: string; description?: string },
   ): Promise<Profile> {
     try {
       const apiData = profileToApiProfil({
@@ -660,7 +673,7 @@ export class ProfileApiService {
       });
       const response = await apiClient.put<ApiProfil>(
         `/Users/profil-update/${id}`,
-        { ...apiData, id: parseInt(id) } as ApiUpdateProfilRequest
+        { ...apiData, id: parseInt(id) } as ApiUpdateProfilRequest,
       );
       return apiProfilToProfile(response.data);
     } catch (error) {

@@ -73,11 +73,8 @@ export function AccountDetailsPage() {
     try {
       await deleteAccountMutation.mutateAsync(account.id);
       navigate("/accounts");
-    } catch (error) {
-    }
+    } catch (error) {}
   };
-
-  console.log("Account details:", account); 
 
   return (
     <div className="space-y-6">
@@ -90,7 +87,10 @@ export function AccountDetailsPage() {
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-xl font-semibold text-gray-900" aria-label={`Détails du compte N°${account.code}`}>
+        <h1
+          className="text-xl font-semibold text-gray-900"
+          aria-label={`Détails du compte N°${account.code}`}
+        >
           Détails du compte N°{account.code}
         </h1>
       </div>
@@ -124,13 +124,21 @@ export function AccountDetailsPage() {
                   <Edit2Icon className="h-4 w-4 text-white" />
                 </button>
               </div>
-              {/* isOnligne badge */}
-              <span
-                className="absolute top-3/7 right-12 p-1 px-4 text-white bg-green-500 border-2 border-white rounded-full"
-                title="En ligne"
-              >
-                En ligne
-              </span>
+              {/* isOnline badge */}
+              {/* Si is_connected est défini, l'utiliser. Sinon, afficher "En ligne" si c'est le profil de l'utilisateur connecté */}
+              {(() => {
+                const isOnline = account.is_connected ?? isOwnProfile;
+                return (
+                  <span
+                    className={`absolute top-3/7 right-12 p-1 px-4 text-white border-2 border-white rounded-full ${
+                      isOnline ? "bg-green-500" : "bg-gray-400"
+                    }`}
+                    title={isOnline ? "En ligne" : "Hors ligne"}
+                  >
+                    {isOnline ? "En ligne" : "Hors ligne"}
+                  </span>
+                );
+              })()}
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">
                   {account.prenoms} {account.nom}
