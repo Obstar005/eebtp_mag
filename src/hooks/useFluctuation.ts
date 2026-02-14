@@ -60,7 +60,6 @@ export function useFluctuationEntrees(params: FluctuationParams | null) {
     queryKey: ["fluctuation-entrees", params],
     queryFn: async () => {
       if (!params) throw new Error("Paramètres manquants");
-
       const response = (await mouvementsApiService.getFluctuationEntree(
         params.projetId,
         params.typeEntree || "entree",
@@ -74,12 +73,24 @@ export function useFluctuationEntrees(params: FluctuationParams | null) {
       if (response && typeof response === "object") {
         if ("donnees" in response && Array.isArray(response.donnees)) {
           donnees = response.donnees;
+          console.log(`✅ ENTREES - ${donnees.length} points trouvés`);
+          if (donnees.length === 0) {
+            console.log('ℹ️ Tableau vide - Aucun mouvement pour:', {
+              projet: (response as any).projet,
+              article: (response as any).article,
+              periode: (response as any).periode,
+            });
+          }
         } else if (Array.isArray(response)) {
           donnees = response as unknown as FluctuationDataPoint[];
+          console.log("✅ Extraction via cast array direct");
+        } else {
+          console.warn("⚠️ Structure de réponse non reconnue", response);
         }
       }
 
-      return processFluctuationData(donnees);
+      const processed = processFluctuationData(donnees);
+      return processed;
     },
     enabled: !!params,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -109,10 +120,13 @@ export function useFluctuationSorties(params: FluctuationParams | null) {
           donnees = response.donnees;
         } else if (Array.isArray(response)) {
           donnees = response as unknown as FluctuationDataPoint[];
+        } else {
+          console.warn("⚠️ SORTIES - Structure de réponse non reconnue", response);
         }
       }
 
-      return processFluctuationData(donnees);
+      const processed = processFluctuationData(donnees);
+      return processed;
     },
     enabled: !!params,
     staleTime: 5 * 60 * 1000, // 5 minutes

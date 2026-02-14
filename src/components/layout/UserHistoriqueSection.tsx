@@ -133,11 +133,11 @@ export function UserHistoriqueSection({
   return (
     <div className="bg-white rounded-lg shadow">
       {/* En-tête avec filtres */}
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex items-center justify-between">
+      <div className="p-4 sm:p-6 border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center space-x-2">
             <Clock className="h-5 w-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
               Historique des activités
             </h3>
           </div>
@@ -149,7 +149,7 @@ export function UserHistoriqueSection({
               id="periode"
               value={periode}
               onChange={(e) => setPeriode(e.target.value as PeriodeHistorique)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm flex-1 sm:flex-none"
             >
               <option value="jour">Aujourd'hui</option>
               <option value="semaine">Cette semaine</option>
@@ -161,7 +161,7 @@ export function UserHistoriqueSection({
       </div>
 
       {/* Contenu */}
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {isLoading ? (
           <div className="flex items-center justify-center h-32">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -176,11 +176,11 @@ export function UserHistoriqueSection({
             <p>Aucune activité pour cette période</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[400px] md:max-h-[500px] xl:max-h-[600px] overflow-y-auto pr-2">
             {historique.map((action, index) => (
               <div
                 key={action.id || index}
-                className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex flex-col sm:flex-row sm:items-start space-y-2 sm:space-y-0 sm:space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 {/* Icône d'action */}
                 <div className="flex-shrink-0 mt-1">
@@ -189,7 +189,7 @@ export function UserHistoriqueSection({
 
                 {/* Contenu */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-medium text-gray-900">
                       {action.user || "Utilisateur inconnu"}
                     </span>
@@ -199,6 +199,10 @@ export function UserHistoriqueSection({
                       )}`}
                     >
                       {getActionLabel(action.action_type)}
+                    </span>
+                    {/* Date mobile - visible sur petit écran */}
+                    <span className="sm:hidden text-xs text-gray-500">
+                      {formatRelativeDate(action.date_action)}
                     </span>
                   </div>
                   <p className="mt-1 text-sm text-gray-700">
@@ -211,8 +215,8 @@ export function UserHistoriqueSection({
                   )}
                 </div>
 
-                {/* Date */}
-                <div className="flex-shrink-0 text-right">
+                {/* Date - visible sur grand écran seulement */}
+                <div className="hidden sm:block flex-shrink-0 text-right">
                   <p className="text-sm text-gray-600">
                     {formatRelativeDate(action.date_action)}
                   </p>

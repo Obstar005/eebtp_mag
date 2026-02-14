@@ -51,7 +51,7 @@ export function Dashboard() {
     number | null
   >(null);
   const [selectedTypeEntree, setSelectedTypeEntree] =
-    useState<string>("entree");
+    useState<string>("Livraison");
 
   // Filtres spécifiques au graphique Sorties
   const [selectedProductSortie, setSelectedProductSortie] = useState<
@@ -72,9 +72,9 @@ export function Dashboard() {
   // Articles formatés pour les sélecteurs
   const articlesList = useMemo(() => {
     const articles = articlesQuery.data?.data || [];
-    return articles.map((article: any) => ({
+    return articles.map((article) => ({
       id: article.id,
-      name: article.name || article.produit_name || `Article #${article.id}`,
+      name: article.name,
     }));
   }, [articlesQuery.data?.data]);
 
@@ -347,9 +347,8 @@ export function Dashboard() {
                   {openTypeEntreeMenu && (
                     <div className="absolute top-full right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
                       {[
-                        { value: "entree", label: "Livraison" },
-                        { value: "depot", label: "Dépôt" },
-                        { value: "retour", label: "Retour" },
+                        { value: "Livraison", label: "Livraison" },
+                        { value: "Retour", label: "Retour" },
                       ].map((type) => (
                         <button
                           key={type.value}

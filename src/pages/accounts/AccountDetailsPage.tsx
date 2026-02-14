@@ -3,8 +3,6 @@ import {
   User,
   Calendar,
   ArrowLeft,
-  Eye,
-  EyeOff,
   Edit2Icon,
 } from "lucide-react";
 import { useAccount, useDeleteAccount } from "../../hooks";
@@ -95,8 +93,8 @@ export function AccountDetailsPage() {
         </h1>
       </div>
 
-      <div className="flex gap-4">
-        <div className="flex-3">
+      <div className="flex gap-4 max-xl:flex-col">
+        <div className="w-full xl:w-2/3">
           {/* Card principale avec photo et informations */}
           <div className="bg-white rounded-lg shadow p-6 mb-6 relative flex flex-col pt-12">
             {/* bg linear with courbes */}
@@ -130,7 +128,7 @@ export function AccountDetailsPage() {
                 const isOnline = account.is_connected ?? isOwnProfile;
                 return (
                   <span
-                    className={`absolute top-3/7 right-12 p-1 px-4 text-white border-2 border-white rounded-full ${
+                    className={`absolute top-3/7 right-4 sm:right-12 p-1 px-3 sm:px-4 text-xs sm:text-sm text-white border-2 border-white rounded-full ${
                       isOnline ? "bg-green-500" : "bg-gray-400"
                     }`}
                     title={isOnline ? "En ligne" : "Hors ligne"}
@@ -140,7 +138,7 @@ export function AccountDetailsPage() {
                 );
               })()}
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
                   {account.prenoms} {account.nom}
                 </h2>
                 <div className="space-y-2">
@@ -148,15 +146,15 @@ export function AccountDetailsPage() {
                   <p className="text-right text-sm text-gray-500">
                     Téléphone: {account.telephone}
                   </p>
-                  <div className="flex justify-between items-center gap-4">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-4">
                     <p className="text-sm text-gray-500">N° {account.code}</p>
-                    <div className="flex gap-6 items-center">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-xs sm:text-sm">
                       {/* created at */}
-                      <p className="text-sm text-gray-500">
+                      <p className="text-gray-500">
                         Créé le: {formatDate(account.date_creation)}
                       </p>
                       {/* updated at */}
-                      <p className="text-sm text-gray-500">
+                      <p className="text-gray-500">
                         Mis à jour: {formatDate(account.date_modification)}
                       </p>
                     </div>
@@ -240,11 +238,14 @@ export function AccountDetailsPage() {
           </div>
         </div>
         {/* Section Historique des activités - visible uniquement si c'est le profil de l'utilisateur */}
-        <div className="flex-1">
+        <div className="w-full xl:w-1/3">
           <UserHistoriqueSection isOwnProfile={isOwnProfile} />
         </div>
-        {/* Bouton Voir le projet associé */}
-        <button className="fixed bottom-10 right-10 w-max min-w-48 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 flex items-center justify-center">
+      </div>
+      
+      {/* Bouton Voir le projet associé */}
+      <div className="mt-6 lg:mt-0 pb-4 lg:pb-0">
+        <button className="w-full lg:fixed lg:bottom-10 lg:right-10 lg:w-auto lg:min-w-[12rem] bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center justify-center shadow-lg transition-all">
           <span>Voir le projet associé</span>
           <svg
             className="w-4 h-4 ml-2"
