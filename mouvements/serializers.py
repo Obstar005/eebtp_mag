@@ -11,6 +11,7 @@ class SortieSerializer(serializers.ModelSerializer):
     # make_by = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
     stock_item_name = serializers.ReadOnlyField(source='stock_item.produit.designation')
     stock_item_type = serializers.ReadOnlyField(source='stock_item.produit.type')
+    stock_item_unite = serializers.ReadOnlyField(source='stock_item.produit.unite')
 
     class Meta:
         model = Sortie
@@ -24,6 +25,7 @@ class EntreeSerializer(serializers.ModelSerializer):
     # make_by = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
     stock_item_name = serializers.ReadOnlyField(source='stock_item.produit.designation')
     stock_item_type = serializers.ReadOnlyField(source='stock_item.produit.type')
+    stock_item_unite = serializers.ReadOnlyField(source='stock_item.produit.unite')
 
     class Meta:
         model = Entree

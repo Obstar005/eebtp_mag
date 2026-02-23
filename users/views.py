@@ -360,7 +360,7 @@ def set_password(request):
     user= request.user
     if not user.profil.libelle == "admin" and not user.profil.libelle == "superadmin":
         return Response(
-            {"error": "Accès refusé! Vous n'êtes pas autorisé à effectuer cette action."},status=status.HTTP_403_FORBIDDEN
+            {"error": "Modification refusée! Vous n'êtes pas autorisé à effectuer cette action."},status=status.HTTP_403_FORBIDDEN
         )
     phone = request.data.get('telephone')
     password = request.data.get('password')
