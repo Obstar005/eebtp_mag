@@ -86,9 +86,12 @@ export function DeclarationEntreeDetailPage() {
                 Quantité
               </label>
               <div className="p-3 bg-gray-50 rounded-lg flex items-center gap-2">
-                <span>Quantité demandée</span>
-                <span className="inline-flex px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">
-                  Urgent
+                <span>
+                  {declaration.quantite_float}{" "}
+                  {declaration.stockItem?.description || "unité(s)"}
+                </span>
+                <span className="inline-flex px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">
+                  Entrée
                 </span>
               </div>
             </div>
@@ -98,7 +101,18 @@ export function DeclarationEntreeDetailPage() {
                 Date de déclaration
               </label>
               <div className="p-3 bg-gray-50 rounded-lg">
-                {declaration.date_voeux_livrer_string}
+                {declaration.date_creation
+                  ? new Date(declaration.date_creation).toLocaleDateString(
+                      "fr-FR",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      },
+                    )
+                  : declaration.date_voeux_livrer_string || "Non spécifiée"}
               </div>
             </div>
 
@@ -123,51 +137,35 @@ export function DeclarationEntreeDetailPage() {
             <span className="text-gray-400">Aucune image disponible</span>
           </div>
         </div>
-      </div>
+        {/* Sections supplémentaires */}
+        <div className="grid grid-cols-1 gap-6">
+          {/* Fournisseur */}
+          <div className="bg-white rounded-lg shadow-sm p-6 h-max">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Fournisseur
+            </h3>
 
-      {/* Sections supplémentaires */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        {/* Approvisionnement Demandé */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Approvisionnement Demandé
-          </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nom
+                </label>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  {declaration.fournisseur?.name || "Nom du fournisseur"}
+                </div>
+              </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                    Article
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                    Quantité
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                    Date
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="px-4 py-2 border-b">
-                    {declaration.stockItem?.name}
-                  </td>
-                  <td className="px-4 py-2 border-b">200 kilogramme</td>
-                  <td className="px-4 py-2 border-b">03/02/2020</td>
-                  <td className="px-4 py-2 border-b">
-                    <button className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700">
-                      OK
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Numéro de téléphone
+                </label>
+                <PhoneDisplay
+                  phoneNumber={declaration.fournisseur?.telephone}
+                  showFullNumber={true}
+                />
+              </div>
+            </div>
           </div>
-
           {/* Livreur */}
           <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -176,22 +174,41 @@ export function DeclarationEntreeDetailPage() {
 
             <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 font-semibold text-sm">JD</span>
+                <span className="text-blue-600 font-semibold text-sm">
+                  {(declaration.livreur?.name || declaration.deposant?.name)
+                    ?.substring(0, 2)
+                    .toUpperCase() || "LV"}
+                </span>
               </div>
               <div className="flex-1">
                 <div className="font-medium text-gray-900">
-                  {declaration.user?.name} {declaration.user?.surname}
+                  {declaration.livreur?.name ||
+                    declaration.deposant?.name ||
+                    "Non spécifié"}
                 </div>
-                <div className="text-sm text-gray-500">Tél: +228 90909090</div>
+                <div className="text-sm text-gray-500">
+                  {declaration.deposant?.fonction && (
+                    <span className="mr-3">
+                      {declaration.deposant.fonction}
+                    </span>
+                  )}
+                  Tél:{" "}
+                  {declaration.livreur?.telephone ||
+                    declaration.deposant?.telephone ||
+                    "Non spécifié"}
+                </div>
               </div>
               {/* Copy phone number btn */}
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(
-                    declaration.user?.telephone || ""
+                    declaration.livreur?.telephone ||
+                      declaration.deposant?.telephone ||
+                      "",
                   );
                 }}
                 className="px-3 py-1 text-blue-600 text-xs rounded hover:text-blue-700"
+                title="Copier le numéro de téléphone"
               >
                 <svg
                   className="w-6 h-6"
@@ -214,34 +231,21 @@ export function DeclarationEntreeDetailPage() {
 
             <div className="mt-4 text-center">
               <span className="text-sm text-gray-500">Signature</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Fournisseur */}
-        <div className="bg-white rounded-lg shadow-sm p-6 h-max">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Fournisseur
-          </h3>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nom
-              </label>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                {declaration.fournisseur?.name || "Nom du fournisseur"}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Numéro de téléphone
-              </label>
-              <PhoneDisplay
-                phoneNumber={declaration.deposant?.telephone}
-                showFullNumber={true}
-              />
+              {declaration.signature_livreur ? (
+                <div className="mt-2">
+                  <img
+                    src={declaration.signature_livreur}
+                    alt="Signature du livreur"
+                    className="max-w-[200px] mx-auto border rounded"
+                  />
+                </div>
+              ) : (
+                <div className="mt-2 p-4 border-2 border-dashed border-gray-300 rounded-lg">
+                  <span className="text-gray-400 text-sm">
+                    Aucune signature
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>

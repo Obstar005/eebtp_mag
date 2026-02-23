@@ -41,6 +41,10 @@ export interface Declaration {
     fonction: string;
     telephone?: string;
   };
+  livreur?: {
+    name: string;
+    telephone?: string;
+  };
   motif?: string;
 
   // Champs supplémentaires de l'API

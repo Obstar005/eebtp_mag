@@ -67,6 +67,7 @@ export function EditAccountPage() {
         mot_de_passe: "",
         confirm_mot_de_passe: "",
         type: account.type || "Interne",
+        titre: account.titre || "",
         telephone: account.telephone || "",
         profile_id: account.profile_id || "",
         photo_profil: undefined,

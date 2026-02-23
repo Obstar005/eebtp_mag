@@ -48,14 +48,20 @@ export function apiEntreeToDeclaration(apiEntree: ApiEntree): Declaration {
         }
       : undefined,
 
-    deposant:
-      apiEntree.nom_deposant || apiEntree.nom_livreur
-        ? {
-            name: apiEntree.nom_deposant || apiEntree.nom_livreur || "",
-            fonction: apiEntree.fonction_deposant || "",
-            telephone: apiEntree.tel_deposant || apiEntree.tel_livreur || "",
-          }
-        : undefined,
+    deposant: apiEntree.nom_deposant
+      ? {
+          name: apiEntree.nom_deposant,
+          fonction: apiEntree.fonction_deposant || "",
+          telephone: apiEntree.tel_deposant || "",
+        }
+      : undefined,
+
+    livreur: apiEntree.nom_livreur
+      ? {
+          name: apiEntree.nom_livreur,
+          telephone: apiEntree.tel_livreur || "",
+        }
+      : undefined,
 
     // Informations supplémentaires
     ...(apiEntree.signature_livreur && {

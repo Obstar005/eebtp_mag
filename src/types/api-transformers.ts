@@ -51,6 +51,7 @@ export async function apiUserToAccount(
       nationalite: apiUser.nationality, // TODO: Convertir nom pays → code pays
       mot_de_passe: "", // Ne pas exposer
       type: apiUser.type as AccountType,
+      titre: apiUser.titre || "",
       telephone: apiUser.telephone,
       photo_profil: apiUser.photo_profil,
       is_active: apiUser.is_active,
@@ -86,6 +87,7 @@ export async function apiUserToAccount(
       nationalite: apiUser.nationality,
       mot_de_passe: "",
       type: apiUser.type as AccountType,
+      titre: apiUser.titre || "",
       telephone: apiUser.telephone,
       photo_profil: apiUser.photo_profil,
       is_active: apiUser.is_active,
@@ -171,7 +173,7 @@ export function accountToApiUser(
     telephone: account.telephone,
     titre: "", // À définir selon la logique métier
     poste: "", // À définir selon la logique métier
-    id_profil: account.profile_id ? parseInt(account.profile_id) : undefined,
+    profil: account.profile_id ? parseInt(account.profile_id) : undefined, // L'API attend "profil"
   };
 }
 

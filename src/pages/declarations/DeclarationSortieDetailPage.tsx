@@ -153,7 +153,7 @@ export function DeclarationSortieDetailPage() {
                 Numéro de téléphone
               </label>
               <PhoneDisplay
-                phoneNumber={declaration.deposant?.telephone}
+                phoneNumber={declaration.receveur?.telephone}
                 showFullNumber={true}
               />
             </div>

@@ -85,9 +85,12 @@ export function DeclarationRetourDetailPage() {
                   Quantité
                 </label>
                 <div className="p-3 bg-gray-50 rounded-lg flex items-center justify-between gap-2">
-                  <span>Quantité</span>
-                  <span className="inline-flex px-2 py-1 text-xs font-medium text-red-100 bg-red-500 rounded">
-                    Urgent
+                  <span>
+                    {declaration.quantite_float}{" "}
+                    {declaration.stockItem?.description || "unité(s)"}
+                  </span>
+                  <span className="inline-flex px-2 py-1 text-xs font-medium text-yellow-100 bg-yellow-500 rounded">
+                    Retour
                   </span>
                 </div>
               </div>
@@ -96,7 +99,18 @@ export function DeclarationRetourDetailPage() {
                   Date de déclaration
                 </label>
                 <div className="p-3 bg-gray-50 rounded-lg">
-                  {declaration.date_voeux_livrer_string}
+                  {declaration.date_creation
+                    ? new Date(declaration.date_creation).toLocaleDateString(
+                        "fr-FR",
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        },
+                      )
+                    : declaration.date_voeux_livrer_string || "Non spécifiée"}
                 </div>
               </div>
             </div>
@@ -113,7 +127,7 @@ export function DeclarationRetourDetailPage() {
                 Nom
               </label>
               <div className="p-3 bg-gray-50 rounded-lg">
-                {declaration.deposant?.name || "Nom du déposant"}
+                {declaration.deposant?.name || "Non spécifié"}
               </div>
             </div>
             <div>
@@ -121,7 +135,7 @@ export function DeclarationRetourDetailPage() {
                 Fonction
               </label>
               <div className="p-3 bg-gray-50 rounded-lg">
-                {declaration.deposant?.fonction || "Fonction du déposant"}
+                {declaration.deposant?.fonction || "Non spécifiée"}
               </div>
             </div>
             <div className="md:col-span-2">
@@ -134,16 +148,87 @@ export function DeclarationRetourDetailPage() {
               />
             </div>
           </div>
+
+          {/* Livreur */}
+          {declaration.livreur && (
+            <div className="bg-white rounded-lg shadow-sm p-6 mt-6 space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                Livreur
+              </h3>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nom
+                </label>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  {declaration.livreur.name}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Numéro de téléphone
+                </label>
+                <PhoneDisplay
+                  phoneNumber={declaration.livreur.telephone}
+                  showFullNumber={true}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Les images de l'article */}
-        <div className="bg-white rounded-lg shadow-sm p-6 h-max">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Les images de l'article
-          </h3>
-          <div className="text-sm text-gray-500 mb-4">Photos</div>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg h-48 flex items-center justify-center">
-            <span className="text-gray-400">Aucune image disponible</span>
+        <div>
+          {/* Fournisseur / Société */}
+          {declaration.fournisseur && (
+            <div className="bg-white rounded-lg shadow-sm p-6 space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                Société / Fournisseur
+              </h3>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nom
+                </label>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  {declaration.fournisseur.name}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Numéro de téléphone
+                </label>
+                <PhoneDisplay
+                  phoneNumber={declaration.fournisseur.telephone}
+                  showFullNumber={true}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Source (sortie d'origine) */}
+          {declaration.source_id && (
+            <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Sortie d'origine
+              </h3>
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <span className="text-sm text-gray-600">
+                  Référence sortie:{" "}
+                </span>
+                <span className="font-medium">#{declaration.source_id}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Les images de l'article */}
+          <div className="bg-white rounded-lg shadow-sm p-6 mt-6 h-max">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Les images de l'article
+            </h3>
+            <div className="text-sm text-gray-500 mb-4">Photos</div>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg h-48 flex items-center justify-center">
+              <span className="text-gray-400">Aucune image disponible</span>
+            </div>
           </div>
         </div>
       </div>

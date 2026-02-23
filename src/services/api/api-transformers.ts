@@ -131,6 +131,7 @@ export async function apiUserToAccount(
       nationalite: countryCode,
       mot_de_passe: "",
       type: apiUser.type as AccountType,
+      titre: apiUser.titre || "",
       telephone: apiUser.telephone,
       photo_profil: apiUser.photo_profil,
       is_active: apiUser.is_active,
@@ -174,6 +175,7 @@ export async function apiUserToAccount(
       nationalite: countryCode, // Convertir le nom complet du pays en code
       mot_de_passe: "", // Ne pas exposer
       type: apiUser.type as AccountType,
+      titre: apiUser.titre || "",
       telephone: apiUser.telephone,
       photo_profil: apiUser.photo_profil,
       is_active: apiUser.is_active,
@@ -217,6 +219,7 @@ export async function apiUserToAccount(
       nationalite: countryCode,
       mot_de_passe: "",
       type: apiUser.type as AccountType,
+      titre: apiUser.titre || "",
       telephone: apiUser.telephone,
       photo_profil: apiUser.photo_profil,
       is_active: apiUser.is_active,
@@ -379,7 +382,7 @@ export function accountToApiUser(
     telephone: account.telephone,
     titre: "", // À définir selon la logique métier
     poste: "", // À définir selon la logique métier
-    id_profil: account.profile_id ? parseInt(account.profile_id) : undefined,
+    profil: account.profile_id ? parseInt(account.profile_id) : undefined, // L'API attend "profil"
   };
 }
 
@@ -428,7 +431,7 @@ export function createAccountDataToApiUser(
     titre: data.titre,
     poste: data.titre, // Utiliser titre comme poste
     password: data.mot_de_passe,
-    id_profil: profileId,
+    profil: profileId, // L'API attend "profil" pas "id_profil"
   };
 
   return apiUser;
@@ -453,7 +456,7 @@ export function updateAccountDataToApiUser(
     telephone: data.telephone,
     titre: data.titre,
     poste: data.titre, // Utiliser titre comme poste
-    id_profil: data.profile_id ? parseInt(data.profile_id) : undefined,
+    profil: data.profile_id ? parseInt(data.profile_id) : undefined, // L'API attend "profil" pas "id_profil"
   };
 }
 

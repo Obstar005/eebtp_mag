@@ -165,6 +165,15 @@ export function AccountDetailsPage() {
           </div>
           {/* Sections d'informations */}
           <div className="bg-white rounded-lg shadow p-4 space-y-4">
+            {/* Nom d'utilisateur */}
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase tracking-wide">
+                Nom d'utilisateur
+              </label>
+              <div className="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50">
+                <span className="text-gray-900">{account.nom_utilisateur}</span>
+              </div>
+            </div>
             {/* Nom */}
             <div className="space-y-1">
               <label className="text-xs text-gray-500 uppercase tracking-wide">
@@ -181,6 +190,15 @@ export function AccountDetailsPage() {
               </label>
               <div className="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50">
                 <span className="text-gray-900">{account.prenoms}</span>
+              </div>
+            </div>
+            {/* Titre */}
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase tracking-wide">
+                Titre
+              </label>
+              <div className="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50">
+                <span className="text-gray-900">{account.titre || "Non défini"}</span>
               </div>
             </div>
             {/* Date de naissance */}
@@ -233,6 +251,37 @@ export function AccountDetailsPage() {
                       ? `Profil #${account.profile_id}`
                       : "Non défini")}
                 </span>
+              </div>
+            </div>
+            {/* Statut */}
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase tracking-wide">
+                Statut du compte
+              </label>
+              <div className="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50 flex items-center">
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    account.is_active
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {account.is_active ? "Actif" : "Inactif"}
+                </span>
+              </div>
+            </div>
+            {/* Dernière connexion */}
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 uppercase tracking-wide">
+                Dernière connexion
+              </label>
+              <div className="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50 flex items-center">
+                <span className="text-gray-900">
+                  {account.derniere_connexion
+                    ? formatDate(account.derniere_connexion)
+                    : "Jamais connecté"}
+                </span>
+                <Calendar className="h-4 w-4 ml-2 text-gray-400" />
               </div>
             </div>
           </div>

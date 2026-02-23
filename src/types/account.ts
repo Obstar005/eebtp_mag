@@ -9,6 +9,7 @@ export interface Account {
   nationalite: string; // Code pays (ex: TG, FR, etc.)
   mot_de_passe: string; // Hash du mot de passe
   type: AccountType;
+  titre: string; // Titre du compte (ex: Ingénieur, Manager)
   telephone: string;
   photo_profil?: string; // URL de la photo de profil
   is_active: boolean;

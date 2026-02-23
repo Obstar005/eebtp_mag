@@ -93,7 +93,7 @@ export interface ApiCreateUserRequest {
   titre: string;
   poste: string;
   telephone: string;
-  id_profil?: number;
+  profil?: number; // L'API attend "profil" pas "id_profil"
 }
 
 export interface ApiUpdateUserRequest extends Partial<ApiCreateUserRequest> {
