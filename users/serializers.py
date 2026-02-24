@@ -15,6 +15,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
     projets = serializers.PrimaryKeyRelatedField(many=True, queryset=Projet.objects.all(), required=False)
     magasin = serializers.ReadOnlyField(source='magasin.nom')
+    profil_name = serializers.ReadOnlyField(source='profil.libelle')
     class Meta:
         model = CustomUser
         fields = '__all__'

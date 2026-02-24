@@ -180,7 +180,7 @@ def create_entree(request):
     except StockItem.DoesNotExist:
         return Response({'error': 'Article introuvable'}, status=status.HTTP_404_NOT_FOUND)
 
-    if type == 'Retour' or not data.get('source') or not data.get('fonction_deposant') or not data.get('tel_deposant') or not data.get('nom_deposant'):
+    if type == 'Retour' and not data.get('source') and not data.get('fonction_deposant') and not data.get('tel_deposant') and not data.get('nom_deposant'):
         return Response({'error': 'Ces champs sont obligatoires pour déclarer un retour de stock'}, status=status.HTTP_400_BAD_REQUEST)
     if type == 'Retour':
         try:
