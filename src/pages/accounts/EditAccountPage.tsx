@@ -22,7 +22,7 @@ export function EditAccountPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<Country | undefined>(
-    undefined
+    undefined,
   );
   const [selectedPhoneCountry, setSelectedPhoneCountry] = useState<
     Country | undefined
@@ -86,7 +86,7 @@ export function EditAccountPage() {
       // Pays de nationalité
       if (account.nationalite && !selectedCountry) {
         const nationalityCountry = countries.find(
-          (country) => country.abbreviation === account.nationalite
+          (country) => country.abbreviation === account.nationalite,
         );
         if (nationalityCountry) {
           setSelectedCountry(nationalityCountry);
@@ -99,9 +99,9 @@ export function EditAccountPage() {
         // On doit le dé-formater pour extraire le code pays et le numéro local
         const parsedPhone = parsePhoneNumberFromAPI(account.telephone);
         const phoneCountry = countries.find(
-          (country) => country.code === parsedPhone.countryCode
+          (country) => country.code === parsedPhone.countryCode,
         );
-        
+
         if (phoneCountry) {
           setSelectedPhoneCountry(phoneCountry);
           // Mettre à jour le champ téléphone avec le format lisible (numéro local uniquement)
@@ -112,7 +112,7 @@ export function EditAccountPage() {
         } else {
           // Par défaut, utiliser le Togo
           const togoCountry = countries.find(
-            (country) => country.abbreviation === "TG"
+            (country) => country.abbreviation === "TG",
           );
           if (togoCountry) {
             setSelectedPhoneCountry(togoCountry);
@@ -124,7 +124,7 @@ export function EditAccountPage() {
 
   const handleInputChange = (
     field: keyof UpdateAccountData,
-    value: string | File
+    value: string | File,
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -162,7 +162,7 @@ export function EditAccountPage() {
         // Formater pour l'API (format 00228909090900)
         const apiPhoneNumber = formatPhoneNumberForAPI(
           formData.telephone,
-          selectedPhoneCountry.code
+          selectedPhoneCountry.code,
         );
         formData.telephone = apiPhoneNumber;
       }
@@ -184,7 +184,55 @@ export function EditAccountPage() {
         data: updateData,
       });
       navigate(`/accounts/${id}`);
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Erreur lors de la modification du compte:", error);
+
+      // Gestion des erreurs 400 avec détails de validation
+      if (error?.response?.status === 400 && error?.response?.data) {
+        const errorData = error.response.data;
+
+        // Labels français pour les champs
+        const fieldLabels: Record<string, string> = {
+          telephone: "Téléphone",
+          username: "Nom d'utilisateur",
+          email: "Email",
+          first_name: "Prénom",
+          last_name: "Nom",
+          profil: "Profil",
+          titre: "Titre",
+          password: "Mot de passe",
+        };
+
+        // Traduction des messages d'erreur courants
+        const translateMessage = (msg: string): string => {
+          if (msg.includes("already exists")) return "existe déjà";
+          if (msg.includes("required")) return "est requis";
+          if (msg.includes("invalid")) return "est invalide";
+          if (msg.includes("blank")) return "ne peut pas être vide";
+          return msg;
+        };
+
+        if (typeof errorData === "object") {
+          const errorMessages: string[] = [];
+          for (const [field, messages] of Object.entries(errorData)) {
+            const fieldLabel = fieldLabels[field] || field;
+            if (Array.isArray(messages)) {
+              messages.forEach((msg: string) => {
+                errorMessages.push(`• ${fieldLabel}: ${translateMessage(msg)}`);
+              });
+            } else if (typeof messages === "string") {
+              errorMessages.push(
+                `• ${fieldLabel}: ${translateMessage(messages)}`,
+              );
+            }
+          }
+          if (errorMessages.length > 0) {
+            setError(`Erreur de validation:\n${errorMessages.join("\n")}`);
+            return;
+          }
+        }
+      }
+
       setError("Erreur lors de la modification du compte");
     }
   };

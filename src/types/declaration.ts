@@ -16,6 +16,7 @@ export interface Declaration {
     id: number;
     name: string;
     description?: string;
+    unite?: string;
   };
   user?: {
     id: number;

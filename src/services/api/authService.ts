@@ -161,13 +161,18 @@ export class AuthService {
         confirm_password: data.newPassword,
       });
 
-      if (setPasswordResponse.success) {
+      // L'API retourne success: undefined mais message de succès
+      // Vérifier que success n'est pas explicitement false
+      const isSuccess = setPasswordResponse.success !== false && 
+        (setPasswordResponse.success === true || 
+         setPasswordResponse.message?.toLowerCase().includes("succès"));
+      
+      if (isSuccess) {
         // Reconnecter l'utilisateur après changement de mot de passe
         const loginResponse = await authApiService.loginByPhone({
           phone: data.phone,
           password: data.newPassword,
         });
-
         return {
           success: true,
           user: loginResponse.user,

@@ -199,7 +199,11 @@ export class AuthApiService {
       const response = await apiClient.get<ApiCustomUser>(
         "/Users/authentication/user-info/",
       );
-      return await apiUserToUser(response.data);
+      console.log("🔐 [DEBUG getUserInfo] Réponse API brute:", response.data);
+      const user = await apiUserToUser(response.data);
+      console.log("🔐 [DEBUG getUserInfo] User transformé:", user);
+      console.log("🔐 [DEBUG getUserInfo] hasCompletedSetup:", user.hasCompletedSetup);
+      return user;
     } catch (error) {
       console.error(
         "Erreur lors de la récupération des infos utilisateur:",
@@ -427,13 +431,8 @@ export class UserApiService {
           data: err.response.data,
         });
 
-        // Extraire un message d'erreur spécifique si disponible
-        const errorMessage =
-          err.response.data?.message ||
-          err.response.data?.error ||
-          "Impossible de créer l'utilisateur";
-
-        throw new Error(`Erreur ${err.response.status}: ${errorMessage}`);
+        // Re-lancer l'erreur originale pour que le composant puisse accéder à response.data
+        throw error;
       }
 
       // Extraire le message d'erreur de façon sûre
@@ -456,7 +455,8 @@ export class UserApiService {
       return await apiUserToAccount(response.data);
     } catch (error) {
       console.error("Erreur updateUser:", error);
-      throw new Error("Impossible de mettre à jour l'utilisateur");
+      // Re-lancer l'erreur originale pour que le composant puisse accéder à response.data
+      throw error;
     }
   }
 
@@ -466,7 +466,8 @@ export class UserApiService {
       await apiClient.delete(`/Users/user-delete/${id}`);
     } catch (error) {
       console.error("Erreur deleteUser:", error);
-      throw new Error("Impossible de supprimer l'utilisateur");
+      // Re-lancer l'erreur originale pour que le composant puisse accéder à response.data
+      throw error;
     }
   }
 

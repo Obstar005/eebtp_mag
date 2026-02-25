@@ -12,6 +12,7 @@ export interface ApiEntree {
   source?: number; // nullable
   stock_item_name: string; // ReadOnly
   stock_item_type: string; // ReadOnly
+  stock_item_unite?: string; // ReadOnly - unité du produit
   type: "Livraison" | "Retour";
   quantite_m: string; // decimal format
   nom_deposant?: string; // nullable
@@ -54,6 +55,7 @@ export interface ApiSortie {
   stock_item: number;
   stock_item_name: string; // ReadOnly
   stock_item_type: string; // ReadOnly
+  stock_item_unite?: string; // ReadOnly - unité du produit
   quantite_m: string; // decimal format
   date_creation: string; // ReadOnly - format date-time
   date_modif: string; // ReadOnly - format date-time

@@ -3,6 +3,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useLocation } from "react-router-dom";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { useState, useRef, useEffect } from "react";
+import { formatRole } from "../../utils/formatUtils";
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -28,24 +29,6 @@ export function Header({ onToggleSidebar }: HeaderProps) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // Fonction pour formater le rôle
-  const formatRole = (profil: string | undefined) => {
-    if (!profil) return "Utilisateur";
-
-    const roleMap: Record<string, string> = {
-      dtx: "Directeur des Travaux",
-      dt: "Directeur Technique",
-      dga: "Directeur Général Adjoint",
-      dg: "Directeur Général",
-      df: "Directeur Financier",
-      chef_appro: "Chef Approvisionnement",
-      Admin: "Administrateur",
-      magasinier: "Magasinier",
-    };
-
-    return roleMap[profil] || profil;
-  };
 
   // Fonction pour obtenir le titre de la page actuelle
   const getPageTitle = () => {

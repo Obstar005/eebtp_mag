@@ -37,6 +37,7 @@ export function apiEntreeToDeclaration(apiEntree: ApiEntree): Declaration {
       id: apiEntree.stock_item,
       name: apiEntree.stock_item_name,
       description: apiEntree.stock_item_type,
+      unite: apiEntree.stock_item_unite,
     },
 
     // Informations spécifiques aux entrées
@@ -104,6 +105,7 @@ export function apiSortieToDeclaration(apiSortie: ApiSortie): Declaration {
       id: apiSortie.stock_item,
       name: apiSortie.stock_item_name,
       description: apiSortie.stock_item_type,
+      unite: apiSortie.stock_item_unite,
     },
 
     receveur: {

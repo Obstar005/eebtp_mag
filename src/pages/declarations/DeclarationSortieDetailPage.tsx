@@ -2,6 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useDeclaration } from "../../hooks/useDeclarations";
 import { PhoneDisplay } from "../../components/ui";
+import { formatUnit } from "../../utils/formatUtils";
 
 export function DeclarationSortieDetailPage() {
   const navigate = useNavigate();
@@ -85,13 +86,14 @@ export function DeclarationSortieDetailPage() {
                   Quantité sortie
                 </label>
                 <div className="p-3 bg-gray-50 rounded-lg flex items-center justify-between gap-2">
-                  <span>
-                    {declaration.quantite_float}{" "}
-                    {declaration.stockItem?.description || "unité(s)"}
-                  </span>
-                  <span className="inline-flex px-2 py-1 text-xs font-medium text-white bg-red-500 rounded">
-                    Sortie
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-semibold text-gray-900">
+                      {declaration.quantite_float}
+                    </span>
+                    <span className="text-gray-600">
+                      {formatUnit(declaration.stockItem?.unite)}
+                    </span>
+                  </div>
                 </div>
               </div>
               <div>

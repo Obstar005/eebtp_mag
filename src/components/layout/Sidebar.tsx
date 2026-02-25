@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import logoPng from "../../assets/logo_eebtp.png";
 import { useAuth } from "../../contexts/AuthContext";
+import { formatRole } from "../../utils/formatUtils";
 
 interface MenuItem {
   name: string;
@@ -239,7 +240,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200">
           <div className="flex items-center justify-between space-x-3 mb-3">
             <div className="flex items-center space-x-2 min-w-0 flex-1">
-              <div className="flex items-center justify-center h-8 w-8 bg-blue-600 rounded-full flex-shrink-0">
+              <div className="flex items-center justify-center h-8 w-8 bg-gray-900 rounded-full flex-shrink-0">
                 <User className="h-4 w-4 text-white" />
               </div>
               <div className="min-w-0 flex-1">
@@ -247,7 +248,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                   {user?.firstName || "-"} {user?.lastName || "-"}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
-                  {user?.role === "admin" ? "Admin" : "DG"}
+                  {formatRole(user?.profil)}
                 </p>
               </div>
             </div>

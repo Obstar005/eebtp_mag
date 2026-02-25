@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useMemo } from "react";
 
-import { Truck } from "lucide-react";
+import { ArrowLeft, Truck } from "lucide-react";
 import RequestTreatmentModal from "../components/requests/RequestTreatmentModal";
 import { useDemande, useTraiterDemande } from "../hooks/useDemandes";
 import { showErrorMessage, logError } from "../utils/errorHandling";
@@ -66,7 +66,7 @@ export default function RequestDetailPage() {
           logError("Traitement de demande", error);
           showErrorMessage(error);
         },
-      }
+      },
     );
   };
 
@@ -105,7 +105,14 @@ export default function RequestDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2 px-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+            title="Retour"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
           Détails de la demande N° {request.id}
         </h1>
         {canTreatRequest && (
@@ -210,14 +217,14 @@ export default function RequestDetailPage() {
                       {t.action === "approuve"
                         ? "Approuvée"
                         : t.action === "valide"
-                        ? "Validée"
-                        : t.action === "confirme"
-                        ? "Confirmée"
-                        : t.action === "refuse"
-                        ? "Rejetée"
-                        : t.action === "emis"
-                        ? "Émise"
-                        : t.action}
+                          ? "Validée"
+                          : t.action === "confirme"
+                            ? "Confirmée"
+                            : t.action === "refuse"
+                              ? "Rejetée"
+                              : t.action === "emis"
+                                ? "Émise"
+                                : t.action}
                     </td>
                   </tr>
                 ))}

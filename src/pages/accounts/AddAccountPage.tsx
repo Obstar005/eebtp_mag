@@ -34,7 +34,7 @@ export function AddAccountPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<Country | undefined>(
-    undefined
+    undefined,
   );
   const [selectedPhoneCountry, setSelectedPhoneCountry] = useState<
     Country | undefined
@@ -79,7 +79,7 @@ export function AddAccountPage() {
   useEffect(() => {
     if (countries && countries.length > 0 && !selectedCountry) {
       const togoCountry = countries.find(
-        (country) => country.abbreviation === "TG"
+        (country) => country.abbreviation === "TG",
       );
       if (togoCountry) {
         setSelectedCountry(togoCountry);
@@ -92,7 +92,7 @@ export function AddAccountPage() {
 
   const handleInputChange = (
     field: keyof CreateAccountData,
-    value: string | File
+    value: string | File,
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
@@ -152,7 +152,7 @@ export function AddAccountPage() {
         "Image sélectionnée:",
         file.name,
         file.type,
-        `${(file.size / 1024).toFixed(2)}KB`
+        `${(file.size / 1024).toFixed(2)}KB`,
       );
       setFormData((prev) => ({ ...prev, photo_profil: file }));
 
@@ -180,7 +180,7 @@ export function AddAccountPage() {
     // Vérifier s'il y a des erreurs de validation
     if (validationErrors.nom_utilisateur || validationErrors.mot_de_passe) {
       setError(
-        "Veuillez corriger les erreurs de validation avant de soumettre le formulaire."
+        "Veuillez corriger les erreurs de validation avant de soumettre le formulaire.",
       );
       return;
     }
@@ -199,7 +199,7 @@ export function AddAccountPage() {
         // Formater pour l'API (format 00228909090900)
         const apiPhoneNumber = formatPhoneNumberForAPI(
           formData.telephone,
-          selectedPhoneCountry.code
+          selectedPhoneCountry.code,
         );
         formData.telephone = apiPhoneNumber;
       }
@@ -222,14 +222,13 @@ export function AddAccountPage() {
 
       navigate("/accounts");
     } catch (error) {
-
       // Vérifier si l'erreur est liée à un ID manquant
       if (
         error instanceof Error &&
         error.message.includes("sans ID d'utilisateur")
       ) {
         setError(
-          "Le compte a été créé mais l'ID est manquant. Redirection vers la liste des comptes..."
+          "Le compte a été créé mais l'ID est manquant. Redirection vers la liste des comptes...",
         );
         // Attendre un peu puis rediriger vers la liste
         setTimeout(() => {
@@ -240,27 +239,67 @@ export function AddAccountPage() {
 
       // Extraction des messages d'erreur spécifiques de l'API
       // Utiliser une approche sûre au niveau du typage
-      const err = error as { response?: { data?: Record<string, unknown> } };
-      if (err.response?.data) {
+      const err = error as {
+        response?: { data?: Record<string, unknown>; status?: number };
+      };
+      if (err.response?.data && err.response?.status === 400) {
         const apiErrors = err.response.data;
-        let errorMessage = "";
+        const errorMessages: string[] = [];
+
+        // Mapping des noms de champs API vers des noms lisibles en français
+        const fieldLabels: Record<string, string> = {
+          telephone: "Téléphone",
+          username: "Nom d'utilisateur",
+          email: "Email",
+          password: "Mot de passe",
+          first_name: "Prénom",
+          last_name: "Nom",
+          profil: "Profil",
+          titre: "Titre",
+          poste: "Poste",
+        };
+
+        // Mapping des messages d'erreur en anglais vers le français
+        const translateMessage = (msg: string): string => {
+          if (msg.includes("already exists")) {
+            return "existe déjà";
+          }
+          if (msg.includes("required")) {
+            return "est requis";
+          }
+          if (msg.includes("invalid")) {
+            return "est invalide";
+          }
+          if (msg.includes("too short")) {
+            return "est trop court";
+          }
+          if (msg.includes("too long")) {
+            return "est trop long";
+          }
+          return msg;
+        };
 
         // Parcourir tous les champs d'erreur retournés par l'API
         Object.entries(apiErrors).forEach(([field, messagesRaw]) => {
           // Vérifier si messages est un tableau
           const messages = Array.isArray(messagesRaw) ? messagesRaw : [];
           if (messages.length > 0 && typeof messages[0] === "string") {
-            errorMessage += `${field}: ${messages[0]}\n`;
+            const fieldLabel = fieldLabels[field] || field;
+            const translatedMsg = translateMessage(messages[0]);
+            errorMessages.push(`• ${fieldLabel}: ${translatedMsg}`);
           }
         });
 
-        setError(
-          errorMessage ||
-            "Échec de la création du compte. Veuillez vérifier les informations et réessayer."
-        );
+        if (errorMessages.length > 0) {
+          setError(`Erreur de validation:\n${errorMessages.join("\n")}`);
+        } else {
+          setError(
+            "Échec de la création du compte. Veuillez vérifier les informations et réessayer.",
+          );
+        }
       } else {
         setError(
-          "Échec de la création du compte. Veuillez vérifier les informations et réessayer."
+          "Échec de la création du compte. Veuillez vérifier les informations et réessayer.",
         );
       }
     }
