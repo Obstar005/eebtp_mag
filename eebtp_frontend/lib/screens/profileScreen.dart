@@ -506,12 +506,12 @@ Padding(
         child: CustomElevatedButton(
           text: "Changer de magasin",
           backgroundColor: Colors.white,
-          textColor: const Color(0xFF34C759),
+          textColor: const Color(0xFF007AFF),
           onPressed: () {
             Navigator.pushNamed(context, '/store_selection');
           },
           icon: Icons.store_outlined,
-          iconColor: const Color(0xFF34C759),
+          iconColor: const Color(0xFF007AFF),
           outlined: true,
         ),
       ),
@@ -533,7 +533,7 @@ Padding(
       
       // Bouton Debug (à retirer en production)
       SizedBox(height: 2.h),
-      SizedBox(
+  /*     SizedBox(
         width: double.infinity,
         height: 6.2.h,
         child: CustomElevatedButton(
@@ -551,7 +551,7 @@ Padding(
           outlined: false,
         ),
       ),
-    ],
+    */ ],
   ),
 ),            ],
                 ),

@@ -222,7 +222,7 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
       final champs = {
         'magasin': magasinId.toString(),
         'stock_item': selectedProduct!.id.toString(),
-        'demande_source': selectedRequest!.id.toString(),
+        //'demande_source': selectedRequest!.id.toString(),
         'type': 'Livraison',
         'quantite_m': quantityController.text.trim(),
         'societe': supplierController.text.trim(),
