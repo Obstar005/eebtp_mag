@@ -4,8 +4,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Profil, CustomUser, SMSVerification
-from .serializers import ProfilSerializer, CustomUserSerializer
+from .models import Profil, CustomUser, SMSVerification, PermissionCustom
+from .serializers import ProfilSerializer, CustomUserSerializer, PermissionCustomSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django_countries import countries
@@ -48,18 +48,18 @@ def get_countries(request):
     return JsonResponse(data, safe=False)
 
 #Access
-# @swagger_auto_schema(
-#     method='get',
-#     operation_description="Liste de tous les acces",
-#     responses={200: ProfilSerializer(many=True)}
-# )
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# def list_acces(request):
-#     acces = Acces.objects.all().order_by('-date_creation')
-#     enregistrer_action(request.user, 'consultation', 'A consulté la liste des accès dans le système.', "Liste des accès")
-#     serializer = AccesSerializer(acces, many=True)
-#     return Response(serializer.data)
+@swagger_auto_schema(
+    method='get',
+    operation_description="Liste de tous les acces",
+    responses={200: ProfilSerializer(many=True)}
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_acces(request):
+    acces = PermissionCustom.objects.all().order_by('-date_creation')
+    # enregistrer_action(request.user, 'consultation', 'A consulté la liste des accès dans le système.', "Liste des accès")
+    serializer = PermissionCustomSerializer(acces, many=True)
+    return Response(serializer.data)
 
 #Profilssss
 @swagger_auto_schema(
