@@ -1,15 +1,15 @@
 # serializers.py
 from rest_framework import serializers
-from .models import CustomUser, Profil, Acces
+from .models import CustomUser, Profil
 from django_countries.serializer_fields import CountryField
 from projets.serializers import ProjetSerializer
 from projets.models import Projet
 
-class AccesSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Acces
-        fields = ['id', 'code', 'libelle', 'create_by']
-        # read_only_fields = ['id', 'date_creation', 'create_by']
+# class AccesSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Acces
+#         fields = ['id', 'code', 'libelle', 'create_by']
+#         # read_only_fields = ['id', 'date_creation', 'create_by']
 
 class ProfilSerializer(serializers.ModelSerializer):
     # 👉 pour écrire (POST / PUT)
@@ -20,11 +20,11 @@ class ProfilSerializer(serializers.ModelSerializer):
     # )
 
     # 👉 pour lire (GET)
-    permissions_details = AccesSerializer(
-        source='permissions',
-        many=True,
-        read_only=True
-    )
+    # permissions_details = AccesSerializer(
+    #     source='permissions',
+    #     many=True,
+    #     read_only=True
+    # )
 
     class Meta:
         model = Profil

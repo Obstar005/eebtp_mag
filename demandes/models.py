@@ -38,3 +38,4 @@ class Demande(models.Model):
     cout_total_approx = models.FloatField(null=True, blank=True)
     # rejet_valid_par = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='demandes_rejetées_validation')
     # date_rejet_valid = models.DateTimeField(null=True)
+    is_valide = models.BooleanField(default=True)

@@ -4,20 +4,21 @@ from django_countries.fields import CountryField
 from django.utils import timezone
 from datetime import timedelta
 
-class Acces(models.Model):
-    code = models.CharField(max_length=50, unique=True)  
-    libelle = models.CharField(max_length=255)
-    date_creation = models.DateTimeField(auto_now_add=True)
-    create_by = models.CharField(max_length=100)
+# class PermissionCustom(models.Model):
+#     code = models.CharField(max_length=50, unique=True)  
+#     libelle = models.CharField(max_length=255)
+#     is_active = models.BooleanField(default=True)
+#     date_creation = models.DateTimeField(auto_now_add=True)
+#     create_by = models.CharField(max_length=100, null=True, blank=True)
 
 class Profil(models.Model):
-    code = models.CharField(max_length=50, null=True, blank=True)
+    # code = models.CharField(max_length=50, null=True, blank=True)
     libelle = models.CharField(max_length=100, unique=True)
     description = models.TextField()
     is_active = models.BooleanField(default=True)
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modif = models.DateTimeField(auto_now=True)
-    permissions = models.ManyToManyField(Acces, blank=True)
+    # permissions = models.ManyToManyField(Acces, blank=True)
 
     def __str__(self):
         return self.libelle
