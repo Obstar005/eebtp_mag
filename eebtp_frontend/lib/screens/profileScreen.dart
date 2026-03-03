@@ -102,6 +102,64 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // Fonction pour afficher l'image en plein écran avec zoom
+  void _showFullScreenImage(String? photoUrl) {
+    if (photoUrl == null) return;
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            // Image zoomable
+            Center(
+              child: InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: CachedNetworkImage(
+                  imageUrl: photoUrl,
+                  fit: BoxFit.contain,
+                  placeholder: (context, url) => Center(
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Image.asset(
+                    "assets/profile.png",
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+            // Bouton fermer
+            Positioned(
+              top: 8.h,
+              right: 5.w,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  padding: EdgeInsets.all(3.w),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 6.w,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _pickImage(bool fromCamera) async {
     final token = context.read<AuthProvider>().token;
     if (token == null) {
@@ -185,7 +243,6 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final token = context.watch<AuthProvider>().token;
-    final storeId = context.watch<AuthProvider>().storeId;
     final currentUser = context.watch<AuthProvider>().user;
 
     if (token == null) {
@@ -197,17 +254,16 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
 
-    double avatarSize = 35.w;
-    double topSpace = 12.h;
-    double bottomSpace = 15.h;
-    double btnSpace = 3.h;
-    if (screenHeight < 550) {
-      topSpace = 2.h;
-      avatarSize = 28.w;
-      bottomSpace = 3.h;
-      btnSpace = 2.h;
-    }
+    // Responsivité améliorée
+    double avatarSize = screenWidth < 350 ? 25.w : screenHeight < 600 ? 28.w : 32.w;
+    double topSpace = screenHeight < 600 ? 6.h : screenHeight < 700 ? 10.h : 12.h;
+    double nameSize = screenHeight < 600 ? 18.sp : 20.sp;
+    double posteSize = screenHeight < 600 ? 13.sp : 15.sp;
+    double btnHeight = screenHeight < 600 ? 5.h : 6.2.h;
+    double btnSpacing = screenHeight < 600 ? 1.2.h : 2.h;
+    double bottomMargin = screenHeight < 600 ? 10.h : 14.h;
 
     return NavContainer(
       initialIndex: 3,
@@ -218,9 +274,13 @@ class _ProfilePageState extends State<ProfilePage> {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(
-              child: Text(
-                "Erreur: ${snapshot.error}",
-                style: const TextStyle(color: Colors.red),
+              child: Padding(
+                padding: EdgeInsets.all(5.w),
+                child: Text(
+                  "Erreur: ${snapshot.error}",
+                  style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
               ),
             );
           } else if (!snapshot.hasData) {
@@ -266,12 +326,10 @@ class _ProfilePageState extends State<ProfilePage> {
               // ----------- Contenu principal ----------
               SafeArea(
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     // Header
                     Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -311,18 +369,19 @@ class _ProfilePageState extends State<ProfilePage> {
                                     shape: BoxShape.circle,
                                   ),
                                   constraints: BoxConstraints(
-                                    minWidth: 14,
-                                    minHeight: 14,
+                                    minWidth: 16,
+                                    minHeight: 16,
                                   ),
-                                  child: Text(
-                                    "3",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10.sp,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: 'Montserrat',
+                                  child: Center(
+                                    child: Text(
+                                      "3",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10.sp,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'Montserrat',
+                                      ),
                                     ),
-                                    textAlign: TextAlign.center,
                                   ),
                                 ),
                               ),
@@ -334,11 +393,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
                     SizedBox(height: topSpace),
 
-                    // Photo profil
-                    Center(
-                      child: Stack(
-                        children: [
-                          Container(
+                    // Photo profil avec zoom
+                    Stack(
+                      children: [
+                        GestureDetector(
+                          onTap: () => _showFullScreenImage(photoUrl),
+                          child: Container(
                             width: avatarSize,
                             height: avatarSize,
                             decoration: BoxDecoration(
@@ -373,7 +433,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                           ),
                                         ),
                                       ),
-                                      errorWidget: (context, url, error) => Image.asset(
+                                      errorWidget: (context, url, error) =>
+                                          Image.asset(
                                         "assets/profile.png",
                                         fit: BoxFit.cover,
                                       ),
@@ -384,39 +445,38 @@ class _ProfilePageState extends State<ProfilePage> {
                                     ),
                             ),
                           ),
-                          Positioned(
-                            bottom: 2,
-                            right: 2,
-                            child: GestureDetector(
-                              onTap: () => _showImagePickerOptions(context),
-                              child: Container(
-                                padding: EdgeInsets.all(2.w),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF007AFF),
-                                  shape: BoxShape.circle,
-                                  border:
-                                      Border.all(color: Colors.white, width: 2),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.2),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Icon(
-                                  Icons.edit,
-                                  size: 4.5.w,
-                                  color: Colors.white,
-                                ),
+                        ),
+                        Positioned(
+                          bottom: 2,
+                          right: 2,
+                          child: GestureDetector(
+                            onTap: () => _showImagePickerOptions(context),
+                            child: Container(
+                              padding: EdgeInsets.all(2.w),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF007AFF),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                Icons.edit,
+                                size: 4.5.w,
+                                color: Colors.white,
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
 
-                    SizedBox(height: 2.h),
+                    SizedBox(height: 1.5.h),
 
                     // Nom complet
                     Padding(
@@ -424,7 +484,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: Text(
                         "${user.firstName} ${user.lastName}",
                         style: GoogleFonts.montserrat(
-                          fontSize: 20.sp,
+                          fontSize: nameSize,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF007AFF),
                         ),
@@ -440,7 +500,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: Text(
                         _getDisplayPoste(user.poste),
                         style: GoogleFonts.montserrat(
-                          fontSize: 15.sp,
+                          fontSize: posteSize,
                           color: const Color(0xFF8E8E93),
                           fontWeight: FontWeight.w500,
                         ),
@@ -450,110 +510,91 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
 
-                    SizedBox(height: bottomSpace*0.7),
+                    SizedBox(height: bottomMargin),
 
-                    // ✅ SECTION BOUTONS MODIFIÉE
-    // ✅ SECTION BOUTONS AVEC RECHARGEMENT
-Padding(
-  padding: EdgeInsets.symmetric(horizontal: 6.w),
-  child: Column(
-    children: [
-      // Bouton Modifier votre profil - AVEC RECHARGEMENT
-      Container(
-        width: double.infinity,
-        height: 6.2.h,
-        margin: EdgeInsets.only(bottom: btnSpace),
-        child: CustomElevatedButton(
-          text: "Modifier votre profil",
-          backgroundColor: Colors.white,
-          textColor: const Color(0xFF007AFF),
-          onPressed: () async {
-            // ✅ MODIFICATION : Attendre le résultat de la navigation
-            final result = await Navigator.pushNamed(
-              context,
-              '/edit_profile',
-              arguments: {
-                'user': user,
-              },
-            );
-            
-            // ✅ NOUVEAU : Si des modifications ont été faites, recharger
-            if (result == true && mounted) {
-              final token = context.read<AuthProvider>().token;
-              if (token != null) {
-                setState(() {
-                  _futureUser = UserService().getUserInfo(token);
-                });
-                
-                _showToast(
-                  message: "Profil rechargé avec succès",
-                  type: ToastificationType.success,
-                );
-              }
-            }
-          },
-          icon: Icons.edit_outlined,
-          iconColor: const Color(0xFF007AFF),
-          outlined: true,
-        ),
-      ),
-      
-      // Bouton Changer de magasin
-      Container(
-        width: double.infinity,
-        height: 6.2.h,
-        margin: EdgeInsets.only(bottom: btnSpace),
-        child: CustomElevatedButton(
-          text: "Changer de magasin",
-          backgroundColor: Colors.white,
-          textColor: const Color(0xFF007AFF),
-          onPressed: () {
-            Navigator.pushNamed(context, '/store_selection');
-          },
-          icon: Icons.store_outlined,
-          iconColor: const Color(0xFF007AFF),
-          outlined: true,
-        ),
-      ),
-      
-      // Bouton Déconnecter
-      SizedBox(
-        width: double.infinity,
-        height: 6.2.h,
-        child: CustomElevatedButton(
-          text: "Déconnecter",
-          backgroundColor: Colors.white,
-          textColor: const Color(0xFFFF3B30),
-          onPressed: () => _showLogoutDialog(context),
-          icon: Icons.logout,
-          iconColor: const Color(0xFFFF3B30),
-          outlined: true,
-        ),
-      ),
-      
-      // Bouton Debug (à retirer en production)
-      SizedBox(height: 2.h),
-  /*     SizedBox(
-        width: double.infinity,
-        height: 6.2.h,
-        child: CustomElevatedButton(
-          text: "🔧 Réinitialiser l'app (Debug)",
-          backgroundColor: Colors.orange,
-          textColor: Colors.white,
-          onPressed: () async {
-            await context.read<AuthProvider>().resetApp();
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              '/',
-              (route) => false,
-            );
-          },
-          outlined: false,
-        ),
-      ),
-    */ ],
-  ),
-),            ],
+                    // Section boutons
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 6.w),
+                      child: Column(
+                        children: [
+                          // Bouton Modifier profil
+                          SizedBox(
+                            width: double.infinity,
+                            height: btnHeight,
+                            child: CustomElevatedButton(
+                              text: "Modifier votre profil",
+                              backgroundColor: Colors.white,
+                              textColor: const Color(0xFF007AFF),
+                              onPressed: () async {
+                                final result = await Navigator.pushNamed(
+                                  context,
+                                  '/edit_profile',
+                                  arguments: {
+                                    'user': user,
+                                  },
+                                );
+
+                                if (result == true && mounted) {
+                                  final token =
+                                      context.read<AuthProvider>().token;
+                                  if (token != null) {
+                                    setState(() {
+                                      _futureUser =
+                                          UserService().getUserInfo(token);
+                                    });
+
+                                    _showToast(
+                                      message: "Profil rechargé avec succès",
+                                      type: ToastificationType.success,
+                                    );
+                                  }
+                                }
+                              },
+                              icon: Icons.edit_outlined,
+                              iconColor: const Color(0xFF007AFF),
+                              outlined: true,
+                            ),
+                          ),
+
+                          SizedBox(height: btnSpacing),
+
+                          // Bouton Changer de magasin
+                          SizedBox(
+                            width: double.infinity,
+                            height: btnHeight,
+                            child: CustomElevatedButton(
+                              text: "Changer de magasin",
+                              backgroundColor: Colors.white,
+                              textColor: const Color(0xFF007AFF),
+                              onPressed: () {
+                                Navigator.pushNamed(context, '/store_selection');
+                              },
+                              icon: Icons.store_outlined,
+                              iconColor: const Color(0xFF007AFF),
+                              outlined: true,
+                            ),
+                          ),
+
+                          SizedBox(height: btnSpacing),
+
+                          // Bouton Déconnecter
+                          SizedBox(
+                            width: double.infinity,
+                            height: btnHeight,
+                            child: CustomElevatedButton(
+                              text: "Déconnecter",
+                              backgroundColor: Colors.white,
+                              textColor: const Color(0xFFFF3B30),
+                              onPressed: () => _showLogoutDialog(context),
+                              icon: Icons.logout,
+                              iconColor: const Color(0xFFFF3B30),
+                              outlined: true,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -603,7 +644,8 @@ Padding(
               onTap: () => _pickImage(true),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: Color(0xFF007AFF)),
+              leading:
+                  const Icon(Icons.photo_library, color: Color(0xFF007AFF)),
               title: const Text("Choisir depuis la galerie"),
               onTap: () => _pickImage(false),
             ),
@@ -636,35 +678,41 @@ Padding(
           content: Text(
             "Souhaitez-vous vous déconnecter ?",
             style: TextStyle(fontSize: 14.sp, fontFamily: "Montserrat"),
+            textAlign: TextAlign.center,
           ),
-          actionsPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          actionsAlignment: MainAxisAlignment.center,
+          actionsPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
           actions: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                CustomElevatedButton(
-                  text: "NON",
-                  backgroundColor: Colors.white,
-                  textColor: const Color.fromARGB(255, 0, 0, 0),
-                  onPressed: () => Navigator.pop(context),
-                  width: 30.w,
-                  outlined: true,
+                Flexible(
+                  child: CustomElevatedButton(
+                    text: "NON",
+                    backgroundColor: Colors.white,
+                    textColor: const Color.fromARGB(255, 0, 0, 0),
+                    onPressed: () => Navigator.pop(context),
+                    width: 30.w,
+                    outlined: true,
+                  ),
                 ),
-                SizedBox(width: 14),
-                CustomElevatedButton(
-                  text: "OUI",
-                  backgroundColor: const Color(0xFFFF3B30),
-                  textColor: Colors.white,
-                  onPressed: () {
-                    Navigator.pop(context);
-                    context.read<AuthProvider>().clear();
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/login',
-                      (route) => false,
-                    );
-                  },
-                  width: 30.w,
+                SizedBox(width: 3.w),
+                Flexible(
+                  child: CustomElevatedButton(
+                    text: "OUI",
+                    backgroundColor: const Color(0xFFFF3B30),
+                    textColor: Colors.white,
+                    onPressed: () {
+                      Navigator.pop(context);
+                      context.read<AuthProvider>().clear();
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/login',
+                        (route) => false,
+                      );
+                    },
+                    width: 30.w,
+                  ),
                 ),
               ],
             ),
