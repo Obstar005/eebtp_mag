@@ -1,14 +1,35 @@
 # serializers.py
 from rest_framework import serializers
-from .models import CustomUser, Profil
+from .models import CustomUser, Profil, Acces
 from django_countries.serializer_fields import CountryField
 from projets.serializers import ProjetSerializer
 from projets.models import Projet
 
+class AccesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Acces
+        fields = ['id', 'code', 'libelle', 'create_by']
+        # read_only_fields = ['id', 'date_creation', 'create_by']
+
 class ProfilSerializer(serializers.ModelSerializer):
+    # 👉 pour écrire (POST / PUT)
+    # permissions = serializers.PrimaryKeyRelatedField(
+    #     many=True,
+    #     queryset=Acces.objects.all(),
+    #     write_only=True
+    # )
+
+    # 👉 pour lire (GET)
+    permissions_details = AccesSerializer(
+        source='permissions',
+        many=True,
+        read_only=True
+    )
+
     class Meta:
         model = Profil
-        fields = '__all__'
+        fields = ['id', 'libelle', 'description', 'permissions', 'permissions_details']
+
 
 class CustomUserSerializer(serializers.ModelSerializer):
     nationality = CountryField(name_only=True)
@@ -18,21 +39,25 @@ class CustomUserSerializer(serializers.ModelSerializer):
     profil_name = serializers.ReadOnlyField(source='profil.libelle')
     class Meta:
         model = CustomUser
-        fields = '__all__'
+        # fields = '__all__'
         extra_kwargs = {
             'password': {'write_only': True}
         }
+        exclude = ['groups', 'user_permissions']
         
     def create(self, validated_data):
         # Pour gérer un mot de passe
         password = validated_data.pop("password", None)
         projets_data = validated_data.pop('projets', None)
+        groups_data = validated_data.pop('groups', None)
 
         user = CustomUser.objects.create(**validated_data)
         if password:
             user.set_password(password)
         if projets_data:
             user.projets.set(projets_data)
+        if groups_data:
+            user.groups.set(groups_data)  # 👈 CORRECTION
 
         user.save()
         return user
@@ -40,6 +65,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         projets_data = validated_data.pop('projets', None)
         password = validated_data.pop("password", None)
+        groups_data = validated_data.pop('groups', None)
 
         # Mettre à jour les champs simples
         for attr, value in validated_data.items():
@@ -47,10 +73,11 @@ class CustomUserSerializer(serializers.ModelSerializer):
         if password:
             instance.set_password(password)
 
-        instance.save()
-
         # Mettre à jour les ManyToMany
         if projets_data is not None:
-            instance.projets.set(projets_data)  # ← la bonne façon
+            instance.projets.set(projets_data)  # Remplace les projets existants par les nouveaux
+        if groups_data is not None:
+            instance.groups.set(groups_data)
 
+        instance.save()
         return instance

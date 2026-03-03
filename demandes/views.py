@@ -42,7 +42,7 @@ def detail_demande(request, id):
 @permission_classes([IsAuthenticated])
 def emettre_demande(request):
     user = request.user
-    if user.profil.libelle not in ['magasinier', 'admin', 'superadmin']:
+    if user.profil.code not in ['magasinier', 'admin', 'superadmin']:
         return Response({'error': 'Seul un magasinier peut émettre une demande.'}, status=status.HTTP_403_FORBIDDEN)
     
     #Générer le numéro de la demande
@@ -99,7 +99,7 @@ def liste_demandes_emises(request):
 @permission_classes([IsAuthenticated])
 def confirmer_demande(request, id):
     user = request.user
-    if user.profil.libelle not in ['chef_appro', 'dga', 'dt', 'admin']:
+    if user.profil.code not in ['chef_appro', 'dga', 'dt', 'admin']:
         return Response({'error': 'Vous n\'êtes pas autorisé à confirmer cette demande.'}, status=status.HTTP_403_FORBIDDEN)
 
     try:
@@ -140,7 +140,7 @@ def liste_demandes_confirmees(request):
 @permission_classes([IsAuthenticated])
 def approuver_demande(request, id):
     user = request.user
-    if user.profil.libelle not in ['chef_appro','dtx', 'dt', 'admin', 'superadmin']:
+    if user.profil.code not in ['chef_appro','dtx', 'dt', 'admin', 'superadmin']:
         return Response({'error': 'Vous n\'êtes pas autorisé à approuver cette demande.'}, status=status.HTTP_403_FORBIDDEN)
     try:
         demande = Demande.objects.get(pk=id)
@@ -174,7 +174,7 @@ def liste_demandes_approuvees(request):
 @permission_classes([IsAuthenticated])
 def valider_demande(request, id):
     user = request.user
-    if user.profil.libelle not in ['chef_appro', 'dga', 'df', 'dg', 'admin', 'superadmin']:
+    if user.profil.code not in ['chef_appro', 'dga', 'df', 'dg', 'admin', 'superadmin']:
         return Response({'error': 'Vous n\'êtes pas autorisé à valider cette demande.'}, status=status.HTTP_403_FORBIDDEN)
     try:
         demande = Demande.objects.get(pk=id)
@@ -229,7 +229,7 @@ def liste_demandes_validees_filtrer(request, periode):
 @permission_classes([IsAuthenticated])
 def rejeter_demande(request, id):
     user = request.user
-    if user.profil.libelle not in ['chef_appro', 'dga', 'df', 'dg', 'superadmin']:
+    if user.profil.code not in ['chef_appro', 'dga', 'df', 'dg', 'superadmin']:
         return Response({'error': 'Vous n\'êtes pas abilité à rejeter cette demande.'}, status=status.HTTP_403_FORBIDDEN)
     try:
         demande = Demande.objects.get(pk=id)
@@ -414,7 +414,8 @@ def statistiques_demandes(request, periode):
         elif periode == 'mois':
             previous_start_date = now - timedelta(days=60)
             previous_end_date = now - timedelta(days=30)
-        
+         
+         
         previous_demandes = Demande.objects.filter(date_creation__gte=previous_start_date, date_creation__lt=previous_end_date)
         previous_total = previous_demandes.count()
         

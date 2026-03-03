@@ -2,6 +2,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    #Pour les accès
+    path('liste-acces', views.list_acces, name='list_acces'),
     #Pour les profils
     path('liste-profils', views.list_profils, name='list_profils'),
     path('profil-create', views.create_profil, name='create_profil'),

@@ -11,9 +11,11 @@ class Produit(models.Model):
         ('m3', 'Mètre cube'),
         ('unite', 'Unité'),
         ('m', 'Mètre'),
-        ('autre', 'Autre')
+        ('autre', 'Autre'),
+        ('t', 'Tonne'),
     ])
     is_active = models.BooleanField(default=True)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def __str__(self):
         return f"{self.designation} ({self.unite})"

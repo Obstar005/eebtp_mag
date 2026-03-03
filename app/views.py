@@ -69,7 +69,7 @@ def historique_toutes_actions(request):
 @permission_classes([IsAuthenticated])
 def generer_rapport_stocks_pdf(request, projet_id):
     user = request.user
-    if user.profil.libelle not in ['dg', 'dga', 'chef_appro', 'dt', 'admin', 'superadmin']:
+    if user.profil.code not in ['dg', 'dga', 'chef_appro', 'dt', 'admin', 'superadmin']:
         return Response({'error': "Vous n'avez pas le niveau d'habilitation nécessaire pour générer ce rapport."}, status=status.HTTP_403_FORBIDDEN)
     try:
         date_debut = request.data.get('date_debut')

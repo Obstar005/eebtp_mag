@@ -95,6 +95,22 @@ def list_projets(request):
     enregistrer_action(request.user, 'consultation', 'A consulté la liste des projets du système.', "Liste des projets")
     return Response(serializer.data)
 
+#Vue pour la liste des projets archivées
+@swagger_auto_schema(
+    method='get',
+    operation_description="Cette API permet de récupérer la liste des projets archivés.",
+    responses={
+        200: openapi.Response("Liste des projets archivés", ProjetSerializer(many=True)),
+    }
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_projets_archives(request):
+    projets = Projet.objects.filter(is_active=False).order_by('-date_creation')
+    serializer = ProjetSerializer(projets, many=True)
+    # enregistrer_action(request.user, 'consultation', 'A consulté la liste des projets archivés.', "Liste des projets archivés")
+    return Response(serializer.data)
+
 #Vue pour la récupération d'un projet
 @swagger_auto_schema(
     method='get',
@@ -295,7 +311,24 @@ def delete_photo(request, pk):
 @permission_classes([IsAuthenticated])
 def list_magasins(request):
     magasins = Magasin.objects.filter(is_active=True).order_by('-date_creation')
-    enregistrer_action(request.user, 'consultation', 'A consulté la liste des magasins du système.', "Liste des Magasins")
+    # enregistrer_action(request.user, 'consultation', 'A consulté la liste des magasins du système.', "Liste des Magasins")
+    serializer = MagasinSerializer(magasins, many=True)
+    return Response(serializer.data)
+
+#Vue pour la liste des magasins achivées
+#Vue pour la liste des magasins
+@swagger_auto_schema(   
+    method='get',
+    operation_description="Cette API permet de récupérer la liste des magasins archivés.",
+    responses={
+        200: openapi.Response("Liste des magasins archivés", MagasinSerializer(many=True)),
+    }
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_magasins_archives(request):
+    magasins = Magasin.objects.filter(is_active=False).order_by('-date_creation')
+    # enregistrer_action(request.user, 'consultation', 'A consulté la liste des magasins archivés.', "Liste des Magasins Archivés")
     serializer = MagasinSerializer(magasins, many=True)
     return Response(serializer.data)
 

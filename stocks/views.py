@@ -11,6 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from projets.models import Magasin, StockItem
 from projets.serializers import MagasinSerializer, StockItemSerializer
 from app.utils import enregistrer_action
+from django.db.models import F
 
 #Creation d'un produit dans le système
 @swagger_auto_schema(
@@ -289,3 +290,25 @@ def stats_quantite_stocks(request, projet_id, produit_id):
     }
 
     return Response(response_data, status=status.HTTP_200_OK)
+
+#Vue pour les articles en dessous du niveau seuil dans un magasin à travers le projet
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def articles_below_threshold(request, projet_id):
+    try:
+        projet = Projet.objects.get(pk=projet_id)
+    except Projet.DoesNotExist:
+        return Response({'error': 'Projet introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Récupérer les magasins du projet
+    magasins = Magasin.objects.filter(projet=projet)
+
+    # Récupérer les articles en dessous du seuil pour ces magasins
+    articles_below_threshold = StockItem.objects.filter(
+        magasin__in=magasins,
+        quantite__lt=F('quantite_seuil'),
+        is_active=True
+    ).select_related('produit', 'magasin')
+
+    serializer = StockItemSerializer(articles_below_threshold, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)

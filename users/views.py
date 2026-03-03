@@ -4,8 +4,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Profil, CustomUser, SMSVerification
-from .serializers import ProfilSerializer, CustomUserSerializer
+from .models import Profil, CustomUser, SMSVerification, Acces
+from .serializers import ProfilSerializer, CustomUserSerializer, AccesSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django_countries import countries
@@ -47,6 +47,19 @@ def get_countries(request):
     data = [{"code": code, "name": name} for code, name in list(countries)]
     return JsonResponse(data, safe=False)
 
+#Access
+@swagger_auto_schema(
+    method='get',
+    operation_description="Liste de tous les acces",
+    responses={200: ProfilSerializer(many=True)}
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_acces(request):
+    acces = Acces.objects.all().order_by('-date_creation')
+    enregistrer_action(request.user, 'consultation', 'A consulté la liste des accès dans le système.', "Liste des accès")
+    serializer = AccesSerializer(acces, many=True)
+    return Response(serializer.data)
 
 #Profilssss
 @swagger_auto_schema(
@@ -163,7 +176,7 @@ def supp_profil(request, pk):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_users(request):
-    users = CustomUser.objects.filter(is_active=True).order_by('-date_creation')
+    users = CustomUser.objects.order_by('-date_creation')
     enregistrer_action(request.user, 'consultation', 'A consulté la liste des utilisateurs dans le système.', "Liste des utilisateurs")
     serializer = CustomUserSerializer(users, many=True)
     return Response(serializer.data)
@@ -179,10 +192,13 @@ def list_users(request):
 @permission_classes([IsAuthenticated])
 def create_user(request):
     serializer = CustomUserSerializer(data=request.data)
+    print(request.data)
     enregistrer_action(request.user, 'creation', 'A crée un utilisateur dans le système.', f"Utilisateur #{request.data.get('username')}")
     if serializer.is_valid():
         serializer.save()
-        return Response({'message': 'Utilisateur crée avec succès'}, status=status.HTTP_201_CREATED)
+        # si ça passe on doit lui retourner l'ID de l'utilisateur crée pour que le front puisse renvoyer sur la page de detail , sinon on peut lui retourner un message de succès
+        return Response({'message': 'Utilisateur crée avec succès', 'user_id': serializer.instance.id}, status=status.HTTP_201_CREATED)
+    
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @swagger_auto_schema(
@@ -358,7 +374,7 @@ def change_password(request):
 @permission_classes([IsAuthenticated])
 def set_password(request):
     user= request.user
-    if not user.profil.libelle == "admin" and not user.profil.libelle == "superadmin":
+    if not user.profil.code == "admin" and not user.profil.code == "superadmin":
         return Response(
             {"error": "Modification refusée! Vous n'êtes pas autorisé à effectuer cette action."},status=status.HTTP_403_FORBIDDEN
         )
@@ -423,7 +439,7 @@ def login_by_phone_web(request):
         )
     #Ici verifions si l'utilisateur n'est pas un magasinier
     
-    if user.profil.libelle == "magasinier": 
+    if user.profil.code == "magasinier": 
         return Response(
             {"error": "Accès refusé! Vous n'êtes pas autorisé à vous connecter à cette plateforme."},status=status.HTTP_403_FORBIDDEN
         )
@@ -447,7 +463,7 @@ def login_by_phone_web(request):
     # notifier_utilisateurs([user], "Connexion Réussie", "Vous vous êtes connecté avec succès au système.")
 
     return Response(
-        {"message": "Connexion réussie.", 'access_token': str(refresh.access_token), "refresh_token": str(refresh), "first_login": first, 'profil': user.profil.libelle}, status=status.HTTP_200_OK)
+        {"message": "Connexion réussie.", 'access_token': str(refresh.access_token), "refresh_token": str(refresh), "first_login": first, 'profil': user.profil.code}, status=status.HTTP_200_OK)
 
 #Vue pour authentifier un utilisateur par son numero de telephone sur mobile
 @swagger_auto_schema(

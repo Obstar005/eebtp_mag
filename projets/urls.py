@@ -11,6 +11,7 @@ urlpatterns = [
     path('projet-detail/<int:pk>', views.get_projet, name='get_projet'),
     path('projet-update/<int:pk>', views.update_projet, name='update_projet'),
     path('projet-delete/<int:pk>', views.delete_projet, name='delete_projet'),
+    path('liste-projets-archives', views.list_projets_archives, name='list_projets_archives'),
 
     # Pour les photos de projets
     path('projet-photo-create/<int:pk>', views.create_photo, name='create_projet_photo'),
@@ -20,11 +21,12 @@ urlpatterns = [
 
     # Pour les magasins
     path('liste-magasins', views.list_magasins, name='list_magasins'),
-    # path('magasin-create', views.create_magasin, name='create_magasin'),    
+    path('liste-magasins-archives', views.list_magasins_archives, name='list_magasins_archives'),
     path('magasin-detail/<int:pk>', views.get_magasin, name='get_magasin'),
     path('magasin-update/<int:pk>', views.update_magasin, name='update_magasin'),
     path('magasin-delete/<int:pk>', views.delete_magasin, name='delete_magasin'),
     path('liste-magasins-by-projet/<int:pk>', views.list_magasins_by_projet, name='list_magasins_by_projet'),
     path('projets-by-user', views.list_user_projets_magasins, name='projets_by_user'),
     path('stats-quantites-articles/<int:projet_id>', views.stats_quantites_articles_magasin, name='stats_quantites_articles_magasin'),
+
 ]

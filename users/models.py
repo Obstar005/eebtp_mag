@@ -4,13 +4,20 @@ from django_countries.fields import CountryField
 from django.utils import timezone
 from datetime import timedelta
 
+class Acces(models.Model):
+    code = models.CharField(max_length=50, unique=True)  
+    libelle = models.CharField(max_length=255)
+    date_creation = models.DateTimeField(auto_now_add=True)
+    create_by = models.CharField(max_length=100)
 
 class Profil(models.Model):
+    code = models.CharField(max_length=50, null=True, blank=True)
     libelle = models.CharField(max_length=100, unique=True)
     description = models.TextField()
     is_active = models.BooleanField(default=True)
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modif = models.DateTimeField(auto_now=True)
+    permissions = models.ManyToManyField(Acces, blank=True)
 
     def __str__(self):
         return self.libelle
@@ -20,8 +27,8 @@ class CustomUser(AbstractUser):
     surname = models.CharField(max_length=100)
     birth_date = models.DateField(null=True, blank=True)
     nationality = CountryField(null=True, blank=True)  
-    type = models.CharField(max_length=50, choices=[('Interne', 'Interne'), ('Consultant', 'Consultant')])
-    titre = models.CharField(max_length=100)
+    type = models.CharField(max_length=50, choices=[('Interne', 'Interne'), ('Externe', 'Externe')])
+    titre = models.CharField(max_length=100, null=True, blank=True)
     poste = models.CharField(max_length=100)
     profil = models.ForeignKey(Profil, on_delete=models.SET_NULL, null=True)
     photo_profil = models.ImageField(upload_to='photos/', null=True, blank=True)
@@ -30,7 +37,7 @@ class CustomUser(AbstractUser):
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modif = models.DateTimeField(auto_now=True)
     first_login = models.BooleanField(default=True)
-    projets = models.ManyToManyField('projets.Projet', related_name='users', blank=True)
+    # projets = models.ManyToManyField('projets.Projet', related_name='users', blank=True)
     is_connected = models.BooleanField(default=False)
 
 

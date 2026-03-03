@@ -22,6 +22,8 @@ class Projet(models.Model):
     chef_projet = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, related_name="chef_de_projet", null=True, blank=True)
     chef_chantier = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, 
                                       related_name="chef_chantier", null=True, blank=True)
+    cout_total_estime = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    cout_total_reel = models.DecimalField(max_digits=15, decimal_places=2, default=0)
 
     def __str__(self):
         return self.nom
