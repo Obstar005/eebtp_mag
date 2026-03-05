@@ -25,6 +25,7 @@ class Profil(models.Model):
 
 
 class CustomUser(AbstractUser):
+    
     birth_date = models.DateField(null=True, blank=True)
     nationality = CountryField(null=True, blank=True)  
     type = models.CharField(max_length=50, choices=[('Interne', 'Interne'), ('Externe', 'Externe')])
