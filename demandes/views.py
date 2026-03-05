@@ -42,7 +42,7 @@ def detail_demande(request, id):
 @permission_classes([IsAuthenticated])
 def emettre_demande(request):
     user = request.user
-    if user.profil.libelle not in ['magasinier', 'admin', 'superadmin']:
+    if user.profil.code not in ['magasinier', 'admin', 'superadmin']:
         return Response({'error': 'Seul un magasinier peut émettre une demande.'}, status=status.HTTP_403_FORBIDDEN)
     
     #Générer le numéro de la demande

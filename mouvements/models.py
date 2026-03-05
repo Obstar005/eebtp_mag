@@ -8,7 +8,7 @@ class Sortie(models.Model):
     magasin = models.ForeignKey(Magasin, on_delete=models.CASCADE)
     stock_item = models.ForeignKey(StockItem, on_delete=models.CASCADE)
     quantite_m = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    date_creation = models.DateTimeField()#auto_now_add=True
+    date_creation = models.DateTimeField(auto_now_add=True)#
     date_modif = models.DateTimeField(auto_now=True)
     make_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, 
                                related_name="declareur_entree", null=True, blank=True)
@@ -30,7 +30,7 @@ class Entree(models.Model):
     nom_deposant = models.CharField(max_length=100, null=True, blank=True)
     tel_deposant = models.CharField(max_length=20, null=True, blank=True)
     fonction_deposant = models.CharField(max_length=100, null=True, blank=True)
-    date_creation = models.DateTimeField()#auto_now_add=True
+    date_creation = models.DateTimeField(auto_now_add=True)#
     date_modif = models.DateTimeField(auto_now=True)
     make_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, 
                                related_name="declareur_sortie", null=True, blank=True)
