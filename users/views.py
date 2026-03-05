@@ -54,7 +54,7 @@ def get_countries(request):
     responses={200: ProfilSerializer(many=True)}
 )
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def list_acces(request):
     acces = PermissionCustom.objects.all().order_by('-date_creation')
     # enregistrer_action(request.user, 'consultation', 'A consulté la liste des accès dans le système.', "Liste des accès")
@@ -68,7 +68,7 @@ def list_acces(request):
     responses={200: ProfilSerializer(many=True)}
 )
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def list_profils(request):
     profils = Profil.objects.filter(is_active=True).order_by('-date_creation')
     enregistrer_action(request.user, 'consultation', 'A consulté la liste des profils dans le système.', "Liste des profils")
@@ -174,7 +174,7 @@ def supp_profil(request, pk):
     responses={200: CustomUserSerializer(many=True)}
 )
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def list_users(request):
     users = CustomUser.objects.order_by('-date_creation')
     enregistrer_action(request.user, 'consultation', 'A consulté la liste des utilisateurs dans le système.', "Liste des utilisateurs")
