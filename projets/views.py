@@ -88,7 +88,7 @@ def create_projet(request):
     }
 )
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def list_projets(request):
     projets = Projet.objects.filter(is_active=True).order_by('-date_creation')
     serializer = ProjetSerializer(projets, many=True)
@@ -308,7 +308,7 @@ def delete_photo(request, pk):
     }
 )
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def list_magasins(request):
     magasins = Magasin.objects.filter(is_active=True).order_by('-date_creation')
     # enregistrer_action(request.user, 'consultation', 'A consulté la liste des magasins du système.', "Liste des Magasins")

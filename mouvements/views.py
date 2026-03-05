@@ -56,7 +56,7 @@ def create_sortie(request):
     responses={200: SortieSerializer(many=True)}
 )
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def list_sorties(request):
     sorties = Sortie.objects.filter(is_active=True).order_by('-date_creation')
     enregistrer_action(request.user, 'consultation', 'A consulté la liste des sorties de stock dans le système.', "Liste des sorties de stock")
@@ -95,7 +95,7 @@ def list_sorties_filtrer(request, periode):
     responses={200: SortieSerializer, 404: 'Not Found'}
 )
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def list_sorties_magasin(request, magasin_id):
     try:
         magasin = Magasin.objects.get(pk=magasin_id)
@@ -244,7 +244,7 @@ def get_entree(request, pk):
     responses={200: EntreeSerializer(many=True)}
 )
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def list_entrees(request):
     entrees = Entree.objects.filter(is_active=True).order_by('-date_creation')
     enregistrer_action(request.user, 'consultation', 'A consulté la liste des entrées de stock dans le système.', "Liste des entrées de stock")

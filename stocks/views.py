@@ -38,7 +38,7 @@ def create_article(request):
     responses={200: ProduitSerializer(many=True)}
 )
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def list_articles(request):
     articles = Produit.objects.filter(is_active=True).order_by('-date_creation')
     enregistrer_action(request.user, 'consultation', 'A consulté la liste des articles dans le système.', "Liste des articles")
@@ -132,7 +132,7 @@ def add_stock_item(request):
     responses={200: StockItemSerializer(many=True)}
 )
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def list_stock_items(request, magasin_id):
     try:
         magasin = Magasin.objects.get(pk=magasin_id)

@@ -12,7 +12,7 @@ class PermissionCustom(models.Model):
     create_by = models.CharField(max_length=100, null=True, blank=True)
 
 class Profil(models.Model):
-    code = models.CharField(max_length=50, null=True, blank=True)
+    code = models.CharField(max_length=50, unique=True)
     libelle = models.CharField(max_length=100, unique=True)
     description = models.TextField()
     is_active = models.BooleanField(default=True)
