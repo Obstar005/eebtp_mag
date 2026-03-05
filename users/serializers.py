@@ -28,7 +28,7 @@ class ProfilSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profil
-        fields = ['id', 'libelle', 'description', 'permissions', 'permissions_details']
+        fields = ['id','code','libelle', 'description', 'permissions', 'permissions_details']
 
 
 class CustomUserSerializer(serializers.ModelSerializer):

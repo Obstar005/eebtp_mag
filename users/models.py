@@ -30,7 +30,7 @@ class CustomUser(AbstractUser):
     nationality = CountryField(null=True, blank=True)  
     type = models.CharField(max_length=50, choices=[('Interne', 'Interne'), ('Externe', 'Externe')])
     titre = models.CharField(max_length=100, null=True, blank=True)
-    poste = models.CharField(max_length=100)
+    poste = models.CharField(max_length=100, null=True, blank=True)
     profil = models.ForeignKey(Profil, on_delete=models.SET_NULL, null=True)
     photo_profil = models.ImageField(upload_to='photos/', null=True, blank=True)
     telephone = models.CharField(max_length=20, unique=True)
