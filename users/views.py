@@ -439,7 +439,7 @@ def login_by_phone_web(request):
         )
     #Ici verifions si l'utilisateur n'est pas un magasinier
     
-    if user.id_profil.libelle == "magasinier": 
+    if user.profil.libelle == "magasinier": 
         return Response(
             {"error": "Accès refusé! Vous n'êtes pas autorisé à vous connecter à cette plateforme."},status=status.HTTP_403_FORBIDDEN
         )
@@ -463,7 +463,7 @@ def login_by_phone_web(request):
     # notifier_utilisateurs([user], "Connexion Réussie", "Vous vous êtes connecté avec succès au système.")
 
     return Response(
-        {"message": "Connexion réussie.", 'access_token': str(refresh.access_token), "refresh_token": str(refresh), "first_login": first, 'profil': user.id_profil.libelle}, status=status.HTTP_200_OK)
+        {"message": "Connexion réussie.", 'access_token': str(refresh.access_token), "refresh_token": str(refresh), "first_login": first, 'profil': user.profil.libelle}, status=status.HTTP_200_OK)
 
 #Vue pour authentifier un utilisateur par son numero de telephone sur mobile
 @swagger_auto_schema(
