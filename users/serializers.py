@@ -48,14 +48,14 @@ class CustomUserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Pour gérer un mot de passe
         password = validated_data.pop("password", None)
-        # projets_data = validated_data.pop('projets', None)
+        projets_data = validated_data.pop('projets', None)
         groups_data = validated_data.pop('groups', None)
 
         user = CustomUser.objects.create(**validated_data)
         if password:
             user.set_password(password)
-        # if projets_data:
-        #     user.projets.set(projets_data)
+        if projets_data:
+            user.projets.set(projets_data)
         if groups_data:
             user.groups.set(groups_data)  # 👈 CORRECTION
 
@@ -63,7 +63,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
-        # projets_data = validated_data.pop('projets', None)
+        projets_data = validated_data.pop('projets', None)
         password = validated_data.pop("password", None)
         groups_data = validated_data.pop('groups', None)
 
@@ -74,8 +74,8 @@ class CustomUserSerializer(serializers.ModelSerializer):
             instance.set_password(password)
 
         # Mettre à jour les ManyToMany
-        # if projets_data is not None:
-        #     instance.projets.set(projets_data)  # Remplace les projets existants par les nouveaux
+        if projets_data is not None:
+            instance.projets.set(projets_data)  # Remplace les projets existants par les nouveaux
         if groups_data is not None:
             instance.groups.set(groups_data)
 

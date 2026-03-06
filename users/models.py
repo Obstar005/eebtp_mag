@@ -11,6 +11,9 @@ class PermissionCustom(models.Model):
     date_creation = models.DateTimeField(auto_now_add=True)
     create_by = models.CharField(max_length=100, null=True, blank=True)
 
+    def __str__(self):
+        return self.code
+
 class Profil(models.Model):
     code = models.CharField(max_length=50, unique=True)
     libelle = models.CharField(max_length=100, unique=True)
@@ -38,7 +41,7 @@ class CustomUser(AbstractUser):
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modif = models.DateTimeField(auto_now=True)
     first_login = models.BooleanField(default=True)
-    # projets = models.ManyToManyField('projets.Projet', related_name='users', blank=True)
+    projets = models.ManyToManyField('projets.Projet', related_name='users', blank=True)
     is_connected = models.BooleanField(default=False)
 
 
