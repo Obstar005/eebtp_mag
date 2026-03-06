@@ -37,6 +37,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
     projets = serializers.PrimaryKeyRelatedField(many=True, queryset=Projet.objects.all(), required=False)
     magasin = serializers.ReadOnlyField(source='magasin.nom')
     profil_name = serializers.ReadOnlyField(source='profil.libelle')
+    permissions = serializers.SerializerMethodField()
     class Meta:
         model = CustomUser
         # fields = '__all__'
@@ -81,3 +82,8 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+    
+    def get_permissions(self, obj):
+        if obj.profil:
+            return PermissionCustomSerializer(obj.profil.permissions.all(), many=True).data
+        return []
