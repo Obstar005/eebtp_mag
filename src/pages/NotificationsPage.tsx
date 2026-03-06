@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow, parseISO, format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { toast } from "react-toast";
 import {
   useNotifications,
   useNotificationStats,
@@ -53,15 +54,36 @@ export function NotificationsPage() {
   const total = notificationsResponse?.total || 0;
 
   const handleMarkAsRead = (notificationId: number) => {
-    markAsReadMutation.mutate(notificationId);
+    markAsReadMutation.mutate(notificationId, {
+      onSuccess: () => {
+        toast.success("Notification marquée comme lue");
+      },
+      onError: () => {
+        toast.error("Erreur lors du marquage de la notification");
+      },
+    });
   };
 
   const handleMarkAllAsRead = () => {
-    markAllAsReadMutation.mutate(notifications);
+    markAllAsReadMutation.mutate(notifications, {
+      onSuccess: () => {
+        toast.success("Toutes les notifications ont été marquées comme lues");
+      },
+      onError: () => {
+        toast.error("Erreur lors du marquage des notifications");
+      },
+    });
   };
 
   const handleClearRead = () => {
-    clearReadMutation.mutate();
+    clearReadMutation.mutate(undefined, {
+      onSuccess: () => {
+        toast.success("Notifications lues supprimées");
+      },
+      onError: () => {
+        toast.error("Erreur lors de la suppression des notifications");
+      },
+    });
   };
 
   const handleFilterChange = (newFilters: Partial<NotificationFilters>) => {
@@ -124,7 +146,7 @@ export function NotificationsPage() {
   };
 
   const actionTypes = Array.from(
-    new Set(notifications.map((n: { action_type: string }) => n.action_type))
+    new Set(notifications.map((n: { action_type: string }) => n.action_type)),
   );
 
   return (

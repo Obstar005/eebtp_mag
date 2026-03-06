@@ -1,25 +1,18 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  ArrowLeft,
-  Plus,
-  Eye,
-  Edit,
-  Trash2,
-  Search,
-  Filter,
-} from "lucide-react";
+import { ArrowLeft, Plus, Eye, Edit, Search, Filter } from "lucide-react";
+import { toast } from "react-toast";
 import {
   useMagasin,
   useStockArticles,
   useDeleteStockArticle,
 } from "../../hooks/useMagasins";
 import { useModal } from "../../hooks/useModal";
-import { useCountries } from "../../hooks/useCountries";
 import { ConfirmationModal } from "../../components/layout/ConfirmationModal";
 import { AddEditArticleModal } from "../../components/magasins/AddEditArticleModal";
 import { EditMagasinModal } from "../../components/magasins/EditMagasinModal";
 import type { StockArticleFilter } from "../../types/magasin";
+import { formatApiDate } from "../../utils/formatUtils";
 
 export function MagasinDetailsPage() {
   const navigate = useNavigate();
@@ -33,46 +26,11 @@ export function MagasinDetailsPage() {
   const [selectedArticleId, setSelectedArticleId] = useState<number | null>(
     null,
   );
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
 
   // Hooks
   const { data: magasin, isLoading: isLoadingMagasin } = useMagasin(magasinId);
-  const { countries, getTogoCountry } = useCountries();
-
-  // Fonction pour détecter le pays depuis l'adresse
-  const getCountryFromAddress = (address?: string) => {
-    if (!address) return getTogoCountry(); // Valeur par défaut
-
-    const addressLower = address.toLowerCase();
-
-    // Recherche du pays dans l'adresse
-    const foundCountry = countries.find((country) => {
-      const nameMatch = addressLower.includes(country.name.toLowerCase());
-      const abbrevMatch = addressLower.includes(
-        country.abbreviation.toLowerCase(),
-      );
-
-      // Recherche spéciale pour certains pays
-      const specialMatches = {
-        ghana: country.name.toLowerCase() === "ghana",
-        accra: country.name.toLowerCase() === "ghana",
-        togo: country.name.toLowerCase() === "togo",
-        lomé: country.name.toLowerCase() === "togo",
-        lome: country.name.toLowerCase() === "togo",
-        "côte d'ivoire": country.name.toLowerCase() === "côte d'ivoire",
-        abidjan: country.name.toLowerCase() === "côte d'ivoire",
-        nigeria: country.name.toLowerCase() === "nigeria",
-        lagos: country.name.toLowerCase() === "nigeria",
-      };
-
-      const specialMatch = Object.entries(specialMatches).some(
-        ([key, condition]) => addressLower.includes(key) && condition,
-      );
-
-      return nameMatch || abbrevMatch || specialMatch;
-    });
-
-    return foundCountry || getTogoCountry(); // Fallback vers Togo
-  };
 
   const filter: StockArticleFilter = {
     search: searchTerm || undefined,
@@ -84,20 +42,29 @@ export function MagasinDetailsPage() {
   const confirmDeleteModal = useModal();
 
   const articles = articlesResponse?.data || [];
-  console.log("Articles loaded", articles);
 
-  const handleDeleteArticle = (articleId: number) => {
-    setSelectedArticleId(articleId);
-    confirmDeleteModal.open();
+  // Pagination
+  const totalPages = Math.ceil(articles.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedArticles = articles.slice(startIndex, endIndex);
+
+  // Reset page when search changes
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
   };
 
   const confirmDelete = async () => {
     if (selectedArticleId) {
       try {
         await deleteArticleMutation.mutateAsync(selectedArticleId);
+        toast.success("Article supprimé avec succès !");
         confirmDeleteModal.close();
         setSelectedArticleId(null);
-      } catch (error) {}
+      } catch (error) {
+        toast.error("Erreur lors de la suppression de l'article");
+      }
     }
   };
 
@@ -184,7 +151,7 @@ export function MagasinDetailsPage() {
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">
-                  Liste des Articles(Stock)
+                  Liste des Articles en Stock
                 </h2>
                 <button
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -204,7 +171,7 @@ export function MagasinDetailsPage() {
                     type="text"
                     placeholder="Rechercher un article..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -234,11 +201,17 @@ export function MagasinDetailsPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Désignation
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Quantité
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Quantité seuil
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Unité
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Prix unitaire
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
@@ -246,26 +219,31 @@ export function MagasinDetailsPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {articles.map((article) => (
+                    {paginatedArticles.map((article) => (
                       <tr key={article.id} className="hover:bg-gray-50">
                         <td className="px-6 py-3 whitespace-nowrap">
                           <div className="font-medium text-gray-900">
                             {article.name}
-                            <span className="text-gray-400">
-                              {" "}
-                              ({article.type_enum})
-                            </span>
                           </div>
                         </td>
                         <td className="px-6 py-3 whitespace-nowrap">
-                          <div className="text-gray-900">
+                          <div className="text-gray-900 text-right">
                             {article.quantite}
                           </div>
                         </td>
                         <td className="px-6 py-3 whitespace-nowrap">
-                          <div className="text-gray-900">
+                          <div className="text-gray-900 text-right">
                             {article.quantite_seuil}
                           </div>
+                        </td>
+                        <td className="px-6 py-3 whitespace-nowrap">
+                          <div className="text-gray-900">{article.unite}</div>
+                        </td>
+                        <td className="px-6 py-3 whitespace-nowrap text-right text-gray-900">
+                          {article.prix_unitaire?.toLocaleString("fr-FR", {
+                            style: "currency",
+                            currency: "XOF",
+                          })}
                         </td>
                         <td className="px-6 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-2">
@@ -283,13 +261,6 @@ export function MagasinDetailsPage() {
                             >
                               <Edit className="h-4 w-4" />
                             </button>
-                            <button
-                              onClick={() => handleDeleteArticle(article.id)}
-                              className="p-0.5 px-2  text-gray-50 bg-red-600 hover:bg-red-700 rounded-md transition-colors"
-                              title="Supprimer"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
                           </div>
                         </td>
                       </tr>
@@ -303,13 +274,36 @@ export function MagasinDetailsPage() {
             <div className="px-6 py-3 border-t border-gray-200">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-500">
-                  {articles.length} Articles
+                  {articles.length > 0 ? (
+                    <>
+                      Affichage de {startIndex + 1} à{" "}
+                      {Math.min(endIndex, articles.length)} sur{" "}
+                      {articles.length} articles
+                    </>
+                  ) : (
+                    "0 article"
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     Précédent
                   </button>
-                  <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
+                  <span className="text-sm text-gray-600">
+                    Page {currentPage} / {totalPages || 1}
+                  </span>
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    disabled={currentPage >= totalPages}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     Suivant
                   </button>
                 </div>
@@ -338,11 +332,9 @@ export function MagasinDetailsPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Date de création
                   </label>
-                  <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                  <div className="p-2 py-1 bg-gray-50 rounded-lg text-sm">
                     {magasin.date_creation
-                      ? new Date(magasin.date_creation).toLocaleDateString(
-                          "fr-FR",
-                        )
+                      ? formatApiDate(magasin.date_creation)
                       : "-"}
                   </div>
                 </div>
@@ -350,11 +342,9 @@ export function MagasinDetailsPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Date de mise à jour
                   </label>
-                  <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                  <div className="p-2 py-1 bg-gray-50 rounded-lg text-sm">
                     {magasin.date_mise_a_jour
-                      ? new Date(magasin.date_mise_a_jour).toLocaleDateString(
-                          "fr-FR",
-                        )
+                      ? formatApiDate(magasin.date_mise_a_jour)
                       : "-"}
                   </div>
                 </div>
@@ -488,7 +478,9 @@ export function MagasinDetailsPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => navigate(`/projects/${magasin.projet?.id}`)}
+                  onClick={() =>
+                    navigate(`/projects/${magasin.projet?.id}/details`)
+                  }
                   className="min-w-52 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-between gap-2"
                 >
                   Consulter le projet

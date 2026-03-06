@@ -11,9 +11,11 @@ import {
 } from "../hooks/useProjets";
 import { useStockArticles } from "../hooks/useMagasins";
 import { useDashboardStats } from "../hooks/useDashboard";
+import { useAccess } from "../hooks/useAccessPermissions";
 import { FluctuationChartJS } from "../components/FluctuationChartJS";
 import { StockBarChartJS } from "../components/StockBarChartJS";
 import { SearchableSelect } from "../components/ui/SearchableSelect";
+import { AccessDenied } from "../components/ui/AccessGuard";
 import type { FluctuationParams } from "../types/fluctuation";
 
 export function Dashboard() {
@@ -23,22 +25,19 @@ export function Dashboard() {
   // Récupérer les projets de l'API
   const projetsQuery = useProjetsSelect();
 
+  // Permissions
+  const { statistique, isLoading: permissionsLoading } = useAccess();
+
   // États pour les menus déroulants
-  const [openPeriodMenu, setOpenPeriodMenu] = useState(false);
   const [openTypeEntreeMenu, setOpenTypeEntreeMenu] = useState(false);
 
   // Filtres globaux (affectent les deux graphiques)
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<
-    "jour" | "semaine" | "mois" | "projet"
-  >("mois");
+    "" | "jour" | "semaine" | "mois" | "projet"
+  >("");
 
-  // Si aucun projet sélectionné, prendre le premier renvoyé par l'API
-  useEffect(() => {
-    if (!selectedProject && projetsQuery.data && projetsQuery.data.length > 0) {
-      setSelectedProject(projetsQuery.data[0].id);
-    }
-  }, [projetsQuery.data, selectedProject]);
+  // Note: L'utilisateur doit sélectionner manuellement un projet
 
   // Reset les articles sélectionnés quand le projet change
   useEffect(() => {
@@ -84,11 +83,18 @@ export function Dashboard() {
 
     const ids = articlesList.map((a) => a.id);
 
-    if (!ids.includes(selectedProductEntree as number)) {
-      setSelectedProductEntree(articlesList[0].id);
+    // Réinitialiser si l'article sélectionné n'existe plus dans la liste
+    if (
+      selectedProductEntree !== null &&
+      !ids.includes(selectedProductEntree as number)
+    ) {
+      setSelectedProductEntree(null);
     }
-    if (!ids.includes(selectedProductSortie as number)) {
-      setSelectedProductSortie(articlesList[0].id);
+    if (
+      selectedProductSortie !== null &&
+      !ids.includes(selectedProductSortie as number)
+    ) {
+      setSelectedProductSortie(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [articlesList]);
@@ -137,6 +143,22 @@ export function Dashboard() {
     return articles.filter((article) => article.type === "materiel");
   }, [statsArticlesQuery.data?.articles]);
 
+  // Vérification des permissions (afficher loading si nécessaire)
+  if (permissionsLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Vérification des permissions de vue
+  if (!statistique.canView) {
+    return (
+      <AccessDenied message="Vous n'avez pas la permission de consulter les statistiques." />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header avec titre et filtres globaux */}
@@ -156,57 +178,20 @@ export function Dashboard() {
           />
 
           {/* Sélecteur de Période */}
-          <div className="relative">
-            <button
-              onClick={() => setOpenPeriodMenu(!openPeriodMenu)}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-900 rounded hover:bg-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2v16h12V4H6zm1 1h2v2H7V5zm4 0h2v2h-2V5zm4 0h2v2h-2V5z" />
-              </svg>
-              <span>
-                {selectedPeriod.charAt(0).toUpperCase() +
-                  selectedPeriod.slice(1)}
-              </span>
-              <svg
-                className={`w-4 h-4 transition-transform ${
-                  openPeriodMenu ? "rotate-180" : ""
-                }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                />
-              </svg>
-            </button>
-            {openPeriodMenu && (
-              <div className="absolute top-full left-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
-                {["jour", "semaine", "mois", "projet"].map((period) => (
-                  <button
-                    key={period}
-                    onClick={() => {
-                      setSelectedPeriod(
-                        period as "jour" | "semaine" | "mois" | "projet",
-                      );
-                      setOpenPeriodMenu(false);
-                    }}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                      selectedPeriod === period
-                        ? "bg-blue-50 text-blue-900 font-semibold"
-                        : "text-gray-900"
-                    }`}
-                  >
-                    {period.charAt(0).toUpperCase() + period.slice(1)}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <SearchableSelect
+            options={[
+              { id: "jour", name: "Jour" },
+              { id: "semaine", name: "Semaine" },
+              { id: "mois", name: "Mois" },
+              { id: "projet", name: "Projet" },
+            ]}
+            value={selectedPeriod}
+            onChange={setSelectedPeriod}
+            placeholder="Sélectionner une période"
+            labelKey="name"
+            valueKey="id"
+            allowClear={true}
+          />
         </div>
       </div>
 
@@ -301,7 +286,7 @@ export function Dashboard() {
           <div className="lg:col-span-3">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
-                État des Entrées
+                Fluctuation des Entrées
               </h3>
               <div className="flex gap-2">
                 {/* Filtre Article pour Entrées avec Recherche */}
@@ -309,7 +294,7 @@ export function Dashboard() {
                   options={articlesList}
                   value={selectedProductEntree}
                   onChange={setSelectedProductEntree}
-                  placeholder="Article"
+                  placeholder="Sélectionner un article"
                   labelKey="name"
                   valueKey="id"
                   buttonClassName="px-3 py-2 text-xs"
@@ -319,6 +304,7 @@ export function Dashboard() {
                       ? "Sélectionnez un projet"
                       : "Aucun article disponible"
                   }
+                  allowClear={true}
                 />
 
                 {/* Filtre Type d'Entrée */}
@@ -327,7 +313,7 @@ export function Dashboard() {
                     onClick={() => setOpenTypeEntreeMenu(!openTypeEntreeMenu)}
                     className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-blue-900 rounded hover:bg-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-600"
                   >
-                    <span>Type</span>
+                    <span>Sélectionner un type</span>
                     <svg
                       className={`w-3 h-3 transition-transform ${
                         openTypeEntreeMenu ? "rotate-180" : ""
@@ -382,8 +368,8 @@ export function Dashboard() {
           {/* Graphique Stock Articles - 2/5 */}
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Stock Matériaux
+              <h3 className="text-lg font-semibold text-gray-900 first-letter:capitalize">
+                état de stock de Matériaux
               </h3>
             </div>
             <StockBarChartJS
@@ -406,7 +392,7 @@ export function Dashboard() {
           <div className="lg:col-span-3">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
-                État des Sorties
+                Fluctuation des Sorties
               </h3>
               <div className="flex gap-2">
                 {/* Filtre Article pour Sorties avec Recherche */}
@@ -414,7 +400,7 @@ export function Dashboard() {
                   options={articlesList}
                   value={selectedProductSortie}
                   onChange={setSelectedProductSortie}
-                  placeholder="Article"
+                  placeholder="Sélectionner un article"
                   labelKey="name"
                   valueKey="id"
                   buttonClassName="px-3 py-2 text-xs"
@@ -424,6 +410,7 @@ export function Dashboard() {
                       ? "Sélectionnez un projet"
                       : "Aucun article disponible"
                   }
+                  allowClear={false}
                 />
               </div>
             </div>
@@ -439,8 +426,8 @@ export function Dashboard() {
           {/* Graphique Stock Matériels - 2/5 */}
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Stock Matériels
+              <h3 className="text-lg font-semibold text-gray-900 first-letter:capitalize">
+                état de stock de Matériels
               </h3>
             </div>
             <StockBarChartJS

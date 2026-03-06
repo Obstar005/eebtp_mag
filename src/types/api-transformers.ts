@@ -153,8 +153,11 @@ export async function apiUserToUser(apiUser: ApiCustomUser): Promise<User> {
 export function apiProfilToProfile(apiProfil: ApiProfil): Profile {
   return {
     id: apiProfil.id.toString(),
+    code: apiProfil.code || '',
     nom: apiProfil.libelle,
     description: apiProfil.description,
+    is_active: apiProfil.is_active,
+    permissions: apiProfil.permissions || [],
   };
 }
 
@@ -179,8 +182,10 @@ export function accountToApiUser(
 
 export function profileToApiProfil(profile: Profile): ApiCreateProfilRequest {
   return {
+    code: profile.code,
     libelle: profile.nom,
     description: profile.description || "",
+    permissions: profile.permissions || [],
   };
 }
 

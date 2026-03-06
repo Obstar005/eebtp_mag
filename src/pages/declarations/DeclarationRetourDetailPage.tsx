@@ -1,6 +1,8 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useDeclaration } from "../../hooks/useDeclarations";
+import { useAccess } from "../../hooks/useAccessPermissions";
+import { AccessDenied } from "../../components/ui/AccessGuard";
 import { PhoneDisplay } from "../../components/ui/PhoneDisplay";
 import { formatUnit } from "../../utils/formatUtils";
 
@@ -9,11 +11,30 @@ export function DeclarationRetourDetailPage() {
   const { declarationId } = useParams<{
     declarationId: string;
   }>();
+  const { mouvement, isLoading: permissionsLoading } = useAccess();
 
   const declarationIdNumber = declarationId ? parseInt(declarationId) : 0;
 
   // Hooks
   const { data: declaration, isLoading } = useDeclaration(declarationIdNumber);
+
+  // Vérification des permissions de chargement
+  if (permissionsLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Vérification des permissions de consultation de sortie (retour utilise les mêmes permissions)
+  if (!mouvement.sortie.canView) {
+    return (
+      <AccessDenied message="Vous n'avez pas la permission de consulter les déclarations de retour." />
+    );
+  }
 
   if (isLoading) {
     return (
@@ -81,18 +102,29 @@ export function DeclarationRetourDetailPage() {
                   {declaration.stockItem?.name}
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Quantité
-                </label>
-                <div className="p-3 bg-gray-50 rounded-lg flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-semibold text-gray-900">
-                      {declaration.quantite_float}
-                    </span>
-                    <span className="text-gray-600">
-                      {formatUnit(declaration.stockItem?.unite)}
-                    </span>
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Quantité retournée
+                  </label>
+                  <div className="p-3 bg-gray-50 rounded-lg flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-semibold text-gray-900">
+                        {declaration.quantite_float}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Unité de mesure
+                  </label>
+                  <div className="p-3 bg-gray-50 rounded-lg flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-600">
+                        {formatUnit(declaration.stockItem?.unite)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

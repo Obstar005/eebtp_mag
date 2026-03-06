@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Eye, Edit, Trash2, Upload } from "lucide-react";
+import { toast } from "react-toast";
 import {
   useProjet,
   useDeleteProjet,
@@ -13,6 +14,7 @@ import { useCountries } from "../../hooks/useCountries";
 import { useModal } from "../../hooks/useModal";
 import { ConfirmationModal } from "../../components/layout/ConfirmationModal";
 import { EditMagasinModal } from "../../components/magasins/EditMagasinModal";
+import { formatApiDate } from "../../utils/formatUtils";
 
 export function ProjectDetailsPage() {
   const navigate = useNavigate();
@@ -59,23 +61,15 @@ export function ProjectDetailsPage() {
 
   const projectCountry = getProjectCountry();
 
-  // Formatage des dates
-  const formatDate = (dateValue: string | Date) => {
-    const date =
-      typeof dateValue === "string" ? new Date(dateValue) : dateValue;
-    return date.toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
-
   const confirmDelete = async () => {
     try {
       await deleteProjetMutation.mutateAsync(projetId);
+      toast.success("Projet supprimé avec succès !");
       confirmDeleteModal.close();
       navigate("/projects");
-    } catch (error) {}
+    } catch (error) {
+      toast.error("Erreur lors de la suppression du projet");
+    }
   };
 
   const handleDeletePhoto = async (photoId: number) => {
@@ -83,7 +77,10 @@ export function ProjectDetailsPage() {
 
     try {
       await deletePhotoMutation.mutateAsync({ photoId, projetId });
-    } catch (error) {}
+      toast.success("Photo supprimée avec succès !");
+    } catch (error) {
+      toast.error("Erreur lors de la suppression de la photo");
+    }
   };
 
   if (isLoading) {
@@ -171,7 +168,7 @@ export function ProjectDetailsPage() {
                     Date du début
                   </label>
                   <div className="p-3 bg-gray-50 rounded-lg">
-                    {formatDate(projet.date_debut)}
+                    {formatApiDate(projet.date_debut, true)}
                   </div>
                 </div>
                 <div>
@@ -180,31 +177,53 @@ export function ProjectDetailsPage() {
                   </label>
                   <div className="p-3 bg-gray-50 rounded-lg">
                     {projet.date_fin
-                      ? formatDate(projet.date_fin)
+                      ? formatApiDate(projet.date_fin, true)
                       : "Non définie"}
                   </div>
                 </div>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date de création
+                </label>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  {projet.date_creation
+                    ? formatApiDate(projet.date_creation)
+                    : "Non définie"}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date de mise à jour
+                </label>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  {projet.date_modification
+                    ? formatApiDate(projet.date_modification)
+                    : "Non définie"}
+                </div>
+              </div>
+
+              {/* Section Coûts */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Date de création
+                    Coût estimé
                   </label>
                   <div className="p-3 bg-gray-50 rounded-lg">
-                    {projet.date_creation
-                      ? formatDate(projet.date_creation)
-                      : "Non définie"}
+                    {projet.cout_total_estime
+                      ? `${projet.cout_total_estime.toLocaleString("fr-FR")} FCFA`
+                      : "Non défini"}
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Date de mise à jour
+                    Coût réel
                   </label>
                   <div className="p-3 bg-gray-50 rounded-lg">
-                    {projet.date_modification
-                      ? formatDate(projet.date_modification)
-                      : "Non définie"}
+                    {projet.cout_total_reel
+                      ? `${projet.cout_total_reel.toLocaleString("fr-FR")} FCFA`
+                      : "Non défini"}
                   </div>
                 </div>
               </div>
@@ -297,7 +316,7 @@ export function ProjectDetailsPage() {
                       <button
                         onClick={() =>
                           navigate(
-                            `/projects/magasins/${projet.magasin_associe?.id}`
+                            `/projects/magasins/${projet.magasin_associe?.id}`,
                           )
                         }
                         className="bg-green-600 text-white p-1 rounded text-xs"

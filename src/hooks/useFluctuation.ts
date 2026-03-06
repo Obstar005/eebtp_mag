@@ -10,12 +10,14 @@ import type {
 
 /**
  * Traiter les données API pour les afficher dans le graphique
+ * @param data - Les données brutes de l'API
+ * @param periode - La période sélectionnée (jour, semaine, mois, projet)
  */
 function processFluctuationData(
-  data: FluctuationDataPoint[]
+  data: FluctuationDataPoint[],
+  periode?: string
 ): ProcessedFluctuationData {
   if (!data || !Array.isArray(data) || data.length === 0) {
-    console.log("⚠️ Données vides ou invalides");
     return {
       labels: [],
       values: [],
@@ -30,11 +32,18 @@ function processFluctuationData(
   const values = data.map((d) => d.quantite_totale);
   const labels = data.map((d) => {
     const date = new Date(d.date);
+    // Pour la période "projet", afficher uniquement mois et année
+    if (periode === "projet") {
+      return date.toLocaleDateString("fr-FR", {
+        month: "long",
+        year: "numeric",
+      }).replace(/(^\w|\s\w)/g, (c) => c.toUpperCase());
+    }
     return date.toLocaleDateString("fr-FR", {
       day: "2-digit",
       month: "short",
       year: "numeric",
-    });
+    }).replace(/(^\w|\s\w)/g, (c) => c.toUpperCase());
   });
 
   const result = {
@@ -46,8 +55,6 @@ function processFluctuationData(
     total: values.reduce((a, b) => a + b, 0),
     dataPoints: data,
   };
-
-  console.log(`✅ Traité: ${data.length} points, Total: ${result.total}`);
 
   return result;
 }
@@ -73,23 +80,12 @@ export function useFluctuationEntrees(params: FluctuationParams | null) {
       if (response && typeof response === "object") {
         if ("donnees" in response && Array.isArray(response.donnees)) {
           donnees = response.donnees;
-          console.log(`✅ ENTREES - ${donnees.length} points trouvés`);
-          if (donnees.length === 0) {
-            console.log('ℹ️ Tableau vide - Aucun mouvement pour:', {
-              projet: (response as any).projet,
-              article: (response as any).article,
-              periode: (response as any).periode,
-            });
-          }
         } else if (Array.isArray(response)) {
           donnees = response as unknown as FluctuationDataPoint[];
-          console.log("✅ Extraction via cast array direct");
-        } else {
-          console.warn("⚠️ Structure de réponse non reconnue", response);
         }
       }
 
-      const processed = processFluctuationData(donnees);
+      const processed = processFluctuationData(donnees, params.periode);
       return processed;
     },
     enabled: !!params,
@@ -120,12 +116,10 @@ export function useFluctuationSorties(params: FluctuationParams | null) {
           donnees = response.donnees;
         } else if (Array.isArray(response)) {
           donnees = response as unknown as FluctuationDataPoint[];
-        } else {
-          console.warn("⚠️ SORTIES - Structure de réponse non reconnue", response);
         }
       }
 
-      const processed = processFluctuationData(donnees);
+      const processed = processFluctuationData(donnees, params.periode);
       return processed;
     },
     enabled: !!params,

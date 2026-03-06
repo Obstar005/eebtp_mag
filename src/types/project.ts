@@ -15,6 +15,10 @@ export interface Projet {
   creator: number; // ID du créateur du projet (requis par l'API)
   is_active: boolean; // Statut actif du projet
 
+  // Champs de coûts
+  cout_total_estime?: number; // Coût total estimé du projet
+  cout_total_reel?: number; // Coût total réel du projet
+
   // Rôles principaux selon l'API
   chef_projet?: number; // ID du chef de projet (optionnel)
   chef_chantier?: number; // ID du chef de chantier (optionnel)
@@ -97,6 +101,10 @@ export interface CreateProjetData {
   date_fin?: string; // Format: YYYY-MM-DD (optionnel)
   is_active?: boolean; // Par défaut true
 
+  // Champs de coûts
+  cout_total_estime?: number; // Coût total estimé du projet
+  cout_total_reel?: number; // Coût total réel du projet
+
   // Rôles principaux
   chef_projet?: number; // ID du chef de projet
   chef_chantier?: number; // ID du chef de chantier
@@ -172,6 +180,9 @@ export interface ProjetWithDetails {
   date_fin: string;
   pays: string;
   status: ProjetStatus;
+  // Champs de coûts
+  cout_total_estime?: number;
+  cout_total_reel?: number;
   chefProjet: {
     id: number;
     name: string;

@@ -32,9 +32,6 @@ export class NotificationApiService {
         "status" in error &&
         error.status === 404
       ) {
-        console.warn(
-          "⚠️ Endpoint historique-user non disponible, retour d'une liste vide"
-        );
         return [];
       }
       throw new Error("Impossible de récupérer les notifications");

@@ -199,10 +199,7 @@ export class AuthApiService {
       const response = await apiClient.get<ApiCustomUser>(
         "/Users/authentication/user-info/",
       );
-      console.log("🔐 [DEBUG getUserInfo] Réponse API brute:", response.data);
       const user = await apiUserToUser(response.data);
-      console.log("🔐 [DEBUG getUserInfo] User transformé:", user);
-      console.log("🔐 [DEBUG getUserInfo] hasCompletedSetup:", user.hasCompletedSetup);
       return user;
     } catch (error) {
       console.error(
@@ -279,10 +276,7 @@ export class AuthApiService {
     try {
       await apiClient.post("/Users/authentication/logout/");
     } catch (error) {
-      console.warn(
-        "⚠️ Erreur lors de la déconnexion API (non-bloquant):",
-        error,
-      );
+      // Erreur de déconnexion API (non-bloquant)
     }
   }
 }
@@ -292,9 +286,6 @@ export class UserApiService {
   // Récupérer tous les utilisateurs
   async getUsers(): Promise<Account[]> {
     try {
-      console.log(
-        "🔍 UserApiService: Récupération des utilisateurs depuis l'API EEBTP...",
-      );
       const response =
         await apiClient.get<ApiCustomUser[]>("/Users/liste-users");
 
@@ -321,10 +312,6 @@ export class UserApiService {
         response.data.is_connected !== undefined
       ) {
         account.is_connected = response.data.is_connected;
-        console.log(
-          "⚠️ PATCH appliqué - is_connected ajouté:",
-          account.is_connected,
-        );
       }
 
       return account;
@@ -337,22 +324,10 @@ export class UserApiService {
   // Créer un utilisateur
   async createUser(data: CreateAccountData): Promise<Account> {
     try {
-      console.log("🚀 Création d'un nouvel utilisateur:", {
-        nom: data.nom,
-        prenoms: data.prenoms,
-        nom_utilisateur: data.nom_utilisateur,
-        type: data.type,
-        telephone: data.telephone,
-        profile_id: data.profile_id,
-        has_photo: !!data.photo_profil,
-      });
-
       const apiData = createAccountDataToApiUser(data);
 
       // Utiliser FormData si une image est présente
       if (data.photo_profil) {
-        console.log("📸 Image détectée, utilisation de FormData");
-
         const formData = new FormData();
 
         // Ajouter toutes les données utilisateur
@@ -381,10 +356,6 @@ export class UserApiService {
           console.error(
             "❌ Validation de l'utilisateur créé (avec image) échouée:",
             validation,
-          );
-        } else {
-          console.log(
-            "✅ Validation de l'utilisateur créé (avec image) réussie",
           );
         }
 
@@ -571,7 +542,7 @@ export class UserApiService {
       // 3. Calculer les statistiques de base
       const total = accounts.length;
       const interne = accounts.filter((a) => a.type === "Interne").length;
-      const consultant = accounts.filter((a) => a.type === "Consultant").length;
+      const externe = accounts.filter((a) => a.type === "Externe").length;
       const active = accounts.filter((a) => a.is_active).length;
       const inactive = total - active;
 
@@ -599,7 +570,7 @@ export class UserApiService {
       return {
         total,
         interne,
-        consultant,
+        externe,
         active,
         inactive,
         byProfile,
@@ -641,14 +612,18 @@ export class ProfileApiService {
 
   // Créer un profil
   async createProfile(data: {
+    code: string;
     nom: string;
     description?: string;
+    permissions?: number[];
   }): Promise<Profile> {
     try {
       const apiData = profileToApiProfil({
         ...data,
         id: "",
+        code: data.code,
         description: data.description || "",
+        permissions: data.permissions || [],
       });
       const response = await apiClient.post<ApiProfil>(
         "/Users/profil-create",
@@ -657,20 +632,22 @@ export class ProfileApiService {
       return apiProfilToProfile(response.data);
     } catch (error) {
       console.error("Erreur createProfile:", error);
-      throw new Error("Impossible de créer le profil");
+      throw error; // Re-throw pour que l'appelant puisse gérer l'erreur
     }
   }
 
   // Mettre à jour un profil
   async updateProfile(
     id: string,
-    data: { nom: string; description?: string },
+    data: { code?: string; nom?: string; description?: string; permissions?: number[] },
   ): Promise<Profile> {
     try {
       const apiData = profileToApiProfil({
-        ...data,
         id,
+        code: data.code || '',
+        nom: data.nom || '',
         description: data.description || "",
+        permissions: data.permissions || [],
       });
       const response = await apiClient.put<ApiProfil>(
         `/Users/profil-update/${id}`,
@@ -679,7 +656,7 @@ export class ProfileApiService {
       return apiProfilToProfile(response.data);
     } catch (error) {
       console.error("Erreur updateProfile:", error);
-      throw new Error("Impossible de mettre à jour le profil");
+      throw error; // Re-throw pour que l'appelant puisse gérer l'erreur
     }
   }
 

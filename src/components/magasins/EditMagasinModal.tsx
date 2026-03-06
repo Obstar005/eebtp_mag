@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "react-toast";
 import { FormModal } from "../layout/FormModal";
 import { useUpdateMagasin, useMagasin } from "../../hooks/useMagasins";
 import type { UpdateMagasinData } from "../../types/magasin";
@@ -62,8 +63,10 @@ export function EditMagasinModal({
         adresse: formData.adresse,
       };
       await updateMutation.mutateAsync(updateData);
+      toast.success("Magasin modifié avec succès !");
       onClose();
     } catch (error) {
+      toast.error("Une erreur est survenue lors de la mise à jour");
       setError("Une erreur est survenue lors de la mise à jour");
     }
   };

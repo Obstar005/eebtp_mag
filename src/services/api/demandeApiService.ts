@@ -223,14 +223,11 @@ export class DemandeApiService {
    */
   async getDemandeStats(periode: string = "total"): Promise<ApiDemandeStats> {
     try {
-      console.log(
-        `📊 Récupération des statistiques des demandes pour la période: ${periode}`
-      );
 
       const response = await apiClient.get<ApiDemandeStats>(
         `${this.basePath}/demandes/statistiques/${periode}`
       );
-
+      
       return response.data;
     } catch (error) {
       console.error(
@@ -269,44 +266,29 @@ export class DemandeApiService {
 
         const endpointStatus = statusEndpointMap[filters.status];
         if (endpointStatus) {
-          console.log(
-            `📋 Utilisation de l'endpoint avec période: ${endpointStatus}/${filters.periode}`
-          );
           const response = await apiClient.get<ApiDemande[]>(
             `${this.basePath}/demandes/${endpointStatus}/${filters.periode}`
           );
           return response.data;
         }
       } catch (error) {
-        console.warn(
-          "⚠️ Erreur avec l'endpoint de période, fallback vers toutes les demandes:",
-          error
-        );
+        // Fallback vers toutes les demandes silencieusement
       }
     }
 
     // Si on a seulement une période (sans statut), utiliser l'endpoint "toutes" avec période
     if (filters.periode && (!filters.status || filters.status === "tous")) {
       try {
-        console.log(
-          `📋 Utilisation de l'endpoint toutes avec période: ${filters.periode}`
-        );
         const response = await apiClient.get<ApiDemande[]>(
           `${this.basePath}/demandes/toutes/${filters.periode}`
         );
         return response.data;
       } catch (error) {
-        console.warn(
-          "⚠️ Erreur avec l'endpoint toutes/période, fallback:",
-          error
-        );
+        // Fallback silencieux
       }
     }
 
     // Fallback : récupérer toutes les demandes et filtrer côté client
-    console.log(
-      "📋 Récupération de toutes les demandes pour filtrage côté client..."
-    );
     const allDemandes = await this.getAllDemandes();
 
     return allDemandes.filter((demande) => {

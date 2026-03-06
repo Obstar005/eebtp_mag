@@ -2,47 +2,10 @@
 
 /**
  * Analyse et affiche la structure d'une réponse API pour débogage
+ * Note: Fonction de debug désactivée en production
  */
-export function debugApiResponse(response: unknown, context: string = "API Response"): void {
-  console.group(`🔍 DEBUG: ${context}`);
-  
-  if (response === null) {
-  } else if (response === undefined) {
-  } else if (typeof response !== 'object') {
-  } else {
-    
-    // Analyser des propriétés importantes
-    if ('id' in response) {
-      console.log("🆔 ID:", {
-        value: response.id,
-        type: typeof response.id,
-        exists: response.id !== null && response.id !== undefined
-      });
-    } else {
-    }
-    
-    if ('status' in response) {
-    }
-    
-    if ('data' in response) {
-      console.log("📦 Data:", {
-        exists: !!response.data,
-        type: typeof response.data,
-        keys: response.data ? Object.keys(response.data) : []
-      });
-      
-      if (response.data && typeof response.data === 'object' && 'id' in response.data) {
-        console.log("🆔 Data.ID:", {
-          value: response.data.id,
-          type: typeof response.data.id,
-          exists: response.data.id !== null && response.data.id !== undefined
-        });
-      }
-    }
-    
-  }
-  
-  console.groupEnd();
+export function debugApiResponse(_response: unknown, _context: string = "API Response"): void {
+  // Debug désactivé - fonction no-op
 }
 
 /**

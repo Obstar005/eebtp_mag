@@ -16,7 +16,7 @@ import type { ProfilePermissions, AvailableAction } from "../utils/permissions";
 export function usePermissions() {
   const { user } = useAuth();
   const [permissions, setPermissions] = useState<ProfilePermissions | null>(
-    null
+    null,
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +55,7 @@ export function usePermissions() {
    * Vérifie si l'utilisateur a une permission spécifique
    */
   const hasPermission = async (
-    permission: keyof ProfilePermissions["permissions"]
+    permission: keyof ProfilePermissions["permissions"],
   ): Promise<boolean> => {
     if (!user) return false;
 
@@ -64,7 +64,7 @@ export function usePermissions() {
     } catch (err) {
       console.error(
         `Erreur lors de la vérification de la permission ${permission}:`,
-        err
+        err,
       );
       return false;
     }
@@ -81,7 +81,7 @@ export function usePermissions() {
     } catch (err) {
       console.error(
         "Erreur lors de la vérification de traitement de demande:",
-        err
+        err,
       );
       return false;
     }
@@ -91,7 +91,7 @@ export function usePermissions() {
    * Récupère les actions de traitement disponibles pour un état de demande
    */
   const getAvailableActions = async (
-    requestStatus: string
+    requestStatus: string,
   ): Promise<AvailableAction[]> => {
     if (!user) return [];
 
@@ -100,7 +100,7 @@ export function usePermissions() {
     } catch (err) {
       console.error(
         "Erreur lors de la récupération des actions disponibles:",
-        err
+        err,
       );
       return [];
     }
@@ -148,7 +148,7 @@ export function usePermissions() {
  * Utilise les permissions déjà chargées
  */
 export function usePermissionCheck(
-  permission: keyof ProfilePermissions["permissions"]
+  permission: keyof ProfilePermissions["permissions"],
 ) {
   const { permissions } = usePermissions();
   return permissions?.permissions[permission] ?? false;
@@ -173,7 +173,7 @@ export function useTreatmentActions(requestStatus: string) {
       try {
         const availableActions = await getAvailableTreatmentActions(
           user,
-          requestStatus
+          requestStatus,
         );
         setActions(availableActions);
       } catch (err) {
@@ -203,7 +203,7 @@ export function useConditionalRender() {
   const renderIfPermission = (
     permission: keyof ProfilePermissions["permissions"],
     component: React.ReactNode,
-    fallback?: React.ReactNode
+    fallback?: React.ReactNode,
   ) => {
     if (permissions.isLoading) {
       return <div className="animate-pulse bg-gray-200 h-4 w-20 rounded"></div>;
@@ -211,24 +211,24 @@ export function useConditionalRender() {
 
     const hasPermission =
       permissions.permissions?.permissions[permission] ?? false;
-    return hasPermission ? component : fallback ?? null;
+    return hasPermission ? component : (fallback ?? null);
   };
 
   const renderIfAuthenticated = (
     component: React.ReactNode,
-    fallback?: React.ReactNode
+    fallback?: React.ReactNode,
   ) => {
-    return permissions.isAuthenticated ? component : fallback ?? null;
+    return permissions.isAuthenticated ? component : (fallback ?? null);
   };
 
   const renderIfRole = (
     requiredProfils: string[],
     component: React.ReactNode,
-    fallback?: React.ReactNode
+    fallback?: React.ReactNode,
   ) => {
     const userProfil = permissions.user?.profil;
     const hasProfil = userProfil && requiredProfils.includes(userProfil);
-    return hasProfil ? component : fallback ?? null;
+    return hasProfil ? component : (fallback ?? null);
   };
 
   return {

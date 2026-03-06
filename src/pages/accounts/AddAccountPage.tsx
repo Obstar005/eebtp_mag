@@ -8,7 +8,10 @@ import {
   ChevronDown,
   AlertCircle,
 } from "lucide-react";
+import { toast } from "react-toast";
 import { useCreateAccount, useProfiles } from "../../hooks";
+import { useAccess } from "../../hooks/useAccessPermissions";
+import { AccessDenied } from "../../components/ui/AccessGuard";
 import { CountrySelector } from "../../components/ui/CountrySelector";
 import { useCountries } from "../../hooks/useCountries";
 import type { CreateAccountData, AccountType } from "../../types/account";
@@ -30,6 +33,7 @@ const validatePassword = (password: string): boolean => {
 export function AddAccountPage() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { userAccess: userPerms, isLoading: permissionsLoading } = useAccess();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -148,12 +152,6 @@ export function AddAccountPage() {
         return;
       }
 
-      console.log(
-        "Image sélectionnée:",
-        file.name,
-        file.type,
-        `${(file.size / 1024).toFixed(2)}KB`,
-      );
       setFormData((prev) => ({ ...prev, photo_profil: file }));
 
       // Créer une prévisualisation
@@ -219,7 +217,7 @@ export function AddAccountPage() {
 
     try {
       await createAccountMutation.mutateAsync(submissionData);
-
+      toast.success("Compte créé avec succès !");
       navigate("/accounts");
     } catch (error) {
       // Vérifier si l'erreur est liée à un ID manquant
@@ -306,6 +304,22 @@ export function AddAccountPage() {
   };
 
   const isLoading = createAccountMutation.isPending;
+
+  // Vérification des permissions de chargement
+  if (permissionsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Vérification des permissions de création
+  if (!userPerms.canCreate) {
+    return (
+      <AccessDenied message="Vous n'avez pas la permission de créer des comptes utilisateurs." />
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -422,6 +436,13 @@ export function AddAccountPage() {
                 <div className="relative">
                   <input
                     type="date"
+                    max={
+                      new Date(
+                        new Date().setFullYear(new Date().getFullYear() - 15),
+                      )
+                        .toISOString()
+                        .split("T")[0]
+                    }
                     required
                     value={formData.date_naissance}
                     onChange={(e) =>
@@ -598,7 +619,7 @@ export function AddAccountPage() {
                   title="Sélectionner le type de compte"
                 >
                   <option value="Interne">Interne</option>
-                  <option value="Consultant">Consultant</option>
+                  <option value="Externe">Externe</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               </div>{" "}

@@ -10,6 +10,7 @@ export interface ApiDemande {
   // Champs calculés (readOnly)
   magasin_name: string;
   stock_item_name: string;
+  stock_item_unite?: string; // Unité du stock item
   emis_par_name: string;
   confirme_par_name?: string;
   approve_par_name?: string;
@@ -18,7 +19,7 @@ export interface ApiDemande {
   number: string; // Numéro de la demande
 
   // Champs requis pour création
-  quantite: number;
+  quantite_dem: number; // Quantité demandée
   raison: string;
   stock_item: number; // ID du stock item
   magasin: number; // ID du magasin
@@ -31,6 +32,19 @@ export interface ApiDemande {
   date_approbation?: string;
   date_validation?: string;
   date_rejet?: string;
+
+  // Commentaires à chaque étape
+  commentaire_confirmation?: string;
+  commentaire_approbation?: string;
+  commentaire_validation?: string;
+
+  // Quantités ajustées à chaque étape
+  quantite_approuv?: number;
+  quantite_valid?: number;
+
+  // Autres champs
+  cout_total_approx?: number;
+  is_valide?: boolean;
 
   // Motif de rejet
   motif_rejet?: string;
@@ -55,14 +69,14 @@ export type ApiDemandeStatut =
 // ==================== TYPES POUR CRÉATION/MODIFICATION ====================
 
 export interface ApiCreateDemandeRequest {
-  quantite: number;
+  quantite_dem: number;
   raison: string;
   stock_item: number;
   magasin: number;
 }
 
 export interface ApiUpdateDemandeRequest {
-  quantite?: number;
+  quantite_dem?: number;
   raison?: string;
   stock_item?: number;
   magasin?: number;
@@ -72,21 +86,20 @@ export interface ApiUpdateDemandeRequest {
 
 export interface ApiApprouverDemandeRequest {
   // Les données à envoyer pour approuver une demande
-  // (à compléter selon la documentation détaillée)
-  approved: boolean;
-  motif?: string;
+  commentaire_approbation?: string;
+  quantite_approuv?: number;
 }
 
 export interface ApiConfirmerDemandeRequest {
   // Les données à envoyer pour confirmer une demande
-  confirmed: boolean;
-  motif?: string;
+  commentaire_confirmation?: string;
 }
 
 export interface ApiValiderDemandeRequest {
   // Les données à envoyer pour valider une demande
-  validated: boolean;
-  motif?: string;
+  commentaire_validation?: string;
+  quantite_valid?: number;
+  cout_total_approx?: number;
 }
 
 export interface ApiRejeterDemandeRequest {
@@ -120,6 +133,18 @@ export interface ApiDemandeStats {
   demandes_validees: number;
   demandes_rejetees: number;
   demandes_livrees: number;
+  demandes_en_attente_validation?: number;
+  demandes_traitées?: number;
+  taux_variation?: {
+    total?: number;
+    emises?: number;
+    confirmees?: number;
+    approuvees?: number;
+    validees?: number;
+    rejetees?: number;
+    livrees?: number;
+    en_attente?: number;
+  };
 }
 
 // ==================== MAPPING STATUTS API ↔ FRONTEND ====================

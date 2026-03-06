@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "react-toast";
 import { FormModal } from "../layout/FormModal";
 import {
   useCreateStockArticle,
@@ -10,7 +11,6 @@ import { SelectWithSearch } from "../ui/SelectWithSearch";
 import {
   type CreateStockArticleData,
   type UpdateStockArticleData,
-  ArticleEtat,
   ArticleType,
 } from "../../types/magasin";
 
@@ -63,10 +63,10 @@ export function AddEditArticleModal({
   useEffect(() => {
     if (isEditing && article) {
       setFormData({
-        articleId: Number(article.id),
+        articleId: article.article_id || 0, // ID du produit catalogue
         description: article.description || "",
-        quantite: article.quantite,
-        quantite_seuil: article.quantite_seuil,
+        quantite: article.quantite ?? 0,
+        quantite_seuil: article.quantite_seuil ?? 0,
         etat: article.etat?.toLowerCase() || "neuf",
         type_enum: article.type_enum || "matiere_premiere",
         magasin_id: article.magasin_id,
@@ -149,6 +149,7 @@ export function AddEditArticleModal({
           prix_unitaire: formData.prix_unitaire,
         };
         await updateMutation.mutateAsync(updateData);
+        toast.success("Article modifié avec succès !");
       } else {
         const selectedProduct = productsList?.data.find(
           (p) => p.id === String(formData.articleId),
@@ -168,10 +169,12 @@ export function AddEditArticleModal({
           prix_unitaire: formData.prix_unitaire,
         };
         await createMutation.mutateAsync(createData);
+        toast.success("Article ajouté avec succès !");
       }
       onClose();
     } catch (error) {
       console.error("Error saving article:", error);
+      toast.error("Une erreur est survenue lors de la sauvegarde");
       setError("Une erreur est survenue lors de la sauvegarde");
     }
   };
@@ -183,7 +186,7 @@ export function AddEditArticleModal({
       isOpen={isOpen}
       onClose={onClose}
       onSubmit={handleSubmit}
-      title={isEditing ? "Détails de l'article CIMENT" : "Ajouter un article"}
+      title={isEditing ? "Détails de l'article" : "Ajouter un article"}
       loading={isLoading}
       submitText={isEditing ? "Modifier" : "Enregistrer"}
       size="md"
@@ -233,9 +236,12 @@ export function AddEditArticleModal({
             required
             min="0"
             step="0.1"
-            value={formData.quantite}
+            value={formData.quantite === 0 ? "" : formData.quantite}
             onChange={(e) =>
-              handleInputChange("quantite", parseFloat(e.target.value) || 0)
+              handleInputChange(
+                "quantite",
+                e.target.value === "" ? 0 : parseFloat(e.target.value),
+              )
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="Quantité"
@@ -251,11 +257,11 @@ export function AddEditArticleModal({
             required
             min="0"
             step="0.1"
-            value={formData.quantite_seuil}
+            value={formData.quantite_seuil === 0 ? "" : formData.quantite_seuil}
             onChange={(e) =>
               handleInputChange(
                 "quantite_seuil",
-                parseFloat(e.target.value) || 0,
+                e.target.value === "" ? 0 : parseFloat(e.target.value),
               )
             }
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"

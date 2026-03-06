@@ -160,11 +160,6 @@ export async function retryWithBackoff<T>(
 
       // Wait with exponential backoff
       const delay = baseDelayMs * Math.pow(2, attempt);
-      console.warn(
-        `⚠️ Tentative ${attempt + 1}/${
-          maxRetries + 1
-        } échouée, retry dans ${delay}ms`
-      );
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }

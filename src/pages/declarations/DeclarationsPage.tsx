@@ -1,34 +1,46 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Search, Filter, Eye } from "lucide-react";
+import {
+  ArrowLeft,
+  Search,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import {
   useDeclarations,
   useDeclarationStats,
 } from "../../hooks/useDeclarations";
 import { useMagasin } from "../../hooks/useMagasins";
+import { useAccess } from "../../hooks/useAccessPermissions";
+import { AccessDenied } from "../../components/ui/AccessGuard";
 import type {
   DeclarationFilter,
   DeclarationType,
   PeriodeType,
 } from "../../types/declaration";
+import { formatUnit } from "../../utils/formatUtils";
 
 export function DeclarationsPage() {
   const navigate = useNavigate();
   const { magasinId } = useParams<{ magasinId: string }>();
   const magasinIdNumber = magasinId ? parseInt(magasinId) : 0;
+  const { mouvement, isLoading: permissionsLoading } = useAccess();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState<DeclarationType | "">("");
   const [activeTab, setActiveTab] = useState<
-    "Tous" | "Entrée" | "Sortie" | "Retour"
+    "Tous" | "Livraison" | "Sortie" | "Retour"
   >("Tous");
   const [selectedPeriode, setSelectedPeriode] = useState<PeriodeType>("total");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
 
   // Synchroniser le filtre avec l'onglet actif
   useEffect(() => {
     switch (activeTab) {
-      case "Entrée":
-        setSelectedType("entree");
+      case "Livraison":
+        setSelectedType("livraison");
         break;
       case "Sortie":
         setSelectedType("sortie");
@@ -55,16 +67,16 @@ export function DeclarationsPage() {
 
   const { data: declarationsResponse, isLoading } = useDeclarations(
     magasinIdNumber,
-    filter
+    filter,
   );
   const declarations = useMemo(
     () => declarationsResponse?.data || [],
-    [declarationsResponse?.data]
+    [declarationsResponse?.data],
   );
 
   const getDeclarationTypeColor = (type: DeclarationType) => {
     switch (type) {
-      case "entree":
+      case "livraison":
         return "bg-green-100 text-green-800";
       case "sortie":
         return "bg-red-100 text-red-800";
@@ -77,8 +89,8 @@ export function DeclarationsPage() {
 
   const getDeclarationTypeLabel = (type: DeclarationType) => {
     switch (type) {
-      case "entree":
-        return "Entrée";
+      case "livraison":
+        return "Livraison";
       case "sortie":
         return "Sortie";
       case "retour":
@@ -90,10 +102,10 @@ export function DeclarationsPage() {
 
   const handleViewDeclaration = (
     declarationId: number,
-    type: DeclarationType
+    type: DeclarationType,
   ) => {
     navigate(
-      `/magasins/${magasinIdNumber}/declarations/${declarationId}/detail/${type}`
+      `/magasins/${magasinIdNumber}/declarations/${declarationId}/detail/${type}`,
     );
   };
 
@@ -103,7 +115,7 @@ export function DeclarationsPage() {
     // Filtrage par type selon l'onglet actif
     if (activeTab !== "Tous") {
       const typeMap: Record<string, DeclarationType> = {
-        Entrée: "entree",
+        Livraison: "livraison",
         Sortie: "sortie",
         Retour: "retour",
       };
@@ -121,12 +133,40 @@ export function DeclarationsPage() {
           d.stockItem?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           d.stockItem?.description
             ?.toLowerCase()
-            .includes(searchTerm.toLowerCase())
+            .includes(searchTerm.toLowerCase()),
       );
     }
 
     return filtered;
   }, [declarations, activeTab, searchTerm]);
+
+  // Réinitialiser la page quand les filtres changent
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchTerm, selectedPeriode]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredDeclarations.length / itemsPerPage);
+  const paginatedDeclarations = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredDeclarations.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredDeclarations, currentPage, itemsPerPage]);
+
+  // Vérification des permissions de chargement
+  if (permissionsLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Vérification des permissions de consultation (entrée ou sortie)
+  if (!mouvement.entree.canView && !mouvement.sortie.canView) {
+    return (
+      <AccessDenied message="Vous n'avez pas la permission de consulter les déclarations." />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -141,7 +181,7 @@ export function DeclarationsPage() {
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-2xl font-bold text-gray-900">
-            Liste des déclarations du magasin N°{magasin?.name || magasinId}
+            Liste des déclarations du magasin {magasin?.name || magasinId}
           </h1>
         </div>
         <div className="flex bg-blue-50 rounded-full p-1 gap-1">
@@ -189,19 +229,19 @@ export function DeclarationsPage() {
                   Total Des Entrées
                 </p>
                 <p className="text-3xl font-bold text-gray-900">
-                  {stats.totalEntrees.toLocaleString()}
+                  {(stats.totalLivraisons ?? 0).toLocaleString()}
                 </p>
               </div>
               <div className="flex items-center text-sm">
                 <span
                   className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                    stats.variationVsHier.entrees >= 0
+                    (stats.variationVsHier?.livraisons ?? 0) >= 0
                       ? "bg-green-100 text-green-800"
                       : "bg-red-100 text-red-800"
                   }`}
                 >
-                  {stats.variationVsHier.entrees >= 0 ? "+" : ""}
-                  {stats.variationVsHier.entrees}%
+                  {(stats.variationVsHier?.livraisons ?? 0) >= 0 ? "+" : ""}
+                  {stats.variationVsHier?.livraisons ?? 0}%
                 </span>
                 <span className="ml-2 text-gray-500">vs. Hier</span>
               </div>
@@ -215,19 +255,19 @@ export function DeclarationsPage() {
                   Total Des Sorties
                 </p>
                 <p className="text-3xl font-bold text-gray-900">
-                  {stats.totalSorties.toLocaleString()}
+                  {(stats.totalSorties ?? 0).toLocaleString()}
                 </p>
               </div>
               <div className="flex items-center text-sm">
                 <span
                   className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                    stats.variationVsHier.sorties >= 0
+                    (stats.variationVsHier?.sorties ?? 0) >= 0
                       ? "bg-green-100 text-green-800"
                       : "bg-red-100 text-red-800"
                   }`}
                 >
-                  {stats.variationVsHier.sorties >= 0 ? "+" : ""}
-                  {stats.variationVsHier.sorties}%
+                  {(stats.variationVsHier?.sorties ?? 0) >= 0 ? "+" : ""}
+                  {stats.variationVsHier?.sorties ?? 0}%
                 </span>
                 <span className="ml-2 text-gray-500">vs. Hier</span>
               </div>
@@ -241,19 +281,19 @@ export function DeclarationsPage() {
                   Total des retours
                 </p>
                 <p className="text-3xl font-bold text-gray-900">
-                  {stats.totalRetours.toLocaleString()}
+                  {(stats.totalRetours ?? 0).toLocaleString()}
                 </p>
               </div>
               <div className="flex items-center text-sm">
                 <span
                   className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                    stats.variationVsHier.retours >= 0
+                    (stats.variationVsHier?.retours ?? 0) >= 0
                       ? "bg-green-100 text-green-800"
                       : "bg-red-100 text-red-800"
                   }`}
                 >
-                  {stats.variationVsHier.retours >= 0 ? "+" : ""}
-                  {stats.variationVsHier.retours}%
+                  {(stats.variationVsHier?.retours ?? 0) >= 0 ? "+" : ""}
+                  {stats.variationVsHier?.retours ?? 0}%
                 </span>
                 <span className="ml-2 text-gray-500">vs. Hier</span>
               </div>
@@ -268,11 +308,13 @@ export function DeclarationsPage() {
         <div className="p-6 border-b border-gray-200 flex items-center gap-4 justify-between max-md:flex-col">
           {/* Onglets */}
           <div className="flex space-x-8">
-            {["Tous", "Entrée", "Sortie", "Retour"].map((tab) => (
+            {["Tous", "Livraison", "Sortie", "Retour"].map((tab) => (
               <button
                 key={tab}
                 onClick={() =>
-                  setActiveTab(tab as "Tous" | "Entrée" | "Sortie" | "Retour")
+                  setActiveTab(
+                    tab as "Tous" | "Livraison" | "Sortie" | "Retour",
+                  )
                 }
                 className={`pb-2 border-b-2 font-medium text-sm ${
                   activeTab === tab
@@ -282,9 +324,10 @@ export function DeclarationsPage() {
               >
                 {tab}
                 {tab === "Tous" && ` (${declarations.length})`}
-                {tab === "Entrée" &&
+                {tab === "Livraison" &&
                   ` (${
-                    declarations.filter((d) => d.type_enum === "entree").length
+                    declarations.filter((d) => d.type_enum === "livraison")
+                      .length
                   })`}
                 {tab === "Sortie" &&
                   ` (${
@@ -317,7 +360,7 @@ export function DeclarationsPage() {
               <div className="absolute top-[calc(100%+.5rem)] right-0 bg-white border border-gray-200 rounded-md shadow-md min-h-24 w-64">
                 {[
                   { value: "", label: "Tous les types" },
-                  { value: "entree", label: "Entrée" },
+                  { value: "livraison", label: "Livraison" },
                   { value: "sortie", label: "Sortie" },
                   { value: "retour", label: "Retour" },
                 ].map((status) => (
@@ -353,8 +396,11 @@ export function DeclarationsPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Désignation
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Quantité
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Unité
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Fournisseur
@@ -371,7 +417,7 @@ export function DeclarationsPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredDeclarations.map((declaration, index) => (
+                {paginatedDeclarations.map((declaration, index) => (
                   <tr
                     key={`${index}-${declaration.id}`}
                     className="hover:bg-gray-50"
@@ -381,9 +427,14 @@ export function DeclarationsPage() {
                         {declaration.stockItem?.name}
                       </div>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <div className="text-gray-900">
+                        {declaration.quantite_float}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-gray-900">
-                        {declaration.quantite_float} kilogramme
+                        {formatUnit(declaration.stockItem?.unite) || "-"}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -397,7 +448,7 @@ export function DeclarationsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getDeclarationTypeColor(
-                          declaration.type_enum
+                          declaration.type_enum,
                         )}`}
                       >
                         {getDeclarationTypeLabel(declaration.type_enum)}
@@ -419,7 +470,7 @@ export function DeclarationsPage() {
                         onClick={() =>
                           handleViewDeclaration(
                             declaration.id,
-                            declaration.type_enum
+                            declaration.type_enum,
                           )
                         }
                         className="p-2 text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors"
@@ -436,22 +487,45 @@ export function DeclarationsPage() {
         </div>
 
         {/* Footer avec pagination */}
-        <div className="px-6 py-3 border-t border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-500">
-              Affichage de 1-10 sur 100 données
-            </div>
-            <div className="flex items-center gap-2">
-              <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
-                1
-              </button>
-              <span className="text-sm text-gray-500">/</span>
-              <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
-                2
-              </button>
+        {filteredDeclarations.length > 0 && (
+          <div className="px-6 py-3 border-t border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-500">
+                Affichage de {(currentPage - 1) * itemsPerPage + 1}-
+                {Math.min(
+                  currentPage * itemsPerPage,
+                  filteredDeclarations.length,
+                )}{" "}
+                sur {filteredDeclarations.length} données
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  disabled={currentPage === 1}
+                  className="p-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Page précédente"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <span className="text-sm text-gray-700">
+                  Page {currentPage} / {totalPages}
+                </span>
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  disabled={currentPage === totalPages}
+                  className="p-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Page suivante"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

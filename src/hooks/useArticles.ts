@@ -18,6 +18,7 @@ export const articleKeys = {
 
 /**
  * Hook pour récupérer la liste des articles d'un magasin
+ * Si magasinId est 0, récupère tous les articles sans filtrage
  */
 export function useStockArticles(
   magasinId: number,
@@ -27,7 +28,7 @@ export function useStockArticles(
     queryKey: articleKeys.list(magasinId, filter),
     queryFn: () => articleService.getArticles(magasinId, filter),
     staleTime: 1 * 60 * 1000, // 1 minute
-    enabled: !!magasinId,
+    enabled: true, // Toujours actif, même avec magasinId = 0
   });
 }
 

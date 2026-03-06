@@ -12,19 +12,23 @@ interface SearchableSelectProps<T> {
   buttonClassName?: string;
   isLoading?: boolean;
   emptyMessage?: string;
+  allowClear?: boolean;
+  clearLabel?: string;
 }
 
 export function SearchableSelect<T extends Record<string, any>>({
   options,
   value,
   onChange,
-  placeholder = "Sélectionner",
+  placeholder = "Sélectionner...",
   labelKey = "name" as keyof T,
   valueKey = "id" as keyof T,
   className = "",
   buttonClassName = "",
   isLoading = false,
   emptyMessage = "Aucun résultat",
+  allowClear = true,
+  clearLabel = "Aucun",
 }: SearchableSelectProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -44,7 +48,7 @@ export function SearchableSelect<T extends Record<string, any>>({
   }, []);
 
   const filteredOptions = options.filter((option) =>
-    String(option[labelKey]).toLowerCase().includes(searchTerm.toLowerCase())
+    String(option[labelKey]).toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const selectedOption = options.find((opt) => opt[valueKey] === value);
@@ -118,28 +122,53 @@ export function SearchableSelect<T extends Record<string, any>>({
                   Chargement...
                 </div>
               </div>
-            ) : filteredOptions.length === 0 ? (
+            ) : filteredOptions.length === 0 && !allowClear ? (
               <div className="px-4 py-2 text-sm text-gray-500 text-center">
                 {emptyMessage}
               </div>
             ) : (
-              filteredOptions.map((option) => (
-                <button
-                  key={String(option[valueKey])}
-                  onClick={() => {
-                    onChange(option[valueKey]);
-                    setIsOpen(false);
-                    setSearchTerm("");
-                  }}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                    value === option[valueKey]
-                      ? "bg-blue-50 text-blue-900 font-semibold"
-                      : "text-gray-900"
-                  }`}
-                >
-                  {String(option[labelKey])}
-                </button>
-              ))
+              <>
+                {/* Option "Aucun" pour réinitialiser la sélection */}
+                {allowClear && (
+                  <button
+                    onClick={() => {
+                      onChange(null);
+                      setIsOpen(false);
+                      setSearchTerm("");
+                    }}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 border-b border-gray-100 ${
+                      value === null
+                        ? "bg-blue-50 text-blue-900 font-semibold"
+                        : "text-gray-500 italic"
+                    }`}
+                  >
+                    {clearLabel}
+                  </button>
+                )}
+                {filteredOptions.length === 0 ? (
+                  <div className="px-4 py-2 text-sm text-gray-500 text-center">
+                    {emptyMessage}
+                  </div>
+                ) : (
+                  filteredOptions.map((option) => (
+                    <button
+                      key={String(option[valueKey])}
+                      onClick={() => {
+                        onChange(option[valueKey]);
+                        setIsOpen(false);
+                        setSearchTerm("");
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                        value === option[valueKey]
+                          ? "bg-blue-50 text-blue-900 font-semibold"
+                          : "text-gray-900"
+                      }`}
+                    >
+                      {String(option[labelKey])}
+                    </button>
+                  ))
+                )}
+              </>
             )}
           </div>
         </div>

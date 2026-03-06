@@ -1,17 +1,22 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Modal, ModalButton } from "../layout";
 import { useAuth } from "../../contexts/AuthContext";
-import {
-  getAvailableTreatmentActionsSync,
-  type AvailableAction,
-} from "../../utils/permissions";
+import { useAccess } from "../../hooks/useAccessPermissions";
+import { type AvailableAction } from "../../utils/permissions";
+import { formatUnit } from "../../utils/formatUtils";
 
 interface RequestTreatmentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { traitement: string; motif: string }) => void;
+  onSubmit: (data: {
+    traitement: string;
+    commentaire: string;
+    quantite?: number;
+    coutTotal?: number;
+  }) => void;
   article: string;
   quantite: number;
+  unite?: string; // Unité du stock item
   isLoading?: boolean;
   requestStatus: string; // État actuel de la demande
 }
@@ -22,18 +27,34 @@ export default function RequestTreatmentModal({
   onSubmit,
   article,
   quantite,
+  unite = "unité(s)",
   isLoading = false,
   requestStatus,
 }: RequestTreatmentModalProps) {
   const { user } = useAuth();
+  const { getDemandeActions, isLoading: isLoadingPermissions } = useAccess();
   const [traitement, setTraitement] = useState("");
-  const [motif, setMotif] = useState("");
+  const [commentaire, setCommentaire] = useState("");
+  const [quantiteAjustee, setQuantiteAjustee] = useState<number | "">(quantite);
+  const [coutTotal, setCoutTotal] = useState<number | "">("");
 
-  // Déterminer les actions disponibles selon le profil utilisateur et l'état de la demande
-  // Utilise la hiérarchie : Émission → Confirmation → Approbation → Validation/Rejet
+  // Réinitialiser la quantité lorsque la quantité de la demande change
+  useEffect(() => {
+    setQuantiteAjustee(quantite);
+  }, [quantite]);
+
+  // Déterminer les actions disponibles selon les ACCÈS API de l'utilisateur
+  // Utilise le nouveau système basé sur les codes d'accès (demande.confirm, demande.approuv, demande.valid)
   const availableActions = useMemo(() => {
-    return getAvailableTreatmentActionsSync(user, requestStatus);
-  }, [user, requestStatus]);
+    return getDemandeActions(requestStatus);
+  }, [getDemandeActions, requestStatus]);
+
+  // Déterminer si on doit afficher le champ de quantité
+  const showQuantiteField =
+    traitement === "approuver" || traitement === "valider";
+
+  // Déterminer si on doit afficher le champ de coût total
+  const showCoutTotalField = traitement === "valider";
 
   const handleSubmit = () => {
     if (!traitement) {
@@ -41,16 +62,42 @@ export default function RequestTreatmentModal({
       return;
     }
 
-    if (traitement === "rejeter" && !motif) {
+    if (traitement === "rejeter" && !commentaire) {
       alert("Le motif est obligatoire pour un rejet");
       return;
     }
 
-    onSubmit({ traitement, motif });
+    onSubmit({
+      traitement,
+      commentaire,
+      quantite:
+        showQuantiteField && quantiteAjustee !== ""
+          ? quantiteAjustee
+          : undefined,
+      coutTotal: showCoutTotalField && coutTotal !== "" ? coutTotal : undefined,
+    });
 
     // Réinitialiser les champs après soumission
     setTraitement("");
-    setMotif("");
+    setCommentaire("");
+    setQuantiteAjustee(quantite);
+    setCoutTotal("");
+  };
+
+  // Labels dynamiques pour le commentaire selon l'action
+  const getCommentaireLabel = () => {
+    switch (traitement) {
+      case "confirmer":
+        return "Commentaire de confirmation";
+      case "approuver":
+        return "Commentaire d'approbation";
+      case "valider":
+        return "Commentaire de validation";
+      case "rejeter":
+        return "Motif de rejet";
+      default:
+        return "Commentaire";
+    }
   };
 
   return (
@@ -83,14 +130,19 @@ export default function RequestTreatmentModal({
             readOnly
           />
           <span className="absolute top-1/2 right-2 -translate-y-1/2 origin-center inline-block mt-2 bg-red-600 text-white px-2 py-1 rounded text-xs">
-            {quantite} Kilogramme
+            {quantite} {formatUnit(unite)}
           </span>
         </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">
             Action de traitement
           </label>
-          {availableActions.length > 0 ? (
+          {isLoadingPermissions ? (
+            <div className="w-full rounded-lg px-3 py-2 bg-gray-50 border border-gray-200 text-gray-500 text-sm flex items-center gap-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              Chargement des permissions...
+            </div>
+          ) : availableActions.length > 0 ? (
             <select
               className="w-full rounded-lg px-3 py-2 bg-gray-100 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={traitement}
@@ -107,13 +159,55 @@ export default function RequestTreatmentModal({
             <div className="w-full rounded-lg px-3 py-2 bg-red-50 border border-red-200 text-red-600 text-sm">
               {!user
                 ? "Vous devez être connecté pour traiter cette demande"
-                : `Aucune action disponible pour votre profil (${user.profil}) à l'état "${requestStatus}"`}
+                : `Aucune action disponible pour vos accès à l'état "${requestStatus}"`}
             </div>
           )}
         </div>
+
+        {/* Champ de quantité pour approbation et validation */}
+        {showQuantiteField && (
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">
+              Quantité {traitement === "approuver" ? "approuvée" : "validée"}
+            </label>
+            <input
+              type="number"
+              className="w-full rounded-lg px-3 py-2 bg-gray-100 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder={`Quantité (demandée: ${quantite})`}
+              value={quantiteAjustee}
+              onChange={(e) =>
+                setQuantiteAjustee(e.target.value ? Number(e.target.value) : "")
+              }
+              min={0}
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Laissez vide ou égal à {quantite} pour garder la quantité demandée
+            </p>
+          </div>
+        )}
+
+        {/* Champ de coût total pour validation */}
+        {showCoutTotalField && (
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">
+              Coût total approximatif
+            </label>
+            <input
+              type="number"
+              className="w-full rounded-lg px-3 py-2 bg-gray-100 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Montant en FCFA"
+              value={coutTotal}
+              onChange={(e) =>
+                setCoutTotal(e.target.value ? Number(e.target.value) : "")
+              }
+              min={0}
+            />
+          </div>
+        )}
+
         <div>
           <label className="block text-xs text-gray-500 mb-1">
-            Motif ou commentaire{" "}
+            {getCommentaireLabel()}{" "}
             {traitement === "rejeter" && (
               <span className="text-red-500">*</span>
             )}
@@ -123,11 +217,11 @@ export default function RequestTreatmentModal({
             placeholder={
               traitement === "rejeter"
                 ? "Expliquez la raison du rejet (obligatoire)"
-                : "Commentaire optionnel sur cette action"
+                : `Ajoutez un commentaire pour cette ${traitement || "action"}`
             }
             rows={3}
-            value={motif}
-            onChange={(e) => setMotif(e.target.value)}
+            value={commentaire}
+            onChange={(e) => setCommentaire(e.target.value)}
           />
         </div>
       </div>

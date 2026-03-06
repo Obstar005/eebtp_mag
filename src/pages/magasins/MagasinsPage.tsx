@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Eye, Edit, Trash2, MoreHorizontal } from "lucide-react";
+import { Eye, Edit, Trash2, MoreHorizontal } from "lucide-react";
+import { toast } from "react-toast";
 import { useMagasins, useDeleteMagasin } from "../../hooks/useMagasins";
 import { useModal } from "../../hooks/useModal";
+import { useAccess } from "../../hooks/useAccessPermissions";
 import { ConfirmationModal } from "../../components/layout/ConfirmationModal";
+import { AccessDenied } from "../../components/ui/AccessGuard";
 import { EditMagasinModal } from "../../components/magasins/EditMagasinModal";
 import type { MagasinFilter } from "../../types/magasin";
 
@@ -11,7 +14,7 @@ export default function MagasinsPage() {
   const navigate = useNavigate();
 
   const [selectedMagasinId, setSelectedMagasinId] = useState<number | null>(
-    null
+    null,
   );
   const [editMagasinId, setEditMagasinId] = useState<number | null>(null);
 
@@ -25,6 +28,9 @@ export default function MagasinsPage() {
   const confirmDeleteModal = useModal();
   const editMagasinModal = useModal();
 
+  // Permissions
+  const { magasin: magasinPerms, isLoading: permissionsLoading } = useAccess();
+
   const magasins = magasinsResponse?.data || [];
 
   const handleDeleteMagasin = (magasinId: number) => {
@@ -36,9 +42,11 @@ export default function MagasinsPage() {
     if (selectedMagasinId) {
       try {
         await deleteMagasinMutation.mutateAsync(selectedMagasinId);
+        toast.success("Magasin supprimé avec succès !");
         confirmDeleteModal.close();
         setSelectedMagasinId(null);
       } catch (error) {
+        toast.error("Erreur lors de la suppression du magasin");
       }
     }
   };
@@ -52,7 +60,7 @@ export default function MagasinsPage() {
     editMagasinModal.open();
   };
 
-  if (isLoading) {
+  if (isLoading || permissionsLoading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -62,6 +70,13 @@ export default function MagasinsPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       </div>
+    );
+  }
+
+  // Vérification des permissions de vue
+  if (!magasinPerms.canView) {
+    return (
+      <AccessDenied message="Vous n'avez pas la permission de consulter les magasins." />
     );
   }
 
@@ -77,12 +92,14 @@ export default function MagasinsPage() {
         {magasins.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500">Aucun magasin disponible</p>
-            <button
-              onClick={() => navigate("/magasins/add")}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Créer le premier magasin
-            </button>
+            {magasinPerms.canCreate && (
+              <button
+                onClick={() => navigate("/magasins/add")}
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Créer le premier magasin
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
@@ -117,20 +134,24 @@ export default function MagasinsPage() {
                           <Eye className="h-4 w-4" />
                           Voir les détails
                         </button>
-                        <button
-                          onClick={() => handleEditMagasin(magasin.id)}
-                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          <Edit className="h-4 w-4" />
-                          Modifier
-                        </button>
-                        <button
-                          onClick={() => handleDeleteMagasin(magasin.id)}
-                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Supprimer
-                        </button>
+                        {magasinPerms.canUpdate && (
+                          <button
+                            onClick={() => handleEditMagasin(magasin.id)}
+                            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                          >
+                            <Edit className="h-4 w-4" />
+                            Modifier
+                          </button>
+                        )}
+                        {magasinPerms.canDelete && (
+                          <button
+                            onClick={() => handleDeleteMagasin(magasin.id)}
+                            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Supprimer
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -176,12 +197,14 @@ export default function MagasinsPage() {
                     >
                       Voir détails
                     </button>
-                    <button
-                      onClick={() => handleEditMagasin(magasin.id)}
-                      className="px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      Modifier
-                    </button>
+                    {magasinPerms.canUpdate && (
+                      <button
+                        onClick={() => handleEditMagasin(magasin.id)}
+                        className="px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        Modifier
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

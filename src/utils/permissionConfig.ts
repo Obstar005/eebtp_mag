@@ -235,49 +235,14 @@ export class PermissionTester {
       return;
     }
 
-    console.log(
-      `\n🔍 Test des permissions pour: ${config.libelle} (${profileLibelle})`
-    );
-
+    // Test des permissions silencieux
     const permissions = config.permissions;
-
-    // Test des permissions de traitement des demandes
-
-    // Test des permissions de gestion des stocks
-
-    // Test des permissions d'administration
-    console.log(
-      `  Gérer utilisateurs: ${permissions.canManageUsers ? "✅" : "❌"}`
-    );
-    console.log(
-      `  Gérer profils: ${permissions.canManageProfiles ? "✅" : "❌"}`
-    );
-    console.log(
-      `  Panneau admin: ${permissions.canAccessAdminPanel ? "✅" : "❌"}`
-    );
-    console.log(
-      `  Exporter données: ${permissions.canExportData ? "✅" : "❌"}`
-    );
-
-    // Résumé du niveau d'autorisation
     const totalPermissions = Object.values(permissions).length;
     const grantedPermissions = Object.values(permissions).filter(
       (p) => p
     ).length;
-    const permissionLevel = Math.round(
-      (grantedPermissions / totalPermissions) * 100
-    );
-
-    console.log(
-      `\n📊 Niveau d'autorisation: ${grantedPermissions}/${totalPermissions} (${permissionLevel}%)`
-    );
-
-    if (permissionLevel >= 80) {
-    } else if (permissionLevel >= 60) {
-    } else if (permissionLevel >= 40) {
-    } else if (permissionLevel >= 20) {
-    } else {
-    }
+    // Calcul du niveau d'autorisation pour usage interne
+    Math.round((grantedPermissions / totalPermissions) * 100);
   }
 
   /**
@@ -293,25 +258,7 @@ export class PermissionTester {
    * Affiche un résumé comparatif des profils
    */
   static showPermissionMatrix(): void {
-    const profiles = Object.keys(PROFILE_PERMISSIONS_CONFIG);
-    const permissionKeys = Object.keys(
-      PROFILE_PERMISSIONS_CONFIG[profiles[0]].permissions
-    ) as Array<keyof ProfilePermissions["permissions"]>;
-
-    // En-tête
-    console.log(
-      "Permission".padEnd(25) + profiles.map((p) => p.padEnd(12)).join("")
-    );
-
-    // Lignes des permissions
-    permissionKeys.forEach((permission) => {
-      let row = permission.padEnd(25);
-      profiles.forEach((profile) => {
-        const hasPermission =
-          PROFILE_PERMISSIONS_CONFIG[profile].permissions[permission];
-        row += (hasPermission ? "✅" : "❌").padEnd(12);
-      });
-    });
+    // Méthode de debug désactivée
   }
 
   /**

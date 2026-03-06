@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Save } from "lucide-react";
+import { toast } from "react-toast";
 import {
   useCreateMagasin,
   useUpdateMagasin,
@@ -84,14 +85,20 @@ export function AddEditMagasinPage() {
         };
         await createMagasinMutation.mutateAsync(createData);
       }
+      toast.success(
+        isEditing
+          ? "Magasin modifié avec succès !"
+          : "Magasin créé avec succès !",
+      );
       navigate("/magasins");
     } catch (error) {
+      toast.error("Erreur lors de l'enregistrement du magasin");
     }
   };
 
   const handleChange = (
     field: keyof MagasinForm,
-    value: string | number | undefined
+    value: string | number | undefined,
   ) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {

@@ -154,6 +154,15 @@ export function StockBarChartJS({
           border: {
             display: false,
           },
+          title: {
+            display: true,
+            text: "Articles",
+            font: {
+              size: 12,
+              weight: "bold" as const,
+            },
+            color: "rgb(107, 114, 128)", // gray-500
+          },
           ticks: {
             color: "rgb(55, 65, 81)", // gray-700
             font: {
@@ -177,6 +186,15 @@ export function StockBarChartJS({
           },
           border: {
             display: false,
+          },
+          title: {
+            display: true,
+            text: "Quantité",
+            font: {
+              size: 12,
+              weight: "bold" as const,
+            },
+            color: "rgb(107, 114, 128)", // gray-500
           },
           ticks: {
             color: "rgb(107, 114, 128)", // gray-500

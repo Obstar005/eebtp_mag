@@ -229,9 +229,6 @@ export function useAddUserToProjet() {
     }) => {
       // Pour l'instant, utiliser updateProjet pour ajouter l'utilisateur
       // En récupérant d'abord le projet existant
-      console.log(
-        `👤 Ajout de l'utilisateur ${userId} au projet ${projetId} avec le rôle ${role}`,
-      );
 
       return projetService.getProjetById(projetId).then((projet) => {
         // Récupérer les comptes actuels et ajouter le nouvel utilisateur
@@ -314,10 +311,6 @@ export function useUpdateUserRoleInProjet() {
       userId: number;
       newRole: ProjetRole;
     }) => {
-      console.log(
-        `🔄 Mise à jour du rôle de l'utilisateur ${userId} vers ${newRole} dans le projet ${projetId}`,
-      );
-
       // Dans l'implémentation actuelle, nous allons mettre à jour certains champs spécifiques du projet
       // selon le rôle attribué. Dans une API plus complète, cela pourrait être géré différemment.
       return projetService.getProjetById(projetId).then((projet) => {

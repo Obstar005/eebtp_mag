@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toast";
 import { useProfiles, useDeleteAccountProfile } from "../hooks";
+import { useAccess } from "../hooks/useAccessPermissions";
 import { ConfirmationModal } from "../components/layout";
+import { AccessDenied } from "../components/ui/AccessGuard";
 import { useModal } from "../hooks/useModal";
 import type { Profile } from "../types/account";
 
@@ -14,6 +17,9 @@ export function ProfilesPage() {
   const deleteMutation = useDeleteAccountProfile();
 
   const deleteModal = useModal();
+
+  // Permissions
+  const { profil: profilPerms, isLoading: permissionsLoading } = useAccess();
 
   const handleCreate = () => {
     navigate("/profiles/add");
@@ -36,11 +42,21 @@ export function ProfilesPage() {
     if (selectedProfile) {
       try {
         await deleteMutation.mutateAsync(selectedProfile.id);
+        toast.success("Profil supprimé avec succès !");
         deleteModal.close();
         setSelectedProfile(null);
-      } catch (error) {}
+      } catch (error) {
+        toast.error("Erreur lors de la suppression du profil");
+      }
     }
   };
+
+  // Vérification des permissions de vue
+  if (!permissionsLoading && !profilPerms.canView) {
+    return (
+      <AccessDenied message="Vous n'avez pas la permission de consulter les profils." />
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -51,18 +67,20 @@ export function ProfilesPage() {
             Liste des profils
           </h1>
         </div>
-        <button
-          onClick={handleCreate}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Ajouter un profil</span>
-        </button>
+        {profilPerms.canCreate && (
+          <button
+            onClick={handleCreate}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Ajouter un profil</span>
+          </button>
+        )}
       </div>
 
       {/* Tableau des profils */}
       <div className="bg-white rounded-lg shadow">
-        {isLoading ? (
+        {isLoading || permissionsLoading ? (
           <div className="p-6">
             <div className="animate-pulse">
               <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
@@ -82,10 +100,10 @@ export function ProfilesPage() {
                     Libellé
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Créé le
+                    Code
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Mise à jour le
+                    Statut
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Action
@@ -105,14 +123,20 @@ export function ProfilesPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {new Date().toLocaleDateString("fr-FR")}
+                        <div className="text-sm text-gray-900 font-mono">
+                          {profile.code || "-"}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {new Date().toLocaleDateString("fr-FR")}
-                        </div>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            profile.is_active !== false
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {profile.is_active !== false ? "Actif" : "Inactif"}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
@@ -123,20 +147,24 @@ export function ProfilesPage() {
                           >
                             <Eye className="h-4 w-4" />
                           </button>
-                          <button
-                            onClick={() => handleEdit(profile)}
-                            className="p-0.5 px-2  text-gray-50 bg-blue-600 hover:bg-blue-800 rounded"
-                            title="Modifier"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(profile)}
-                            className="p-0.5 px-2  text-gray-50 bg-red-600 hover:bg-red-800 rounded"
-                            title="Supprimer"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          {profilPerms.canUpdate && (
+                            <button
+                              onClick={() => handleEdit(profile)}
+                              className="p-0.5 px-2  text-gray-50 bg-blue-600 hover:bg-blue-800 rounded"
+                              title="Modifier"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                          )}
+                          {profilPerms.canDelete && (
+                            <button
+                              onClick={() => handleDelete(profile)}
+                              className="p-0.5 px-2  text-gray-50 bg-red-600 hover:bg-red-800 rounded"
+                              title="Supprimer"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -145,12 +173,14 @@ export function ProfilesPage() {
                   <tr>
                     <td colSpan={4} className="px-6 py-12 text-center">
                       <div className="text-gray-500">Aucun profil trouvé</div>
-                      <button
-                        onClick={handleCreate}
-                        className="mt-4 text-blue-600 hover:text-blue-800"
-                      >
-                        Créer le premier profil
-                      </button>
+                      {profilPerms.canCreate && (
+                        <button
+                          onClick={handleCreate}
+                          className="mt-4 text-blue-600 hover:text-blue-800"
+                        >
+                          Créer le premier profil
+                        </button>
+                      )}
                     </td>
                   </tr>
                 )}

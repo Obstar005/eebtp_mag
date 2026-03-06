@@ -13,7 +13,7 @@ export interface ApiCustomUser {
   date_joined: string; // ISO datetime
   surname: string;
   birth_date?: string; // YYYY-MM-DD
-  type: "Interne" | "Consultant";
+  type: "Interne" | "Externe";
   titre: string;
   poste: string;
   photo_profil?: string; // URI
@@ -30,11 +30,20 @@ export interface ApiCustomUser {
 
 export interface ApiProfil {
   id: number;
+  code: string;
   libelle: string;
   description: string;
-  is_active: boolean;
-  date_creation: string; // ISO datetime
-  date_modif: string; // ISO datetime
+  is_active?: boolean;
+  permissions?: number[]; // IDs des accès/permissions
+  permissions_details?: ApiPermission[]; // Détails des permissions (lecture seule)
+}
+
+// Structure d'une permission (accès) retournée par l'API
+export interface ApiPermission {
+  id: number;
+  code: string;
+  libelle: string;
+  create_by?: string | null;
 }
 
 // Types pour les requêtes d'authentification
@@ -89,7 +98,7 @@ export interface ApiCreateUserRequest {
   surname: string;
   email?: string;
   birth_date?: string;
-  type: "Interne" | "Consultant";
+  type: "Interne" | "Externe";
   titre: string;
   poste: string;
   telephone: string;
@@ -103,8 +112,10 @@ export interface ApiUpdateUserRequest extends Partial<ApiCreateUserRequest> {
 
 // Types pour la gestion des profils
 export interface ApiCreateProfilRequest {
+  code: string;
   libelle: string;
   description: string;
+  permissions?: number[]; // IDs des accès/permissions à assigner
 }
 
 export interface ApiUpdateProfilRequest extends Partial<ApiCreateProfilRequest> {

@@ -1,13 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Search, Eye, Edit, Trash2, Filter } from "lucide-react";
+import { toast } from "react-toast";
 import {
   useStockArticles,
   useDeleteStockArticle,
 } from "../../hooks/useArticles";
 import { useModal } from "../../hooks/useModal";
+import { useAccess } from "../../hooks/useAccessPermissions";
 import { ConfirmationModal } from "../../components/layout/ConfirmationModal";
+import { AccessDenied } from "../../components/ui/AccessGuard";
 import type { StockArticleFilter, ArticleType } from "../../types/magasin";
+import { formatApiDate, formatUnit } from "../../utils/formatUtils";
 
 export function ArticlesPage() {
   const navigate = useNavigate();
@@ -15,13 +19,13 @@ export function ArticlesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState<ArticleType | "">("");
   const [selectedArticleId, setSelectedArticleId] = useState<number | null>(
-    null
+    null,
   );
   const [activeTab, setActiveTab] = useState<"tous" | "materiel" | "materiaux">(
-    "tous"
+    "tous",
   );
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   const filter: StockArticleFilter = {
     search: searchTerm || undefined,
@@ -29,9 +33,12 @@ export function ArticlesPage() {
   };
 
   // Hooks
-  const { data: articlesResponse, isLoading } = useStockArticles(1, filter); // Utilise magasin_id = 1 pour l'exemple
+  const { data: articlesResponse, isLoading } = useStockArticles(0, filter); // magasin_id 0 pour tous les articles
   const deleteArticleMutation = useDeleteStockArticle();
   const confirmDeleteModal = useModal();
+
+  // Permissions
+  const { article: articlePerms, isLoading: permissionsLoading } = useAccess();
 
   const articles = articlesResponse?.data || [];
 
@@ -75,9 +82,11 @@ export function ArticlesPage() {
     if (selectedArticleId) {
       try {
         await deleteArticleMutation.mutateAsync(selectedArticleId);
+        toast.success("Article supprimé avec succès !");
         confirmDeleteModal.close();
         setSelectedArticleId(null);
       } catch (error) {
+        toast.error("Erreur lors de la suppression de l'article");
       }
     }
   };
@@ -101,7 +110,7 @@ export function ArticlesPage() {
     return articles.length;
   };
 
-  if (isLoading) {
+  if (isLoading || permissionsLoading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -114,19 +123,28 @@ export function ArticlesPage() {
     );
   }
 
+  // Vérification des permissions de vue
+  if (!articlePerms.canView) {
+    return (
+      <AccessDenied message="Vous n'avez pas la permission de consulter les articles." />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       {/* En-tête */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Liste des articles</h1>
-        <button
-          onClick={() => navigate("/articles/add")}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          title="Ajouter un article"
-        >
-          <Plus className="h-4 w-4" />
-          Ajouter
-        </button>
+        {articlePerms.canCreate && (
+          <button
+            onClick={() => navigate("/articles/add")}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            title="Ajouter un article"
+          >
+            <Plus className="h-4 w-4" />
+            Ajouter
+          </button>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow-sm">
@@ -257,31 +275,22 @@ export function ArticlesPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-3 whitespace-nowrap text-gray-900 capitalize">
-                      {article.unite === "m" ? "mètre" : article.unite}
+                    <td className="px-6 py-3 whitespace-nowrap text-gray-900">
+                      {formatUnit(article.unite?.toLowerCase() || "")}
                     </td>
                     <td
                       className={`px-6 py-3 whitespace-nowrap text-gray-900 ${getTypeColor(
-                        article.type_enum || "equipement"
+                        article.type_enum || "equipement",
                       )}`}
                     >
                       {article.type_enum === "matiere_premiere"
                         ? "Matériaux"
                         : article.type_enum === "equipement"
-                        ? "Matériel"
-                        : "Consommable"}
+                          ? "Matériel"
+                          : "Consommable"}
                     </td>
                     <td className="px-6 py-3 whitespace-nowrap text-gray-900">
-                      {new Date(article.date_creation).toLocaleDateString(
-                        "fr-FR",
-                        {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        }
-                      )}
+                      {formatApiDate(article.date_creation)}
                     </td>
                     <td className="px-6 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-1">
@@ -292,22 +301,26 @@ export function ArticlesPage() {
                         >
                           <Eye className="h-4 w-4" />
                         </button>
-                        <button
-                          onClick={() =>
-                            navigate(`/articles/${article.id}/edit`)
-                          }
-                          className="p-0.5 px-2  text-gray-50 bg-yellow-600 hover:bg-yellow-700 rounded-md transition-colors"
-                          title="Modifier"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteArticle(article.id)}
-                          className="p-0.5 px-2  text-gray-50 bg-red-600 hover:bg-red-700 rounded-md transition-colors"
-                          title="Supprimer"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        {articlePerms.canUpdate && (
+                          <button
+                            onClick={() =>
+                              navigate(`/articles/${article.id}/edit`)
+                            }
+                            className="p-0.5 px-2  text-gray-50 bg-yellow-600 hover:bg-yellow-700 rounded-md transition-colors"
+                            title="Modifier"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                        )}
+                        {articlePerms.canDelete && (
+                          <button
+                            onClick={() => handleDeleteArticle(article.id)}
+                            className="p-0.5 px-2  text-gray-50 bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+                            title="Supprimer"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -376,7 +389,7 @@ export function ArticlesPage() {
                             {page}
                           </button>
                         );
-                      }
+                      },
                     )}
                   </div>
 

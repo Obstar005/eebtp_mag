@@ -93,10 +93,6 @@ export class ProfilePermissionService {
       const defaultPermissions = DEFAULT_PROFILE_PERMISSIONS[libelle];
 
       if (!defaultPermissions) {
-        console.warn(
-          `Permissions non définies pour le profil: ${profile.nom} (${libelle})`
-        );
-
         // Retourner des permissions par défaut très limitées
         const fallbackPermissions: ProfilePermissions = {
           profileId,

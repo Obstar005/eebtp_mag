@@ -46,6 +46,7 @@ export interface MaterialRequest {
   demande: string; // Nom du matériel demandé
   nomMagasinier: string; // Nom du magasinier
   quantiteDemandee: number; // Quantité demandée
+  unite?: string; // Unité du stock item
   profil: string; // Profil du demandeur
   status: RequestStatus;
   dateDemande: string;
@@ -62,6 +63,18 @@ export interface MaterialRequest {
   motif?: string;
   observation?: string;
   traitements?: RequestTreatment[];
+  
+  // Commentaires à chaque étape
+  commentaireConfirmation?: string;
+  commentaireApprobation?: string;
+  commentaireValidation?: string;
+  
+  // Quantités ajustées à chaque étape
+  quantiteApprouvee?: number;
+  
+  // Autres champs
+  coutTotalApprox?: number;
+  isValide?: boolean;
 }
 
 // Traitement d'une demande
@@ -71,4 +84,6 @@ export interface RequestTreatment {
   profil: string;
   action: RequestStatus; // approuve, valide, refuse, etc.
   date: string;
+  commentaire?: string; // Commentaire ajouté lors du traitement
+  quantite?: number; // Quantité ajustée lors du traitement
 }

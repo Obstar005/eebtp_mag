@@ -52,6 +52,7 @@ export interface UpdateMagasinRequest {
 // Types pour les articles de stock
 export interface StockArticle {
   id: number;
+  article_id?: number; // ID du produit catalogue
   name: string;
   description?: string;
   type_enum?: ArticleType;

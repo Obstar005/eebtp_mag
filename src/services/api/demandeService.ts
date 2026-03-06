@@ -37,6 +37,17 @@ export interface DemandeStats {
   validees: number;
   rejetees: number;
   livrees: number;
+  enAttenteValidation?: number;
+  variationVsHier?: {
+    total?: number;
+    emises?: number;
+    confirmees?: number;
+    approuvees?: number;
+    validees?: number;
+    rejetees?: number;
+    livrees?: number;
+    enAttente?: number;
+  };
 }
 
 // Interface pour la réponse paginée
@@ -63,7 +74,6 @@ export class DemandeService {
 
       // Récupérer les demandes de l'API
       const apiDemandes = await demandeApiService.getDemandesFiltered(filter);
-      console.log("Api data", apiDemandes);
 
       // Transformer en format frontend
       let demandes = apiDemandes.map(apiDemandeToMaterialRequest);
@@ -141,7 +151,7 @@ export class DemandeService {
       const apiData: ApiCreateDemandeRequest = {
         stock_item: data.stock_item_id,
         magasin: data.magasin_id,
-        quantite: data.quantite,
+        quantite_dem: data.quantite,
         raison: data.raison,
       };
 
@@ -161,13 +171,12 @@ export class DemandeService {
    */
   async confirmerDemande(
     id: string,
-    data?: { motif?: string }
+    data?: { commentaire?: string }
   ): Promise<MaterialRequest> {
     try {
 
       const apiData: ApiConfirmerDemandeRequest = {
-        confirmed: true,
-        motif: data?.motif,
+        commentaire_confirmation: data?.commentaire,
       };
 
       const apiDemande = await demandeApiService.confirmerDemande(
@@ -187,13 +196,13 @@ export class DemandeService {
    */
   async approuverDemande(
     id: string,
-    data?: { motif?: string }
+    data?: { commentaire?: string; quantite?: number }
   ): Promise<MaterialRequest> {
     try {
 
       const apiData: ApiApprouverDemandeRequest = {
-        approved: true,
-        motif: data?.motif,
+        commentaire_approbation: data?.commentaire,
+        quantite_approuv: data?.quantite,
       };
 
       const apiDemande = await demandeApiService.approuverDemande(
@@ -213,13 +222,14 @@ export class DemandeService {
    */
   async validerDemande(
     id: string,
-    data?: { motif?: string }
+    data?: { commentaire?: string; quantite?: number; coutTotal?: number }
   ): Promise<MaterialRequest> {
     try {
 
       const apiData: ApiValiderDemandeRequest = {
-        validated: true,
-        motif: data?.motif,
+        commentaire_validation: data?.commentaire,
+        quantite_valid: data?.quantite,
+        cout_total_approx: data?.coutTotal,
       };
 
       const apiDemande = await demandeApiService.validerDemande(
@@ -275,6 +285,17 @@ export class DemandeService {
         validees: apiStats.demandes_validees,
         rejetees: apiStats.demandes_rejetees,
         livrees: apiStats.demandes_livrees,
+        enAttenteValidation: apiStats.demandes_en_attente_validation,
+        variationVsHier: apiStats.taux_variation ? {
+          total: apiStats.taux_variation.total,
+          emises: apiStats.taux_variation.emises,
+          confirmees: apiStats.taux_variation.confirmees,
+          approuvees: apiStats.taux_variation.approuvees,
+          validees: apiStats.taux_variation.validees,
+          rejetees: apiStats.taux_variation.rejetees,
+          livrees: apiStats.taux_variation.livrees,
+          enAttente: apiStats.taux_variation.en_attente,
+        } : undefined,
       };
 
       return stats;
@@ -295,20 +316,27 @@ export class DemandeService {
   async traiterDemande(
     id: string,
     action: "confirmer" | "approuver" | "valider" | "rejeter",
-    motif?: string
+    data?: { commentaire?: string; quantite?: number; coutTotal?: number }
   ): Promise<MaterialRequest> {
     switch (action) {
       case "confirmer":
-        return this.confirmerDemande(id, { motif });
+        return this.confirmerDemande(id, { commentaire: data?.commentaire });
       case "approuver":
-        return this.approuverDemande(id, { motif });
+        return this.approuverDemande(id, { 
+          commentaire: data?.commentaire, 
+          quantite: data?.quantite 
+        });
       case "valider":
-        return this.validerDemande(id, { motif });
+        return this.validerDemande(id, { 
+          commentaire: data?.commentaire, 
+          quantite: data?.quantite,
+          coutTotal: data?.coutTotal 
+        });
       case "rejeter":
-        if (!motif) {
+        if (!data?.commentaire) {
           throw new Error("Le motif de rejet est requis");
         }
-        return this.rejeterDemande(id, motif);
+        return this.rejeterDemande(id, data.commentaire);
       default:
         throw new Error(`Action non supportée: ${action}`);
     }

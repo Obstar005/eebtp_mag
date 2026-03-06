@@ -122,7 +122,7 @@ export function useCreateAccountProfile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { nom: string; description?: string }) =>
+    mutationFn: (data: { code: string; nom: string; description?: string; permissions?: number[] }) =>
       profileService.createProfile(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: profileKeys.lists() });
@@ -139,7 +139,7 @@ export function useUpdateAccountProfile() {
       data,
     }: {
       id: string;
-      data: { nom: string; description?: string };
+      data: { code?: string; nom?: string; description?: string; permissions?: number[] };
     }) => profileService.updateProfile(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: profileKeys.lists() });

@@ -11,7 +11,10 @@ export interface ApiProjet {
   date_debut: string; // Format: YYYY-MM-DD
   date_fin?: string; // Format: YYYY-MM-DD
   is_active: boolean;
-  magasin_associe?: ApiMagasin
+  magasin_associe?: ApiMagasin;
+  // Champs de coûts
+  cout_total_estime?: number;
+  cout_total_reel?: number;
 }
 
 export interface ApiMagasin {
@@ -44,6 +47,9 @@ export interface ApiCreateProjetRequest {
   pays: string;
   comptes?: number[];
   is_active?: boolean;
+  // Champs de coûts
+  cout_total_estime?: number;
+  cout_total_reel?: number;
   // Champs pour la création automatique du magasin associé
   nom_magasin?: string;
   adresse_magasin?: string;
@@ -59,6 +65,9 @@ export interface ApiUpdateProjetRequest {
   pays?: string;
   comptes?: number[];
   is_active?: boolean;
+  // Champs de coûts
+  cout_total_estime?: number;
+  cout_total_reel?: number;
   // Champs pour la mise à jour du magasin associé
   nom_magasin?: string;
   adresse_magasin?: string;

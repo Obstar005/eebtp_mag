@@ -1,21 +1,24 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 
-import { ArrowLeft, Truck } from "lucide-react";
+import { ArrowLeft, X, Eye } from "lucide-react";
+import { toast } from "react-toast";
 import RequestTreatmentModal from "../components/requests/RequestTreatmentModal";
 import { useDemande, useTraiterDemande } from "../hooks/useDemandes";
+import { useAccess } from "../hooks/useAccessPermissions";
 import { showErrorMessage, logError } from "../utils/errorHandling";
-import { useAuth } from "../contexts/AuthContext";
-import {
-  canUserTreatRequestSync,
-  mapApiStatusToPermissionStatus,
-} from "../utils/permissions";
+import { mapApiStatusToPermissionStatus } from "../utils/permissions";
+import { getStatusBadge, getStatusIcon } from "../utils/statutUtils";
+import { RequestStatusLabels, type RequestTreatment } from "../types";
+import { formatUnit } from "../utils/formatUtils";
 
 export default function RequestDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { canTreatDemande } = useAccess();
   const [isTreatmentModalOpen, setIsTreatmentModalOpen] = useState(false);
+  const [selectedTreatment, setSelectedTreatment] =
+    useState<RequestTreatment | null>(null);
 
   // Récupération des données de la demande depuis l'API
   const { data: request, isLoading, error } = useDemande(id!);
@@ -24,26 +27,20 @@ export default function RequestDetailPage() {
   const { mutate: traiterDemande, isPending: isTraitementLoading } =
     useTraiterDemande();
 
-  // Déterminer si l'utilisateur peut traiter cette demande
-  const canTreatRequest = useMemo(() => {
+  // Déterminer si l'utilisateur peut traiter cette demande (basé sur les accès API)
+  const canTreatRequest = (() => {
     const apiStatus = request?.status || "";
     const mappedStatus = mapApiStatusToPermissionStatus(apiStatus);
-
-    console.log("🔍 RequestDetailPage: Debugging request object", {
-      request: request,
-      apiStatus: apiStatus,
-      mappedStatus: mappedStatus,
-      allProps: request ? Object.keys(request) : "no request",
-    });
-
-    return canUserTreatRequestSync(user, mappedStatus);
-  }, [user, request]);
+    return canTreatDemande(mappedStatus);
+  })();
 
   const handleOpenTreatmentModal = () => setIsTreatmentModalOpen(true);
   const handleCloseTreatmentModal = () => setIsTreatmentModalOpen(false);
   const handleSubmitTreatment = (data: {
     traitement: string;
-    motif: string;
+    commentaire: string;
+    quantite?: number;
+    coutTotal?: number;
   }) => {
     if (!request || !id) return;
 
@@ -55,14 +52,17 @@ export default function RequestDetailPage() {
           | "approuver"
           | "valider"
           | "rejeter",
-        motif: data.motif,
+        commentaire: data.commentaire,
+        quantite: data.quantite,
+        coutTotal: data.coutTotal,
       },
       {
         onSuccess: () => {
+          toast.success("Demande traitée avec succès !");
           handleCloseTreatmentModal();
-          // Optionnel : afficher un message de succès
         },
         onError: (error: unknown) => {
+          toast.error("Erreur lors du traitement de la demande");
           logError("Traitement de demande", error);
           showErrorMessage(error);
         },
@@ -137,6 +137,7 @@ export default function RequestDetailPage() {
         onSubmit={handleSubmitTreatment}
         article={request.demande}
         quantite={request.quantiteDemandee}
+        unite={request.unite}
         isLoading={isTraitementLoading}
         requestStatus={mapApiStatusToPermissionStatus(request.status)}
       />
@@ -161,7 +162,7 @@ export default function RequestDetailPage() {
               </label>
               <input
                 className="w-full rounded-lg px-3 py-2 bg-gray-100"
-                value={request.nomMagasin}
+                value={request.nomMagasin ?? "-"}
                 readOnly
               />
             </div>
@@ -204,33 +205,118 @@ export default function RequestDetailPage() {
                 <tr>
                   <th className="text-left py-2">Nom</th>
                   <th className="text-left py-2">Profil</th>
-                  <th className="text-left py-2">Actions</th>
+                  <th className="text-left py-2">Action</th>
+                  <th className="text-left py-2">Détails</th>
                 </tr>
               </thead>
-              <tbody className="space-y-2">
+              <tbody>
                 {request.traitements?.map((t) => (
                   <tr key={t.id} className="border-t border-gray-200">
-                    <td className="py-1">{t.nom}</td>
-                    <td className="py-1">{t.profil}</td>
-                    <td className="py-1 text-blue-600 font-medium flex items-center gap-1">
-                      <Truck />
-                      {t.action === "approuve"
-                        ? "Approuvée"
-                        : t.action === "valide"
-                          ? "Validée"
-                          : t.action === "confirme"
-                            ? "Confirmée"
-                            : t.action === "refuse"
-                              ? "Rejetée"
-                              : t.action === "emis"
-                                ? "Émise"
-                                : t.action}
+                    <td className="py-2">{t.nom}</td>
+                    <td className="py-2">{t.profil}</td>
+                    <td className="py-2">
+                      <span className={getStatusBadge(t.action)}>
+                        {getStatusIcon(t.action)}
+                        {RequestStatusLabels[t.action]}
+                      </span>
+                    </td>
+                    <td className="py-2">
+                      <button
+                        onClick={() => setSelectedTreatment(t)}
+                        className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm"
+                        title="Voir les détails"
+                      >
+                        <Eye className="h-4 w-4" />
+                        Voir
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+
+          {/* Modal détails du traitement */}
+          {selectedTreatment && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md mx-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">
+                    Détails du traitement
+                  </h3>
+                  <button
+                    onClick={() => setSelectedTreatment(null)}
+                    className="text-gray-500 hover:text-gray-700"
+                    title="Fermer"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-xs text-gray-500">Nom</span>
+                      <p className="font-medium">{selectedTreatment.nom}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-500">Profil</span>
+                      <p className="font-medium">{selectedTreatment.profil}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500">Action</span>
+                    <p>
+                      <span
+                        className={getStatusBadge(selectedTreatment.action)}
+                      >
+                        {getStatusIcon(selectedTreatment.action)}
+                        {RequestStatusLabels[selectedTreatment.action]}
+                      </span>
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500">Commentaire</span>
+                    <p className="text-gray-700 bg-gray-50 p-2 rounded mt-1">
+                      {selectedTreatment.commentaire || "Aucun commentaire"}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500">Quantité</span>
+                    <p className="font-medium">
+                      {selectedTreatment.quantite !== undefined
+                        ? selectedTreatment.quantite
+                        : "-"}
+                    </p>
+                  </div>
+                  {selectedTreatment.date && (
+                    <div>
+                      <span className="text-xs text-gray-500">Date</span>
+                      <p className="text-gray-700">
+                        {new Date(selectedTreatment.date).toLocaleDateString(
+                          "fr-FR",
+                          {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          },
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={() => setSelectedTreatment(null)}
+                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                  >
+                    Fermer
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         {/* Colonne droite : Demande */}
         <div className="bg-white rounded-lg shadow p-6">
@@ -257,7 +343,7 @@ export default function RequestDetailPage() {
                   readOnly
                 />
                 <span className="text-white bg-blue-700 px-2 py-1 rounded text-xs">
-                  Unité
+                  {formatUnit(request.unite)}
                 </span>
               </div>
             </div>
@@ -272,7 +358,7 @@ export default function RequestDetailPage() {
                   readOnly
                 />
                 <span className="text-white bg-blue-700 px-2 py-1 rounded text-xs">
-                  Unité
+                  {formatUnit(request.unite)}
                 </span>
               </div>
             </div>
@@ -287,18 +373,8 @@ export default function RequestDetailPage() {
             <div>
               <label className="block text-xs text-gray-500 mb-1">Motif</label>
               <textarea
-                className="w-full rounded-lg px-3 py-2 bg-gray-50"
+                className="w-full rounded-lg px-3 py-2 bg-gray-100 border-none"
                 value={request.motif}
-                readOnly
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">
-                Observation
-              </label>
-              <textarea
-                className="w-full rounded-lg px-3 py-2 bg-gray-50"
-                value={request.observation}
                 readOnly
               />
             </div>

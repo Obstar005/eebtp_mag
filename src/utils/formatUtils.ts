@@ -63,3 +63,24 @@ export function formatUnit(unit: string | undefined): string {
 
     return roleMap[profil] || profil;
   };
+
+  /**
+ * Formater une date API pour l'affichage
+ */
+export function formatApiDate(apiDate: string|Date, noHours: boolean = false): string {
+  try {
+    const date = typeof apiDate === "string" ? new Date(apiDate) : apiDate;
+    return date
+      .toLocaleDateString("fr-FR",
+        {
+          // weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          ...(noHours ? {} : { hour: "2-digit", minute: "2-digit" }),
+        })
+      .replace(/(^\w|\s\w)/g, (c) => c.toUpperCase()).replace(",", " à");
+  } catch {
+    return apiDate.toString();
+  }
+}

@@ -828,6 +828,24 @@
       },
       "parameters": []
     },
+    "/Projets/liste-magasins-archives": {
+      "get": {
+        "operationId": "Projets_liste-magasins-archives_list",
+        "description": "Cette API permet de récupérer la liste des magasins archivés.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Liste des magasins archivés",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/Magasin" }
+            }
+          }
+        },
+        "tags": ["Projets"]
+      },
+      "parameters": []
+    },
     "/Projets/liste-magasins-by-projet/{id}": {
       "get": {
         "operationId": "Projets_liste-magasins-by-projet_read",
@@ -878,6 +896,24 @@
         "responses": {
           "200": {
             "description": "Liste des projets",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/Projet" }
+            }
+          }
+        },
+        "tags": ["Projets"]
+      },
+      "parameters": []
+    },
+    "/Projets/liste-projets-archives": {
+      "get": {
+        "operationId": "Projets_liste-projets-archives_list",
+        "description": "Cette API permet de récupérer la liste des projets archivés.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Liste des projets archivés",
             "schema": {
               "type": "array",
               "items": { "$ref": "#/definitions/Projet" }
@@ -1259,6 +1295,23 @@
         { "name": "id", "in": "path", "required": true, "type": "string" }
       ]
     },
+    "/Stocks/articles-below-threshold/{projet_id}": {
+      "get": {
+        "operationId": "Stocks_articles-below-threshold_read",
+        "description": "",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Stocks"]
+      },
+      "parameters": [
+        {
+          "name": "projet_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
     "/Stocks/liste-articles": {
       "get": {
         "operationId": "Stocks_liste-articles_list",
@@ -1540,10 +1593,10 @@
       },
       "parameters": []
     },
-    "/Users/authentication/set-password/": {
+    "/Users/authentication/reset-password/": {
       "post": {
-        "operationId": "Users_authentication_set-password_create",
-        "description": "Créer un mot de passe pour un nouveau utilisateur",
+        "operationId": "Users_authentication_reset-password_create",
+        "description": "Réinitialiser un mot de passe pour un utilisateur existant (par un administrateur)",
         "parameters": [
           {
             "name": "data",
@@ -1566,9 +1619,49 @@
           }
         ],
         "responses": {
-          "200": { "description": "Mot de passe créé avec succès" },
+          "200": { "description": "Mot de passe réinitialisé avec succès" },
           "400": { "description": "Bad Request" },
           "404": { "description": "Utilisateur introuvable" }
+        },
+        "tags": ["Users"]
+      },
+      "parameters": []
+    },
+    "/Users/authentication/set-password/": {
+      "post": {
+        "operationId": "Users_authentication_set-password_create",
+        "description": "Pour modifier le mot de passe d'un utilisateur que ce soit lors de la première connexion ou indéfiniement",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "required": ["telephone", "old_password", "new_password"],
+              "type": "object",
+              "properties": {
+                "telephone": {
+                  "description": "Numéro de téléphone de l'utilisateur",
+                  "type": "string",
+                  "example": "0022890099009"
+                },
+                "old_password": {
+                  "description": "Ancien mot de passe de l'utilisateur",
+                  "type": "string"
+                },
+                "new_password": {
+                  "description": "Nouveau mot de passe de l'utilisateur",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Mot de passe modifié avec succès" },
+          "400": { "description": "Bad Request" },
+          "404": { "description": "Utilisateur introuvable" },
+          "403": { "description": "Accès refusé" }
         },
         "tags": ["Users"]
       },
@@ -1613,6 +1706,24 @@
                 { "code": "US", "name": "United States" },
                 { "code": "CA", "name": "Canada" }
               ]
+            }
+          }
+        },
+        "tags": ["Users"]
+      },
+      "parameters": []
+    },
+    "/Users/liste-acces": {
+      "get": {
+        "operationId": "Users_liste-acces_list",
+        "description": "Liste de tous les acces",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/Profil" }
             }
           }
         },
@@ -1897,7 +2008,7 @@
       }
     },
     "Demande": {
-      "required": ["quantite", "raison", "stock_item", "magasin"],
+      "required": ["quantite_dem", "raison", "stock_item", "magasin"],
       "type": "object",
       "properties": {
         "id": { "title": "ID", "type": "integer", "readOnly": true },
@@ -1947,7 +2058,7 @@
           "readOnly": true,
           "minLength": 1
         },
-        "quantite": { "title": "Quantite", "type": "number" },
+        "quantite_dem": { "title": "Quantite dem", "type": "number" },
         "raison": { "title": "Raison", "type": "string", "minLength": 1 },
         "statut": {
           "title": "Statut",
@@ -1982,11 +2093,26 @@
           "readOnly": true,
           "x-nullable": true
         },
+        "commentaire_confirmation": {
+          "title": "Commentaire confirmation",
+          "type": "string",
+          "x-nullable": true
+        },
         "date_approbation": {
           "title": "Date approbation",
           "type": "string",
           "format": "date-time",
           "readOnly": true,
+          "x-nullable": true
+        },
+        "commentaire_approbation": {
+          "title": "Commentaire approbation",
+          "type": "string",
+          "x-nullable": true
+        },
+        "quantite_approuv": {
+          "title": "Quantite approuv",
+          "type": "number",
           "x-nullable": true
         },
         "date_validation": {
@@ -1996,20 +2122,22 @@
           "readOnly": true,
           "x-nullable": true
         },
-        "motif_rejet": {
-          "title": "Motif rejet",
+        "commentaire_validation": {
+          "title": "Commentaire validation",
           "type": "string",
-          "readOnly": true,
-          "minLength": 1,
           "x-nullable": true
         },
-        "date_rejet": {
-          "title": "Date rejet",
-          "type": "string",
-          "format": "date-time",
-          "readOnly": true,
+        "quantite_valid": {
+          "title": "Quantite valid",
+          "type": "number",
           "x-nullable": true
         },
+        "cout_total_approx": {
+          "title": "Cout total approx",
+          "type": "number",
+          "x-nullable": true
+        },
+        "is_valide": { "title": "Is valide", "type": "boolean" },
         "stock_item": { "title": "Stock item", "type": "integer" },
         "magasin": { "title": "Magasin", "type": "integer" },
         "emis_par": {
@@ -2019,25 +2147,19 @@
           "x-nullable": true
         },
         "confirme_par": {
-          "title": "Confirme par",
+          "title": "Confirmé ou non par",
           "type": "integer",
           "readOnly": true,
           "x-nullable": true
         },
         "approve_par": {
-          "title": "Approve par",
+          "title": "Approuvé ou non par",
           "type": "integer",
           "readOnly": true,
           "x-nullable": true
         },
         "valide_par": {
-          "title": "Valide par",
-          "type": "integer",
-          "readOnly": true,
-          "x-nullable": true
-        },
-        "rejete_par": {
-          "title": "Rejete par",
+          "title": "Validé ou non par",
           "type": "integer",
           "readOnly": true,
           "x-nullable": true
@@ -2059,6 +2181,11 @@
         },
         "stock_item_type": {
           "title": "Stock item type",
+          "type": "string",
+          "readOnly": true
+        },
+        "stock_item_unite": {
+          "title": "Stock item unite",
           "type": "string",
           "readOnly": true
         },
@@ -2168,6 +2295,11 @@
         },
         "stock_item_type": {
           "title": "Stock item type",
+          "type": "string",
+          "readOnly": true
+        },
+        "stock_item_unite": {
+          "title": "Stock item unite",
           "type": "string",
           "readOnly": true
         },
@@ -2588,6 +2720,16 @@
           "x-nullable": true
         },
         "is_active": { "title": "Is active", "type": "boolean" },
+        "cout_total_estime": {
+          "title": "Cout total estime",
+          "type": "string",
+          "format": "decimal"
+        },
+        "cout_total_reel": {
+          "title": "Cout total reel",
+          "type": "string",
+          "format": "decimal"
+        },
         "magasinier": {
           "title": "Magasinier",
           "type": "integer",
@@ -2641,9 +2783,14 @@
         "unite": {
           "title": "Unite",
           "type": "string",
-          "enum": ["litre", "kg", "m3", "unite", "m", "autre"]
+          "enum": ["litre", "kg", "m3", "unite", "m", "autre", "t"]
         },
-        "is_active": { "title": "Is active", "type": "boolean" }
+        "is_active": { "title": "Is active", "type": "boolean" },
+        "unit_price": {
+          "title": "Unit price",
+          "type": "string",
+          "format": "decimal"
+        }
       }
     },
     "StockItem": {
@@ -2710,15 +2857,7 @@
       }
     },
     "CustomUser": {
-      "required": [
-        "nationality",
-        "username",
-        "surname",
-        "type",
-        "titre",
-        "poste",
-        "telephone"
-      ],
+      "required": ["nationality", "username", "type", "telephone"],
       "type": "object",
       "properties": {
         "id": { "title": "ID", "type": "integer", "readOnly": true },
@@ -2984,6 +3123,11 @@
           "uniqueItems": true
         },
         "magasin": { "title": "Magasin", "type": "string", "readOnly": true },
+        "profil_name": {
+          "title": "Profil name",
+          "type": "string",
+          "readOnly": true
+        },
         "last_login": {
           "title": "Last login",
           "type": "string",
@@ -3029,12 +3173,6 @@
           "type": "string",
           "format": "date-time"
         },
-        "surname": {
-          "title": "Surname",
-          "type": "string",
-          "maxLength": 100,
-          "minLength": 1
-        },
         "birth_date": {
           "title": "Birth date",
           "type": "string",
@@ -3044,19 +3182,19 @@
         "type": {
           "title": "Type",
           "type": "string",
-          "enum": ["Interne", "Consultant"]
+          "enum": ["Interne", "Externe"]
         },
         "titre": {
           "title": "Titre",
           "type": "string",
           "maxLength": 100,
-          "minLength": 1
+          "x-nullable": true
         },
         "poste": {
           "title": "Poste",
           "type": "string",
           "maxLength": 100,
-          "minLength": 1
+          "x-nullable": true
         },
         "photo_profil": {
           "title": "Photo profil",
@@ -3086,32 +3224,45 @@
         },
         "first_login": { "title": "First login", "type": "boolean" },
         "is_connected": { "title": "Is connected", "type": "boolean" },
-        "profil": { "title": "Profil", "type": "integer", "x-nullable": true },
-        "groups": {
-          "description": "The groups this user belongs to. A user will get all permissions granted to each of their groups.",
-          "type": "array",
-          "items": {
-            "description": "The groups this user belongs to. A user will get all permissions granted to each of their groups.",
-            "type": "integer"
-          },
-          "uniqueItems": true
+        "profil": { "title": "Profil", "type": "integer", "x-nullable": true }
+      }
+    },
+    "PermissionCustom": {
+      "required": ["code", "libelle"],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "code": {
+          "title": "Code",
+          "type": "string",
+          "maxLength": 50,
+          "minLength": 1
         },
-        "user_permissions": {
-          "description": "Specific permissions for this user.",
-          "type": "array",
-          "items": {
-            "description": "Specific permissions for this user.",
-            "type": "integer"
-          },
-          "uniqueItems": true
+        "libelle": {
+          "title": "Libelle",
+          "type": "string",
+          "maxLength": 255,
+          "minLength": 1
+        },
+        "create_by": {
+          "title": "Create by",
+          "type": "string",
+          "maxLength": 100,
+          "x-nullable": true
         }
       }
     },
     "Profil": {
-      "required": ["libelle", "description"],
+      "required": ["code", "libelle", "description"],
       "type": "object",
       "properties": {
         "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "code": {
+          "title": "Code",
+          "type": "string",
+          "maxLength": 50,
+          "minLength": 1
+        },
         "libelle": {
           "title": "Libelle",
           "type": "string",
@@ -3123,17 +3274,14 @@
           "type": "string",
           "minLength": 1
         },
-        "is_active": { "title": "Is active", "type": "boolean" },
-        "date_creation": {
-          "title": "Date creation",
-          "type": "string",
-          "format": "date-time",
-          "readOnly": true
+        "permissions": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "uniqueItems": true
         },
-        "date_modif": {
-          "title": "Date modif",
-          "type": "string",
-          "format": "date-time",
+        "permissions_details": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/PermissionCustom" },
           "readOnly": true
         }
       }

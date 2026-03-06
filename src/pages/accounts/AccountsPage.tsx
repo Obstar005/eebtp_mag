@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { toast } from "react-toast";
 import {
   useAccounts,
   useDeleteAccount,
@@ -16,8 +17,11 @@ import {
   useProfiles,
   useModal,
 } from "../../hooks";
+import { useAccess } from "../../hooks/useAccessPermissions";
 import { ConfirmationModal } from "../../components/layout";
+import { AccessDenied } from "../../components/ui/AccessGuard";
 import type { AccountFilters, AccountType } from "../../types/account";
+import { formatApiDate } from "../../utils/formatUtils";
 
 export function AccountsPage() {
   const [page, setPage] = useState(1);
@@ -25,7 +29,7 @@ export function AccountsPage() {
   const [filters, setFilters] = useState<AccountFilters>({});
   const [activeTab, setActiveTab] = useState<"all" | AccountType>("all");
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
-    null
+    null,
   );
 
   const deleteModal = useModal();
@@ -38,13 +42,16 @@ export function AccountsPage() {
       type: activeTab === "all" ? undefined : activeTab,
     },
     page,
-    limit
+    limit,
   );
 
   const { data: profiles } = useProfiles();
 
   const deleteAccountMutation = useDeleteAccount();
   const toggleStatusMutation = useToggleAccountStatus();
+
+  // Permissions
+  const { userAccess: userPerms, isLoading: permissionsLoading } = useAccess();
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -60,15 +67,26 @@ export function AccountsPage() {
     if (selectedAccountId) {
       deleteAccountMutation.mutate(selectedAccountId, {
         onSuccess: () => {
+          toast.success("Compte supprimé avec succès !");
           deleteModal.close();
           setSelectedAccountId(null);
+        },
+        onError: () => {
+          toast.error("Erreur lors de la suppression du compte");
         },
       });
     }
   };
 
   const handleToggleStatus = (accountId: string) => {
-    toggleStatusMutation.mutate(accountId);
+    toggleStatusMutation.mutate(accountId, {
+      onSuccess: () => {
+        toast.success("Statut du compte modifié avec succès !");
+      },
+      onError: () => {
+        toast.error("Erreur lors de la modification du statut");
+      },
+    });
   };
 
   const [showProfileOptions, setShowProfileOptions] = useState(false);
@@ -80,7 +98,7 @@ export function AccountsPage() {
   const tabs = [
     { label: "Tous", value: "all" },
     { label: "Interne", value: "Interne" },
-    { label: "Consultant", value: "Consultant" },
+    { label: "Externe", value: "Externe" },
   ];
 
   const accounts = accountsData?.data || [];
@@ -118,12 +136,12 @@ export function AccountsPage() {
       </span>
     ) : (
       <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
-        Consultant
+        Externe
       </span>
     );
   };
 
-  if (isLoading) {
+  if (isLoading || permissionsLoading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -145,20 +163,29 @@ export function AccountsPage() {
     );
   }
 
+  // Vérification des permissions de vue
+  if (!userPerms.canView) {
+    return (
+      <AccessDenied message="Vous n'avez pas la permission de consulter les comptes utilisateurs." />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Liste des comptes</h1>
-        <button
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-          onClick={() => {
-            window.location.href = "/accounts/add";
-          }}
-        >
-          <Plus className="h-4 w-4" />
-          Ajouter un compte
-        </button>
+        {userPerms.canCreate && (
+          <button
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            onClick={() => {
+              window.location.href = "/accounts/add";
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            Ajouter un compte
+          </button>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">
@@ -300,9 +327,7 @@ export function AccountsPage() {
                   </td>
                   <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                     {account.derniere_connexion
-                      ? new Date(account.derniere_connexion).toLocaleDateString(
-                          "fr-FR"
-                        )
+                      ? formatApiDate(account.derniere_connexion)
                       : "Jamais"}
                   </td>
                   <td className="px-6 py-3 whitespace-nowrap">
@@ -317,23 +342,27 @@ export function AccountsPage() {
                       >
                         <Eye className="h-4 w-4" />
                       </a>
-                      <a
-                        href={`/accounts/${account.id}/edit`}
-                        className="p-0.5 px-2  text-gray-50 bg-green-500 hover:bg-green-600 rounded-md"
-                        title="Modifier"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </a>
-                      <button
-                        onClick={() => {
-                          setSelectedAccountId(account.id);
-                          deleteModal.open();
-                        }}
-                        className="p-0.5 px-2  text-gray-50 bg-red-400 hover:bg-red-600 rounded-md"
-                        title="Supprimer"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      {userPerms.canUpdate && (
+                        <a
+                          href={`/accounts/${account.id}/edit`}
+                          className="p-0.5 px-2  text-gray-50 bg-green-500 hover:bg-green-600 rounded-md"
+                          title="Modifier"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </a>
+                      )}
+                      {userPerms.canDelete && (
+                        <button
+                          onClick={() => {
+                            setSelectedAccountId(account.id);
+                            deleteModal.open();
+                          }}
+                          className="p-0.5 px-2  text-gray-50 bg-red-400 hover:bg-red-600 rounded-md"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

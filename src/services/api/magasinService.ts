@@ -95,10 +95,6 @@ class MagasinService {
             );
             magasin.articlesCount = articlesResponse.data.length;
           } catch (error) {
-            console.warn(
-              `Impossible de récupérer les articles pour le magasin ${magasin.id}:`,
-              error
-            );
             magasin.articlesCount = 0;
           }
         }
@@ -151,10 +147,6 @@ class MagasinService {
         const articlesResponse = await this.getStockArticles(id, {});
         magasin.articlesCount = articlesResponse.data.length;
       } catch (error) {
-        console.warn(
-          `Impossible de récupérer les articles pour le magasin ${id}:`,
-          error
-        );
         magasin.articlesCount = 0;
       }
 
@@ -264,7 +256,7 @@ class MagasinService {
 
       // Convertir vers le format frontend
       const convertedArticles = articles.map(apiStockItemToStockArticle);
-
+      
       return {
         data: convertedArticles,
         pagination: {
@@ -382,10 +374,7 @@ class MagasinService {
           const articlesResponse = await this.getStockArticles(magasin.id, {});
           allArticles.push(...articlesResponse.data);
         } catch (error) {
-          console.warn(
-            `Impossible de récupérer les articles du magasin ${magasin.id}`,
-            error
-          );
+          // Ignorer les erreurs de récupération d'articles
         }
       }
 
@@ -430,9 +419,6 @@ class MagasinService {
       // Valeur par défaut
       return 1;
     } catch {
-      console.warn(
-        "⚠️ Impossible de récupérer l'ID utilisateur, utilisation de la valeur par défaut"
-      );
       return 1;
     }
   }

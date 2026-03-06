@@ -129,6 +129,7 @@ export const apiStockItemToStockArticle = (
 ): StockArticle => {
   return {
     id: apiItem.id,
+    article_id: apiItem.produit, // ID du produit catalogue
     name: apiItem.produit_name || `Article ${apiItem.id}`, // Utilise produit_name de l'API
     description: apiItem.description || "",
     quantite: apiItem.quantite,

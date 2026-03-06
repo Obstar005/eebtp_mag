@@ -9,15 +9,19 @@ import {
   Trash2,
   ChevronDown,
 } from "lucide-react";
+import { toast } from "react-toast";
 import {
   useProjets,
   useDeleteProjet,
   useProjetStats,
 } from "../../hooks/useProjets";
 import { useModal } from "../../hooks/useModal";
+import { useAccess } from "../../hooks/useAccessPermissions";
 import { ConfirmationModal } from "../../components/layout";
+import { AccessDenied } from "../../components/ui/AccessGuard";
 import { CountrySelector } from "../../components/ui/CountrySelector";
 import type { ProjetFilters, ProjetStatus } from "../../types/project";
+import { formatApiDate } from "../../utils/formatUtils";
 
 export function ProjectsPage() {
   const navigate = useNavigate();
@@ -34,6 +38,9 @@ export function ProjectsPage() {
   const deleteProjetMutation = useDeleteProjet();
   const confirmDeleteModal = useModal();
 
+  // Permissions
+  const { projet: projetPerms, isLoading: permissionsLoading } = useAccess();
+
   // Gestion de la recherche
   const handleSearch = (searchTerm: string) => {
     setFilters((prev) => ({ ...prev, search: searchTerm, page: 1 }));
@@ -42,7 +49,7 @@ export function ProjectsPage() {
   // Gestion des filtres
   const handleFilterChange = (
     key: keyof ProjetFilters,
-    value: string | number
+    value: string | number,
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
   };
@@ -79,9 +86,11 @@ export function ProjectsPage() {
 
     try {
       await deleteProjetMutation.mutateAsync(selectedProjetId);
+      toast.success("Projet supprimé avec succès !");
       confirmDeleteModal.close();
       setSelectedProjetId(null);
     } catch (error) {
+      toast.error("Erreur lors de la suppression du projet");
     }
   };
 
@@ -96,17 +105,7 @@ export function ProjectsPage() {
     return labels[status] || status;
   };
 
-  // Formatage des dates
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
-
-  if (isLoading) {
+  if (isLoading || permissionsLoading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -116,6 +115,13 @@ export function ProjectsPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       </div>
+    );
+  }
+
+  // Vérification des permissions de vue
+  if (!projetPerms.canView) {
+    return (
+      <AccessDenied message="Vous n'avez pas la permission de consulter les projets." />
     );
   }
 
@@ -144,13 +150,15 @@ export function ProjectsPage() {
             Liste des projets
           </h1>
         </div>
-        <button
-          onClick={() => navigate("/projects/add")}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Ajouter un projet
-        </button>
+        {projetPerms.canCreate && (
+          <button
+            onClick={() => navigate("/projects/add")}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Ajouter un projet
+          </button>
+        )}
       </div>
 
       {/* Filtres par statut sous forme d'onglets */}
@@ -317,6 +325,12 @@ export function ProjectsPage() {
                     <th className="px-4 sm:px-6 py-3 text-left text-sm text-gray-700 whitespace-nowrap min-w-[120px]">
                       Date du début
                     </th>
+                    <th className="px-4 sm:px-6 py-3 text-right text-sm text-gray-700 whitespace-nowrap min-w-[120px]">
+                      Coût estimé
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-right text-sm text-gray-700 whitespace-nowrap min-w-[120px]">
+                      Coût réel
+                    </th>
                     <th className="px-4 sm:px-6 py-3 text-left text-sm text-gray-700 whitespace-nowrap min-w-[100px]">
                       État
                     </th>
@@ -367,7 +381,17 @@ export function ProjectsPage() {
                         </div>
                       </td>
                       <td className="px-4 sm:px-6 py-3 text-sm text-gray-700 whitespace-nowrap">
-                        {formatDate(projet.date_debut)}
+                        {formatApiDate(projet.date_debut, true)}
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 text-sm text-gray-700 whitespace-nowrap text-right">
+                        {projet.cout_total_estime
+                          ? `${projet.cout_total_estime.toLocaleString("fr-FR")} FCFA`
+                          : "-"}
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 text-sm text-gray-700 whitespace-nowrap text-right">
+                        {projet.cout_total_reel
+                          ? `${projet.cout_total_reel.toLocaleString("fr-FR")} FCFA`
+                          : "-"}
                       </td>
                       <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                         <span
@@ -375,10 +399,10 @@ export function ProjectsPage() {
                             projet.status === "termine"
                               ? "bg-green-100 text-green-800"
                               : projet.status === "en_cours"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : projet.status === "annule"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-blue-100 text-blue-800"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : projet.status === "annule"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-blue-100 text-blue-800"
                           }`}
                         >
                           <span
@@ -386,10 +410,10 @@ export function ProjectsPage() {
                               projet.status === "termine"
                                 ? "bg-green-500"
                                 : projet.status === "en_cours"
-                                ? "bg-yellow-500"
-                                : projet.status === "annule"
-                                ? "bg-red-500"
-                                : "bg-blue-500"
+                                  ? "bg-yellow-500"
+                                  : projet.status === "annule"
+                                    ? "bg-red-500"
+                                    : "bg-blue-500"
                             }`}
                           ></span>
                           {getStatusLabel(projet.status)}
@@ -406,22 +430,26 @@ export function ProjectsPage() {
                           >
                             <Eye className="h-4 w-4" />
                           </button>
-                          <button
-                            onClick={() =>
-                              navigate(`/projects/${projet.id}/edit`)
-                            }
-                            className="p-0.5 px-2 text-gray-50 bg-yellow-500 rounded hover:bg-yellow-600 transition-colors"
-                            title="Modifier le projet"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProjet(projet.id)}
-                            className="p-0.5 px-2 text-gray-50 bg-red-600 rounded hover:bg-red-700 transition-colors"
-                            title="Supprimer le projet"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          {projetPerms.canUpdate && (
+                            <button
+                              onClick={() =>
+                                navigate(`/projects/${projet.id}/edit`)
+                              }
+                              className="p-0.5 px-2 text-gray-50 bg-yellow-500 rounded hover:bg-yellow-600 transition-colors"
+                              title="Modifier le projet"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                          )}
+                          {projetPerms.canDelete && (
+                            <button
+                              onClick={() => handleDeleteProjet(projet.id)}
+                              className="p-0.5 px-2 text-gray-50 bg-red-600 rounded hover:bg-red-700 transition-colors"
+                              title="Supprimer le projet"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

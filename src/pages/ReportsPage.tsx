@@ -8,17 +8,44 @@ import {
   ListFilter,
   Search,
 } from "lucide-react";
+import { toast } from "react-toast";
 import { useProjets } from "../hooks/useProjets";
 import { useGenererRapportPDF } from "../hooks/useRapports";
+import { useAccess } from "../hooks/useAccessPermissions";
+import { AccessDenied } from "../components/ui/AccessGuard";
 import { showErrorMessage } from "../utils/errorHandling";
 
 export function ReportsPage() {
+  // Fonction pour formater une date en "10 janvier 2025"
+  const formatDateString = (date: Date) => {
+    const monthNamesLower = [
+      "janvier",
+      "février",
+      "mars",
+      "avril",
+      "mai",
+      "juin",
+      "juillet",
+      "août",
+      "septembre",
+      "octobre",
+      "novembre",
+      "décembre",
+    ];
+    return `${date.getDate()} ${monthNamesLower[date.getMonth()]} ${date.getFullYear()}`;
+  };
+
+  // Date par défaut: aujourd'hui pour dateTo, il y a un an pour dateFrom
+  const today = new Date();
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(today.getFullYear() - 1);
+
   const [selectedProject, setSelectedProject] = useState<string>("");
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
-    null
+    null,
   );
-  const [dateFrom, setDateFrom] = useState("10 juillet 2025");
-  const [dateTo, setDateTo] = useState("10 juillet 2026");
+  const [dateFrom, setDateFrom] = useState(formatDateString(oneYearAgo));
+  const [dateTo, setDateTo] = useState(formatDateString(today));
   const [reportType, setReportType] = useState("articles");
 
   // Fonction pour parser une date au format "10 juillet 2025"
@@ -73,6 +100,9 @@ export function ReportsPage() {
   // Mutation pour générer le rapport PDF
   const genererRapportMutation = useGenererRapportPDF();
 
+  // Permissions
+  const { rapport, isLoading: permissionsLoading } = useAccess();
+
   const reportData: any[] = [];
 
   const generateReport = async () => {
@@ -87,7 +117,9 @@ export function ReportsPage() {
         projetId: selectedProjectId,
         nomProjet: selectedProject,
       });
+      toast.success("Rapport généré avec succès !");
     } catch (error) {
+      toast.error("Erreur lors de la génération du rapport");
       showErrorMessage(error);
     } finally {
       setIsLoading(false);
@@ -168,7 +200,7 @@ export function ReportsPage() {
     const currentDateObj = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth(),
-      day
+      day,
     );
     const fromDate = parseDate(dateFrom);
     const toDate = parseDate(dateTo);
@@ -187,7 +219,7 @@ export function ReportsPage() {
     const currentDateObj = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth(),
-      day
+      day,
     );
     const fromDate = parseDate(dateFrom);
     const toDate = parseDate(dateTo);
@@ -201,6 +233,22 @@ export function ReportsPage() {
     );
   };
 
+  // Fonction pour vérifier si un jour est dans le futur (après aujourd'hui)
+  const isDayFuture = (day: number) => {
+    if (!day) return false;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const currentDateObj = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      day,
+    );
+
+    return currentDateObj > today;
+  };
+
   // Fonction pour ajuster le calendrier sur la date sélectionnée
   const adjustCalendarToDate = (dateString: string) => {
     const date = parseDate(dateString);
@@ -208,6 +256,22 @@ export function ReportsPage() {
       setCurrentDate(new Date(date.getFullYear(), date.getMonth()));
     }
   };
+
+  // Vérification des permissions (afficher loading si nécessaire)
+  if (permissionsLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Vérification des permissions
+  if (!rapport.canCreate) {
+    return (
+      <AccessDenied message="Vous n'avez pas la permission de générer des rapports." />
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -390,12 +454,13 @@ export function ReportsPage() {
                     {getDaysInMonth(currentDate).map((day, index) => {
                       const inRange = day ? isDayInRange(day) : false;
                       const isBoundary = day ? isDayBoundary(day) : false;
+                      const isFuture = day ? isDayFuture(day) : false;
 
                       return (
                         <div
                           key={index}
                           onClick={() => {
-                            if (day) {
+                            if (day && !isFuture) {
                               const formattedDate = `${day} ${
                                 monthNamesLower[currentDate.getMonth()]
                               } ${currentDate.getFullYear()}`;
@@ -408,14 +473,16 @@ export function ReportsPage() {
                               setShowCalendar(false);
                             }
                           }}
-                          className={`p-2 text-center text-sm cursor-pointer rounded ${
-                            day
-                              ? isBoundary
-                                ? "bg-blue-600 text-white hover:bg-blue-700"
-                                : inRange
-                                ? "bg-blue-100 text-blue-800 hover:bg-blue-200"
-                                : "text-gray-700 hover:bg-blue-50"
-                              : "text-gray-300"
+                          className={`p-2 text-center text-sm rounded ${
+                            !day
+                              ? "text-gray-300"
+                              : isFuture
+                                ? "text-gray-300 cursor-not-allowed"
+                                : isBoundary
+                                  ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
+                                  : inRange
+                                    ? "bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer"
+                                    : "text-gray-700 hover:bg-blue-50 cursor-pointer"
                           }`}
                         >
                           {day || ""}

@@ -96,7 +96,7 @@ export function useCreateDemande() {
       queryClient.setQueryData(demandeKeys.detail(newDemande.id), newDemande);
 
     },
-    onError: (error) => {
+    onError: () => {
     },
   });
 }
@@ -108,8 +108,8 @@ export function useConfirmerDemande() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, motif }: { id: string; motif?: string }) =>
-      demandeService.confirmerDemande(id, { motif }),
+    mutationFn: ({ id, commentaire }: { id: string; commentaire?: string }) =>
+      demandeService.confirmerDemande(id, { commentaire }),
     onSuccess: (updatedDemande, variables) => {
       // Mettre à jour le cache de la demande spécifique
       queryClient.setQueryData(
@@ -122,7 +122,7 @@ export function useConfirmerDemande() {
       queryClient.invalidateQueries({ queryKey: demandeKeys.stats() });
 
     },
-    onError: (error) => {
+    onError: () => {
     },
   });
 }
@@ -134,8 +134,8 @@ export function useApprouverDemande() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, motif }: { id: string; motif?: string }) =>
-      demandeService.approuverDemande(id, { motif }),
+    mutationFn: ({ id, commentaire, quantite }: { id: string; commentaire?: string; quantite?: number }) =>
+      demandeService.approuverDemande(id, { commentaire, quantite }),
     onSuccess: (updatedDemande, variables) => {
       // Mettre à jour le cache de la demande spécifique
       queryClient.setQueryData(
@@ -148,7 +148,7 @@ export function useApprouverDemande() {
       queryClient.invalidateQueries({ queryKey: demandeKeys.stats() });
 
     },
-    onError: (error) => {
+    onError: () => {
     },
   });
 }
@@ -160,8 +160,8 @@ export function useValiderDemande() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, motif }: { id: string; motif?: string }) =>
-      demandeService.validerDemande(id, { motif }),
+    mutationFn: ({ id, commentaire, quantite, coutTotal }: { id: string; commentaire?: string; quantite?: number; coutTotal?: number }) =>
+      demandeService.validerDemande(id, { commentaire, quantite, coutTotal }),
     onSuccess: (updatedDemande, variables) => {
       // Mettre à jour le cache de la demande spécifique
       queryClient.setQueryData(
@@ -174,7 +174,7 @@ export function useValiderDemande() {
       queryClient.invalidateQueries({ queryKey: demandeKeys.stats() });
 
     },
-    onError: (error) => {
+    onError: () => {
     },
   });
 }
@@ -200,7 +200,7 @@ export function useRejeterDemande() {
       queryClient.invalidateQueries({ queryKey: demandeKeys.stats() });
 
     },
-    onError: (error) => {
+    onError: () => {
     },
   });
 }
@@ -215,12 +215,16 @@ export function useTraiterDemande() {
     mutationFn: ({
       id,
       action,
-      motif,
+      commentaire,
+      quantite,
+      coutTotal,
     }: {
       id: string;
       action: "confirmer" | "approuver" | "valider" | "rejeter";
-      motif?: string;
-    }) => demandeService.traiterDemande(id, action, motif),
+      commentaire?: string;
+      quantite?: number;
+      coutTotal?: number;
+    }) => demandeService.traiterDemande(id, action, { commentaire, quantite, coutTotal }),
     onSuccess: (updatedDemande, variables) => {
       // Mettre à jour le cache de la demande spécifique
       queryClient.setQueryData(
@@ -233,7 +237,7 @@ export function useTraiterDemande() {
       queryClient.invalidateQueries({ queryKey: demandeKeys.stats() });
 
     },
-    onError: (error) => {
+    onError: () => {
     },
   });
 }

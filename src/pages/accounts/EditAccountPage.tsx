@@ -8,9 +8,13 @@ import {
   ChevronDown,
   ArrowLeft,
 } from "lucide-react";
+import { toast } from "react-toast";
 import { useAccount, useUpdateAccount, useProfiles } from "../../hooks";
+import { useAccess } from "../../hooks/useAccessPermissions";
+import { AccessDenied } from "../../components/ui/AccessGuard";
 import { CountrySelector } from "../../components/ui/CountrySelector";
 import { useCountries } from "../../hooks/useCountries";
+import { useAuth } from "../../contexts/AuthContext";
 import type { UpdateAccountData, AccountType } from "../../types/account";
 import type { Country } from "../../services/countriesService";
 
@@ -18,6 +22,8 @@ export function EditAccountPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { userAccess: userPerms, isLoading: permissionsLoading } = useAccess();
+  const { user: currentUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -183,6 +189,7 @@ export function EditAccountPage() {
         id: id!,
         data: updateData,
       });
+      toast.success("Compte modifié avec succès !");
       navigate(`/accounts/${id}`);
     } catch (error: any) {
       console.error("Erreur lors de la modification du compte:", error);
@@ -238,6 +245,25 @@ export function EditAccountPage() {
   };
 
   const isLoading = updateAccountMutation.isPending || accountLoading;
+
+  // Vérifier si c'est le profil de l'utilisateur connecté
+  const isOwnProfile = currentUser?.id?.toString() === id;
+
+  // Vérification des permissions de chargement
+  if (permissionsLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Vérification des permissions de modification (autoriser si c'est son propre profil)
+  if (!userPerms.canUpdate && !isOwnProfile) {
+    return (
+      <AccessDenied message="Vous n'avez pas la permission de modifier des comptes utilisateurs." />
+    );
+  }
 
   if (accountLoading) {
     return (
@@ -362,7 +388,7 @@ export function EditAccountPage() {
                     onChange={(e) =>
                       handleInputChange("date_naissance", e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                     title="Date de naissance"
                   />
                   <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
@@ -514,7 +540,7 @@ export function EditAccountPage() {
                   title="Sélectionner le type de compte"
                 >
                   <option value="Interne">Interne</option>
-                  <option value="Consultant">Consultant</option>
+                  <option value="Externe">Externe</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               </div>

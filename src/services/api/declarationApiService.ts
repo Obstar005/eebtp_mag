@@ -42,11 +42,6 @@ class DeclarationApiService {
   ): Promise<PaginatedResponse<Declaration>> {
     return withApiErrorHandling(
       async () => {
-        console.log(
-          "📋 Récupération des déclarations pour le magasin:",
-          magasinId
-        );
-
         // Récupérer les entrées et sorties en parallèle
         const [entreesPromise, sortiesPromise] = await Promise.allSettled([
           this.getEntrees(magasinId, filter),
@@ -58,21 +53,11 @@ class DeclarationApiService {
         // Traiter les entrées
         if (entreesPromise.status === "fulfilled") {
           allDeclarations.push(...entreesPromise.value.data);
-        } else {
-          console.warn(
-            "Erreur lors de la récupération des entrées:",
-            entreesPromise.reason
-          );
         }
 
         // Traiter les sorties
         if (sortiesPromise.status === "fulfilled") {
           allDeclarations.push(...sortiesPromise.value.data);
-        } else {
-          console.warn(
-            "Erreur lors de la récupération des sorties:",
-            sortiesPromise.reason
-          );
         }
 
         // Filtrer par type si spécifié
@@ -159,7 +144,7 @@ class DeclarationApiService {
 
         const apiRequest = createDeclarationDataToApiRequest(data);
 
-        if (data.type_enum === "entree" || data.type_enum === "retour") {
+        if (data.type_enum === "livraison" || data.type_enum === "retour") {
           // Créer une entrée (les retours sont aussi des entrées avec type="Retour")
           const response = await client.post<ApiEntree>(
             `${this.basePath}/entree-create`,
@@ -297,13 +282,13 @@ class DeclarationApiService {
 
         // Transformer les données API vers le format frontend
         const stats: DeclarationStats = {
-          totalEntrees: apiStats.livraisons, // Les livraisons correspondent aux entrées
-          totalSorties: apiStats.sorties,
-          totalRetours: apiStats.retours,
+          totalLivraisons: apiStats.livraisons ?? 0,
+          totalSorties: apiStats.sorties ?? 0,
+          totalRetours: apiStats.retours ?? 0,
           variationVsHier: {
-            entrees: 0, // L'API ne fournit pas les données de variation
-            sorties: 0,
-            retours: 0,
+            livraisons: apiStats.variationVsHier?.livraisons ?? 0,
+            sorties: apiStats.variationVsHier?.sorties ?? 0,
+            retours: apiStats.variationVsHier?.retours ?? 0,
           },
         };
 

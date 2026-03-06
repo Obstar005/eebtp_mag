@@ -41,9 +41,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Plus d'utilisateur de test automatique
     // L'utilisateur doit passer par le vrai flux d'authentification
     if (isAuthDisabled) {
-      console.log(
-        "🔧 Mode développement: Authentification désactivée mais pas d'auto-connexion",
-      );
       setIsLoading(false);
       return;
     }
@@ -66,11 +63,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [isAuthDisabled]);
 
   const login = (userData: User, token: string) => {
-    console.log("🔐 [DEBUG AuthContext.login] userData:", userData);
-    console.log(
-      "🔐 [DEBUG AuthContext.login] hasCompletedSetup:",
-      userData.hasCompletedSetup,
-    );
     localStorage.setItem("auth_token", token);
     localStorage.setItem("user_data", JSON.stringify(userData));
     setUser(userData);
@@ -84,16 +76,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (!token) {
         throw new Error("Aucun token d'authentification");
       }
-
-      console.log(
-        "🔐 [DEBUG refreshUserInfo] Appel authApiService.getUserInfo...",
-      );
       const userInfo = await authApiService.getUserInfo();
-      console.log("🔐 [DEBUG refreshUserInfo] userInfo reçu:", userInfo);
-      console.log(
-        "🔐 [DEBUG refreshUserInfo] hasCompletedSetup:",
-        userInfo.hasCompletedSetup,
-      );
       localStorage.setItem("user_data", JSON.stringify(userInfo));
       setUser(userInfo);
     } catch (error) {

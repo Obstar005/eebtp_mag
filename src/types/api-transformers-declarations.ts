@@ -76,7 +76,7 @@ export function apiEntreeToDeclaration(apiEntree: ApiEntree): Declaration {
     }),
 
     // Pour les livraisons, le livreur peut être mentionné dans le motif
-    ...(apiEntree.type === "Livraison" &&
+    ...(apiEntree.type.toLowerCase() === "livraison" &&
       apiEntree.nom_livreur && {
         motif: `Livraison par ${apiEntree.nom_livreur}${
           apiEntree.tel_livreur ? ` (${apiEntree.tel_livreur})` : ""
@@ -138,7 +138,7 @@ export function apiDeclarationToDeclaration(
 export function createDeclarationDataToApiRequest(
   data: CreateDeclarationData
 ): ApiCreateEntreeRequest | ApiCreateSortieRequest {
-  if (data.type_enum === "entree" || data.type_enum === "retour") {
+  if (data.type_enum === "livraison" || data.type_enum === "retour") {
     // Créer une entrée (avec type Livraison ou Retour)
     const request: ApiCreateEntreeRequest = {
       magasin: data.magasin_id,
@@ -219,11 +219,11 @@ function mapApiTypeToDeclarationType(
 ): DeclarationType {
   switch (apiType) {
     case "Livraison":
-      return "entree";
+      return "livraison";
     case "Retour":
       return "retour";
     default:
-      return "entree";
+      return "livraison";
   }
 }
 
@@ -234,7 +234,7 @@ export function mapDeclarationTypeToApiType(
   type: DeclarationType
 ): "Livraison" | "Retour" {
   switch (type) {
-    case "entree":
+    case "livraison":
       return "Livraison";
     case "retour":
       return "Retour";

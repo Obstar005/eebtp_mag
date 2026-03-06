@@ -84,7 +84,7 @@ const mockDeclarationService = {
       { length: 10 },
       (_, i) => ({
         id: i + 1,
-        type_enum: i % 3 === 0 ? "entree" : i % 3 === 1 ? "sortie" : "retour",
+        type_enum: i % 3 === 0 ? "livraison" : i % 3 === 1 ? "sortie" : "retour",
         stock_item_id: 1,
         quantite_float: 80,
         date_creation: new Date("2025-07-01"),
@@ -167,7 +167,7 @@ const mockDeclarationService = {
   getDeclaration: async (id: number): Promise<Declaration> => {
     return {
       id,
-      type_enum: "entree",
+      type_enum: "livraison",
       stock_item_id: 1,
       quantite_float: 80,
       date_creation: new Date("2025-07-10"),
@@ -227,7 +227,7 @@ const mockDeclarationService = {
   ): Promise<Declaration> => {
     return {
       id: data.id,
-      type_enum: data.type_enum || "entree",
+      type_enum: data.type_enum || "livraison",
       stock_item_id: data.stock_item_id || 1,
       quantite_float: data.quantite_float || 0,
       date_creation: new Date("2025-07-10"),
@@ -254,11 +254,11 @@ const mockDeclarationService = {
     _magasinId: number
   ): Promise<DeclarationStats> => {
     return {
-      totalEntrees: 2420,
+      totalLivraisons: 2420,
       totalSorties: 2420,
       totalRetours: 2420,
       variationVsHier: {
-        entrees: -30,
+        livraisons: -30,
         sorties: -25,
         retours: 20,
       },

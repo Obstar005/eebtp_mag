@@ -1,7 +1,10 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Upload, X } from "lucide-react";
+import { toast } from "react-toast";
 import { useCreateStockArticle } from "../../hooks/useArticles";
+import { useAccess } from "../../hooks/useAccessPermissions";
+import { AccessDenied } from "../../components/ui/AccessGuard";
 import type {
   CreateStockArticleData,
   ArticleType,
@@ -28,6 +31,7 @@ interface ArticleFormErrors {
 export function AddArticlePage() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { article: articlePerms, isLoading: permissionsLoading } = useAccess();
 
   const [form, setForm] = useState<ArticleForm>({
     name: "",
@@ -71,8 +75,10 @@ export function AddArticlePage() {
         magasin_id: form.magasin_id,
       };
       await createArticleMutation.mutateAsync(createData);
+      toast.success("Article créé avec succès !");
       navigate("/articles");
     } catch (error) {
+      toast.error("Erreur lors de la création de l'article");
     }
   };
 
@@ -111,6 +117,22 @@ export function AddArticlePage() {
   };
 
   const isLoading = createArticleMutation.isPending;
+
+  // Vérification des permissions de chargement
+  if (permissionsLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Vérification des permissions de création
+  if (!articlePerms.canCreate) {
+    return (
+      <AccessDenied message="Vous n'avez pas la permission de créer des articles." />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -228,6 +250,7 @@ export function AddArticlePage() {
                   <option value="m3">Mètre cube</option>
                   <option value="unite">Unité</option>
                   <option value="m">Mètre</option>
+                  <option value="tonnage">Tonnage</option>
                   <option value="autre">Autre</option>
                 </select>
               </div>

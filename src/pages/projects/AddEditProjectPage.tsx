@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Upload, X, ChevronDown, Search } from "lucide-react";
+import { toast } from "react-toast";
 import {
   useCreateProjet,
   useUpdateProjet,
@@ -36,7 +37,7 @@ export function AddEditProjectPage() {
   // States
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedCountry, setSelectedCountry] = useState<Country | undefined>(
-    undefined
+    undefined,
   );
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]); // Nouvelles images à envoyer
@@ -72,6 +73,10 @@ export function AddEditProjectPage() {
     description: "",
     date_fin: "",
     is_active: true,
+
+    // Champs de coûts
+    cout_total_estime: undefined,
+    cout_total_reel: undefined,
 
     // Rôles principaux (selon API)
     chef_projet: 0,
@@ -153,6 +158,10 @@ export function AddEditProjectPage() {
           : "",
         is_active: projet.is_active,
 
+        // Champs de coûts
+        cout_total_estime: projet.cout_total_estime,
+        cout_total_reel: projet.cout_total_reel,
+
         // Rôles principaux (selon API)
         chef_projet: projet.chef_projet || 0,
         chef_chantier: projet.chef_chantier || 0,
@@ -178,7 +187,7 @@ export function AddEditProjectPage() {
       // Initialiser le pays sélectionné
       if (countries && projet.pays) {
         const country = countries.find(
-          (c) => c.name === projet.pays || c.abbreviation === projet.pays
+          (c) => c.name === projet.pays || c.abbreviation === projet.pays,
         );
         if (country) {
           setSelectedCountry(country);
@@ -193,7 +202,7 @@ export function AddEditProjectPage() {
         const comptesAssocies = projetComptes
           .map((compteId: number | string) => {
             const account = accounts.data.find(
-              (acc) => acc.id === compteId.toString()
+              (acc) => acc.id === compteId.toString(),
             );
             if (account) {
               return {
@@ -204,7 +213,7 @@ export function AddEditProjectPage() {
             return null;
           })
           .filter(
-            (item): item is { id: string; name: string } => item !== null
+            (item): item is { id: string; name: string } => item !== null,
           ) as {
           id: string;
           name: string;
@@ -217,7 +226,7 @@ export function AddEditProjectPage() {
 
   const handleInputChange = (
     field: keyof CreateProjetData,
-    value: string | number
+    value: string | number,
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -284,7 +293,7 @@ export function AddEditProjectPage() {
     if (isSelected) {
       // Supprimer le compte
       setSelectedAccounts((prev) =>
-        prev.filter((item) => item.id !== account.id)
+        prev.filter((item) => item.id !== account.id),
       );
     } else {
       // Ajouter le compte
@@ -295,13 +304,13 @@ export function AddEditProjectPage() {
     updateComptesAssocies(
       isSelected
         ? selectedAccounts.filter((item) => item.id !== account.id)
-        : [...selectedAccounts, account]
+        : [...selectedAccounts, account],
     );
   };
 
   // Fonction pour mettre à jour formData.comptes_associes
   const updateComptesAssocies = (
-    accounts: { id: string; name: string }[] = selectedAccounts
+    accounts: { id: string; name: string }[] = selectedAccounts,
   ) => {
     const compteIds = accounts.map((account) => account.id);
     setFormData((prev) => ({
@@ -313,7 +322,7 @@ export function AddEditProjectPage() {
   const removeSelectedAccount = (accountId: string) => {
     // Mettre à jour le tableau des comptes sélectionnés
     const updatedAccounts = selectedAccounts.filter(
-      (item) => item.id !== accountId
+      (item) => item.id !== accountId,
     );
     setSelectedAccounts(updatedAccounts);
 
@@ -416,15 +425,14 @@ export function AddEditProjectPage() {
         };
         await updateProjetMutation.mutateAsync(updateData);
       } else {
-        const newProjet = await createProjetMutation.mutateAsync(
-          formDataWithComptes
-        );
+        const newProjet =
+          await createProjetMutation.mutateAsync(formDataWithComptes);
 
         if (newProjet && newProjet.id) {
           savedProjetId = newProjet.id;
         } else {
           setError(
-            "Erreur: le projet a été créé mais l'ID n'est pas disponible"
+            "Erreur: le projet a été créé mais l'ID n'est pas disponible",
           );
           return;
         }
@@ -435,8 +443,14 @@ export function AddEditProjectPage() {
         await handleImages(savedProjetId);
       }
 
+      toast.success(
+        isEditing
+          ? "Projet modifié avec succès !"
+          : "Projet créé avec succès !",
+      );
       navigate("/projects");
     } catch (error) {
+      toast.error("Une erreur est survenue lors de la sauvegarde");
       setError("Une erreur est survenue lors de la sauvegarde");
     }
   };
@@ -479,7 +493,7 @@ export function AddEditProjectPage() {
           {isEditing
             ? `Modification du projet N° PRJT${String(projetId).padStart(
                 3,
-                "0"
+                "0",
               )}`
             : "Ajouter un projet"}
         </h1>
@@ -579,6 +593,61 @@ export function AddEditProjectPage() {
                         aria-label="Date de fin du projet"
                       />
                     </div>
+                  </div>
+                </div>
+
+                {/* Section Coûts */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Coûts du projet
+                  </label>
+                  <div
+                    className={`grid ${isEditing ? "grid-cols-2" : "grid-cols-1"} gap-4`}
+                  >
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        Coût estimé (FCFA)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1000"
+                        value={formData.cout_total_estime || ""}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "cout_total_estime",
+                            e.target.value ? parseFloat(e.target.value) : 0,
+                          )
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="0"
+                        title="Coût total estimé du projet"
+                        aria-label="Coût total estimé du projet"
+                      />
+                    </div>
+                    {isEditing && (
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">
+                          Coût réel (FCFA)
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="1000"
+                          value={formData.cout_total_reel || ""}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "cout_total_reel",
+                              e.target.value ? parseFloat(e.target.value) : 0,
+                            )
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="0"
+                          title="Coût total réel du projet"
+                          aria-label="Coût total réel du projet"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -924,7 +993,7 @@ export function AddEditProjectPage() {
                                 {filteredAccounts.map((account) => {
                                   const accountName = `${account.nom} ${account.prenoms}`;
                                   const isSelected = selectedAccounts.some(
-                                    (item) => item.id === account.id
+                                    (item) => item.id === account.id,
                                   );
 
                                   return (

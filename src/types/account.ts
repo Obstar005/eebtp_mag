@@ -23,13 +23,16 @@ export interface Account {
 
 export interface Profile {
   id: string;
+  code: string; // Code unique du profil
   nom: string; // Nom du profil (ex: Magasinier, Directeur général, etc.)
   description?: string;
+  is_active?: boolean; // Statut actif/inactif du profil
+  permissions?: number[]; // IDs des accès/permissions assignés
 }
 
 export const AccountType = {
   INTERNE: "Interne",
-  CONSULTANT: "Consultant",
+  EXTERNE: "Externe",
 } as const;
 
 export type AccountType = (typeof AccountType)[keyof typeof AccountType];
@@ -70,7 +73,7 @@ export interface AccountFilters {
 export interface AccountStats {
   total: number;
   interne: number;
-  consultant: number;
+  externe: number;
   active: number;
   inactive: number;
   byProfile: Array<{

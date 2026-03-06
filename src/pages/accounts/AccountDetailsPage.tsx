@@ -1,12 +1,10 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import {
-  User,
-  Calendar,
-  ArrowLeft,
-  Edit2Icon,
-} from "lucide-react";
+import { User, Calendar, ArrowLeft, Edit2Icon } from "lucide-react";
+import { toast } from "react-toast";
 import { useAccount, useDeleteAccount } from "../../hooks";
 import { useAuth } from "../../contexts/AuthContext";
+import { useAccess } from "../../hooks/useAccessPermissions";
+import { AccessDenied } from "../../components/ui/AccessGuard";
 import { UserHistoriqueSection } from "../../components/layout/UserHistoriqueSection";
 
 // Fonction utilitaire pour obtenir le chemin du drapeau à partir du code de pays
@@ -34,6 +32,7 @@ import { useModal } from "../../hooks/useModal";
 export function AccountDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { userAccess: userPerms, isLoading: permissionsLoading } = useAccess();
 
   const { data: account, isLoading, error } = useAccount(id!);
   const { user: currentUser } = useAuth();
@@ -43,13 +42,21 @@ export function AccountDetailsPage() {
   const editModal = useModal();
 
   // Vérifier si c'est le profil de l'utilisateur connecté
-  const isOwnProfile = currentUser?.id === account?.id;
+  const isOwnProfile = currentUser?.id?.toString() === id;
 
-  if (isLoading) {
+  // Vérification des permissions de chargement
+  if (permissionsLoading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
+    );
+  }
+
+  // Vérification des permissions de consultation (autoriser si c'est son propre profil)
+  if (!userPerms.canView && !isOwnProfile) {
+    return (
+      <AccessDenied message="Vous n'avez pas la permission de consulter les détails des comptes utilisateurs." />
     );
   }
 
@@ -70,8 +77,11 @@ export function AccountDetailsPage() {
   const handleDelete = async () => {
     try {
       await deleteAccountMutation.mutateAsync(account.id);
+      toast.success("Compte supprimé avec succès !");
       navigate("/accounts");
-    } catch (error) {}
+    } catch (error) {
+      toast.error("Erreur lors de la suppression du compte");
+    }
   };
 
   return (
@@ -198,7 +208,9 @@ export function AccountDetailsPage() {
                 Titre
               </label>
               <div className="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50">
-                <span className="text-gray-900">{account.titre || "Non défini"}</span>
+                <span className="text-gray-900">
+                  {account.titre || "Non défini"}
+                </span>
               </div>
             </div>
             {/* Date de naissance */}
@@ -210,7 +222,16 @@ export function AccountDetailsPage() {
                 <span className="text-gray-900">
                   {formatDate(account.date_naissance)}
                 </span>
-                <Calendar className="h-4 w-4 ml-2 text-gray-400" />
+                <Calendar
+                  max={
+                    new Date(
+                      new Date().setFullYear(new Date().getFullYear() - 15),
+                    )
+                      .toISOString()
+                      .split("T")[0]
+                  }
+                  className="h-4 w-4 ml-2 text-gray-400"
+                />
               </div>
             </div>
             {/* Nationalité */}
@@ -291,7 +312,7 @@ export function AccountDetailsPage() {
           <UserHistoriqueSection isOwnProfile={isOwnProfile} />
         </div>
       </div>
-      
+
       {/* Bouton Voir le projet associé */}
       <div className="mt-6 lg:mt-0 pb-4 lg:pb-0">
         <button className="w-full lg:fixed lg:bottom-10 lg:right-10 lg:w-auto lg:min-w-[12rem] bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center justify-center shadow-lg transition-all">

@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Save, Upload, X } from "lucide-react";
+import { toast } from "react-toast";
 import {
   useStockArticle,
   useUpdateStockArticle,
 } from "../../hooks/useArticles";
+import { useAccess } from "../../hooks/useAccessPermissions";
+import { AccessDenied } from "../../components/ui/AccessGuard";
 import type { UpdateStockArticleData, ArticleType } from "../../types/magasin";
 import { CustomImage } from "../../components/ui/CustomImage";
 
@@ -24,6 +27,7 @@ interface ArticleFormErrors {
 export default function ArticleDetailsPage() {
   const { id: articleId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { article: articlePerms, isLoading: permissionsLoading } = useAccess();
 
   const [form, setForm] = useState<ArticleForm>({
     name: "",
@@ -36,7 +40,7 @@ export default function ArticleDetailsPage() {
 
   // Hooks
   const { data: article, isLoading } = useStockArticle(
-    articleId ? parseInt(articleId) : 0
+    articleId ? parseInt(articleId) : 0,
   );
   const updateArticleMutation = useUpdateStockArticle();
 
@@ -77,8 +81,10 @@ export default function ArticleDetailsPage() {
         type_enum: form.type_enum,
       };
       await updateArticleMutation.mutateAsync(updateData);
+      toast.success("Article modifié avec succès !");
       navigate("/articles");
     } catch (error) {
+      toast.error("Erreur lors de la modification de l'article");
     }
   };
 
@@ -90,6 +96,22 @@ export default function ArticleDetailsPage() {
   };
 
   const isLoading_ = isLoading || updateArticleMutation.isPending;
+
+  // Vérification des permissions de chargement
+  if (permissionsLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Vérification des permissions de consultation
+  if (!articlePerms.canView) {
+    return (
+      <AccessDenied message="Vous n'avez pas la permission de consulter les détails des articles." />
+    );
+  }
 
   if (isLoading) {
     return (

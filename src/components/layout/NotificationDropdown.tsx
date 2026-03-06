@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Bell, Check, CheckCheck, X, Clock, User, Eye } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
+import { toast } from "react-toast";
 import {
   useUserNotifications,
   useUnreadNotificationsCount,
@@ -40,11 +41,19 @@ export function NotificationDropdown() {
   }, []);
 
   const handleNotificationClick = (notificationId: number) => {
-    markAsReadMutation.mutate(notificationId);
+    markAsReadMutation.mutate(notificationId, {
+      onSuccess: () => {
+        toast.success("Notification marquée comme lue");
+      },
+    });
   };
 
   const handleMarkAllAsRead = () => {
-    markAllAsReadMutation.mutate(notifications);
+    markAllAsReadMutation.mutate(notifications, {
+      onSuccess: () => {
+        toast.success("Toutes les notifications marquées comme lues");
+      },
+    });
   };
 
   const getIconComponent = (actionType: string) => {

@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Eye, Edit, Trash2 } from "lucide-react";
+import { Search, Eye } from "lucide-react";
 import { RequestStatus, RequestStatusLabels } from "../types/request";
 import { useDemandes, useDemandeStats } from "../hooks/useDemandes";
+import { useAccess } from "../hooks/useAccessPermissions";
 import type { PeriodeType } from "../services/api/demandeService";
 import { getErrorMessage } from "../utils/errorHandling";
+import { getStatusBadge, getStatusIcon } from "../utils/statutUtils";
+import { AccessDenied } from "../components/ui/AccessGuard";
 
 export function RequestsPage() {
   const [activeTab, setActiveTab] = useState<RequestStatus>("tous");
@@ -12,6 +15,9 @@ export function RequestsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPeriode, setSelectedPeriode] = useState<PeriodeType>("total");
   const itemsPerPage = 10;
+
+  // Permissions
+  const { demande: demandePerms, isLoading: permissionsLoading } = useAccess();
 
   // Récupération des demandes depuis l'API
   const {
@@ -38,7 +44,7 @@ export function RequestsPage() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedRequests = allRequests.slice(
     startIndex,
-    startIndex + itemsPerPage
+    startIndex + itemsPerPage,
   );
 
   // Compter les demandes par statut (utiliser les stats de l'API)
@@ -65,26 +71,8 @@ export function RequestsPage() {
     }
   };
 
-  const getStatusBadge = (status: RequestStatus) => {
-    const baseClasses = "px-2 py-1 text-xs font-medium rounded-full";
-    switch (status) {
-      case "approuve":
-        return `${baseClasses} bg-green-100 text-green-800`;
-      case "emis":
-        return `${baseClasses} bg-yellow-100 text-yellow-800`;
-      case "valide":
-        return `${baseClasses} bg-purple-100 text-purple-800`;
-      case "livre":
-        return `${baseClasses} bg-orange-100 text-orange-800`;
-      case "refuse":
-        return `${baseClasses} bg-red-100 text-red-800`;
-      default:
-        return `${baseClasses} bg-gray-100 text-gray-800`;
-    }
-  };
-
   // Gestion des états de chargement et d'erreur
-  if (isLoading) {
+  if (isLoading || permissionsLoading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -94,6 +82,13 @@ export function RequestsPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       </div>
+    );
+  }
+
+  // Vérification des permissions de vue
+  if (!demandePerms.canView) {
+    return (
+      <AccessDenied message="Vous n'avez pas la permission de consulter les demandes." />
     );
   }
 
@@ -129,7 +124,9 @@ export function RequestsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Demandes</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold text-gray-900">Demandes</h1>
+        </div>
         {/* Filtres Jour/Semaine/Mois */}
         <div className="flex bg-blue-50 rounded-full p-1 gap-1">
           {[
@@ -168,77 +165,84 @@ export function RequestsPage() {
 
       {/* Statistiques */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {/* Utilisateurs total */}
+        {/* Total demandes */}
         <div className="bg-white rounded-lg shadow p-6 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500 font-medium">
-              Utilisateurs Total
+              Total Demandes
             </span>
-            <button className="text-gray-400 hover:text-gray-600">
-              <span className="text-lg">&#8942;</span>
-            </button>
           </div>
           <div className="flex items-end gap-2 justify-between">
-            <span className="text-3xl font-bold text-gray-900">2,420</span>
-            <div className="flex items-end justify-end gap-2">
-              <span className="text-green-600 text-xs font-semibold bg-green-100 px-2 py-0.5 rounded-full">
-                +20%
+            <span className="text-3xl font-bold text-gray-900">
+              {(stats?.total ?? 0).toLocaleString()}
+            </span>
+            <div className="flex items-center text-sm">
+              <span
+                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                  (stats?.variationVsHier?.total ?? 0) >= 0
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
+                {(stats?.variationVsHier?.total ?? 0) >= 0 ? "+" : ""}
+                {stats?.variationVsHier?.total ?? 0}%
               </span>
-              <span className="text-xs text-gray-400">vs. Hier</span>
+              <span className="ml-2 text-gray-500">vs. Hier</span>
             </div>
           </div>
         </div>
-        {/* Projets actifs */}
+        {/* Demandes approuvées */}
         <div className="bg-white rounded-lg shadow p-6 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500 font-medium">
-              Projets Actif
+              Demandes Approuvées
             </span>
-            <button className="text-gray-400 hover:text-gray-600">
-              <span className="text-lg">&#8942;</span>
-            </button>
           </div>
           <div className="flex items-end gap-2 justify-between">
-            <span className="text-3xl font-bold text-gray-900">2,420</span>
-            <div className="flex items-end gap-2">
-              <span className="text-red-600 text-xs font-semibold bg-red-100 px-2 py-0.5 rounded-full">
-                -20%
+            <span className="text-3xl font-bold text-gray-900">
+              {(stats?.approuvees ?? 0).toLocaleString()}
+            </span>
+            <div className="flex items-center text-sm">
+              <span
+                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                  (stats?.variationVsHier?.approuvees ?? 0) >= 0
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
+                {(stats?.variationVsHier?.approuvees ?? 0) >= 0 ? "+" : ""}
+                {stats?.variationVsHier?.approuvees ?? 0}%
               </span>
-              <span className="text-xs text-gray-400">vs. Hier</span>
+              <span className="ml-2 text-gray-500">vs. Hier</span>
             </div>
           </div>
         </div>
-        {/* Utilisateurs connectés */}
+        {/* Demandes en attente */}
         <div className="bg-white rounded-lg shadow p-6 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500 font-medium">
-              Utilisateurs Connectés
+              Demandes en Attente
             </span>
-            <button className="text-gray-400 hover:text-gray-600">
-              <span className="text-lg">&#8942;</span>
-            </button>
           </div>
           <div className="flex items-center gap-2 justify-between">
-            <span className="text-3xl font-bold text-gray-900">316</span>
-            <div className="flex -space-x-2">
-              <img
-                src="/vite.svg"
-                alt="avatar"
-                className="w-6 h-6 rounded-full border-2 border-white"
-              />
-              <img
-                src="/vite.svg"
-                alt="avatar"
-                className="w-6 h-6 rounded-full border-2 border-white"
-              />
-              <img
-                src="/vite.svg"
-                alt="avatar"
-                className="w-6 h-6 rounded-full border-2 border-white"
-              />
-              <span className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-600 border-2 border-white">
-                +6
+            <span className="text-3xl font-bold text-gray-900">
+              {(
+                stats?.enAttenteValidation ??
+                (stats?.emises ?? 0) + (stats?.confirmees ?? 0)
+              ).toLocaleString()}
+            </span>
+            <div className="flex items-center text-sm">
+              <span
+                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                  (stats?.variationVsHier?.enAttente ?? 0) >= 0
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
+                {(stats?.variationVsHier?.enAttente ?? 0) >= 0 ? "+" : ""}
+                {stats?.variationVsHier?.enAttente ?? 0}%
               </span>
+              <span className="ml-2 text-gray-500">vs. Hier</span>
             </div>
           </div>
         </div>
@@ -247,9 +251,9 @@ export function RequestsPage() {
       {/* Tabs et Search */}
       <div className="bg-white rounded-lg shadow">
         <div className="border-b border-gray-200">
-          <div className="flex items-center justify-between p-4">
-            {/* Tabs */}
-            <div className="flex space-x-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between p-4 gap-4">
+            {/* Tabs - Version desktop */}
+            <div className="hidden md:flex space-x-8">
               {(
                 [
                   "tous",
@@ -277,8 +281,36 @@ export function RequestsPage() {
               ))}
             </div>
 
+            {/* Tabs - Version mobile (dropdown) */}
+            <div className="md:hidden w-full">
+              <select
+                value={activeTab}
+                onChange={(e) => {
+                  setActiveTab(e.target.value as RequestStatus);
+                  setCurrentPage(1);
+                }}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-sm font-medium"
+                title="Filtrer par statut"
+              >
+                {(
+                  [
+                    "tous",
+                    "emis",
+                    "approuve",
+                    "valide",
+                    "livre",
+                    "refuse",
+                  ] as RequestStatus[]
+                ).map((status) => (
+                  <option key={status} value={status}>
+                    {RequestStatusLabels[status]} ({getStatusCount(status)})
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Search */}
-            <div className="relative">
+            <div className="relative w-full md:w-auto">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-gray-400" />
               </div>
@@ -287,7 +319,7 @@ export function RequestsPage() {
                 placeholder="Rechercher"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 w-64"
+                className="w-full md:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -304,11 +336,14 @@ export function RequestsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Nom du magasinier
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Quantité Demandée
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Qté Demandée
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Profil
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Qté Approuvée
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Qté Validée
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Statut
@@ -325,7 +360,7 @@ export function RequestsPage() {
               {paginatedRequests.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-6 py-8 text-center text-gray-500"
                   >
                     {searchQuery || activeTab !== "tous"
@@ -342,14 +377,18 @@ export function RequestsPage() {
                     <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                       {request.nomMagasinier}
                     </td>
-                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                      {request.quantiteDemandee}t
+                    <td className="text-right px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                      {request.quantiteDemandee}
                     </td>
-                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
-                      {request.profil}
+                    <td className="text-right px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                      {request.quantiteApprouvee ?? "-"}
+                    </td>
+                    <td className="text-right px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                      {request.quantiteValidee ?? "-"}
                     </td>
                     <td className="px-6 py-3 whitespace-nowrap">
                       <span className={getStatusBadge(request.status)}>
+                        {getStatusIcon(request.status)}
                         {RequestStatusLabels[request.status]}
                       </span>
                     </td>

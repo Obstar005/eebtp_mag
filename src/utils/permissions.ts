@@ -4,6 +4,8 @@ import type { User } from "../types/auth";
 import { UserProfil } from "../types/auth";
 import { profilePermissionService } from "../services/profilePermissionService";
 import type { ProfilePermissions } from "../services/profilePermissionService";
+import type { UserPermission } from "../services/api/accessService";
+import { DEMANDE_ACCESS_CODES } from "../services/api/accessService";
 
 /**
  * États possibles des demandes de ravitaillement
@@ -39,12 +41,6 @@ export function mapApiStatusToPermissionStatus(apiStatus: string): string {
 
   const normalizedStatus = apiStatus.toLowerCase().trim();
   const mappedStatus = mapping[normalizedStatus] || apiStatus;
-
-  console.log("🔄 mapApiStatusToPermissionStatus:", {
-    input: apiStatus,
-    normalized: normalizedStatus,
-    mapped: mappedStatus,
-  });
 
   return mappedStatus;
 }
@@ -277,7 +273,7 @@ const LEGACY_PROFILE_MAPPING: Record<
     canConfirm: boolean; // Confirmée (après Émise)
     canApprove: boolean; // Approuvée (après Confirmée)
     canValidate: boolean; // Validée (après Approuvée)
-    canReject: boolean; // Rejet possible
+    canReject: boolean; // Rejet possible (uniquement DGA, DF, DG)
   }
 > = {
   // Chef Approvisionnement - SEUL autorisé à confirmer
@@ -285,7 +281,7 @@ const LEGACY_PROFILE_MAPPING: Record<
     canConfirm: true, // Confirme les demandes émises
     canApprove: false,
     canValidate: false,
-    canReject: true, // Peut rejeter à l'étape Émise
+    canReject: false, // NE peut PAS rejeter (selon API)
   },
 
   // Directeur des Travaux - SEUL autorisé à approuver (après confirmation)
@@ -293,7 +289,7 @@ const LEGACY_PROFILE_MAPPING: Record<
     canConfirm: false, // NE peut PAS confirmer
     canApprove: true, // Approuve les demandes confirmées
     canValidate: false,
-    canReject: true, // Peut rejeter à l'étape Confirmée
+    canReject: false, // NE peut PAS rejeter (selon API)
   },
 
   // Directeur Technique - SEUL autorisé à approuver (après confirmation)
@@ -301,7 +297,7 @@ const LEGACY_PROFILE_MAPPING: Record<
     canConfirm: false, // NE peut PAS confirmer
     canApprove: true, // Approuve les demandes confirmées
     canValidate: false,
-    canReject: true, // Peut rejeter à l'étape Confirmée
+    canReject: false, // NE peut PAS rejeter (selon API)
   },
 
   // Directeur Général - SEUL autorisé à valider (après approbation)
@@ -309,7 +305,7 @@ const LEGACY_PROFILE_MAPPING: Record<
     canConfirm: false,
     canApprove: false,
     canValidate: true, // Valide les demandes approuvées
-    canReject: true, // Peut rejeter à l'étape Approuvée
+    canReject: true, // Peut rejeter (selon API)
   },
 
   // Directeur Général Adjoint - SEUL autorisé à valider (après approbation)
@@ -317,7 +313,7 @@ const LEGACY_PROFILE_MAPPING: Record<
     canConfirm: false,
     canApprove: false,
     canValidate: true, // Valide les demandes approuvées
-    canReject: true, // Peut rejeter à l'étape Approuvée
+    canReject: true, // Peut rejeter (selon API)
   },
 
   // Directeur Financier - SEUL autorisé à valider (après approbation)
@@ -325,7 +321,7 @@ const LEGACY_PROFILE_MAPPING: Record<
     canConfirm: false,
     canApprove: false,
     canValidate: true, // Valide les demandes approuvées
-    canReject: true, // Peut rejeter à l'étape Approuvée
+    canReject: true, // Peut rejeter (selon API)
   },
 
   // Administrateur - Permissions complètes pour supervision
@@ -336,7 +332,7 @@ const LEGACY_PROFILE_MAPPING: Record<
     canReject: true,
   },
 
-  // Magasinier - AUCUN traitement de demande (seulement gestion stocks)
+  // Magasinier - AUCUN traitement de demande (seulement émission sur mobile)
   magasinier: {
     canConfirm: false,
     canApprove: false,
@@ -447,4 +443,117 @@ export function canUserTreatRequestSync(
   requestStatus: string
 ): boolean {
   return getAvailableTreatmentActionsSync(user, requestStatus).length > 0;
+}
+
+// ==================== NOUVEAU SYSTÈME BASÉ SUR LES ACCÈS API ====================
+
+/**
+ * Interface pour les permissions de traitement des demandes
+ * basées sur les codes d'accès de l'API
+ */
+export interface DemandeAccessPermissions {
+  canView: boolean;
+  canCreate: boolean;
+  canConfirm: boolean;
+  canApprove: boolean;
+  canValidate: boolean;
+}
+
+/**
+ * Extraire les permissions de demande depuis les permissions utilisateur de l'API
+ */
+export function extractDemandePermissions(
+  userPermissions: UserPermission[]
+): DemandeAccessPermissions {
+  const hasAccess = (code: string) =>
+    userPermissions.some((p) => p.code === code);
+
+  return {
+    canView: hasAccess(DEMANDE_ACCESS_CODES.VIEW),
+    canCreate: hasAccess(DEMANDE_ACCESS_CODES.CREATE),
+    canConfirm: hasAccess(DEMANDE_ACCESS_CODES.CONFIRM),
+    canApprove: hasAccess(DEMANDE_ACCESS_CODES.APPROVE),
+    canValidate: hasAccess(DEMANDE_ACCESS_CODES.VALIDATE),
+  };
+}
+
+/**
+ * Obtenir les actions de traitement disponibles basées sur les accès API
+ * C'est la nouvelle version qui remplace getAvailableTreatmentActionsSync
+ * 
+ * @param userPermissions - Les permissions de l'utilisateur depuis l'API
+ * @param requestStatus - Le statut actuel de la demande
+ * @returns Liste des actions disponibles
+ */
+export function getAvailableTreatmentActionsWithAccess(
+  userPermissions: UserPermission[],
+  requestStatus: string
+): AvailableAction[] {
+  if (!userPermissions || userPermissions.length === 0) {
+    return [];
+  }
+
+  const permissions = extractDemandePermissions(userPermissions);
+  const actions: AvailableAction[] = [];
+
+  // ÉTAPE 1: Confirmation (UNIQUEMENT si statut = Émise)
+  // Autorisé si l'utilisateur a l'accès "demande.confirm"
+  if (permissions.canConfirm && requestStatus === REQUEST_STATUS.EMISE) {
+    actions.push({
+      value: TREATMENT_ACTIONS.CONFIRMER,
+      label: "Confirmer la demande",
+      requiredStatus: REQUEST_STATUS.EMISE,
+    });
+  }
+
+  // ÉTAPE 2: Approbation (UNIQUEMENT si statut = Confirmée)
+  // Autorisé si l'utilisateur a l'accès "demande.approuv"
+  if (permissions.canApprove && requestStatus === REQUEST_STATUS.CONFIRMEE) {
+    actions.push({
+      value: TREATMENT_ACTIONS.APPROUVER,
+      label: "Approuver la demande",
+      requiredStatus: REQUEST_STATUS.CONFIRMEE,
+    });
+  }
+
+  // ÉTAPE 3: Validation (UNIQUEMENT si statut = Approuvée)
+  // Autorisé si l'utilisateur a l'accès "demande.valid"
+  if (permissions.canValidate && requestStatus === REQUEST_STATUS.APPROUVEE) {
+    actions.push({
+      value: TREATMENT_ACTIONS.VALIDER,
+      label: "Valider la demande",
+      requiredStatus: REQUEST_STATUS.APPROUVEE,
+    });
+  }
+
+  // Rejet possible UNIQUEMENT aux étapes non finales
+  // Et UNIQUEMENT si l'utilisateur peut agir à cette étape (validation uniquement selon API)
+  const finalStatuses = [
+    REQUEST_STATUS.VALIDEE,
+    REQUEST_STATUS.REJETEE,
+    REQUEST_STATUS.LIVREE,
+  ];
+
+  if (!finalStatuses.some((status) => status === requestStatus)) {
+    // Le rejet est autorisé uniquement pour ceux qui peuvent valider (DGA, DF, DG)
+    // selon la documentation API
+    if (permissions.canValidate && requestStatus === REQUEST_STATUS.APPROUVEE) {
+      actions.push({
+        value: TREATMENT_ACTIONS.REJETER,
+        label: "Rejeter la demande",
+      });
+    }
+  }
+
+  return actions;
+}
+
+/**
+ * Vérifier si l'utilisateur peut traiter une demande avec le nouveau système d'accès
+ */
+export function canUserTreatRequestWithAccess(
+  userPermissions: UserPermission[],
+  requestStatus: string
+): boolean {
+  return getAvailableTreatmentActionsWithAccess(userPermissions, requestStatus).length > 0;
 }

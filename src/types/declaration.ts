@@ -55,7 +55,7 @@ export interface Declaration {
 }
 
 export const DeclarationType = {
-  ENTREE: "entree",
+  LIVRAISON: "livraison",
   SORTIE: "sortie",
   RETOUR: "retour",
 } as const;
@@ -123,11 +123,11 @@ export interface DeclarationFilter {
 export type PeriodeType = "jour" | "semaine" | "mois" | "total";
 
 export interface DeclarationStats {
-  totalEntrees: number;
+  totalLivraisons: number;
   totalSorties: number;
   totalRetours: number;
   variationVsHier: {
-    entrees: number;
+    livraisons: number;
     sorties: number;
     retours: number;
   };
@@ -138,4 +138,9 @@ export interface ApiStatsResponse {
   livraisons: number;
   sorties: number;
   retours: number;
+  variationVsHier: {
+    livraisons: number;
+    sorties: number;
+    retours: number;
+  };
 }

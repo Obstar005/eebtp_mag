@@ -293,8 +293,8 @@ const mockAccountService = {
     const interne = this.accounts.filter(
       (acc) => acc.type === "Interne"
     ).length;
-    const consultant = this.accounts.filter(
-      (acc) => acc.type === "Consultant"
+    const externe = this.accounts.filter(
+      (acc) => acc.type === "Externe"
     ).length;
     const active = this.accounts.filter((acc) => acc.is_active).length;
     const inactive = total - active;
@@ -314,7 +314,7 @@ const mockAccountService = {
     return {
       total,
       interne,
-      consultant,
+      externe,
       active,
       inactive,
       byProfile,

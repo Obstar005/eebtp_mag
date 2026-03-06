@@ -100,11 +100,7 @@ export async function apiUserToAccount(
 
   // Vérifier si le profil existe avant de faire la requête
   if (!apiUser.profil) {
-    console.warn(
-      "⚠️ apiUserToAccount: Aucun profil défini pour l'utilisateur",
-      apiUser.id
-    );
-
+    // Aucun profil défini pour l'utilisateur
     // Vérifier que l'ID de l'utilisateur existe
     if (!apiUser.id) {
       console.error(
@@ -240,11 +236,6 @@ export async function apiUserToUser(
 ): Promise<User> {
   // Vérifier si le profil existe avant de faire la requête
   if (!apiUser.profil) {
-    console.warn(
-      "⚠️ apiUserToUser: Aucun profil défini pour l'utilisateur",
-      apiUser.id
-    );
-
     // Fallback vers 'magasinier' si aucun profil n'est défini
     const finalProfil = UserProfil.MAGASINIER;
 
@@ -362,8 +353,11 @@ export async function apiLoginResponseToAuthResponse(
 export function apiProfilToProfile(apiProfil: ApiProfil): Profile {
   return {
     id: apiProfil.id.toString(),
+    code: apiProfil.code || '',
     nom: apiProfil.libelle,
     description: apiProfil.description,
+    is_active: apiProfil.is_active,
+    permissions: apiProfil.permissions || [],
   };
 }
 
@@ -389,19 +383,6 @@ export function accountToApiUser(
 export function createAccountDataToApiUser(
   data: CreateAccountData
 ): ApiCreateUserRequest {
-  console.log("🔄 Transformation des données de compte pour l'API:", {
-    nom_utilisateur: data.nom_utilisateur,
-    prenoms: data.prenoms,
-    nom: data.nom,
-    date_naissance: data.date_naissance,
-    nationalite: data.nationalite,
-    type: data.type,
-    telephone: data.telephone,
-    titre: data.titre,
-    profile_id: data.profile_id,
-    has_photo: !!data.photo_profil,
-  });
-
   // Vérifier si profile_id est une chaîne ou un nombre et la convertir en nombre
   let profileId: number | undefined;
   if (data.profile_id) {
@@ -462,8 +443,10 @@ export function updateAccountDataToApiUser(
 
 export function profileToApiProfil(profile: Profile): ApiCreateProfilRequest {
   return {
+    code: profile.code,
     libelle: profile.nom,
     description: profile.description || "",
+    permissions: profile.permissions || [],
   };
 }
 
@@ -500,6 +483,10 @@ export function apiProjetToProjet(apiProjet: ApiProjet): Projet {
     creator: apiProjet.creator, // ID du créateur selon l'API
     is_active: apiProjet.is_active,
 
+    // Champs de coûts
+    cout_total_estime: apiProjet.cout_total_estime,
+    cout_total_reel: apiProjet.cout_total_reel,
+
     // Rôles principaux selon l'API (peuvent être undefined)
     chef_projet: undefined, // À définir si l'API les fournit
     chef_chantier: undefined,
@@ -534,6 +521,9 @@ export function apiProjetToProjetWithDetails(
       apiProjet.date_debut,
       apiProjet.date_fin || apiProjet.date_debut
     ),
+    // Champs de coûts
+    cout_total_estime: apiProjet.cout_total_estime,
+    cout_total_reel: apiProjet.cout_total_reel,
     chefProjet: options.chefProjet || {
       id: apiProjet.creator,
       name: "N/A",
@@ -628,6 +618,9 @@ export function createProjetDataToApiCreateProjet(
     date_fin: data.date_fin,
     is_active: data.is_active !== undefined ? data.is_active : true,
     comptes: userIds,
+    // Champs de coûts
+    cout_total_estime: data.cout_total_estime,
+    cout_total_reel: data.cout_total_reel,
   };
 
   // Ajouter les données du premier magasin pour création automatique
@@ -635,10 +628,6 @@ export function createProjetDataToApiCreateProjet(
     const premierMagasin = data.magasins[0];
     apiData.nom_magasin = premierMagasin.name;
     apiData.adresse_magasin = premierMagasin.adresse || "";
-    console.log("🏪 Magasin ajouté à la requête de création:", {
-      nom_magasin: apiData.nom_magasin,
-      adresse_magasin: apiData.adresse_magasin,
-    });
   }
 
   return apiData;
@@ -692,6 +681,9 @@ export function updateProjetDataToApiUpdateProjet(
     pays: data.pays,
     comptes: userIds, // Liste de tous les IDs d'utilisateurs associés
     is_active: true,
+    // Champs de coûts
+    cout_total_estime: data.cout_total_estime,
+    cout_total_reel: data.cout_total_reel,
   };
 
   // Ajouter les données du premier magasin pour mise à jour
@@ -825,6 +817,7 @@ import type {
 } from "../../types/request";
 import type { ApiDemande } from "../../types/api-demandes";
 import { API_TO_FRONTEND_STATUS } from "../../types/api-demandes";
+import { formatApiDate } from "../../utils/formatUtils";
 /**
  * Convertir ApiDemande vers MaterialRequest (frontend)
  */
@@ -833,15 +826,16 @@ export function apiDemandeToMaterialRequest(
 ): MaterialRequest {
   // Vérification de sécurité pour l'ID
   if (!apiDemande.id) {
-    console.warn("⚠️ apiDemande.id est undefined:", apiDemande);
     throw new Error("ID de demande manquant dans la réponse API");
   }
+
 
   return {
     id: apiDemande.id.toString(),
     demande: apiDemande.stock_item_name,
     nomMagasinier: apiDemande.emis_par_name,
-    quantiteDemandee: apiDemande.quantite,
+    quantiteDemandee: apiDemande.quantite_dem,
+    unite: apiDemande.stock_item_unite,
     profil: "Magasinier", // À adapter selon les données disponibles
     status: (API_TO_FRONTEND_STATUS[apiDemande.statut] ||
       "emis") as DemandeStatut,
@@ -856,10 +850,22 @@ export function apiDemandeToMaterialRequest(
     nomProjet: "N/A", // À compléter si disponible dans l'API
     adresseMagasin: "N/A", // À compléter si disponible dans l'API
     donneurOrdre: apiDemande.emis_par_name,
-    quantiteValidee: undefined, // À adapter selon les besoins
+    quantiteValidee: apiDemande.quantite_valid,
     motif: apiDemande.raison,
     observation: apiDemande.motif_rejet,
     traitements: generateTreatmentsFromApiDemande(apiDemande),
+    
+    // Commentaires à chaque étape
+    commentaireConfirmation: apiDemande.commentaire_confirmation,
+    commentaireApprobation: apiDemande.commentaire_approbation,
+    commentaireValidation: apiDemande.commentaire_validation,
+    
+    // Quantités ajustées
+    quantiteApprouvee: apiDemande.quantite_approuv,
+    
+    // Autres champs
+    coutTotalApprox: apiDemande.cout_total_approx,
+    isValide: apiDemande.is_valide,
   };
 }
 
@@ -873,10 +879,6 @@ function generateTreatmentsFromApiDemande(
 
   // Vérification de sécurité pour l'ID
   if (!apiDemande.id) {
-    console.warn(
-      "⚠️ apiDemande.id manquant pour générer les traitements:",
-      apiDemande
-    );
     return treatments;
   }
 
@@ -888,6 +890,7 @@ function generateTreatmentsFromApiDemande(
       profil: "Magasinier",
       action: "emis",
       date: apiDemande.date_emission,
+      commentaire: apiDemande.raison,
     });
   }
 
@@ -899,6 +902,7 @@ function generateTreatmentsFromApiDemande(
       profil: "Chef Appro",
       action: "confirme",
       date: apiDemande.date_confirmation,
+      commentaire: apiDemande.commentaire_confirmation,
     });
   }
 
@@ -910,6 +914,8 @@ function generateTreatmentsFromApiDemande(
       profil: "Directeur Technique",
       action: "approuve",
       date: apiDemande.date_approbation,
+      commentaire: apiDemande.commentaire_approbation,
+      quantite: apiDemande.quantite_approuv,
     });
   }
 
@@ -921,6 +927,8 @@ function generateTreatmentsFromApiDemande(
       profil: "Directeur",
       action: "valide",
       date: apiDemande.date_validation,
+      commentaire: apiDemande.commentaire_validation,
+      quantite: apiDemande.quantite_valid,
     });
   }
 
@@ -932,28 +940,9 @@ function generateTreatmentsFromApiDemande(
       profil: "Directeur",
       action: "refuse",
       date: apiDemande.date_rejet,
+      commentaire: apiDemande.motif_rejet,
     });
   }
 
   return treatments;
-}
-
-/**
- * Formater une date API pour l'affichage
- */
-function formatApiDate(apiDate: string): string {
-  try {
-    const date = new Date(apiDate);
-    return date
-      .toLocaleDateString("fr-FR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-      .replace(",", " à");
-  } catch {
-    return apiDate;
-  }
 }

@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Upload, X } from "lucide-react";
+import { toast } from "react-toast";
 import {
   useStockArticle,
   useUpdateStockArticle,
 } from "../../hooks/useArticles";
+import { useAccess } from "../../hooks/useAccessPermissions";
+import { AccessDenied } from "../../components/ui/AccessGuard";
 import { ArticleType, ArticleUnite } from "../../types/magasin";
 import type { UpdateStockArticleData } from "../../types/magasin";
 import { CustomImage } from "../../components/ui/CustomImage";
@@ -28,6 +31,7 @@ export default function EditArticlePage() {
   const { id: articleId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { article: articlePerms, isLoading: permissionsLoading } = useAccess();
 
   const [form, setForm] = useState<ArticleForm>({
     name: "",
@@ -41,7 +45,7 @@ export default function EditArticlePage() {
 
   // Récupérer l'article existant
   const { data: article } = useStockArticle(
-    articleId ? parseInt(articleId) : 0
+    articleId ? parseInt(articleId) : 0,
   );
   const updateArticleMutation = useUpdateStockArticle();
 
@@ -78,8 +82,10 @@ export default function EditArticlePage() {
         unite: form.unite,
       };
       await updateArticleMutation.mutateAsync(updateData);
+      toast.success("Article modifié avec succès !");
       navigate("/articles");
     } catch (error) {
+      toast.error("Erreur lors de la modification de l'article");
     }
   };
 
@@ -114,6 +120,22 @@ export default function EditArticlePage() {
   };
 
   const isSaving = updateArticleMutation.isPending;
+
+  // Vérification des permissions de chargement
+  if (permissionsLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Vérification des permissions de modification
+  if (!articlePerms.canUpdate) {
+    return (
+      <AccessDenied message="Vous n'avez pas la permission de modifier des articles." />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
