@@ -58,7 +58,7 @@ class PasswordVerifiedModal extends StatelessWidget {
                   SizedBox(height: 2.h),
 
                   Text(
-                    "Mot de passe vérifié",
+                    "Mot de passe modifié",
                     style: GoogleFonts.poppins(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w600,
