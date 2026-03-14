@@ -9,7 +9,7 @@ from rest_framework import permissions
 schema_view = get_schema_view(
    openapi.Info(
       title="EEBTP_MAG API",
-      default_version='v3.7',
+      default_version='v4.0',
       description="This API is used to manage our projet eebtp_mag. It's contains all informations and details about the API and fonctions about this application",
       terms_of_service="https://www.google.com/policies/terms/",
       contact=openapi.Contact(email="obstar300@gmail.com"),
@@ -26,7 +26,7 @@ urlpatterns = [
     path('swagger.<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-
+    
     path('Stocks/', include('stocks.urls')),
     path('Users/', include('users.urls')),
     path('Projets/', include('projets.urls')),

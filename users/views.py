@@ -20,9 +20,10 @@ from rest_framework.decorators import parser_classes
 from app.utils import enregistrer_action
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-from notifications.utils import notifier_utilisateurs
+from notifications.utils import notifier_utilisateurs, send_notification
 # from celery import shared_task
 from django.utils import timezone
+from app.utils import has_permission
 
 #Fonction pour envoyer les notifications
 # def send_notification_user(user_id, message):
@@ -85,6 +86,10 @@ def list_profils(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_profil(request):
+    user = request.user
+    if not has_permission(user, 'profil.create'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     serializer = ProfilSerializer(data=request.data)
     enregistrer_action(request.user, 'creation', 'A crée un profil dans le système.', f"Profil #{request.data.get('libelle')}")
     if serializer.is_valid():
@@ -101,6 +106,10 @@ def create_profil(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_profil(request, pk):
+    user = request.user
+    if not has_permission(user, 'profil.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         profil = Profil.objects.get(pk=pk)
     except Profil.DoesNotExist:
@@ -119,6 +128,10 @@ def get_profil(request, pk):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update_profil(request, pk):
+    user = request.user
+    if not has_permission(user, 'profil.update'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         profil = Profil.objects.get(pk=pk)
     except Profil.DoesNotExist:
@@ -140,6 +153,10 @@ def update_profil(request, pk):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_profil(request, pk):
+    user = request.user
+    if not has_permission(user, 'profil.delete'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         profil = Profil.objects.get(pk=pk)
         profil.is_active = False
@@ -176,6 +193,10 @@ def supp_profil(request, pk):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_users(request):
+    user = request.user
+    if not has_permission(user, 'user.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     users = CustomUser.objects.order_by('-date_creation')
     enregistrer_action(request.user, 'consultation', 'A consulté la liste des utilisateurs dans le système.', "Liste des utilisateurs")
     serializer = CustomUserSerializer(users, many=True)
@@ -191,13 +212,30 @@ def list_users(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_user(request):
+    user = request.user
+    if not has_permission(user, 'user.create'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     serializer = CustomUserSerializer(data=request.data)
     print(request.data)
-    enregistrer_action(request.user, 'creation', 'A crée un utilisateur dans le système.', f"Utilisateur #{request.data.get('username')}")
     if serializer.is_valid():
-        serializer.save()
+        new_user = serializer.save()
+        enregistrer_action(request.user, 'creation', 'A crée un utilisateur dans le système.', f"Utilisateur #{request.data.get('username')}")
+        concernes = CustomUser.objects.filter(profil__code='superadmin', is_active=True)
+
+        for u in concernes:
+            send_notification(
+                u,
+                "Creation utilisateur",
+                f"Une nouvel utilisateur a été crée dans le système par l'utilisateur #{request.user.id}",
+                "creation_user",
+                data={
+                    "type": "creation_user",
+                    "user_id": str(new_user.id),
+                }
+            )
         # si ça passe on doit lui retourner l'ID de l'utilisateur crée pour que le front puisse renvoyer sur la page de detail , sinon on peut lui retourner un message de succès
-        return Response({'message': 'Utilisateur crée avec succès', 'user_id': serializer.instance.id}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Utilisateur crée avec succès', 'user_id': new_user.id}, status=status.HTTP_201_CREATED)
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -209,6 +247,10 @@ def create_user(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user(request, pk):
+    user = request.user
+    if not has_permission(user, 'user.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         user = CustomUser.objects.get(pk=pk)
     except CustomUser.DoesNotExist:
@@ -226,6 +268,10 @@ def get_user(request, pk):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update_user(request, pk):
+    user = request.user
+    if not has_permission(user, 'user.update'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         user = CustomUser.objects.get(pk=pk)
     except CustomUser.DoesNotExist:
@@ -254,6 +300,7 @@ def update_user(request, pk):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated]) 
 def update_user_photo(request, pk):
+
     try:
         user = CustomUser.objects.get(pk=pk)
     except CustomUser.DoesNotExist:
@@ -276,6 +323,10 @@ def update_user_photo(request, pk):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_user(request, pk):
+    user = request.user
+    if not has_permission(user, 'user.delete'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         user = CustomUser.objects.get(pk=pk)
         user.is_active = False
@@ -439,7 +490,7 @@ def login_by_phone_web(request):
         )
     #Ici verifions si l'utilisateur n'est pas un magasinier
     
-    if user.profil.libelle == "magasinier": 
+    if user.profil.code == "magasinier": 
         return Response(
             {"error": "Accès refusé! Vous n'êtes pas autorisé à vous connecter à cette plateforme."},status=status.HTTP_403_FORBIDDEN
         )
@@ -641,6 +692,10 @@ def verify_code(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_profile_stats(request):
+    user = request.user
+    if not has_permission(user, 'statistique.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     total_users = CustomUser.objects.filter(is_active=True).count()
     connected_users = CustomUser.objects.filter(is_connected=True, is_active=True).count()
     total_profiles = Profil.objects.filter(is_active=True).count()

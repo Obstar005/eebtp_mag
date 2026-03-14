@@ -2,30 +2,6 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 
-# class NotificationConsumer(AsyncWebsocketConsumer):
-#     async def connect(self):
-#         self.user = self.scope["user"]
-#         self.group_name = None  # ✅ Initialisation par défaut
-
-#         if self.user.is_anonymous:
-#             await self.close()
-#         else:
-#             # ✅ On définit le groupe ici
-#             self.group_name = f"user_{self.user.id}"
-#             await self.channel_layer.group_add(self.group_name, self.channel_name)
-#             await self.accept()
-#             await self.send(json.dumps({"message": "Connexion OK ✅"}))
-
-#     async def disconnect(self, close_code):
-#         # ✅ Vérifie avant de tenter de supprimer du groupe
-#         if self.group_name:
-#             await self.channel_layer.group_discard(self.group_name, self.channel_name)
-
-#     async def send_notification(self, event):
-#         """Reçoit les messages envoyés via group_send"""
-#         message = event["message"]
-#         await self.send(json.dumps({"message": message}))
-
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         # Récupère un identifiant d'utilisateur (si connecté sinon 'guest')

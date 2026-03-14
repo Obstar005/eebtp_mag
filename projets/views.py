@@ -13,6 +13,7 @@ from app.utils import enregistrer_action
 from django.contrib.auth import get_user_model
 from users.models import CustomUser
 from .models import StockItem
+from app.utils import has_permission
 
 #Vue pour la création d'un projet
 @swagger_auto_schema(
@@ -30,6 +31,9 @@ from .models import StockItem
 @permission_classes([IsAuthenticated])
 def create_projet(request):
     data = request.data.copy()
+    user = request.user
+    if not has_permission(user, 'projet.create'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
 
     # 1️ Vérifions si le projet existe déjà
     projet_nom = data.get('nom')

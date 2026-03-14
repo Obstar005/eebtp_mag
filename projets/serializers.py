@@ -47,6 +47,7 @@ class StockItemSerializer(serializers.ModelSerializer):
     magasin_name = serializers.ReadOnlyField(source='magasin.nom')
     produit_name = serializers.ReadOnlyField(source='produit.designation')
     produit_unite = serializers.ReadOnlyField(source='produit.unite')
+    produit_price = serializers.ReadOnlyField(source='produit.unit_price')
 
     class Meta:
         model = StockItem

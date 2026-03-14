@@ -3,8 +3,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from .models import HistoriqueAction
-from .serializers import HistoriqueActionSerializer
+from .models import HistoriqueAction, UserDevice
+from .serializers import HistoriqueActionSerializer, UserDeviceSerializer
 from drf_yasg.utils import swagger_auto_schema
 from app.utils import enregistrer_action
 from django.utils import timezone
@@ -21,7 +21,25 @@ from django.conf import settings
 from rest_framework.decorators import api_view
 from projets.models import Magasin, Produit,StockItem, Projet
 from mouvements.models import Entree, Sortie
+from drf_yasg import openapi
 
+@swagger_auto_schema(method='post',
+                        operation_description="Pour engregistrer un nouveau device dans le système avec son token teur des travaux(dtx) ou un supérieur autorisé)",
+                        request_body=UserDeviceSerializer)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def register_device(request):
+
+    token = request.data.get("token")
+    device_type = request.data.get("device_type")
+
+    UserDevice.objects.update_or_create(
+        user=request.user,
+        token=token,
+        defaults={"device_type": device_type}
+    )
+
+    return Response({"message": "Device enregistré"}, status=status.HTTP_200_OK)
 
 @swagger_auto_schema(
     method='get',

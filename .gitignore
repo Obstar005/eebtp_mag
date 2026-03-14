@@ -1,3 +1,4 @@
 #Environnements virtuels Python
 venv/
 .env/  
+eebtp-mag-firebase-adminsdk.json

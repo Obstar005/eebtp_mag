@@ -22,4 +22,10 @@ class HistoriqueAction(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.action_type} - {self.date_action.strftime('%d/%m/%Y %H:%M')}"
+    
+class UserDevice(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    token = models.CharField(max_length=500)
+    device_type = models.CharField(max_length=20) # web, android, ios
+    created_at = models.DateTimeField(auto_now_add=True)
 

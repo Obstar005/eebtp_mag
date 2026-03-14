@@ -23,5 +23,5 @@ class DemandeSerializer(serializers.ModelSerializer):
             'approve_par', 'date_approbation',
             'valide_par', 'date_validation',
             'rejete_par', 'date_rejet', 'motif_rejet',
-            'cout_total_approx',
+            'cout_total_approx', 'duree_traitement'
         ]

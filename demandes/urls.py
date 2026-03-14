@@ -4,9 +4,14 @@ from . import views
 urlpatterns = [
     path('demande/emettre', views.emettre_demande),
     path('demande/confirmer/<int:id>', views.confirmer_demande),
+    path('demande/rejeter-confirmation/<int:id>', views.rejeter_demande_confirmation),
+
     path('demande/approuver/<int:id>', views.approuver_demande),
+    path('demande/rejeter-approbation/<int:id>', views.rejeter_demande_approbation),
+
     path('demande/valider/<int:id>', views.valider_demande),
-    path('demande/rejeter/<int:id>', views.rejeter_demande),
+    path('demande/rejeter-validation/<int:id>', views.rejeter_demande_validation),
+
     path('demandes/emises', views.liste_demandes_emises),
     path('demandes/confirmees', views.liste_demandes_confirmees),
     path('demandes/approuvees', views.liste_demandes_approuvees),
