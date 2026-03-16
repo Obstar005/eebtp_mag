@@ -1,6 +1,5 @@
 import 'package:eebtp_frontend/screens/modal_success.dart';
 import 'package:eebtp_frontend/widgets/button.dart';
-import 'package:eebtp_frontend/widgets/input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -34,17 +33,16 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     final String phone = args['phone'];
 
-    // Responsive sizing based on Sizer
-    final screenHeight = MediaQuery.of(context).size.height;
-    
-    // Ajustement dynamique selon la hauteur de l'écran
-    double topPad = screenHeight < 600 ? 1.h : 2.h;
-    double fieldFont = 12.sp;
-    double titleFont = 17.sp;
-    double errorIcon = 16.sp;
-    double smallGap = screenHeight < 600 ? 0.8.h : 1.2.h;
-    double largeGap = screenHeight < 600 ? 1.5.h : 2.5.h;
-    double imageSize = screenHeight < 600 ? 12.h : 22.h; // ✅ Réduit sur petits écrans
+    final availableHeight = MediaQuery.of(context).size.height -
+        MediaQuery.of(context).padding.top;
+
+    final fieldFont = (availableHeight * 0.02).clamp(11.0, 15.0);
+    final titleFont = (availableHeight * 0.028).clamp(15.0, 20.0);
+    final errorIconSize = (availableHeight * 0.022).clamp(14.0, 18.0);
+    final imageSize = availableHeight < 600 ? 12.h : (availableHeight * 0.2).clamp(100.0, 160.0);
+    final double topPad = availableHeight < 600 ? 1.h : 2.h;
+    final double smallGap = availableHeight < 600 ? 0.8.h : 1.2.h;
+    final double largeGap = availableHeight < 600 ? 1.5.h : 2.5.h;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -65,7 +63,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(height: topPad),
-                    
+
                     // Bouton retour
                     Align(
                       alignment: Alignment.centerLeft,
@@ -75,11 +73,11 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                             color: Color(0xFF007AFF),
                             shape: BoxShape.circle,
                           ),
-                          padding: EdgeInsets.all(2.w),
+                          padding: EdgeInsets.all(8),
                           child: Icon(
                             Icons.arrow_back_ios_new,
                             color: Colors.white,
-                            size: 16.sp,
+                            size: 16,
                           ),
                         ),
                         onPressed: () {
@@ -88,8 +86,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                         },
                       ),
                     ),
-                    
-                    // Image SVG - toujours visible
+
+                    // Image SVG
                     Center(
                       child: SvgPicture.asset(
                         'assets/Floor.svg',
@@ -98,7 +96,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       ),
                     ),
                     SizedBox(height: smallGap),
-                    
+
                     // Titre
                     Text(
                       "Modifier votre mot de passe",
@@ -109,7 +107,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       ),
                     ),
                     SizedBox(height: 0.8.h),
-                    
+
                     // Sous-titre
                     Text(
                       "Saisissez votre nouveau mot de passe",
@@ -119,7 +117,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       ),
                     ),
                     SizedBox(height: smallGap),
-                    
+
                     // Encadré d'instructions
                     Container(
                       width: double.infinity,
@@ -141,66 +139,134 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       ),
                     ),
                     SizedBox(height: largeGap),
-                    
-                    // Champs de saisie
-                    CustomInputField(
-                      controller: oldPassController,
-                      hintText: "Ancien mot de passe",
-                      obscureText: _obscurePass,
-                      fontSize: fieldFont,
-                      onToggleVisibility: () {
-                        setState(() => _obscurePass = !_obscurePass);
-                      },
+
+                    // Ancien mot de passe
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.5.h),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+                      ),
+                      child: TextField(
+                        controller: oldPassController,
+                        obscureText: _obscurePass,
+                        style: GoogleFonts.poppins(fontSize: fieldFont),
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          hintText: "Ancien mot de passe",
+                          hintStyle: GoogleFonts.poppins(
+                            fontSize: fieldFont,
+                            color: Colors.grey,
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 3.w,
+                            vertical: 1.2.h,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePass ? Icons.visibility_off : Icons.visibility,
+                              color: Colors.grey,
+                            ),
+                            onPressed: () => setState(() => _obscurePass = !_obscurePass),
+                          ),
+                        ),
+                      ),
                     ),
                     SizedBox(height: smallGap),
-                    
-                    CustomInputField(
-                      controller: newPassController,
-                      hintText: "Nouveau mot de passe",
-                      obscureText: _obscurePass,
-                      fontSize: fieldFont,
-                      onToggleVisibility: () {
-                        setState(() => _obscurePass = !_obscurePass);
-                      },
+
+                    // Nouveau mot de passe
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.5.h),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+                      ),
+                      child: TextField(
+                        controller: newPassController,
+                        obscureText: _obscurePass,
+                        style: GoogleFonts.poppins(fontSize: fieldFont),
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          hintText: "Nouveau mot de passe",
+                          hintStyle: GoogleFonts.poppins(
+                            fontSize: fieldFont,
+                            color: Colors.grey,
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 3.w,
+                            vertical: 1.2.h,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePass ? Icons.visibility_off : Icons.visibility,
+                              color: Colors.grey,
+                            ),
+                            onPressed: () => setState(() => _obscurePass = !_obscurePass),
+                          ),
+                        ),
+                      ),
                     ),
                     SizedBox(height: smallGap),
-                    
-                    CustomInputField(
-                      controller: confirmPassController,
-                      hintText: "Confirmer le mot de passe",
-                      obscureText: _obscurePass,
-                      fontSize: fieldFont,
-                      onToggleVisibility: () {
-                        setState(() => _obscurePass = !_obscurePass);
-                      },
+
+                    // Confirmer mot de passe
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.5.h),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+                      ),
+                      child: TextField(
+                        controller: confirmPassController,
+                        obscureText: _obscurePass,
+                        style: GoogleFonts.poppins(fontSize: fieldFont),
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          hintText: "Confirmer le mot de passe",
+                          hintStyle: GoogleFonts.poppins(
+                            fontSize: fieldFont,
+                            color: Colors.grey,
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 3.w,
+                            vertical: 1.2.h,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePass ? Icons.visibility_off : Icons.visibility,
+                              color: Colors.grey,
+                            ),
+                            onPressed: () => setState(() => _obscurePass = !_obscurePass),
+                          ),
+                        ),
+                      ),
                     ),
-                    
+
                     // Message d'erreur
                     if (_errorMessage != null) ...[
                       SizedBox(height: 1.h),
-                      Container(
-                        width: double.infinity,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(Icons.error_outline, color: Colors.red, size: errorIcon),
-                            SizedBox(width: 2.w),
-                            Expanded(
-                              child: Text(
-                                _errorMessage!,
-                                style: GoogleFonts.poppins(
-                                  fontSize: fieldFont * .98,
-                                  color: Colors.red,
-                                ),
-                                softWrap: true,
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.error_outline, color: Colors.red, size: errorIconSize),
+                          SizedBox(width: 2.w),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: GoogleFonts.poppins(
+                                fontSize: fieldFont * .98,
+                                color: Colors.red,
                               ),
+                              softWrap: true,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ],
                     SizedBox(height: largeGap),
-                    
+
                     // Bouton
                     Center(
                       child: CustomElevatedButton(
@@ -211,22 +277,22 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                           final oldPass = oldPassController.text.trim();
                           final newPass = newPassController.text.trim();
                           final confirmPass = confirmPassController.text.trim();
-                          
+
                           if (!_validatePassword(newPass)) return;
-                          
+
                           if (newPass != confirmPass) {
                             setState(() {
                               _errorMessage = "Les mots de passe ne correspondent pas";
                             });
                             return;
                           }
-                          
+
                           final success = await _userService.setPassword(
                             phone: phone,
                             oldPassword: oldPass,
                             newPassword: newPass,
                           );
-                          
+
                           if (success) {
                             _clearControllers();
                             if (mounted) {
@@ -247,10 +313,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                         width: 72.w,
                       ),
                     ),
-                    
-                    // Espace supplémentaire en bas
-                    SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0 
-                        ? 2.h 
+
+                    SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0
+                        ? 2.h
                         : 4.h),
                   ],
                 ),
@@ -264,7 +329,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
   bool _validatePassword(String password) {
     setState(() => _errorMessage = null);
-    
+
     if (password.isEmpty) {
       setState(() => _errorMessage = "Veuillez saisir un mot de passe");
       return false;
@@ -285,7 +350,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       setState(() => _errorMessage = "Au moins un chiffre requis");
       return false;
     }
-    
+
     return true;
   }
 

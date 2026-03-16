@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart'; // Pour le token
 import 'package:sizer/sizer.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../widgets/nav.dart';
 import '../providers/auth_provider.dart'; // Pour accéder au token
 
@@ -94,7 +95,13 @@ class _ExitDetailContent extends StatelessWidget {
   final Sortie sortie;
   final ArticleStock? article;
   const _ExitDetailContent({required this.sortie, required this.article});
-
+   
+   void _callPhone(String phone) async {
+  final uri = Uri(scheme: 'tel', path: phone);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri);
+  }
+}
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -121,7 +128,7 @@ class _ExitDetailContent extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 1.h),
-                  Text(
+              /*     Text(
                     article != null ? "Article ID : ${article!.id}" : "",
                     style: GoogleFonts.montserrat(
                       fontSize: 15.sp,
@@ -136,7 +143,7 @@ class _ExitDetailContent extends StatelessWidget {
                       color: Colors.blue[300],
                       fontWeight: FontWeight.w500,
                     ),
-                  ),
+                  ), */
                   SizedBox(height: 3.h),
                   // GRID informations
                   Row(
@@ -334,18 +341,21 @@ class _ExitDetailContent extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE8F5E9),
-              borderRadius: BorderRadius.circular(2.w),
-            ),
-            child: Text(
-              sortie.telReceveur ?? "-",
-              style: GoogleFonts.montserrat(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF34C759),
+          GestureDetector(
+            onTap: () => _callPhone(sortie.telReceveur ?? "-"),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F5E9),
+                borderRadius: BorderRadius.circular(2.w),
+              ),
+              child: Text(
+                sortie.telReceveur ?? "-",
+                style: GoogleFonts.montserrat(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF34C759),
+                ),
               ),
             ),
           ),

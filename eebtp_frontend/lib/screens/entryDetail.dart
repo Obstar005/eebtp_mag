@@ -4,6 +4,7 @@ import 'package:eebtp_frontend/models/article.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../widgets/nav.dart';
 import 'package:provider/provider.dart';
@@ -180,6 +181,12 @@ class _EntryDetailContent extends StatelessWidget {
     );
   }
 
+void _callPhone(String phone) async {
+  final uri = Uri(scheme: 'tel', path: phone);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri);
+  }
+}
   @override
   Widget build(BuildContext context) {
     final isRetour = entry.type == "Retour";
@@ -445,15 +452,19 @@ class _EntryDetailContent extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     SizedBox(width: 2.w),
-                    Text(
-                      phone,
-                      style: GoogleFonts.montserrat(
-                        fontSize: 12.sp,
-                        color: Color(0xFF34C759),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+            GestureDetector(
+  onTap: () => _callPhone(phone),
+  child: Text(
+    phone,
+    style: GoogleFonts.montserrat(
+      fontSize: 12.sp,
+      color: Color(0xFF34C759),
+      fontWeight: FontWeight.w600,
+      decoration: TextDecoration.underline,
+      decorationColor: Color(0xFF34C759),
+    ),
+  ),
+), ],
                 ),
               ),
             ],
@@ -591,15 +602,19 @@ class _EntryDetailContent extends StatelessWidget {
                     ),
                     if (signatureUrl != null && signatureUrl.isNotEmpty)
                       signatureWidget,
-                    Text(
-                      phone,
-                      style: GoogleFonts.montserrat(
-                        fontSize: 12.sp,
-                        color: Color(0xFF34C759),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+              GestureDetector(
+  onTap: () => _callPhone(phone),
+  child: Text(
+    phone,
+    style: GoogleFonts.montserrat(
+      fontSize: 12.sp,
+      color: Color(0xFF34C759),
+      fontWeight: FontWeight.w600,
+      decoration: TextDecoration.underline,
+      decorationColor: Color(0xFF34C759),
+    ),
+  ),
+), ],
                 ),
               ),
             ],
@@ -647,15 +662,18 @@ class _EntryDetailContent extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 3.w),
-              Text(
-                phone,
-                style: GoogleFonts.montserrat(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-            ],
+        GestureDetector(
+  onTap: () => _callPhone(phone),
+  child: Text(
+    phone,
+    style: GoogleFonts.montserrat(
+      fontSize: 14.sp,
+      fontWeight: FontWeight.w600,
+      color: Colors.lightBlue,
+      decoration: TextDecoration.underline,
+    ),
+  ),
+),  ],
           ),
         ),
       ],
