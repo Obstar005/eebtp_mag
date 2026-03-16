@@ -297,6 +297,8 @@ void initState() {
 
   @override
   Widget build(BuildContext context) {
+      final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0; // ✅
+
     return NavContainer(
       initialIndex: 1,
       body: SafeArea(
@@ -314,6 +316,9 @@ void initState() {
                 child: _isLoadingProducts
                     ? const Center(child: CircularProgressIndicator())
                     : SingleChildScrollView(
+                        physics: isKeyboardOpen
+                          ? const ClampingScrollPhysics()
+                          : const NeverScrollableScrollPhysics(),
                         padding: EdgeInsets.symmetric(
                           horizontal: 5.w,
                           vertical: 2.h,

@@ -100,7 +100,7 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
   }
 
 
-  @override
+ @override
   Widget build(BuildContext context) {
     // Vérification immédiate au build : déconnexion si token expiré
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -110,10 +110,9 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
       }
     });
 
-
     return Scaffold(
       backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true, // ✅ Changé de false à true
       body: SafeArea(
         child: PageView(
           controller: _pc,
@@ -124,37 +123,535 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
     );
   }
 
+  Widget _buildPhoneStep(BuildContext ctx) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableHeight = constraints.maxHeight;
+        final fieldFont = (availableHeight * 0.022).clamp(11.0, 16.0);
+        final errorIconSize = (availableHeight * 0.025).clamp(14.0, 18.0);
 
-  Widget _buildHeader(double availableHeight) {
+        return SingleChildScrollView(
+          physics: const ClampingScrollPhysics(), // ✅ Permet le scroll
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(availableHeight),
+                SizedBox(height: availableHeight * 0.025),
+                
+                // Champ téléphone (votre code existant)
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: _phoneError != null
+                          ? Colors.red
+                          : const Color.fromRGBO(226, 232, 240, 1),
+                      width: 1.2,
+                    ),
+                    boxShadow: _phoneError == null
+                        ? [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.03),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: InternationalPhoneNumberInput(
+                    onInputChanged: (PhoneNumber num) {
+                      setState(() {
+                        _phone = num.phoneNumber ?? '';
+                        _initialPhone = num;
+                        if (_phoneError != null && _phone.isNotEmpty) {
+                          _phoneError = null;
+                        }
+                      });
+                    },
+                    onInputValidated: (bool value) {},
+                    initialValue: _initialPhone,
+                    textFieldController: _phoneController,
+                    selectorConfig: const SelectorConfig(
+                      selectorType: PhoneInputSelectorType.BOTTOM_SHEET,
+                      useEmoji: false,
+                      showFlags: true,
+                      setSelectorButtonAsPrefixIcon: true,
+                      leadingPadding: 12,
+                      trailingSpace: true,
+                    ),
+                    selectorTextStyle: GoogleFonts.poppins(
+                      color: Colors.black87,
+                      fontSize: fieldFont,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textStyle: GoogleFonts.poppins(
+                      fontSize: fieldFont,
+                      color: Colors.black,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    formatInput: true,
+                    autoValidateMode: AutovalidateMode.disabled,
+                    keyboardType: TextInputType.phone,
+                    inputDecoration: InputDecoration(
+                      isDense: true,
+                      border: InputBorder.none,
+                      hintText: 'Numéro de téléphone',
+                      hintStyle: GoogleFonts.poppins(
+                        fontSize: fieldFont,
+                        color: Colors.grey[400],
+                        fontWeight: FontWeight.w400,
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 2.w,
+                        vertical: 1.h,
+                      ),
+                    ),
+                    spaceBetweenSelectorAndTextField: 10,
+                    maxLength: 15,
+                    searchBoxDecoration: InputDecoration(
+                      hintText: 'Rechercher un pays',
+                      hintStyle: GoogleFonts.poppins(
+                        fontSize: 14.sp,
+                        color: Colors.grey[400],
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: Color(0xFF007AFF),
+                        size: 22,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 4.w,
+                        vertical: 1.5.h,
+                      ),
+                    ),
+                    locale: 'fr',
+                    countries: const [
+                      'AF','AX','AL','DZ','AS','AD','AO','AI','AQ','AG','AR','AM','AW','AU','AT','AZ',
+                      'BS','BH','BD','BB','BY','BE','BZ','BJ','BM','BT','BO','BQ','BA','BW','BV','BR',
+                      'IO','BN','BG','BF','BI','KH','CM','CA','CV','KY','CF','TD','CL','CN','CX','CC',
+                      'CO','KM','CG','CD','CK','CR','CI','HR','CU','CW','CY','CZ','DK','DJ','DM','DO',
+                      'EC','EG','SV','GQ','ER','EE','SZ','ET','FK','FO','FJ','FI','FR','GF','PF','TF',
+                      'GA','GM','GE','DE','GH','GI','GR','GL','GD','GP','GU','GT','GG','GN','GW','GY',
+                      'HT','HM','VA','HN','HK','HU','IS','IN','ID','IR','IQ','IE','IM','IL','IT','JM',
+                      'JP','JE','JO','KZ','KE','KI','KP','KR','KW','KG','LA','LV','LB','LS','LR','LY',
+                      'LI','LT','LU','MO','MG','MW','MY','MV','ML','MT','MH','MQ','MR','MU','YT','MX',
+                      'FM','MD','MC','MN','ME','MS','MA','MZ','MM','NA','NR','NP','NL','NC','NZ','NI',
+                      'NE','NG','NU','NF','MK','MP','NO','OM','PK','PW','PS','PA','PG','PY','PE','PH',
+                      'PN','PL','PT','PR','QA','RE','RO','RU','RW','BL','SH','KN','LC','MF','PM','VC',
+                      'WS','SM','ST','SA','SN','RS','SC','SL','SG','SX','SK','SI','SB','SO','ZA','GS',
+                      'SS','ES','LK','SD','SR','SJ','SE','CH','SY','TW','TJ','TZ','TH','TL','TG','TK',
+                      'TO','TT','TN','TR','TM','TC','TV','UG','UA','AE','GB','US','UM','UY','UZ','VU',
+                      'VE','VN','VG','VI','WF','EH','YE','ZM','ZW'
+                    ],
+                    countrySelectorScrollControlled: true,
+                  ),
+                ),
+                
+                if (_phoneError != null) ...[
+                  SizedBox(height: availableHeight * 0.008),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.error_outline, color: Colors.red, size: errorIconSize),
+                      SizedBox(width: 2.w),
+                      Expanded(
+                        child: Text(
+                          _phoneError!,
+                          style: GoogleFonts.poppins(
+                            fontSize: fieldFont * 0.9,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                
+                SizedBox(height: availableHeight * 0.015),
+                
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => setState(() => _remember = !_remember),
+                      child: Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: _remember ? Colors.blue : Colors.grey,
+                            width: 2,
+                          ),
+                          color: _remember ? Colors.blue : Colors.transparent,
+                        ),
+                        child: _remember
+                            ? Icon(Icons.check, size: 12, color: Colors.white)
+                            : null,
+                      ),
+                    ),
+                    SizedBox(width: 2.w),
+                    Text(
+                      'Se souvenir de moi',
+                      style: GoogleFonts.poppins(fontSize: fieldFont),
+                    ),
+                  ],
+                ),
+                
+                SizedBox(height: 25.h), // ✅ Espace fixe au lieu de Spacer
+                
+                Column(
+                  children: [
+                    _buildProgressIndicator(0),
+                    SizedBox(height: availableHeight * 0.015),
+                    CustomElevatedButton(
+                      text: 'Suivant',
+                      backgroundColor: const Color(0xFF007AFF),
+                      textColor: Colors.white,
+                      onPressed: () async {
+                        setState(() {
+                          if (_phone.isEmpty) {
+                            _phoneError = "Veuillez entrer un numéro de téléphone";
+                          } else if (_phone.length < 8) {
+                            _phoneError = "Numéro trop court";
+                          } else {
+                            _phoneError = null;
+                          }
+                        });
+
+                        if (_phoneError != null) return;
+
+                        try {
+                          final exists = await _userService.checkUserExists(_phone);
+                          if (exists) {
+                            _showToast(
+                              message: "Numéro vérifié avec succès",
+                              type: ToastificationType.success,
+                            );
+                            _next();
+                          } else {
+                            setState(() {
+                              _phoneError = "Ce numéro n'est pas associé à un utilisateur";
+                            });
+                          }
+                        } catch (e) {
+                          setState(() {
+                            _phoneError = "Erreur de connexion au serveur";
+                          });
+                        }
+                      },
+                      width: 70.w,
+                    ),
+                  ],
+                ),
+                
+                SizedBox(height: 2.h), // ✅ Espace en bas
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPasswordStep(BuildContext ctx) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableHeight = constraints.maxHeight;
+        final illustrationHeight = (availableHeight * 0.18).clamp(90.0, 140.0);
+        final titleSize = (availableHeight * 0.028).clamp(15.0, 20.0);
+        final subtitleSize = (availableHeight * 0.02).clamp(11.0, 15.0);
+        final fieldFont = (availableHeight * 0.02).clamp(11.0, 15.0);
+        final infoBoxFont = (availableHeight * 0.016).clamp(9.0, 13.0);
+        final errorIconSize = (availableHeight * 0.022).clamp(14.0, 18.0);
+
+        return SingleChildScrollView(
+          physics: const ClampingScrollPhysics(), // ✅ Permet le scroll
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    icon: Container(
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF007AFF),
+                        shape: BoxShape.circle,
+                      ),
+                      padding: EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.arrow_back_ios_new,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                    onPressed: () {
+                      _passController.clear();
+                      _pc.previousPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+                  ),
+                ),
+                
+                Center(
+                  child: SvgPicture.asset(
+                    'assets/illustration.svg',
+                    height: illustrationHeight,
+                  ),
+                ),
+                SizedBox(height: availableHeight * 0.01),
+                
+                Text(
+                  "Bienvenue",
+                  style: GoogleFonts.poppins(
+                    fontSize: titleSize,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                SizedBox(height: availableHeight * 0.006),
+                
+                Text(
+                  "Connectez-vous à votre compte",
+                  style: GoogleFonts.poppins(
+                    fontSize: subtitleSize,
+                    color: Colors.black54,
+                  ),
+                ),
+                SizedBox(height: availableHeight * 0.015),
+                
+                Container(
+                  padding: EdgeInsets.all(3.w),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEAF2FF),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    "Le mot de passe doit comporter un minimum de huit caractères sans espaces avec :\n\n"
+                    "• Au moins une lettre majuscule\n"
+                    "• Au moins une lettre minuscule\n"
+                    "• Au moins un chiffre",
+                    style: GoogleFonts.poppins(
+                      fontSize: infoBoxFont,
+                      color: Colors.black87,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                SizedBox(height: availableHeight * 0.015),
+                
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.5.h),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: _errorMessage != null
+                          ? Colors.red
+                          : const Color(0xFFE2E8F0),
+                      width: 1,
+                    ),
+                  ),
+                  child: TextField(
+                    controller: _passController,
+                    obscureText: _obscurePass,
+                    style: GoogleFonts.poppins(fontSize: fieldFont),
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      hintText: "Mot de passe",
+                      hintStyle: GoogleFonts.poppins(
+                        fontSize: fieldFont,
+                        color: Colors.grey,
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 3.w,
+                        vertical: 1.2.h,
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePass ? Icons.visibility_off : Icons.visibility,
+                          color: Colors.grey,
+                        ),
+                        onPressed: () {
+                          setState(() => _obscurePass = !_obscurePass);
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+                
+                if (_errorMessage != null) ...[
+                  SizedBox(height: availableHeight * 0.008),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.error_outline, color: Colors.red, size: errorIconSize),
+                      SizedBox(width: 2.w),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: GoogleFonts.poppins(
+                            fontSize: fieldFont * 0.9,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                
+                SizedBox(height: availableHeight * 0.015),
+                
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => setState(() => _remember = !_remember),
+                      child: Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: _remember ? Colors.blue : Colors.grey,
+                            width: 2,
+                          ),
+                          color: _remember ? Colors.blue : Colors.transparent,
+                        ),
+                        child: _remember
+                            ? Icon(Icons.check, size: 12, color: Colors.white)
+                            : null,
+                      ),
+                    ),
+                    SizedBox(width: 2.w),
+                    Text(
+                      'Se souvenir de moi',
+                      style: GoogleFonts.poppins(fontSize: fieldFont),
+                    ),
+                  ],
+                ),
+                
+                SizedBox(height: 12.h), // ✅ Espace fixe au lieu de Spacer
+                
+                Column(
+                  children: [
+                    _buildProgressIndicator(1),
+                    SizedBox(height: availableHeight * 0.015),
+                    CustomElevatedButton(
+                      text: 'Se connecter',
+                      backgroundColor: const Color(0xFF007AFF),
+                      textColor: Colors.white,
+                      width: 70.w,
+                      onPressed: () async {
+                        final password = _passController.text.trim();
+
+                        if (password.isEmpty) {
+                          setState(() {
+                            _errorMessage = "Veuillez entrer votre mot de passe";
+                          });
+                          return;
+                        }
+
+                        try {
+                          final result = await _userService.loginByPhone(_phone, password);
+
+                          if (result != null) {
+                            final data = jsonDecode(result);
+                            final String token = data['access_token'];
+                            final bool firstLogin = data['first_login'];
+                            await context.read<AuthProvider>().setToken(token);
+
+                            _showToast(
+                              message: "Connexion réussie !",
+                              type: ToastificationType.success,
+                            );
+
+                            _clearControllers();
+
+                            await Future.delayed(const Duration(milliseconds: 500));
+
+                            if (firstLogin) {
+                              Navigator.pushReplacementNamed(
+                                context,
+                                '/change_password',
+                                arguments: {'phone': _phone},
+                              );
+                            } else {
+                              Navigator.pushReplacementNamed(context, '/store_selection');
+                            }
+                          } else {
+                            setState(() {
+                              _errorMessage = "Mot de passe incorrect";
+                            });
+                          }
+                        } catch (e) {
+                          setState(() {
+                            _errorMessage = "Erreur de connexion au serveur";
+                          });
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                
+                SizedBox(height: 2.h), // ✅ Espace en bas
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+Widget _buildHeader(double availableHeight) {
     final illustrationHeight = (availableHeight * 0.2).clamp(100.0, 160.0);
     final titleSize = (availableHeight * 0.028).clamp(15.0, 20.0);
     final subtitleSize = (availableHeight * 0.022).clamp(12.0, 17.0);
     final descSize = (availableHeight * 0.02).clamp(10.0, 15.0);
 
+    // ✅ Vérifier si on peut revenir en arrière
+    final canPop = Navigator.of(context).canPop();
 
     return Column(
       children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: IconButton(
-            icon: Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFF007AFF),
-                shape: BoxShape.circle,
+        // ✅ Afficher le bouton retour uniquement si on peut pop
+        if (canPop)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              icon: Container(
+                decoration: const BoxDecoration(
+                  color: Color(0xFF007AFF),
+                  shape: BoxShape.circle,
+                ),
+                padding: EdgeInsets.all(8),
+                child: Icon(
+                  Icons.arrow_back_ios_new,
+                  color: Colors.white,
+                  size: 16,
+                ),
               ),
-              padding: EdgeInsets.all(8),
-              child: Icon(
-                Icons.arrow_back_ios_new,
-                color: Colors.white,
-                size: 16,
-              ),
+              onPressed: () {
+                _clearControllers();
+                Navigator.pop(context);
+              },
             ),
-            onPressed: () {
-              _clearControllers();
-              Navigator.pop(context);
-            },
           ),
-        ),
+        // ✅ Si pas de bouton retour, ajouter un espace équivalent pour garder l'alignement
+        if (!canPop)
+          SizedBox(height: 48), // Hauteur équivalente au IconButton
+        
         SvgPicture.asset(
           'assets/illustration.svg',
           height: illustrationHeight,
@@ -191,437 +688,6 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
           ),
         ),
       ],
-    );
-  }
-
-
-  Widget _buildPhoneStep(BuildContext ctx) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final availableHeight = constraints.maxHeight;
-        final fieldFont = (availableHeight * 0.022).clamp(11.0, 16.0);
-        final errorIconSize = (availableHeight * 0.025).clamp(14.0, 18.0);
-
-
-        return SingleChildScrollView(
-          physics: const ClampingScrollPhysics(),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: availableHeight,
-              maxHeight: availableHeight,
-            ),
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(availableHeight),
-                  SizedBox(height: availableHeight * 0.025),
-                  Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(
-                        color: _phoneError != null
-                            ? Colors.red
-                            : const Color.fromRGBO(226, 232, 240, 1),
-                        width: 1.2,
-                      ),
-                    ),
-                    child: InternationalPhoneNumberInput(
-                      onInputChanged: (PhoneNumber num) {
-                        setState(() {
-                          _phone = num.phoneNumber ?? '';
-                          _initialPhone = num;
-                        });
-                      },
-                      initialValue: _initialPhone,
-                      textFieldController: _phoneController,
-                      selectorConfig: const SelectorConfig(
-                        selectorType: PhoneInputSelectorType.DROPDOWN,
-                        showFlags: true,
-                        setSelectorButtonAsPrefixIcon: true,
-                      ),
-                      selectorTextStyle:
-                          GoogleFonts.poppins(color: Colors.black, fontSize: fieldFont),
-                      textStyle: GoogleFonts.poppins(
-                        fontSize: fieldFont,
-                        color: Colors.black,
-                      ),
-                      formatInput: true,
-                      keyboardType: TextInputType.phone,
-                      inputDecoration: InputDecoration(
-                        isDense: true,
-                        border: InputBorder.none,
-                        hintText: 'Numéro de téléphone',
-                        hintStyle: GoogleFonts.poppins(
-                          fontSize: fieldFont,
-                          color: Colors.grey[600],
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 2.w,
-                          vertical: 1.h,
-                        ),
-                      ),
-                      spaceBetweenSelectorAndTextField: 8,
-                      maxLength: 15,
-                    ),
-                  ),
-                  if (_phoneError != null) ...[
-                    SizedBox(height: availableHeight * 0.008),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.error_outline, color: Colors.red, size: errorIconSize),
-                        SizedBox(width: 2.w),
-                        Expanded(
-                          child: Text(
-                            _phoneError!,
-                            style: GoogleFonts.poppins(
-                              fontSize: fieldFont * 0.9,
-                              color: Colors.red,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                  SizedBox(height: availableHeight * 0.015),
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => setState(() => _remember = !_remember),
-                        child: Container(
-                          width: 18,
-                          height: 18,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: _remember ? Colors.blue : Colors.grey,
-                              width: 2,
-                            ),
-                            color: _remember ? Colors.blue : Colors.transparent,
-                          ),
-                          child: _remember
-                              ? Icon(Icons.check, size: 12, color: Colors.white)
-                              : null,
-                        ),
-                      ),
-                      SizedBox(width: 2.w),
-                      Text(
-                        'Se souvenir de moi',
-                        style: GoogleFonts.poppins(fontSize: fieldFont),
-                      ),
-                    ],
-                  ),
-                  Spacer(),
-                  Column(
-                    children: [
-                      _buildProgressIndicator(0),
-                      SizedBox(height: availableHeight * 0.015),
-                      CustomElevatedButton(
-                        text: 'Suivant',
-                        backgroundColor: const Color(0xFF007AFF),
-                        textColor: Colors.white,
-                        onPressed: () async {
-                          setState(() {
-                            if (_phone.isEmpty) {
-                              _phoneError = "Veuillez entrer un numéro de téléphone";
-                            } else if (_phone.length < 8) {
-                              _phoneError = "Numéro trop court";
-                            } else {
-                              _phoneError = null;
-                            }
-                          });
-
-                          if (_phoneError != null) return;
-
-                          try {
-                            final exists =
-                                await _userService.checkUserExists(_phone);
-                            if (exists) {
-                              _showToast(
-                                message: "Numéro vérifié avec succès",
-                                type: ToastificationType.success,
-                              );
-                              _next();
-                            } else {
-                              setState(() {
-                                _phoneError =
-                                    "Ce numéro n'est pas associé à un utilisateur";
-                              });
-                            }
-                          } catch (e) {
-                            setState(() {
-                              _phoneError = "Erreur de connexion au serveur";
-                            });
-                          }
-                        },
-                        width: 70.w,
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: availableHeight * 0.015),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildPasswordStep(BuildContext ctx) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final availableHeight = constraints.maxHeight;
-        final illustrationHeight = (availableHeight * 0.18).clamp(90.0, 140.0);
-        final titleSize = (availableHeight * 0.028).clamp(15.0, 20.0);
-        final subtitleSize = (availableHeight * 0.02).clamp(11.0, 15.0);
-        final fieldFont = (availableHeight * 0.02).clamp(11.0, 15.0);
-        final infoBoxFont = (availableHeight * 0.016).clamp(9.0, 13.0);
-        final errorIconSize = (availableHeight * 0.022).clamp(14.0, 18.0);
-
-        return SingleChildScrollView(
-          physics: const ClampingScrollPhysics(),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: availableHeight,
-              maxHeight: availableHeight,
-            ),
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      icon: Container(
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF007AFF),
-                          shape: BoxShape.circle,
-                        ),
-                        padding: EdgeInsets.all(8),
-                        child: Icon(
-                          Icons.arrow_back_ios_new,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                      ),
-                      onPressed: () {
-                        _passController.clear();
-                        _pc.previousPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      },
-                    ),
-                  ),
-                  Center(
-                    child: SvgPicture.asset(
-                      'assets/illustration.svg',
-                      height: illustrationHeight,
-                    ),
-                  ),
-                  SizedBox(height: availableHeight * 0.01),
-                  Text(
-                    "Bienvenue",
-                    style: GoogleFonts.poppins(
-                      fontSize: titleSize,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  SizedBox(height: availableHeight * 0.006),
-                  Text(
-                    "Connectez-vous à votre compte",
-                    style: GoogleFonts.poppins(
-                      fontSize: subtitleSize,
-                      color: Colors.black54,
-                    ),
-                  ),
-                  SizedBox(height: availableHeight * 0.015),
-                  Container(
-                    padding: EdgeInsets.all(3.w),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEAF2FF),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      "Le mot de passe doit comporter un minimum de huit caractères sans espaces avec :\n\n"
-                      "• Au moins une lettre majuscule\n"
-                      "• Au moins une lettre minuscule\n"
-                      "• Au moins un chiffre",
-                      style: GoogleFonts.poppins(
-                        fontSize: infoBoxFont,
-                        color: Colors.black87,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: availableHeight * 0.015),
-                  Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.5.h),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(
-                        color: _errorMessage != null
-                            ? Colors.red
-                            : const Color(0xFFE2E8F0),
-                        width: 1,
-                      ),
-                    ),
-                    child: TextField(
-                      controller: _passController,
-                      obscureText: _obscurePass,
-                      style: GoogleFonts.poppins(fontSize: fieldFont),
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        hintText: "Mot de passe",
-                        hintStyle: GoogleFonts.poppins(
-                          fontSize: fieldFont,
-                          color: Colors.grey,
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 3.w,
-                          vertical: 1.2.h,
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePass ? Icons.visibility_off : Icons.visibility,
-                            color: Colors.grey,
-                          ),
-                          onPressed: () {
-                            setState(() => _obscurePass = !_obscurePass);
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (_errorMessage != null) ...[
-                    SizedBox(height: availableHeight * 0.008),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.error_outline, color: Colors.red, size: errorIconSize),
-                        SizedBox(width: 2.w),
-                        Expanded(
-                          child: Text(
-                            _errorMessage!,
-                            style: GoogleFonts.poppins(
-                              fontSize: fieldFont * 0.9,
-                              color: Colors.red,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                  SizedBox(height: availableHeight * 0.015),
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => setState(() => _remember = !_remember),
-                        child: Container(
-                          width: 18,
-                          height: 18,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: _remember ? Colors.blue : Colors.grey,
-                              width: 2,
-                            ),
-                            color: _remember ? Colors.blue : Colors.transparent,
-                          ),
-                          child: _remember
-                              ? Icon(Icons.check, size: 12, color: Colors.white)
-                              : null,
-                        ),
-                      ),
-                      SizedBox(width: 2.w),
-                      Text(
-                        'Se souvenir de moi',
-                        style: GoogleFonts.poppins(fontSize: fieldFont),
-                      ),
-                      Spacer(),
-                    
-                    ],
-                  ),
-                  Spacer(),
-                  Column(
-                    children: [
-                      _buildProgressIndicator(1),
-                      SizedBox(height: availableHeight * 0.015),
-                      CustomElevatedButton(
-                        text: 'Se connecter',
-                        backgroundColor: const Color(0xFF007AFF),
-                        textColor: Colors.white,
-                        width: 70.w,
-                        onPressed: () async {
-                          final password = _passController.text.trim();
-
-                          if (password.isEmpty) {
-                            setState(() {
-                              _errorMessage = "Veuillez entrer votre mot de passe";
-                            });
-                            return;
-                          }
-
-                          try {
-                            final result =
-                                await _userService.loginByPhone(_phone, password);
-
-                            if (result != null) {
-                              final data = jsonDecode(result);
-                              final String token = data['access_token'];
-                              final bool firstLogin = data['first_login'];
-                              await context.read<AuthProvider>().setToken(token);
-
-                              _showToast(
-                                message: "Connexion réussie !",
-                                type: ToastificationType.success,
-                              );
-
-                              _clearControllers();
-
-                              await Future.delayed(const Duration(milliseconds: 500));
-
-                              if (firstLogin) {
-                                Navigator.pushReplacementNamed(
-                                  context,
-                                  '/change_password',
-                                  arguments: {'phone': _phone},
-                                );
-                              } else {
-                                Navigator.pushReplacementNamed(
-                                    context, '/store_selection');
-                              }
-                            } else {
-                              setState(() {
-                                _errorMessage = "Mot de passe incorrect";
-                              });
-                            }
-                          } catch (e) {
-                            setState(() {
-                              _errorMessage = "Erreur de connexion au serveur";
-                            });
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: availableHeight * 0.015),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 

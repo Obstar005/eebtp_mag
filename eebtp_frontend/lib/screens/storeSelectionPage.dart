@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:eebtp_frontend/services/auth.dart';
 import 'package:eebtp_frontend/models/utilisateur.dart';
 import 'package:eebtp_frontend/providers/auth_provider.dart';
-import 'package:cached_network_image/cached_network_image.dart'; // ✅ Ajouté
+import 'package:cached_network_image/cached_network_image.dart'; 
 
 class StoreSelectionPage extends StatefulWidget {
   const StoreSelectionPage({super.key});
@@ -16,7 +16,7 @@ class StoreSelectionPage extends StatefulWidget {
 }
 
 class _StoreSelectionPageState extends State<StoreSelectionPage> {
-  // ✅ AJOUT : URL du backend
+  //  AJOUT : URL du backend
   static const String backendUrl = 'http://38.242.139.218:8000';
   
   late Future<List<Map<String, dynamic>>> _futureStores;
@@ -24,7 +24,7 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
   final UserService _userService = UserService();
   final ProjetService _projetService = ProjetService();
 
-  // ✅ AJOUT : Clé pour le RefreshIndicator
+  //  AJOUT : Clé pour le RefreshIndicator
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
 
   @override
@@ -444,7 +444,7 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
     );
   }
 
-  Widget _buildStoreCard(Map<String, dynamic> store) {
+Widget _buildStoreCard(Map<String, dynamic> store) {
     return Container(
       margin: EdgeInsets.only(bottom: 2.5.h),
       decoration: BoxDecoration(
@@ -466,8 +466,22 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
+            // ✅ Sauvegarder le storeId sélectionné
             await context.read<AuthProvider>().setStoreId(store['id']);
-            Navigator.pushNamed(context, '/profile');
+            
+            // ✅ NAVIGATION INTELLIGENTE
+            // Vérifier si c'est la première sélection ou un changement de magasin
+            final canPop = Navigator.of(context).canPop();
+            
+            if (canPop) {
+              // L'utilisateur vient de la page Profile (changement de magasin)
+              // → Retourner à la page précédente (Profile ou Home)
+              Navigator.pop(context);
+            } else {
+              // Première sélection après connexion
+              // → Aller directement à la HomePage
+              Navigator.pushReplacementNamed(context, '/home');
+            }
           },
           borderRadius: BorderRadius.circular(20),
           splashColor: const Color(0xFF007AFF).withOpacity(0.1),
@@ -583,7 +597,6 @@ class _StoreSelectionPageState extends State<StoreSelectionPage> {
       ),
     );
   }
-
   Widget _buildLoadingState() {
     return Center(
       child: Column(

@@ -35,14 +35,14 @@ class _StockExitScreenState extends State<StockExitScreen> {
   final TextEditingController _phoneController = TextEditingController();
   PhoneNumber _initialPhone = PhoneNumber(isoCode: 'TG');
 
-    @override
-void initState() {
-  super.initState();
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (mounted) {
-      Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
-    }
-  });
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
+      }
+    });
 
     _fetchProductsWithUnits();
   }
@@ -248,6 +248,9 @@ void initState() {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Détecte si le clavier est visible
+    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+
     return NavContainer(
       initialIndex: 1,
       body: SafeArea(
@@ -260,6 +263,10 @@ void initState() {
                 child: _isLoadingProducts
                     ? Center(child: CircularProgressIndicator())
                     : SingleChildScrollView(
+                        // ✅ Scroll uniquement activé quand le clavier est ouvert
+                        physics: isKeyboardOpen
+                            ? const ClampingScrollPhysics()
+                            : const NeverScrollableScrollPhysics(),
                         padding: EdgeInsets.symmetric(
                           horizontal: 5.w,
                           vertical: 2.h,
@@ -373,54 +380,52 @@ void initState() {
     );
   }
 
- Widget _buildSectionHeader(String title, {bool isLeftAligned = true}) {
-  return Row(
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: isLeftAligned
-        ? [
-            // Texte aligné à gauche
-            Flexible(
-              flex: 0,
-              child: Text(
-                title,
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14.sp,
-                  color: Colors.black87,
+  Widget _buildSectionHeader(String title, {bool isLeftAligned = true}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: isLeftAligned
+          ? [
+              Flexible(
+                flex: 0,
+                child: Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14.sp,
+                    color: Colors.black87,
+                  ),
                 ),
               ),
-            ),
-            SizedBox(width: 2.w), // petit espace entre le texte et la ligne
-            Expanded(
-              child: Container(
-                height: 2,
-                color: const Color(0xFF007AFF),
-              ),
-            ),
-          ]
-        : [
-            // Ligne alignée à gauche
-            Expanded(
-              child: Container(
-                height: 2,
-                color: const Color(0xFF007AFF),
-              ),
-            ),
-            SizedBox(width: 2.w), // petit espace entre la ligne et le texte
-            Flexible(
-              flex: 0,
-              child: Text(
-                title,
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14.sp,
-                  color: Colors.black87,
+              SizedBox(width: 2.w),
+              Expanded(
+                child: Container(
+                  height: 2,
+                  color: const Color(0xFF007AFF),
                 ),
               ),
-            ),
-          ],
-  );
-}
+            ]
+          : [
+              Expanded(
+                child: Container(
+                  height: 2,
+                  color: const Color(0xFF007AFF),
+                ),
+              ),
+              SizedBox(width: 2.w),
+              Flexible(
+                flex: 0,
+                child: Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14.sp,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+    );
+  }
 
   Widget _buildBasicInputField({
     required TextEditingController controller,
@@ -588,8 +593,8 @@ void initState() {
                           fontSize: 14.sp.clamp(12, 16),
                           color: Colors.grey[600],
                         ),
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: 4.w, vertical: 1.5.h),
                       ),
                     ),
                   ),

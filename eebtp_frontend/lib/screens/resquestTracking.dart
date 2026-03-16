@@ -22,12 +22,10 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
   List<Demande> _demandes = [];
   List<Demande> _filteredDemandes = [];
   bool _isLoading = true;
-  
-  // Gestion des permissions
+
   bool _hasPermissionError = false;
   String _permissionErrorMessage = '';
-  
-  // Vérification du rôle Magasinier
+
   bool _isCheckingRole = true;
   bool _isMagasinier = false;
   Utilisateur? _currentUser;
@@ -36,71 +34,71 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
-        _checkUserRole();
-      }
+      if (!mounted) return; // ✅
+      Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
+      _checkUserRole();
     });
   }
 
   Future<void> _checkUserRole() async {
+    if (!mounted) return; // ✅
+
     final token = Provider.of<AuthProvider>(context, listen: false).token;
     if (token == null) {
-      setState(() { _isCheckingRole = false; });
+      if (!mounted) return; // ✅
+      setState(() => _isCheckingRole = false);
       return;
     }
 
     try {
       final userService = UserService();
-      
       final user = await userService.getUserInfo(token);
-      
-      setState(() {
-        _currentUser = user;
-      });
+
+      if (!mounted) return; // ✅ after first await
+      setState(() => _currentUser = user);
 
       if (user.profil == null) {
+        if (!mounted) return; // ✅
         setState(() {
           _isMagasinier = false;
           _isCheckingRole = false;
         });
-        
-        if (mounted) {
-          _showNotMagasinierDialog();
-        }
+        _showNotMagasinierDialog();
         return;
       }
 
       final profilDetail = await userService.getProfilDetail(user.profil!, token);
-      
+
+      if (!mounted) return; // ✅ after second await
+
       final libelle = profilDetail['libelle']?.toString().toLowerCase() ?? '';
       final isMagasinier = libelle == 'magasinier';
-      
+
       setState(() {
         _isMagasinier = isMagasinier;
         _isCheckingRole = false;
       });
 
-      if (!_isMagasinier && mounted) {
+      if (!_isMagasinier) {
         _showNotMagasinierDialog();
-      } else if (_isMagasinier) {
+      } else {
         _fetchDemandes();
       }
     } catch (e) {
-      setState(() { 
+      if (!mounted) return; // ✅ after catch
+
+      setState(() {
         _isMagasinier = false;
-        _isCheckingRole = false; 
+        _isCheckingRole = false;
       });
-      
-      print("Erreur vérification rôle: $e");
-      
-      String errorString = e.toString();
-      if (errorString.contains('permissions insuffisantes') || 
+
+      debugPrint("Erreur vérification rôle: $e");
+
+      final errorString = e.toString();
+      if (errorString.contains('permissions insuffisantes') ||
           errorString.contains('Accès refusé') ||
           errorString.contains('403')) {
-        if (mounted) {
-          _showNotMagasinierDialog();
-        }
+        _showNotMagasinierDialog();
       } else {
         _fetchDemandes();
       }
@@ -108,6 +106,7 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
   }
 
   void _showNotMagasinierDialog() {
+    if (!mounted) return; // ✅
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -150,11 +149,13 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
                 decoration: BoxDecoration(
                   color: Color.fromARGB(255, 253, 227, 227),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Color.fromARGB(255, 255, 0, 4).withOpacity(0.3)),
+                  border: Border.all(
+                      color: Color.fromARGB(255, 255, 0, 4).withOpacity(0.3)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, color: Color.fromARGB(255, 255, 0, 0), size: 20),
+                    Icon(Icons.info_outline,
+                        color: Color.fromARGB(255, 255, 0, 0), size: 20),
                     SizedBox(width: 3.w),
                     Expanded(
                       child: Text(
@@ -199,57 +200,62 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
   }
 
   Future<void> _fetchDemandes() async {
+    if (!mounted) return; // ✅
+
     final token = Provider.of<AuthProvider>(context, listen: false).token;
     if (token == null) {
-      setState(() { _isLoading = false; });
+      if (!mounted) return; // ✅
+      setState(() => _isLoading = false);
       return;
     }
 
     try {
       final demandeService = DemandeService();
       final demandes = await demandeService.getDemandesEmises(token);
-      
+
+      if (!mounted) return; // ✅ after await
+
       setState(() {
-        _demandes = demandes; 
+        _demandes = demandes;
         _filteredDemandes = demandes;
         _isLoading = false;
         _hasPermissionError = false;
       });
     } catch (e) {
-      setState(() { _isLoading = false; });
-      print("Erreur chargement demandes: $e");
-      
-      String errorString = e.toString();
-      if (errorString.contains('permissions insuffisantes') || 
+      if (!mounted) return; // ✅ after catch
+
+      setState(() => _isLoading = false);
+      debugPrint("Erreur chargement demandes: $e");
+
+      final errorString = e.toString();
+      if (errorString.contains('permissions insuffisantes') ||
           errorString.contains('Accès refusé') ||
           errorString.contains('403')) {
         setState(() {
           _hasPermissionError = true;
-          _permissionErrorMessage = "Vous n'avez pas les permissions nécessaires pour accéder aux demandes. Contactez l'administrateur pour mettre à jour votre rôle.";
+          _permissionErrorMessage =
+              "Vous n'avez pas les permissions nécessaires pour accéder aux demandes. Contactez l'administrateur pour mettre à jour votre rôle.";
         });
-        
         _showPermissionDialog();
       } else {
         _showToast(
-          message: 'Erreur lors du chargement des demandes', 
-          type: ToastificationType.error
-        );
+            message: 'Erreur lors du chargement des demandes',
+            type: ToastificationType.error);
       }
     }
   }
 
-  // ✅ NOUVELLE MÉTHODE : Rafraîchir les données
   Future<void> _refreshData() async {
-    // Revérifier le rôle et recharger les demandes
+    if (!mounted) return; // ✅
     setState(() {
       _isCheckingRole = true;
       _hasPermissionError = false;
     });
-    
     await _checkUserRole();
   }
 
   void _showPermissionDialog() {
+    if (!mounted) return; // ✅
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -318,15 +324,17 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
     );
   }
 
-  void _showToast({required String message, required ToastificationType type}) {
+  void _showToast(
+      {required String message, required ToastificationType type}) {
+    if (!mounted) return; // ✅
     toastification.show(
       context: context,
       type: type,
       style: ToastificationStyle.flatColored,
-      title: Text(message, style: GoogleFonts.poppins(
-        fontSize: 13.sp,
-        fontWeight: FontWeight.w500
-      )),
+      title: Text(
+          message,
+          style: GoogleFonts.poppins(
+              fontSize: 13.sp, fontWeight: FontWeight.w500)),
       autoCloseDuration: const Duration(seconds: 4),
       alignment: Alignment.topCenter,
       animationDuration: const Duration(milliseconds: 300),
@@ -401,6 +409,7 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
   }
 
   void _navigateToRequestDetail(Demande demande) {
+    if (!mounted) return; // ✅
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -437,7 +446,8 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
               onTap: () => Navigator.pop(context),
               child: CircleAvatar(
                 backgroundColor: Colors.white,
-                child: Icon(Icons.arrow_back_ios_new, color: Color(0xFF007AFF), size: 18.sp),
+                child: Icon(Icons.arrow_back_ios_new,
+                    color: Color(0xFF007AFF), size: 18.sp),
               ),
             ),
             SizedBox(width: 3.w),
@@ -473,7 +483,8 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
                     padding: EdgeInsets.all(.7.w),
                     decoration: const BoxDecoration(
                         color: Colors.red, shape: BoxShape.circle),
-                    constraints: const BoxConstraints(minWidth: 19, minHeight: 19),
+                    constraints:
+                        const BoxConstraints(minWidth: 19, minHeight: 19),
                     child: Text(
                       "3",
                       textAlign: TextAlign.center,
@@ -530,7 +541,7 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
-                          color: const Color.fromRGBO(13, 13, 13,1),
+                          color: const Color.fromRGBO(13, 13, 13, 1),
                         ),
                       ),
                       SizedBox(height: 1.h),
@@ -545,7 +556,8 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
                   decoration: BoxDecoration(
                     color: _getStatusColor(demande.statut),
                     borderRadius: BorderRadius.circular(10),
@@ -614,7 +626,7 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
           CircularProgressIndicator(color: Color(0xFF007AFF)),
           SizedBox(height: 2.h),
           Text(
-            _isCheckingRole 
+            _isCheckingRole
                 ? "Vérification des permissions..."
                 : "Chargement des demandes...",
             style: GoogleFonts.poppins(
@@ -627,12 +639,10 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
     );
   }
 
-  // ✅ MÉTHODE MODIFIÉE : EmptyState scrollable pour pull-to-refresh
   Widget _buildEmptyState() {
     Widget content;
-    
+
     if (!_isMagasinier && !_isCheckingRole) {
-      // État spécifique si l'utilisateur n'est pas magasinier
       content = Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -642,11 +652,7 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
               color: Color(0xFFFFEBEE),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.block, 
-              size: 50.sp, 
-              color: Color(0xFFFF5252)
-            ),
+            child: Icon(Icons.block, size: 50.sp, color: Color(0xFFFF5252)),
           ),
           SizedBox(height: 3.h),
           Text(
@@ -674,11 +680,13 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
             decoration: BoxDecoration(
               color: Color.fromARGB(255, 253, 227, 227),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Color.fromARGB(255, 255, 0, 0).withOpacity(0.3)),
+              border: Border.all(
+                  color: Color.fromARGB(255, 255, 0, 0).withOpacity(0.3)),
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, color: Color.fromARGB(255, 255, 0, 0), size: 24),
+                Icon(Icons.info_outline,
+                    color: Color.fromARGB(255, 255, 0, 0), size: 24),
                 SizedBox(width: 3.w),
                 Expanded(
                   child: Text(
@@ -700,14 +708,13 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
             label: Text(
               "Retour",
               style: GoogleFonts.poppins(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-              ),
+                  fontSize: 14.sp, fontWeight: FontWeight.w500),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFF007AFF),
               foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 1.8.h),
+              padding:
+                  EdgeInsets.symmetric(horizontal: 8.w, vertical: 1.8.h),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -716,7 +723,6 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
         ],
       );
     } else if (_hasPermissionError) {
-      // État spécifique pour erreur de permission (403)
       content = Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -726,11 +732,8 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
               color: Color(0xFFFFF3E0),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.lock_outline, 
-              size: 50.sp, 
-              color: Color(0xFFFF9800)
-            ),
+            child: Icon(Icons.lock_outline,
+                size: 50.sp, color: Color(0xFFFF9800)),
           ),
           SizedBox(height: 3.h),
           Text(
@@ -758,11 +761,13 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
             decoration: BoxDecoration(
               color: Color(0xFFE3F2FD),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Color(0xFF007AFF).withOpacity(0.3)),
+              border:
+                  Border.all(color: Color(0xFF007AFF).withOpacity(0.3)),
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, color: Color(0xFF007AFF), size: 24),
+                Icon(Icons.info_outline,
+                    color: Color(0xFF007AFF), size: 24),
                 SizedBox(width: 3.w),
                 Expanded(
                   child: Text(
@@ -784,14 +789,13 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
             label: Text(
               "Retour",
               style: GoogleFonts.poppins(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-              ),
+                  fontSize: 14.sp, fontWeight: FontWeight.w500),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFF007AFF),
               foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 1.8.h),
+              padding:
+                  EdgeInsets.symmetric(horizontal: 8.w, vertical: 1.8.h),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -800,7 +804,6 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
         ],
       );
     } else {
-      // État vide normal (pas d'erreur de permission)
       content = Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -827,11 +830,10 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
       );
     }
 
-    // ✅ Envelopper dans ListView pour le pull-to-refresh
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
-        SizedBox(height: 20.h), // Espace pour centrer visuellement
+        SizedBox(height: 20.h),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 8.w),
           child: content,

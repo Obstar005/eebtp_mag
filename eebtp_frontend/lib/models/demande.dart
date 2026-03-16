@@ -55,9 +55,8 @@ class Demande {
     this.rejetePar,
   });
 
-  // Méthodes d'usine pour la conversion JSON, si besoin :
   factory Demande.fromJson(Map<String, dynamic> json) => Demande(
-        id: json['id'],
+        id: json['id'] ?? 0,
         magasinName: json['magasin_name'] ?? '',
         stockItemName: json['stock_item_name'] ?? '',
         emisParName: json['emis_par_name'] ?? '',
@@ -66,8 +65,11 @@ class Demande {
         valideParName: json['valide_par_name'] ?? '',
         rejeteParName: json['rejete_par_name'] ?? '',
         number: json['number'] ?? '',
-        quantite: json['quantite'],
-        raison: json['raison'],
+        
+        // 🔥 Correction principale : éviter le crash si quantite = null
+        quantite: (json['quantite'] ?? 0) as num,
+
+        raison: json['raison'] ?? '',
         statut: json['statut'] ?? '',
         dateCreation: DateTime.parse(json['date_creation']),
         dateEmission: json['date_emission'] != null ? DateTime.parse(json['date_emission']) : null,
@@ -76,8 +78,8 @@ class Demande {
         dateValidation: json['date_validation'] != null ? DateTime.parse(json['date_validation']) : null,
         motifRejet: json['motif_rejet'],
         dateRejet: json['date_rejet'] != null ? DateTime.parse(json['date_rejet']) : null,
-        stockItem: json['stock_item'],
-        magasin: json['magasin'],
+        stockItem: json['stock_item'] ?? 0,
+        magasin: json['magasin'] ?? 0,
         emisPar: json['emis_par'],
         confirmePar: json['confirme_par'],
         approvePar: json['approve_par'],
