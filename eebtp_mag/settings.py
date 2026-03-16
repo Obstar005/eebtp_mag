@@ -173,7 +173,11 @@ SIMPLE_JWT = {
 # Channels
 ASGI_APPLICATION = 'eebtp_mag.asgi.application'
 
-FIREBASE_CREDENTIALS = BASE_DIR / "eebtp-mag-firebase-adminsdk.json"
+FIREBASE_CREDENTIALS = BASE_DIR / "firebase/eebtp-mag-firebase-adminsdk.json"
+
+# BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# FIREBASE_CREDENTIALS = os.path.join(BASE_DIR, "firebase", "firebase-adminsdk.json")
 
 # CELERY_BROKER_URL = 'redis://localhost:6379/0'
 # CELERY_ACCEPT_CONTENT = ['json']
