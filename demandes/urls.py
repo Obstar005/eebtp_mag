@@ -5,6 +5,7 @@ urlpatterns = [
     path('demande/emettre', views.emettre_demande),
     path('demande/confirmer/<int:id>', views.confirmer_demande),
     path('demande/rejeter-confirmation/<int:id>', views.rejeter_demande_confirmation),
+    path('demande-update/<int:pk>', views.update_demande),
 
     path('demande/approuver/<int:id>', views.approuver_demande),
     path('demande/rejeter-approbation/<int:id>', views.rejeter_demande_approbation),

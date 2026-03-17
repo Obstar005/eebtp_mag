@@ -12,6 +12,7 @@ from projets.models import Magasin, StockItem
 from projets.serializers import MagasinSerializer, StockItemSerializer
 from app.utils import enregistrer_action
 from django.db.models import F
+from app.utils import has_permission
 
 #Creation d'un produit dans le système
 @swagger_auto_schema(
@@ -23,6 +24,10 @@ from django.db.models import F
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_article(request):
+    user = request.user
+    if not has_permission(user, 'article.create'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     serializer = ProduitSerializer(data=request.data)
     enregistrer_action(request.user, 'creation', 'A crée un article dans le système.', f"Article #{request.data.get('designation')}")
 
@@ -40,6 +45,10 @@ def create_article(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_articles(request):
+    user = request.user
+    if not has_permission(user, 'articles.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     articles = Produit.objects.filter(is_active=True).order_by('-date_creation')
     enregistrer_action(request.user, 'consultation', 'A consulté la liste des articles dans le système.', "Liste des articles")
     serializer = ProduitSerializer(articles, many=True)
@@ -54,6 +63,10 @@ def list_articles(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_article(request, pk):
+    user = request.user
+    if not has_permission(user, 'article.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         article = Produit.objects.get(pk=pk)
     except Produit.DoesNotExist:
@@ -77,6 +90,10 @@ def get_article(request, pk):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update_article(request, pk):
+    user = request.user
+    if not has_permission(user, 'article.update'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         article = Produit.objects.get(pk=pk)
     except Produit.DoesNotExist:
@@ -98,6 +115,10 @@ def update_article(request, pk):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_article(request, pk):
+    user = request.user
+    if not has_permission(user, 'article.delete'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         article = Produit.objects.get(pk=pk)
         article.is_active = False
@@ -118,6 +139,9 @@ def delete_article(request, pk):
 @permission_classes([IsAuthenticated])
 def add_stock_item(request):
     user = request.user
+    if not has_permission(user, 'stock_item.create'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     serializer = StockItemSerializer(data=request.data)
     enregistrer_action(request.user, 'creation', 'A ajouté un article au stock d\'un magasin.', f"Article dans le magasin #{request.data.get('magasin')}")
     if serializer.is_valid():
@@ -134,6 +158,10 @@ def add_stock_item(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_stock_items(request, magasin_id):
+    user = request.user
+    if not has_permission(user, 'stock_items.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         magasin = Magasin.objects.get(pk=magasin_id)
     except Magasin.DoesNotExist:
@@ -154,6 +182,10 @@ def list_stock_items(request, magasin_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update_stock_item(request, magasin_id):
+    user = request.user
+    if not has_permission(user, 'stock_item.update'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         stock_item = StockItem.objects.get(pk=magasin_id)
     except StockItem.DoesNotExist:
@@ -177,6 +209,10 @@ def update_stock_item(request, magasin_id):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_stock_item(request, stock_item_id):
+    user = request.user
+    if not has_permission(user, 'stock_item.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         stock_item = StockItem.objects.get(pk=stock_item_id)
     except StockItem.DoesNotExist:
@@ -196,6 +232,10 @@ def get_stock_item(request, stock_item_id):
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def delete_stock_item(request, stock_item_id):
+    user = request.user
+    if not has_permission(user, 'stock_item.delete'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         stock_item = StockItem.objects.get(pk=stock_item_id)
         stock_item.is_active = False
@@ -214,6 +254,10 @@ def delete_stock_item(request, stock_item_id):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def stock_statistics(request, magasin_id, unite):
+    user = request.user
+    if not has_permission(user, 'statistique.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         magasin = Magasin.objects.get(pk=magasin_id)
     except Magasin.DoesNotExist:
@@ -235,6 +279,10 @@ def stock_statistics(request, magasin_id, unite):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def stats_quantite_stocks(request, projet_id, produit_id):
+    user = request.user
+    if not has_permission(user, 'statistique.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         projet = Projet.objects.get(pk=projet_id)
     except Projet.DoesNotExist:
@@ -295,6 +343,10 @@ def stats_quantite_stocks(request, projet_id, produit_id):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def articles_below_threshold(request, projet_id):
+    user = request.user
+    if not has_permission(user, 'statistique.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         projet = Projet.objects.get(pk=projet_id)
     except Projet.DoesNotExist:

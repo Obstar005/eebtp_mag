@@ -72,7 +72,7 @@ def emettre_demande(request):
             date_emission=timezone.now()
         )
         enregistrer_action(user, 'creation', 'A créé une nouvelle demande', f"Demande #{new_demande_number}")
-        #Envoyer une notif aux utilisateurs en charge des traitements sur les demandes de ce projet
+        #Envoyer une notif aux utilisateurs en charge des traitements sur les demandes de ce Demande
         new_demande = serializer.instance
         notifier_utilisateurs(new_demande, "emission")
 
@@ -128,7 +128,7 @@ def confirmer_demande(request, id):
     demande.save()
     #Enregistrer l'action de confirmation dans l'historique des actions de l'utilisateur
     enregistrer_action(user, 'modification', 'A confirmé une demande', f"Demande #{demande.number}")
-    #Envoyer une notif aux utilisateurs en charge des traitements sur les demandes de ce projet
+    #Envoyer une notif aux utilisateurs en charge des traitements sur les demandes de ce Demande
     notifier_utilisateurs(demande, "confirmation")
     #Envoyer une notif au magasinier qui a émis la demande pour lui notifier que sa demande a été confirmée
     notifier_magasinier(demande, "confirmation")
@@ -174,11 +174,41 @@ def rejeter_demande_confirmation(request, id):
     demande.date_confirmation = timezone.now()
     demande.save()
     enregistrer_action(user, 'modification', 'A rejeté une demande de confirmation', f"Demande #{demande.number}")
-    #Envoyer une notif aux utilisateurs en charge des traitements sur les demandes de ce projet
+    #Envoyer une notif aux utilisateurs en charge des traitements sur les demandes de ce Demande
     notifier_utilisateurs(demande, "rejet_confirmation")
     #ENvoyer une notif au magasinier qui a émis la demande pour lui notifier que sa demande a été rejetée et lui donner la raison du rejet si le commentaire de rejet est fourni
     notifier_magasinier(demande, "rejet_confirmation")
     return Response({'message': 'Demande rejetée avec succès'}, status=status.HTTP_200_OK)
+
+#Vue pour la mise à jour d'une demande apres rejet
+@swagger_auto_schema(
+    method='put',
+    operation_description="Cette API permet de corriger une demande après rejet.",
+    request_body=DemandeSerializer,
+    responses={
+        200: openapi.Response("Demande modifiée avec succès", DemandeSerializer),
+        404: "Demande non trouvée",
+        400: "Données invalides"
+    }
+)
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_demande(request, pk):
+    try:
+        demande = Demande.objects.get(pk=pk)
+    except Demande.DoesNotExist:
+        return Response({'error': 'Demande introuvable'}, status=status.HTTP_404_NOT_FOUND)
+    
+    data = request.data.copy()
+
+    serializer = DemandeSerializer(demande, data=data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)    
+    enregistrer_action(request.user, 'modification', 'A modifié un demande.', f"Demande #{demande.id}")
+
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 #Liste des demandes confirmées
 @swagger_auto_schema(method='get',

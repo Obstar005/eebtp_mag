@@ -30,6 +30,7 @@ from app.utils import has_permission
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_projet(request):
+    
     data = request.data.copy()
     user = request.user
     if not has_permission(user, 'projet.create'):
@@ -44,7 +45,7 @@ def create_projet(request):
         )
 
     #  Ajout du créateur
-    data['creator'] = request.user.id
+    data['creator'] = user.id
 
     # 3️ On commence par créer le projet
     projet_serializer = ProjetSerializer(data=data)
@@ -94,6 +95,11 @@ def create_projet(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_projets(request):
+
+    user = request.user
+    if not has_permission(user, 'projet.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     projets = Projet.objects.filter(is_active=True).order_by('-date_creation')
     serializer = ProjetSerializer(projets, many=True)
     enregistrer_action(request.user, 'consultation', 'A consulté la liste des projets du système.', "Liste des projets")
@@ -110,6 +116,11 @@ def list_projets(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_projets_archives(request):
+
+    user = request.user
+    if not has_permission(user, 'projet.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     projets = Projet.objects.filter(is_active=False).order_by('-date_creation')
     serializer = ProjetSerializer(projets, many=True)
     # enregistrer_action(request.user, 'consultation', 'A consulté la liste des projets archivés.', "Liste des projets archivés")
@@ -127,6 +138,11 @@ def list_projets_archives(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated]) 
 def get_projet(request, pk):
+
+    user = request.user
+    if not has_permission(user, 'projet.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         projet = Projet.objects.get(pk=pk)
     except Projet.DoesNotExist:
@@ -150,6 +166,11 @@ def get_projet(request, pk):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update_projet(request, pk):
+
+    user = request.user
+    if not has_permission(user, 'projet.update'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         projet = Projet.objects.get(pk=pk)
     except Projet.DoesNotExist:
@@ -178,6 +199,11 @@ def update_projet(request, pk):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_projet(request, pk):
+
+    user = request.user
+    if not has_permission(user, 'projet.delete'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         projet = Projet.objects.get(pk=pk)
         projet.is_active = False
@@ -314,13 +340,17 @@ def delete_photo(request, pk):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_magasins(request):
+
+    user = request.user
+    if not has_permission(user, 'magasin.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     magasins = Magasin.objects.filter(is_active=True).order_by('-date_creation')
     # enregistrer_action(request.user, 'consultation', 'A consulté la liste des magasins du système.', "Liste des Magasins")
     serializer = MagasinSerializer(magasins, many=True)
     return Response(serializer.data)
 
 #Vue pour la liste des magasins achivées
-#Vue pour la liste des magasins
 @swagger_auto_schema(   
     method='get',
     operation_description="Cette API permet de récupérer la liste des magasins archivés.",
@@ -331,6 +361,11 @@ def list_magasins(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_magasins_archives(request):
+
+    user = request.user
+    if not has_permission(user, 'magasin.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     magasins = Magasin.objects.filter(is_active=False).order_by('-date_creation')
     # enregistrer_action(request.user, 'consultation', 'A consulté la liste des magasins archivés.', "Liste des Magasins Archivés")
     serializer = MagasinSerializer(magasins, many=True)
@@ -348,6 +383,10 @@ def list_magasins_archives(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_magasin(request, pk):
+    user = request.user
+    if not has_permission(user, 'magasin.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         magasin = Magasin.objects.get(pk=pk)
     except Magasin.DoesNotExist:
@@ -371,6 +410,10 @@ def get_magasin(request, pk):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update_magasin(request, pk):
+    user = request.user
+    if not has_permission(user, 'magasin.update'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         magasin = Magasin.objects.get(pk=pk)
     except Magasin.DoesNotExist:
@@ -401,6 +444,10 @@ def update_magasin(request, pk):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_magasin(request, pk):
+    user = request.user
+    if not has_permission(user, 'magasin.delete'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         magasin = Magasin.objects.get(pk=pk)
         magasin.is_active = False
@@ -423,6 +470,10 @@ def delete_magasin(request, pk):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_magasins_by_projet(request, pk):
+    user = request.user
+    if not has_permission(user, 'magasin.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     try:
         # Vérifier que le projet existe
         projet = Projet.objects.get(id=pk)
@@ -485,6 +536,10 @@ def list_user_projets_magasins(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def stats_quantites_articles_magasin(request, projet_id):
+    user = request.user
+    if not has_permission(user, 'statistique.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
     # 1️ Vérifier le projet
     try:
         projet = Projet.objects.get(pk=projet_id, is_active=True)
