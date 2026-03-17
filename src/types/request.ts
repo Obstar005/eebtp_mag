@@ -74,6 +74,7 @@ export interface MaterialRequest {
   
   // Autres champs
   coutTotalApprox?: number;
+  dureeTraitement?: string;
   isValide?: boolean;
 }
 

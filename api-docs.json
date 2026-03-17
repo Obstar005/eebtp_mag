@@ -6,7 +6,7 @@
     "termsOfService": "https://www.google.com/policies/terms/",
     "contact": { "email": "obstar300@gmail.com" },
     "license": { "name": "BSD License" },
-    "version": "v3.7"
+    "version": "v4.0"
   },
   "host": "38.242.139.218:8000",
   "schemes": ["http"],
@@ -32,6 +32,28 @@
           "type": "string"
         }
       ]
+    },
+    "/App/devices/register": {
+      "post": {
+        "operationId": "App_devices_register_create",
+        "description": "Pour engregistrer un nouveau device dans le système avec son token teur des travaux(dtx) ou un supérieur autorisé)",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/UserDevice" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/UserDevice" }
+          }
+        },
+        "tags": ["App"]
+      },
+      "parameters": []
     },
     "/App/historique-toutes-actions": {
       "get": {
@@ -81,13 +103,45 @@
             "name": "data",
             "in": "body",
             "required": true,
-            "schema": { "$ref": "#/definitions/Demande" }
+            "schema": {
+              "type": "object",
+              "properties": {
+                "commentaire_approbation": {
+                  "description": "Commentaire d'approbation (facultatif)",
+                  "type": "string"
+                },
+                "is_quantity_reduced_by_approb": {
+                  "description": "Indique si la quantité a été réduite lors de l'approbation (facultatif, par défaut false)",
+                  "type": "boolean"
+                },
+                "quantite_approv": {
+                  "description": "Quantité approuvée (facultatif, si différente de la quantité demandée)",
+                  "type": "integer"
+                }
+              }
+            }
           }
         ],
         "responses": {
           "201": {
             "description": "",
-            "schema": { "$ref": "#/definitions/Demande" }
+            "schema": {
+              "type": "object",
+              "properties": {
+                "commentaire_approbation": {
+                  "description": "Commentaire d'approbation (facultatif)",
+                  "type": "string"
+                },
+                "is_quantity_reduced_by_approb": {
+                  "description": "Indique si la quantité a été réduite lors de l'approbation (facultatif, par défaut false)",
+                  "type": "boolean"
+                },
+                "quantite_approv": {
+                  "description": "Quantité approuvée (facultatif, si différente de la quantité demandée)",
+                  "type": "integer"
+                }
+              }
+            }
           }
         },
         "tags": ["Demandes"]
@@ -99,19 +153,35 @@
     "/Demandes/demande/confirmer/{id}": {
       "post": {
         "operationId": "Demandes_demande_confirmer_create",
-        "description": "Confirmer une demande (par un chef appro ou un supérieur autorisé)",
+        "description": "Confirmer une demande (par les chefs appro ou un supérieur autorisé) en ajoutant un commentaire facultatif pour expliquer la raison de la confirmation",
         "parameters": [
           {
             "name": "data",
             "in": "body",
             "required": true,
-            "schema": { "$ref": "#/definitions/Demande" }
+            "schema": {
+              "type": "object",
+              "properties": {
+                "commentaire_confirmation": {
+                  "description": "Commentaire de confirmation (facultatif)",
+                  "type": "string"
+                }
+              }
+            }
           }
         ],
         "responses": {
           "201": {
             "description": "",
-            "schema": { "$ref": "#/definitions/Demande" }
+            "schema": {
+              "type": "object",
+              "properties": {
+                "commentaire_confirmation": {
+                  "description": "Commentaire de confirmation (facultatif)",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "tags": ["Demandes"]
@@ -160,22 +230,118 @@
       },
       "parameters": []
     },
-    "/Demandes/demande/rejeter/{id}": {
+    "/Demandes/demande/rejeter-approbation/{id}": {
       "post": {
-        "operationId": "Demandes_demande_rejeter_create",
-        "description": "Rejeter une demande (par le DGA, ou le Directeur Financier (DF), ou le DG)",
+        "operationId": "Demandes_demande_rejeter-approbation_create",
+        "description": "Rejeter une demande d'approbation (par les DT, c-a-d directeur technique(dt) ou par le directeur des travaux(dtx) ou un supérieur autorisé)",
         "parameters": [
           {
             "name": "data",
             "in": "body",
             "required": true,
-            "schema": { "$ref": "#/definitions/Demande" }
+            "schema": {
+              "type": "object",
+              "properties": {
+                "commentaire_approbation": {
+                  "description": "Commentaire de rejet d'approbation (facultatif)",
+                  "type": "string"
+                }
+              }
+            }
           }
         ],
         "responses": {
           "201": {
             "description": "",
-            "schema": { "$ref": "#/definitions/Demande" }
+            "schema": {
+              "type": "object",
+              "properties": {
+                "commentaire_approbation": {
+                  "description": "Commentaire de rejet d'approbation (facultatif)",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Demandes"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Demandes/demande/rejeter-confirmation/{id}": {
+      "post": {
+        "operationId": "Demandes_demande_rejeter-confirmation_create",
+        "description": "Rejeter une demande de confirmation (par le chef approvisionnement ou un supérieur autorisé)",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "commentaire_confirmation": {
+                  "description": "Commentaire de rejet de confirmation (facultatif)",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "commentaire_confirmation": {
+                  "description": "Commentaire de rejet de confirmation (facultatif)",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Demandes"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Demandes/demande/rejeter-validation/{id}": {
+      "post": {
+        "operationId": "Demandes_demande_rejeter-validation_create",
+        "description": "Rejeter une demande de validation (par les DG et DGA et DF, un supérieur autorisé)",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "commentaire_validation": {
+                  "description": "Commentaire de rejet de validation (facultatif)",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "commentaire_validation": {
+                  "description": "Commentaire de rejet de validation (facultatif)",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "tags": ["Demandes"]
@@ -187,19 +353,51 @@
     "/Demandes/demande/valider/{id}": {
       "post": {
         "operationId": "Demandes_demande_valider_create",
-        "description": "Valider une demande (par le DGA, ou le Directeur Financier (DF), ou le DG)",
+        "description": "Valider une demande qui se fait par le DG ou le DGA, ou le Directeur Financier (DF))",
         "parameters": [
           {
             "name": "data",
             "in": "body",
             "required": true,
-            "schema": { "$ref": "#/definitions/Demande" }
+            "schema": {
+              "type": "object",
+              "properties": {
+                "commentaire_validation": {
+                  "description": "Commentaire de validation (facultatif)",
+                  "type": "string"
+                },
+                "is_quantity_reduced_by_validation": {
+                  "description": "Indique si la quantité a été réduite lors de la validation (facultatif, par défaut false)",
+                  "type": "boolean"
+                },
+                "quantity_valid": {
+                  "description": "Quantité validée (facultatif, si différente de la quantité demandée)",
+                  "type": "integer"
+                }
+              }
+            }
           }
         ],
         "responses": {
           "201": {
             "description": "",
-            "schema": { "$ref": "#/definitions/Demande" }
+            "schema": {
+              "type": "object",
+              "properties": {
+                "commentaire_validation": {
+                  "description": "Commentaire de validation (facultatif)",
+                  "type": "string"
+                },
+                "is_quantity_reduced_by_validation": {
+                  "description": "Indique si la quantité a été réduite lors de la validation (facultatif, par défaut false)",
+                  "type": "boolean"
+                },
+                "quantity_valid": {
+                  "description": "Quantité validée (facultatif, si différente de la quantité demandée)",
+                  "type": "integer"
+                }
+              }
+            }
           }
         },
         "tags": ["Demandes"]
@@ -800,7 +998,54 @@
         { "name": "periode", "in": "path", "required": true, "type": "string" }
       ]
     },
-    "/Notifications/notifications/test/": {
+    "/Notifications/notification-detail/{id}": {
+      "get": {
+        "operationId": "Notifications_notification-detail_read",
+        "description": "Récupérer les détails d'une notification spécifique pour l'utilisateur connecté.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": { "$ref": "#/definitions/Notification" }
+          },
+          "404": {
+            "description": "Notification non trouvée ou n'appartenant pas à l'utilisateur."
+          }
+        },
+        "tags": ["Notifications"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Notifications/notification-mark-as-read/{id}": {
+      "post": {
+        "operationId": "Notifications_notification-mark-as-read_create",
+        "description": "Marquer une notification comme lue pour l'utilisateur connecté.",
+        "parameters": [],
+        "responses": {
+          "200": { "description": "Notification marquée comme lue" },
+          "404": {
+            "description": "Notification non trouvée ou n'appartenant pas à l'utilisateur."
+          }
+        },
+        "tags": ["Notifications"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Notifications/notifications-by-user": {
+      "get": {
+        "operationId": "Notifications_notifications-by-user_list",
+        "description": "",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Notifications"]
+      },
+      "parameters": []
+    },
+    "/Notifications/notifications/test": {
       "post": {
         "operationId": "Notifications_notifications_test_create",
         "description": "",
@@ -1971,6 +2216,32 @@
     }
   },
   "definitions": {
+    "UserDevice": {
+      "required": ["token", "device_type"],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "user": { "title": "User", "type": "string", "readOnly": true },
+        "token": {
+          "title": "Token",
+          "type": "string",
+          "maxLength": 500,
+          "minLength": 1
+        },
+        "device_type": {
+          "title": "Device type",
+          "type": "string",
+          "maxLength": 20,
+          "minLength": 1
+        },
+        "created_at": {
+          "title": "Created at",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
     "HistoriqueAction": {
       "required": ["action_type", "description"],
       "type": "object",
@@ -2110,6 +2381,10 @@
           "type": "string",
           "x-nullable": true
         },
+        "is_quantity_reduced_by_approb": {
+          "title": "Is quantity reduced by approb",
+          "type": "boolean"
+        },
         "quantite_approuv": {
           "title": "Quantite approuv",
           "type": "number",
@@ -2127,17 +2402,28 @@
           "type": "string",
           "x-nullable": true
         },
+        "is_quantity_reduced_by_valid": {
+          "title": "Is quantity reduced by valid",
+          "type": "boolean"
+        },
         "quantite_valid": {
           "title": "Quantite valid",
           "type": "number",
           "x-nullable": true
         },
         "cout_total_approx": {
-          "title": "Cout total approx",
+          "title": "Coût total approximatif de la demande après approbation",
           "type": "number",
+          "readOnly": true,
           "x-nullable": true
         },
         "is_valide": { "title": "Is valide", "type": "boolean" },
+        "duree_traitement": {
+          "title": "Durée de traitement de la demande",
+          "type": "string",
+          "readOnly": true,
+          "x-nullable": true
+        },
         "stock_item": { "title": "Stock item", "type": "integer" },
         "magasin": { "title": "Magasin", "type": "integer" },
         "emis_par": {
@@ -2346,6 +2632,34 @@
           "readOnly": true,
           "x-nullable": true
         }
+      }
+    },
+    "Notification": {
+      "required": ["title", "message"],
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID", "type": "integer", "readOnly": true },
+        "title": {
+          "title": "Title",
+          "type": "string",
+          "maxLength": 200,
+          "minLength": 1
+        },
+        "message": { "title": "Message", "type": "string", "minLength": 1 },
+        "is_read": { "title": "Is read", "type": "boolean" },
+        "created_at": {
+          "title": "Created at",
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "type": {
+          "title": "Type",
+          "type": "string",
+          "maxLength": 50,
+          "minLength": 1
+        },
+        "user": { "title": "User", "type": "integer", "readOnly": true }
       }
     },
     "Magasin": {
@@ -2820,6 +3134,11 @@
           "type": "string",
           "readOnly": true
         },
+        "produit_price": {
+          "title": "Produit price",
+          "type": "string",
+          "readOnly": true
+        },
         "quantite": {
           "title": "Quantite",
           "type": "string",
@@ -3125,6 +3444,11 @@
         "magasin": { "title": "Magasin", "type": "string", "readOnly": true },
         "profil_name": {
           "title": "Profil name",
+          "type": "string",
+          "readOnly": true
+        },
+        "permissions": {
+          "title": "Permissions",
           "type": "string",
           "readOnly": true
         },

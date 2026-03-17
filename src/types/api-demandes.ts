@@ -44,6 +44,7 @@ export interface ApiDemande {
 
   // Autres champs
   cout_total_approx?: number;
+  duree_traitement?: string;
   is_valide?: boolean;
 
   // Motif de rejet

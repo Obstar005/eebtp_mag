@@ -8,7 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   userInfoError: string | null;
-  login: (user: User, token: string) => void;
+  login: (user: User, token: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUserInfo: () => Promise<void>;
   clearUserInfoError: () => void;
@@ -62,10 +62,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setIsLoading(false);
   }, [isAuthDisabled]);
 
-  const login = (userData: User, token: string) => {
+  const login = async (userData: User, token: string) => {
     localStorage.setItem("auth_token", token);
     localStorage.setItem("user_data", JSON.stringify(userData));
     setUser(userData);
+
+    // Initialisation et envoi du token Firebase FCM en arrière-plan
+    try {
+      const { requestFirebaseNotificationPermission } =
+        await import("../services/firebase");
+      const fcmToken = await requestFirebaseNotificationPermission();
+      if (fcmToken) {
+        await authApiService.registerDeviceToken(fcmToken);
+      } else {
+        console.warn("Aucun token FCM obtenu, notifications désactivées.");
+      }
+    } catch (error) {
+      console.error(
+        "Erreur lors de la configuration des notifications Firebase :",
+        error,
+      );
+    }
   };
 
   // Récupérer les informations utilisateur depuis l'API

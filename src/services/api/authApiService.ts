@@ -279,6 +279,18 @@ export class AuthApiService {
       // Erreur de déconnexion API (non-bloquant)
     }
   }
+
+  // Enregistrer le token firebase (FCM) du device (navigateur)
+  async registerDeviceToken(token: string): Promise<void> {
+    try {
+      await apiClient.post("/App/devices/register", {
+        token,
+        device_type: "web"
+      });
+    } catch (error) {
+      console.error("Erreur lors de l'enregistrement du token Firebase :", error);
+    }
+  }
 }
 
 // Service pour la gestion des utilisateurs

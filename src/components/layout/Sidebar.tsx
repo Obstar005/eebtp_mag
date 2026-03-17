@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import logoPng from "../../assets/logo_eebtp.png";
 import { useAuth } from "../../contexts/AuthContext";
+import { useAccess } from "../../hooks/useAccessPermissions";
 import { formatRole } from "../../utils/formatUtils";
 
 interface MenuItem {
@@ -25,15 +26,18 @@ interface MenuItem {
   href?: string;
   icon: LucideIcon;
   children?: MenuItem[];
+  permissionKey?: string; // Clé de permission pour filtrer l'affichage
 }
 
 // Structure des sections avec titre et items
 interface NavigationSection {
   title?: string;
   items: MenuItem[];
+  sectionPermissionKey?: string; // Clé de permission pour toute la section
 }
 
-const navigation: NavigationSection[] = [
+// Navigation de base - sera filtrée par les permissions
+const getNavigation = (): NavigationSection[] => [
   // Section principale - Statistiques
   {
     title: "Statistiques",
@@ -42,17 +46,14 @@ const navigation: NavigationSection[] = [
         name: "Tableau de bord",
         href: "/dashboard",
         icon: BarChart3,
+        permissionKey: "statistique.canView",
       },
       {
         name: "Rapport",
         href: "/reports",
         icon: FileText,
+        permissionKey: "rapport.canCreate",
       },
-      // {
-      //   name: "Notifications",
-      //   href: "/notifications",
-      //   icon: Bell,
-      // },
     ],
   },
   // Section Profils
@@ -63,11 +64,13 @@ const navigation: NavigationSection[] = [
         name: "Ajouter un profil",
         href: "/profiles/add",
         icon: UserPlus,
+        permissionKey: "profil.canCreate",
       },
       {
         name: "Liste des profils",
         href: "/profiles",
         icon: List,
+        permissionKey: "profil.canView",
       },
     ],
   },
@@ -79,11 +82,13 @@ const navigation: NavigationSection[] = [
         name: "Ajouter un compte",
         href: "/accounts/add",
         icon: UserPlus,
+        permissionKey: "userAccess.canCreate",
       },
       {
         name: "Liste des comptes",
         href: "/accounts",
         icon: List,
+        permissionKey: "userAccess.canView",
       },
     ],
   },
@@ -95,11 +100,13 @@ const navigation: NavigationSection[] = [
         name: "Ajouter un projet",
         href: "/projects/add",
         icon: Plus,
+        permissionKey: "projet.canCreate",
       },
       {
         name: "Liste des projets",
         href: "/projects",
         icon: List,
+        permissionKey: "projet.canView",
       },
     ],
   },
@@ -111,16 +118,19 @@ const navigation: NavigationSection[] = [
         name: "Ajouter un article",
         href: "/articles/add",
         icon: Plus,
+        permissionKey: "article.canCreate",
       },
       {
         name: "Liste des articles",
         href: "/articles",
         icon: List,
+        permissionKey: "article.canView",
       },
       {
         name: "Liste des magasins",
         href: "/magasins",
         icon: Store,
+        permissionKey: "magasin.canView",
       },
     ],
   },
@@ -132,6 +142,7 @@ const navigation: NavigationSection[] = [
         name: "Liste des demandes",
         href: "/requests",
         icon: MessageSquare,
+        permissionKey: "demande.canView",
       },
     ],
   },
@@ -144,6 +155,37 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const { user, logout } = useAuth();
+  const accessPerms = useAccess();
+
+  // Fonction pour vérifier si l'utilisateur a la permission
+  const hasPermission = (permissionKey?: string): boolean => {
+    if (!permissionKey) return true; // Pas de permission requise = visible
+
+    const [module, permission] = permissionKey.split(".");
+    const modulePerms = accessPerms[module as keyof typeof accessPerms];
+
+    if (typeof modulePerms === "object" && modulePerms !== null) {
+      return (modulePerms as Record<string, boolean>)[permission] ?? false;
+    }
+
+    return false;
+  };
+
+  // Filtrer les items de navigation selon les permissions
+  const getFilteredNavigation = (): NavigationSection[] => {
+    const navigation = getNavigation();
+
+    return navigation
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) =>
+          hasPermission(item.permissionKey),
+        ),
+      }))
+      .filter((section) => section.items.length > 0); // Masquer les sections vides
+  };
+
+  const filteredNavigation = getFilteredNavigation();
 
   const renderMenuItem = (item: MenuItem) => {
     return (
@@ -232,7 +274,9 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         {/* Navigation - Zone scrollable */}
         <nav className="flex-1 overflow-y-auto px-3 py-6">
           <div className="space-y-1">
-            {navigation.map((section, index) => renderSection(section, index))}
+            {filteredNavigation.map((section, index) =>
+              renderSection(section, index),
+            )}
           </div>
         </nav>
 

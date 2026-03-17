@@ -865,6 +865,7 @@ export function apiDemandeToMaterialRequest(
     
     // Autres champs
     coutTotalApprox: apiDemande.cout_total_approx,
+    dureeTraitement: apiDemande.duree_traitement,
     isValide: apiDemande.is_valide,
   };
 }

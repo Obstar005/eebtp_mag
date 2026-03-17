@@ -196,6 +196,30 @@ export default function RequestDetailPage() {
                 readOnly
               />
             </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">
+                Coût total approx.
+              </label>
+              <input
+                className="w-full rounded-lg px-3 py-2 bg-gray-100"
+                value={
+                  request.coutTotalApprox !== undefined
+                    ? `${request.coutTotalApprox} XOF`
+                    : "-"
+                }
+                readOnly
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">
+                Durée de traitement
+              </label>
+              <input
+                className="w-full rounded-lg px-3 py-2 bg-gray-100"
+                value={request.dureeTraitement ?? "-"}
+                readOnly
+              />
+            </div>
           </div>
           {/* Traitements */}
           <div className="mt-8">
