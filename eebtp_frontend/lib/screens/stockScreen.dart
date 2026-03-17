@@ -670,10 +670,7 @@ class _StockPageState extends State<StockPage> {
   }
 
   Widget _buildEntryCard(Entree entry) {
-    final article = _getArticleForStockItem(entry.stockItem);
-    String typeArticle = article?.type ?? "";
-    String uniteArticle = article?.unite ?? "";
-
+  
     String typeLabel = entry.type.toLowerCase() == "livraison"
         ? "Livré le"
         : (entry.type.toLowerCase() == "retour" ? "Retourné le" : "Entrée le");
@@ -748,7 +745,7 @@ class _StockPageState extends State<StockPage> {
                 ),
                 SizedBox(height: 1.5.h),
                 Text(
-                  "Quantité : ${entry.quantiteM ?? '-'} $uniteArticle",
+                  "Quantité : ${entry.quantiteM ?? '-'} ${entry.stockItemUnite ?? '-'}",
                   style: GoogleFonts.montserrat(
                     fontSize: 15.sp,
                     color: const Color.fromARGB(255, 18, 18, 18),
@@ -765,9 +762,7 @@ class _StockPageState extends State<StockPage> {
   }
 
   Widget _buildExitCard(Sortie exit) {
-    final article = _getArticleForStockItem(exit.stockItem);
-    String typeArticle = article?.type ?? "";
-    String uniteArticle = article?.unite ?? "";
+
     String dateAffiche = _formatShortDateHeure(exit.dateCreation);
 
     return GestureDetector(
@@ -839,7 +834,7 @@ class _StockPageState extends State<StockPage> {
                 ),
                 SizedBox(height: 1.5.h),
                 Text(
-                  "Quantité : ${exit.quantiteM ?? '-'} $uniteArticle",
+                  "Quantité : ${exit.quantiteM ?? '-'} ${exit.stockItemUnite ?? '-'}",
                   style: GoogleFonts.montserrat(
                     fontSize: 15.sp,
                     color: const Color.fromARGB(255, 18, 18, 18),

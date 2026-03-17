@@ -5,6 +5,7 @@ class Entree {
   final int? source;
   final String? stockItemName;
   final String? stockItemType;
+  final String? stockItemUnite;
   final String type;
   final String quantiteM;
   final String nomDeposant;
@@ -28,6 +29,7 @@ class Entree {
     this.source,
     this.stockItemName,
     this.stockItemType,
+    this.stockItemUnite,
     required this.type,
     required this.quantiteM,
     required this.nomDeposant,
@@ -53,6 +55,7 @@ class Entree {
       source: json['source'],
       stockItemName: json['stock_item_name'],
       stockItemType: json['stock_item_type'],
+      stockItemUnite: json['stock_item_unite'],
       type: json['type'] ?? '',
       quantiteM: json['quantite_m'] ?? '',
       nomDeposant: json['nom_deposant'] ?? '',

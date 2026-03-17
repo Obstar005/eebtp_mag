@@ -9,7 +9,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../widgets/nav.dart';
 import 'package:provider/provider.dart';
 import 'package:eebtp_frontend/providers/auth_provider.dart';
-import 'package:eebtp_frontend/services/stockservice.dart';
 import 'package:eebtp_frontend/services/projetservice.dart';
 
 class EntryDetailPage extends StatefulWidget {
@@ -21,7 +20,7 @@ class EntryDetailPage extends StatefulWidget {
 }
 
 class _EntryDetailPageState extends State<EntryDetailPage> {
-  ArticleStock? article;
+
   String magasinName = "-";
   bool loading = true;
 
@@ -30,7 +29,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
-        Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
+        Provider.of<AuthProvider>(
+          context,
+          listen: false,
+        ).checkTokenExpiry(context);
         await _fetchAllData();
       }
     });
@@ -38,26 +40,22 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
 
   Future<void> _fetchAllData() async {
     final token = context.read<AuthProvider>().token;
-    final stockService = StockService(token: token!);
-    ArticleStock? art;
+    
     String magName = "-";
     try {
-      // 1. Article lié pour l'unité (si besoin)
-      art = await stockService.getArticleDetail(widget.entry.stockItem ?? -1);
-
-      // 2. Nom du magasin via storeId
+       // 1. Nom du magasin via storeId
       int? storeId = context.read<AuthProvider>().storeId;
       if (storeId != null) {
         final res = await ProjetService().getMagasinDetail(storeId);
         magName = res['nom'] ?? "-";
       }
     } catch (e) {
-      print("Erreur chargement article ou magasin: $e");
+      print("Erreur : $e");
     }
 
     if (mounted) {
       setState(() {
-        article = art;
+        
         magasinName = magName;
         loading = false;
       });
@@ -72,7 +70,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
           : _EntryDetailContent(
               entry: widget.entry,
               magasinName: magasinName,
-              article: article,
+             
             ),
       initialIndex: 1,
     );
@@ -82,11 +80,11 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
 class _EntryDetailContent extends StatelessWidget {
   final Entree entry;
   final String magasinName;
-  final ArticleStock? article;
+
   const _EntryDetailContent({
     required this.entry,
     required this.magasinName,
-    required this.article,
+
   });
 
   static const String backendUrl = 'http://38.242.139.218:8000';
@@ -130,7 +128,11 @@ class _EntryDetailContent extends StatelessWidget {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.error_outline, size: 48, color: Colors.red),
+                            Icon(
+                              Icons.error_outline,
+                              size: 48,
+                              color: Colors.red,
+                            ),
                             SizedBox(height: 2.h),
                             Text(
                               "Impossible de charger l'image",
@@ -166,11 +168,7 @@ class _EntryDetailContent extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: Icon(
-                      Icons.close,
-                      size: 6.w,
-                      color: Colors.black87,
-                    ),
+                    child: Icon(Icons.close, size: 6.w, color: Colors.black87),
                   ),
                 ),
               ),
@@ -181,19 +179,20 @@ class _EntryDetailContent extends StatelessWidget {
     );
   }
 
-void _callPhone(String phone) async {
-  final uri = Uri(scheme: 'tel', path: phone);
-  if (await canLaunchUrl(uri)) {
-    await launchUrl(uri);
+  void _callPhone(String phone) async {
+    final uri = Uri(scheme: 'tel', path: phone);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
   }
-}
+
   @override
   Widget build(BuildContext context) {
     final isRetour = entry.type == "Retour";
     final String pageTitle = isRetour ? "Détail retour" : "Détail entrée";
     final String cardLabel = isRetour ? "Déposant(e)" : "Livreur";
     final String dateLabel = isRetour ? "Retournée le" : "Entrée le";
-    final String unit = article?.unite ?? "";
+    final String unit = entry.stockItemUnite ?? "";
 
     return Column(
       children: [
@@ -209,7 +208,8 @@ void _callPhone(String phone) async {
                   _buildProductImage(),
                   SizedBox(height: 3.h),
                   Text(
-                    (entry.stockItemName ?? article?.designation ?? "-").toUpperCase(),
+                    (entry.stockItemName ??  "-")
+                        .toUpperCase(),
                     style: GoogleFonts.montserrat(
                       fontSize: 22.sp,
                       fontWeight: FontWeight.w700,
@@ -221,7 +221,10 @@ void _callPhone(String phone) async {
                   if (magasinName.isNotEmpty && magasinName != "-")
                     Container(
                       margin: EdgeInsets.only(bottom: 1.h),
-                      padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 3.w,
+                        vertical: 1.h,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFE8F0FE),
                         borderRadius: BorderRadius.circular(10),
@@ -242,7 +245,7 @@ void _callPhone(String phone) async {
                         child: _buildInfoCard(
                           icon: Icons.grid_view,
                           title: "Type",
-                          value: entry.stockItemType ?? article?.type ?? "-",
+                          value: entry.stockItemType ??  "-",
                         ),
                       ),
                       SizedBox(width: 3.w),
@@ -281,7 +284,11 @@ void _callPhone(String phone) async {
                     ),
                   if (entry.societe?.isNotEmpty == true) ...[
                     SizedBox(height: 2.h),
-                    _buildSupplierCard("Société", entry.societe!, entry.telSociete ?? "-"),
+                    _buildSupplierCard(
+                      "Société",
+                      entry.societe!,
+                      entry.telSociete ?? "-",
+                    ),
                   ],
                   SizedBox(height: 10.h),
                 ],
@@ -295,9 +302,7 @@ void _callPhone(String phone) async {
 
   Widget _buildHeader(BuildContext context, String title) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF0A84FF),
-      ),
+      decoration: const BoxDecoration(color: Color(0xFF0A84FF)),
       child: SafeArea(
         bottom: false,
         child: Padding(
@@ -337,20 +342,16 @@ void _callPhone(String phone) async {
   }
 
   Widget _buildProductImage() => Container(
-        height: 30.h,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(4.w),
-        ),
-        child: Center(
-          child: Icon(
-            Icons.inventory_2,
-            size: 20.w,
-            color: Colors.grey[400],
-          ),
-        ),
-      );
+    height: 30.h,
+    width: double.infinity,
+    decoration: BoxDecoration(
+      color: const Color(0xFFF5F5F5),
+      borderRadius: BorderRadius.circular(4.w),
+    ),
+    child: Center(
+      child: Icon(Icons.inventory_2, size: 20.w, color: Colors.grey[400]),
+    ),
+  );
 
   Widget _buildInfoCard({
     required IconData icon,
@@ -452,19 +453,20 @@ void _callPhone(String phone) async {
                       overflow: TextOverflow.ellipsis,
                     ),
                     SizedBox(width: 2.w),
-            GestureDetector(
-  onTap: () => _callPhone(phone),
-  child: Text(
-    phone,
-    style: GoogleFonts.montserrat(
-      fontSize: 12.sp,
-      color: Color(0xFF34C759),
-      fontWeight: FontWeight.w600,
-      decoration: TextDecoration.underline,
-      decorationColor: Color(0xFF34C759),
-    ),
-  ),
-), ],
+                    GestureDetector(
+                      onTap: () => _callPhone(phone),
+                      child: Text(
+                        phone,
+                        style: GoogleFonts.montserrat(
+                          fontSize: 12.sp,
+                          color: Color(0xFF34C759),
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline,
+                          decorationColor: Color(0xFF34C759),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -483,7 +485,7 @@ void _callPhone(String phone) async {
     String? signatureUrl,
   }) {
     Widget signatureWidget = const SizedBox.shrink();
-    
+
     if (signatureUrl != null && signatureUrl.isNotEmpty) {
       // ✅ Construction de l'URL complète
       String effectiveUrl = signatureUrl;
@@ -556,11 +558,7 @@ void _callPhone(String phone) async {
               // ✅ Indicateur cliquable si signature existe
               if (signatureUrl != null && signatureUrl.isNotEmpty) ...[
                 SizedBox(width: 2.w),
-                Icon(
-                  Icons.zoom_in,
-                  size: 16,
-                  color: Colors.grey[500],
-                ),
+                Icon(Icons.zoom_in, size: 16, color: Colors.grey[500]),
                 SizedBox(width: 1.w),
                 Text(
                   "Toucher la signature pour agrandir",
@@ -602,19 +600,20 @@ void _callPhone(String phone) async {
                     ),
                     if (signatureUrl != null && signatureUrl.isNotEmpty)
                       signatureWidget,
-              GestureDetector(
-  onTap: () => _callPhone(phone),
-  child: Text(
-    phone,
-    style: GoogleFonts.montserrat(
-      fontSize: 12.sp,
-      color: Color(0xFF34C759),
-      fontWeight: FontWeight.w600,
-      decoration: TextDecoration.underline,
-      decorationColor: Color(0xFF34C759),
-    ),
-  ),
-), ],
+                    GestureDetector(
+                      onTap: () => _callPhone(phone),
+                      child: Text(
+                        phone,
+                        style: GoogleFonts.montserrat(
+                          fontSize: 12.sp,
+                          color: Color(0xFF34C759),
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline,
+                          decorationColor: Color(0xFF34C759),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -662,18 +661,19 @@ void _callPhone(String phone) async {
                 ),
               ),
               SizedBox(width: 3.w),
-        GestureDetector(
-  onTap: () => _callPhone(phone),
-  child: Text(
-    phone,
-    style: GoogleFonts.montserrat(
-      fontSize: 14.sp,
-      fontWeight: FontWeight.w600,
-      color: Colors.lightBlue,
-      decoration: TextDecoration.underline,
-    ),
-  ),
-),  ],
+              GestureDetector(
+                onTap: () => _callPhone(phone),
+                child: Text(
+                  phone,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.lightBlue,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],

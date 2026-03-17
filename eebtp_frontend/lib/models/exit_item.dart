@@ -4,6 +4,7 @@ class Sortie {
   final int stockItem;
   final String? stockItemName;
   final String? stockItemType;
+  final String? stockItemUnite;
   final String quantiteM;
   final String? dateCreation;
   final String? dateModif;
@@ -20,6 +21,7 @@ class Sortie {
     required this.stockItem,
     this.stockItemName,
     this.stockItemType,
+    this.stockItemUnite,
     required this.quantiteM,
     this.dateCreation,
     this.dateModif,
@@ -38,6 +40,7 @@ class Sortie {
       stockItem: json['stock_item'],
       stockItemName: json['stock_item_name'],
       stockItemType: json['stock_item_type'],
+      stockItemUnite: json['stock_item_unite'], 
       quantiteM: json['quantite_m'],
       dateCreation: json['date_creation'],
       dateModif: json['date_modif'],

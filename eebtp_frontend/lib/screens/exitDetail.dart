@@ -19,12 +19,11 @@ class ExitDetailPage extends StatefulWidget {
 }
 
 class _ExitDetailPageState extends State<ExitDetailPage> {
-  ArticleStock? article;
-  bool isLoading = true;
-  bool isError = false;
+ 
+  bool isLoading = false;
+ 
 
-  @override
-   @override
+@override  
 void initState() {
   super.initState();
   WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -33,68 +32,24 @@ void initState() {
     }
   });
 
-    _loadArticle();
   }
 
-  Future<void> _loadArticle() async {
-    setState(() {
-      isLoading = true;
-      isError = false;
-    });
-
-    try {
-      // On récupère le token depuis le Provider
-      final token = context.read<AuthProvider>().token;
-      final fetched =
-          await StockService(token: token).getArticleDetail(widget.sortie.stockItem);
-      setState(() {
-        article = fetched;
-        isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        isError = true;
-        isLoading = false;
-      });
-    }
-  }
-
+ 
   @override
   Widget build(BuildContext context) {
     return NavContainer(
       initialIndex: 1,
       body: isLoading
           ? Center(child: CircularProgressIndicator())
-          : isError
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.warning_amber_rounded,
-                          color: Colors.red, size: 40),
-                      SizedBox(height: 2.h),
-                      Text('Erreur lors du chargement de l\'article.',
-                          style: GoogleFonts.montserrat(
-                              fontSize: 16, color: Colors.red)),
-                      SizedBox(height: 2.h),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue),
-                        onPressed: _loadArticle,
-                        child: Text('Réessayer'),
-                      ),
-                    ],
-                  ),
-                )
-              : _ExitDetailContent(sortie: widget.sortie, article: article),
+          : _ExitDetailContent(sortie: widget.sortie),
     );
   }
 }
 
 class _ExitDetailContent extends StatelessWidget {
   final Sortie sortie;
-  final ArticleStock? article;
-  const _ExitDetailContent({required this.sortie, required this.article});
+  
+  const _ExitDetailContent({required this.sortie});
    
    void _callPhone(String phone) async {
   final uri = Uri(scheme: 'tel', path: phone);
@@ -119,7 +74,7 @@ class _ExitDetailContent extends StatelessWidget {
                   SizedBox(height: 3.h),
                   // INFO produit/article
                   Text(
-                    (article?.designation ?? "Produit lié ID #${sortie.stockItem}").toUpperCase(),
+                    (sortie.stockItemName ?? "Produit lié ID #${sortie.stockItem}").toUpperCase(),
                     style: GoogleFonts.montserrat(
                       fontSize: 22.sp,
                       fontWeight: FontWeight.w700,
@@ -152,7 +107,7 @@ class _ExitDetailContent extends StatelessWidget {
                         child: _buildInfoCard(
                           icon: Icons.grid_view,
                           title: "Type",
-                          value: article?.type ?? "-",
+                          value: sortie.stockItemType ?? "-",
                         ),
                       ),
                       SizedBox(width: 3.w),
@@ -168,7 +123,7 @@ class _ExitDetailContent extends StatelessWidget {
                         child: _buildInfoCard(
                           icon: Icons.shopping_cart_outlined,
                           title: "Qté sortie",
-                          value: "${sortie.quantiteM} ${article?.unite ?? ''}",
+                          value: "${sortie.quantiteM} ${sortie.stockItemUnite ?? ''}",
                         ),
                       ),
                     ],
