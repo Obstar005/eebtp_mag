@@ -44,10 +44,10 @@ def send_notification(user, title, body, type, data=None):
 def notifier_utilisateurs(demande, type_notification):
     projet = demande.magasin.projet
 
-    confirmateurs = CustomUser.objects.filter(profil__code__in=['superadmin', 'chef_appro'], is_active=True).distinct()
+    confirmateurs = CustomUser.objects.filter(profil__code__in=['superadmin', 'admin', 'chef_appro'], is_active=True).distinct()
     #Les approveurs(Qui sont les dt ou les dtx); on doit s'assurer qu'ils sont tous affectés au projet de la demande pour éviter de notifier des chefs de projet qui n'ont rien à voir avec la demande
-    approuveurs = CustomUser.objects.filter(profil__code__in=['superadmin', 'dtx', 'dt'], projets=projet, is_active=True).distinct()
-    validateurs = CustomUser.objects.filter(profil__code__in=['superadmin', 'dg', 'dga', 'df'], is_active=True).distinct()
+    approuveurs = CustomUser.objects.filter(profil__code__in=['superadmin', 'admin', 'dtx', 'dt'], projets=projet, is_active=True).distinct()
+    validateurs = CustomUser.objects.filter(profil__code__in=['superadmin', 'admin', 'dg', 'dga', 'df'], is_active=True).distinct()
     if type_notification == "emission":
         users = list(confirmateurs) + list(approuveurs) + list(validateurs) #On notifie tous les confirmateurs qui sont des chefs appro et les dt/dtx qui sont les approveurs et les validateurs qui sont des directeurs dans l'entreprise et qui ont accès a tous les projets contrairement aux approuveurs qui sont des chefs de projet et qui n'ont accès qu'aux projets dont ils sont responsables
         title = "Nouvelle Demande Émise dans le système"
