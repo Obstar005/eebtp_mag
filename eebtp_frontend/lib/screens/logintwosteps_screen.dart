@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:eebtp_frontend/services/fcm_service.dart';
 import 'package:eebtp_frontend/widgets/button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -572,7 +573,7 @@ class _LoginTwoStepScreenState extends State<LoginTwoStepScreen> {
                             final String token = data['access_token'];
                             final bool firstLogin = data['first_login'];
                             await context.read<AuthProvider>().setToken(token);
-
+                            await FcmService().initialize(token);
                             _showToast(
                               message: "Connexion réussie !",
                               type: ToastificationType.success,

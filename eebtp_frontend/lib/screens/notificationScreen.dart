@@ -1,4 +1,6 @@
+import 'package:eebtp_frontend/services/fcm_service.dart';
 import 'package:eebtp_frontend/widgets/nav.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
@@ -16,63 +18,54 @@ class _NotificationScreenState extends State<NotificationScreen> {
   String searchQuery = '';
   bool isSearchMode = false;
 
-  // Données factices
-  final List<NotificationItem> notifications = [
-    NotificationItem(
-      id: 'DEM-008',
-      userName: 'Lex Murphy',
-      userAvatar: 'assets/avatars/lex.jpg',
-      message: 'a valider votre demande d\'approvisionnement de ciment',
-      timestamp: 'Aujourd\'hui à 9:42',
-      isRead: false,
-      type: NotificationType.validation,
-    ),
-    NotificationItem(
-      id: 'DEM-004',
-      userName: 'Lex Murphy',
-      userAvatar: 'assets/avatars/lex2.jpg',
-      message: 'a valider votre demande d\'approvisionnement de ciment',
-      timestamp: 'Hier à 9:42',
-      isRead: false,
-      type: NotificationType.validation,
-    ),
-    NotificationItem(
-      id: 'DEM-005',
-      userName: 'Lex Murphy',
-      userAvatar: 'assets/avatars/lex3.jpg',
-      message: 'a valider votre demande d\'approvisionnement de ciment',
-      timestamp: 'Hier à 9:42',
-      isRead: true,
-      type: NotificationType.validation,
-    ),
-    NotificationItem(
-      id: 'DEM-005',
-      userName: 'Lex Murphy',
-      userAvatar: 'assets/avatars/lex4.jpg',
-      message: 'a alider votre demande d\'approvisionnement de ciment',
-      timestamp: 'Hier à 9:42',
-      isRead: true,
-      type: NotificationType.validation,
-    ),
-    NotificationItem(
-      id: 'DEM-006',
-      userName: 'Ray Arnold',
-      userAvatar: 'assets/avatars/ray.jpg',
-      message: 'a refuser votre demande d\'approvisionnement de couteaux',
-      timestamp: 'Hier à 9:42',
-      isRead: false,
-      type: NotificationType.refusal,
-    ),
-  ];
+  // ✅ Liste mutable (pas final) pour pouvoir insérer les notifs FCM
+  List<NotificationItem> notifications = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    // ✅ Écoute les notifications FCM en foreground
+    FcmService().setupForegroundHandler(
+      onMessage: (RemoteMessage message) {
+        if (!mounted) return;
+        setState(() {
+          notifications.insert(
+            0,
+            NotificationItem(
+              id: message.data['demande_id'] ?? '-',
+              userName: message.notification?.title ?? 'Notification',
+              userAvatar: '',
+              message: message.notification?.body ?? '',
+              timestamp: 'À l\'instant',
+              isRead: false,
+              type: _resolveType(message.data['type']),
+            ),
+          );
+        });
+      },
+    );
+  }
+
+  NotificationType _resolveType(String? raw) {
+    switch (raw) {
+      case 'validation':
+        return NotificationType.validation;
+      case 'refusal':
+        return NotificationType.refusal;
+      default:
+        return NotificationType.info;
+    }
+  }
+
+  int get _unreadCount => notifications.where((n) => !n.isRead).length;
 
   List<NotificationItem> get filteredNotifications {
-    if (searchQuery.isEmpty) {
-      return notifications;
-    }
-    return notifications.where((notification) {
-      return notification.userName.toLowerCase().contains(searchQuery.toLowerCase()) ||
-             notification.message.toLowerCase().contains(searchQuery.toLowerCase()) ||
-             notification.id.toLowerCase().contains(searchQuery.toLowerCase());
+    if (searchQuery.isEmpty) return notifications;
+    return notifications.where((n) {
+      return n.userName.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          n.message.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          n.id.toLowerCase().contains(searchQuery.toLowerCase());
     }).toList();
   }
 
@@ -89,11 +82,27 @@ class _NotificationScreenState extends State<NotificationScreen> {
     });
   }
 
+  // ✅ Marquer une notification comme lue
+  void _markAsRead(int index) {
+    if (!notifications[index].isRead) {
+      setState(() {
+        notifications[index].isRead = true;
+      });
+    }
+  }
+
+  // ✅ Marquer toutes comme lues
+  void _markAllAsRead() {
+    setState(() {
+      for (var n in notifications) {
+        n.isRead = true;
+      }
+    });
+  }
+
   Widget _buildNormalAppBar() {
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF0A84FF),
-      ),
+      decoration: const BoxDecoration(color: Color(0xFF0A84FF)),
       child: SafeArea(
         bottom: false,
         child: Padding(
@@ -124,6 +133,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   color: Colors.white,
                 ),
               ),
+              // ✅ Badge dynamique basé sur _unreadCount
               Stack(
                 children: [
                   Container(
@@ -138,29 +148,32 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       color: const Color(0xFF0A84FF),
                     ),
                   ),
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 1.5.w, vertical: 0.3.h),
-                      constraints: BoxConstraints(minWidth: 5.w, minHeight: 2.h),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFF3B30),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          "3",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Montserrat',
+                  if (_unreadCount > 0)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 1.5.w, vertical: 0.3.h),
+                        constraints:
+                            BoxConstraints(minWidth: 5.w, minHeight: 2.h),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFF3B30),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$_unreadCount',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Montserrat',
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ],
@@ -172,9 +185,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Widget _buildSearchAppBar() {
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF0A84FF),
-      ),
+      decoration: const BoxDecoration(color: Color(0xFF0A84FF)),
       child: SafeArea(
         bottom: false,
         child: Padding(
@@ -207,9 +218,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     controller: _searchController,
                     focusNode: _searchFocusNode,
                     onChanged: (value) {
-                      setState(() {
-                        searchQuery = value;
-                      });
+                      setState(() => searchQuery = value);
                     },
                     style: GoogleFonts.montserrat(
                       fontSize: 14.sp,
@@ -221,18 +230,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         color: Colors.grey[400],
                         fontSize: 14.sp,
                       ),
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: Colors.grey[400],
-                        size: 6.w,
-                      ),
+                      prefixIcon:
+                          Icon(Icons.search, color: Colors.grey[400], size: 6.w),
                       suffixIcon: searchQuery.isNotEmpty
                           ? GestureDetector(
                               onTap: () {
                                 _searchController.clear();
-                                setState(() {
-                                  searchQuery = '';
-                                });
+                                setState(() => searchQuery = '');
                               },
                               child: Container(
                                 margin: EdgeInsets.all(2.w),
@@ -240,19 +244,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                   color: Colors.grey[300],
                                   shape: BoxShape.circle,
                                 ),
-                                child: Icon(
-                                  Icons.close,
-                                  color: Colors.grey[600],
-                                  size: 4.w,
-                                ),
+                                child: Icon(Icons.close,
+                                    color: Colors.grey[600], size: 4.w),
                               ),
                             )
                           : null,
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(
-                        horizontal: 4.w,
-                        vertical: 1.8.h,
-                      ),
+                          horizontal: 4.w, vertical: 1.8.h),
                     ),
                   ),
                 ),
@@ -267,133 +266,148 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Widget _buildSearchBarBelow() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
-      child: GestureDetector(
-        onTap: _toggleSearchMode,
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.circular(30),
-          ),
-          child: Row(
-            children: [
-              Padding(
-                padding: EdgeInsets.only(left: 4.w),
-                child: Icon(
-                  Icons.search,
-                  color: Colors.grey[400],
-                  size: 6.w,
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: _toggleSearchMode,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F5F5),
+                  borderRadius: BorderRadius.circular(30),
                 ),
-              ),
-              SizedBox(width: 3.w),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 2.h),
-                  child: Text(
-                    "Rechercher",
-                    style: GoogleFonts.montserrat(
-                      color: Colors.grey[400],
-                      fontSize: 14.sp,
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(left: 4.w),
+                      child: Icon(Icons.search, color: Colors.grey[400], size: 6.w),
                     ),
-                  ),
+                    SizedBox(width: 3.w),
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 2.h),
+                        child: Text(
+                          "Rechercher",
+                          style: GoogleFonts.montserrat(
+                            color: Colors.grey[400],
+                            fontSize: 14.sp,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+          // ✅ Bouton "Tout lire" visible seulement s'il y a des non-lues
+          if (_unreadCount > 0) ...[
+            SizedBox(width: 3.w),
+            GestureDetector(
+              onTap: _markAllAsRead,
+              child: Text(
+                "Tout lire",
+                style: GoogleFonts.montserrat(
+                  fontSize: 13.sp,
+                  color: const Color(0xFF0A84FF),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
 
-  Widget _buildNotificationItem(NotificationItem notification) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 1.5.h),
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: notification.isRead 
-          ? Colors.white 
-          : const Color(0xFFE3F2FD),
-        borderRadius: BorderRadius.circular(3.w),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              Container(
-                width: 12.w,
-                height: 12.w,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.grey[300],
-                  image: const DecorationImage(
-                    image: NetworkImage('https://via.placeholder.com/150'),
-                    fit: BoxFit.cover,
+  Widget _buildNotificationItem(NotificationItem notification, int index) {
+    return GestureDetector(
+      onTap: () => _markAsRead(index), // ✅ Marquer comme lu au tap
+      child: Container(
+        margin: EdgeInsets.only(bottom: 1.5.h),
+        padding: EdgeInsets.all(4.w),
+        decoration: BoxDecoration(
+          color: notification.isRead ? Colors.white : const Color(0xFFE3F2FD),
+          borderRadius: BorderRadius.circular(3.w),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                Container(
+                  width: 12.w,
+                  height: 12.w,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.grey[300],
                   ),
+                  child: Icon(Icons.person, color: Colors.white, size: 7.w),
                 ),
-              ),
-              if (!notification.isRead)
-                Positioned(
-                  left: 0,
-                  top: 0,
-                  child: Container(
-                    width: 2.5.w,
-                    height: 2.5.w,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF0A84FF),
-                      shape: BoxShape.circle,
+                if (!notification.isRead)
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    child: Container(
+                      width: 2.5.w,
+                      height: 2.5.w,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF0A84FF),
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
-                ),
-            ],
-          ),
-          SizedBox(width: 3.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: notification.userName,
-                        style: GoogleFonts.montserrat(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black,
-                        ),
-                      ),
-                      TextSpan(
-                        text: ' ${notification.message}',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 0.5.h),
-                Text(
-                  'N° ${notification.id}',
-                  style: GoogleFonts.montserrat(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                SizedBox(height: 0.3.h),
-                Text(
-                  notification.timestamp,
-                  style: GoogleFonts.montserrat(
-                    fontSize: 12.sp,
-                    color: Colors.grey[500],
-                  ),
-                ),
               ],
             ),
-          ),
-        ],
+            SizedBox(width: 3.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: notification.userName,
+                          style: GoogleFonts.montserrat(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black,
+                          ),
+                        ),
+                        TextSpan(
+                          text: ' ${notification.message}',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 0.5.h),
+                  Text(
+                    'N° ${notification.id}',
+                    style: GoogleFonts.montserrat(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 0.3.h),
+                  Text(
+                    notification.timestamp,
+                    style: GoogleFonts.montserrat(
+                      fontSize: 12.sp,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -443,10 +457,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
               child: filteredNotifications.isEmpty
                   ? _buildEmptyState()
                   : ListView.builder(
-                      padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.h),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.h),
                       itemCount: filteredNotifications.length,
                       itemBuilder: (context, index) {
-                        return _buildNotificationItem(filteredNotifications[index]);
+                        return _buildNotificationItem(
+                            filteredNotifications[index], index);
                       },
                     ),
             ),

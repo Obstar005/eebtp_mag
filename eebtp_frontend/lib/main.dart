@@ -1,4 +1,7 @@
 import 'package:eebtp_frontend/screens/returnScreen.dart';
+import 'package:eebtp_frontend/services/fcm_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:provider/provider.dart';
@@ -35,13 +38,30 @@ import 'package:eebtp_frontend/screens/splash_screen.dart';
 import 'package:eebtp_frontend/screens/stockScreen.dart';
 import 'package:eebtp_frontend/screens/storeSelectionPage.dart';
 
+//  Handler background — doit être top-level
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print("Background message reçu: ${message.messageId}");
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ✅ Firebase init
+  await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
   final authProvider = AuthProvider();
   await authProvider.loadFromStorage();
+
+  // ✅ Si l'utilisateur est déjà connecté (token en storage), enregistrer le device
+  if (authProvider.token != null) {
+    await FcmService().initialize(authProvider.token!);
+  }
+
   runApp(
     ChangeNotifierProvider.value(
-      
       value: authProvider,
       child: const MyApp(),
     ),
@@ -69,47 +89,36 @@ class MyApp extends StatelessWidget {
                 return MaterialPageRoute(
                   builder: (context) => ProfilePage(),
                 );
-
               case '/edit_profile':
                 final args = settings.arguments as Map<String, dynamic>;
                 final user = args['user'] as Utilisateur;
                 return MaterialPageRoute(
                   builder: (_) => EditProfilePage(user: user),
                 );
-
-              // Détail stock : reçoit bien un StockItem (paramètre = stockItem)
               case '/product-detail':
                 final stockItem = settings.arguments as StockItem;
                 return MaterialPageRoute(
                   builder: (_) => ProductDetailPage(stockItem: stockItem),
                 );
-
-              // Détail entrée : EntryDetailPage(entry: entry)
               case '/entry-detail':
                 final entry = settings.arguments as Entree;
                 return MaterialPageRoute(
                   builder: (_) => EntryDetailPage(entry: entry),
                 );
-
-              // Détail sortie : ExitDetailPage(sortie: sortie)
               case '/exit-detail':
                 final sortie = settings.arguments as Sortie;
                 return MaterialPageRoute(
                   builder: (_) => ExitDetailPage(sortie: sortie),
                 );
-
-              // Modal password succès
               case '/modal_success':
                 final phone = settings.arguments as String;
                 return MaterialPageRoute(
                   builder: (_) => PasswordVerifiedModal(phone: phone),
                 );
-
               case '/mdp_page':
                 return MaterialPageRoute(
                   builder: (_) => ChangePasswordPage(),
                 );
-
               default:
                 return null;
             }
