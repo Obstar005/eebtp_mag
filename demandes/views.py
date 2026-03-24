@@ -443,6 +443,20 @@ def liste_demandes_validees(request):
     serializer = DemandeSerializer(demandes, many=True)
     return Response(serializer.data)
 
+#Liste des demandes validées par un magasinier
+@swagger_auto_schema(method='get',
+                        operation_description="Récupérer la liste des demandes validées pour un magasinier précisement")
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def liste_demandes_validees_magasinier(request):
+    user = request.user
+    if not has_permission(user, 'demande.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
+    demandes = Demande.objects.filter(statut='Validée', emis_par=user).order_by('-date_creation')
+    serializer = DemandeSerializer(demandes, many=True)
+    return Response(serializer.data)
+
 #Liste des demandes validées filtrer par periode
 @swagger_auto_schema(method='get',
                         operation_description="Récupérer la liste des demandes validées selon une période: jour, semaine, mois, total")
@@ -519,6 +533,20 @@ def liste_toutes_les_demandes(request):
         return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
     
     demandes = Demande.objects.all().order_by('-date_creation')
+    serializer = DemandeSerializer(demandes, many=True)
+    return Response(serializer.data)
+
+#Liste de toutes les demandes
+@swagger_auto_schema(method='get',
+                        operation_description="Récupérer la liste de toutes les demandes faites par un magasinier")
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def liste_toutes_les_demandes_magasinier(request):
+    user = request.user
+    if not has_permission(user, 'demande.view'):
+        return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    
+    demandes = Demande.objects.filter(emis_par=user).order_by('-date_creation')
     serializer = DemandeSerializer(demandes, many=True)
     return Response(serializer.data)
 
