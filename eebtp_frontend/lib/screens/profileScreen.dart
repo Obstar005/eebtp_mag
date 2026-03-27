@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:eebtp_frontend/models/utilisateur.dart';
 import 'package:eebtp_frontend/services/auth.dart';
+import 'package:eebtp_frontend/services/notification_service.dart';
 import 'package:eebtp_frontend/widgets/button.dart';
 import 'package:eebtp_frontend/widgets/nav.dart';
 import 'package:flutter/material.dart';
@@ -41,6 +42,7 @@ class _ProfilePageState extends State<ProfilePage> {
         Navigator.pushReplacementNamed(context, '/login');
       });
     }
+    _fetchUnreadCount();
   }
 
   String? _getProfilePhotoUrl(String? photoPath) {
@@ -53,6 +55,22 @@ class _ProfilePageState extends State<ProfilePage> {
     return photoPath;
   }
 
+
+int _unreadNotifCount = 0;
+
+Future<void> _fetchUnreadCount() async {
+  final token = Provider.of<AuthProvider>(context, listen: false).token;
+  if (token == null) return;
+  try {
+    final data = await NotificationService(token: token).getNotificationsByUser();
+    if (!mounted) return;
+    setState(() {
+      _unreadNotifCount = data.where((n) => !n.isRead).length;
+    });
+  } catch (e) {
+    debugPrint('Erreur fetch unread count: $e');
+  }
+}
   String _getDisplayPoste(String? poste) {
     if (poste == null || poste.isEmpty || poste.toLowerCase() == 'string') {
       return 'Sans poste';
@@ -359,33 +377,26 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                 ),
                               ),
-                              Positioned(
-                                right: 0,
-                                top: 0,
-                                child: Container(
-                                  padding: EdgeInsets.all(1.w),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.red,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  constraints: BoxConstraints(
-                                    minWidth: 16,
-                                    minHeight: 16,
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      "3",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 10.sp,
-                                        fontWeight: FontWeight.bold,
-                                        fontFamily: 'Montserrat',
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                           if (_unreadNotifCount > 0)
+  Positioned(
+    right: 0,
+    top: 0,
+    child: Container(
+      padding: EdgeInsets.all(5),
+      decoration: const BoxDecoration(
+        color: Colors.red,
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        '$_unreadNotifCount',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 14.sp,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  ),],
                           ),
                         ],
                       ),

@@ -4,6 +4,7 @@ import 'package:eebtp_frontend/models/entry_item.dart';
 import 'package:eebtp_frontend/models/exit_item.dart';
 import 'package:eebtp_frontend/models/stockitem.dart';
 import 'package:eebtp_frontend/models/article.dart';
+import 'package:eebtp_frontend/services/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
@@ -47,6 +48,7 @@ class _StockPageState extends State<StockPage> {
       }
 
       _initializeServices();
+      _fetchUnreadCount();
     });
   }
 
@@ -60,6 +62,22 @@ class _StockPageState extends State<StockPage> {
       _loadAllData(storeId);
     }
   }
+int _unreadNotifCount = 0;
+
+Future<void> _fetchUnreadCount() async {
+  final token = Provider.of<AuthProvider>(context, listen: false).token;
+  if (token == null) return;
+  try {
+    final data = await NotificationService(token: token).getNotificationsByUser();
+    if (!mounted) return;
+    setState(() {
+      _unreadNotifCount = data.where((n) => !n.isRead).length;
+    });
+  } catch (e) {
+    debugPrint('Erreur fetch unread count: $e');
+  }
+}
+
 
   Future<void> _loadAllData(int? storeId) async {
     if (storeId == null) return;
@@ -273,26 +291,26 @@ class _StockPageState extends State<StockPage> {
                                 ),
                               ),
                             ),
-                            Positioned(
-                              right: 0,
-                              top: 0,
-                              child: Container(
-                                padding: EdgeInsets.all(1.w),
-                                decoration: const BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Text(
-                                  "3",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10.sp,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                        if (_unreadNotifCount > 0)
+  Positioned(
+    right: 0,
+    top: 0,
+    child: Container(
+      padding: EdgeInsets.all(5),
+      decoration: const BoxDecoration(
+        color: Colors.red,
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        '$_unreadNotifCount',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 14.sp,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  ), ],
                         ),
                       ],
                     ),

@@ -220,8 +220,73 @@ Future<Demande> updateDemandeRejetee({
     rethrow;
   }
 }
+ 
+Future<List<Demande>> getToutesDemandesMagasinier(String token) async {
+  final url = Uri.parse('$baseUrl/Demandes/demandes-magasignier/toutes');
+
+  try {
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is List) {
+        return data.map((item) => Demande.fromJson(item as Map<String, dynamic>)).toList();
+      } else {
+        throw FormatException('Réponse inattendue : attendu une liste');
+      }
+    } else if (response.statusCode == 401) {
+      throw Exception('Non autorisé : token invalide ou expiré');
+    } else if (response.statusCode == 403) {
+      throw Exception('Accès refusé : permissions insuffisantes');
+    } else {
+      throw Exception('Erreur HTTP ${response.statusCode} : ${response.reasonPhrase}');
+    }
+  } catch (e) {
+    throw Exception('Erreur réseau ou inattendue : $e');
+  }
+}
+
+
+Future<List<Demande>> getDemandesValideesMagasinier(String token) async {
+  final url = Uri.parse('$baseUrl/Demandes/demandes-validées-magasignier');
+
+  try {
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is List) {
+        return data.map((item) => Demande.fromJson(item as Map<String, dynamic>)).toList();
+      } else {
+        throw FormatException('Réponse inattendue : attendu une liste');
+      }
+    } else if (response.statusCode == 401) {
+      throw Exception('Non autorisé : token invalide ou expiré');
+    } else if (response.statusCode == 403) {
+      throw Exception('Accès refusé : permissions insuffisantes');
+    } else {
+      throw Exception('Erreur HTTP ${response.statusCode} : ${response.reasonPhrase}');
+    }
+  } catch (e) {
+    throw Exception('Erreur réseau ou inattendue : $e');
+  }
+}
+
+
  Future<void> emettreDemande({
-    required int quantite,
+    required int quantiteDem,
     required String raison,
     required int stockItem,
     required int magasin,
@@ -229,7 +294,7 @@ Future<Demande> updateDemandeRejetee({
   }) async {
     final url = Uri.parse('$baseUrl/Demandes/demande/emettre');
     final body = jsonEncode({
-      'quantite': quantite,
+      'quantite_dem': quantiteDem,
       'raison': raison,
       'stock_item': stockItem,
       'magasin': magasin,

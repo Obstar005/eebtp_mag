@@ -248,9 +248,7 @@ class _StockExitScreenState extends State<StockExitScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Détecte si le clavier est visible
-    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
-
+  
     return NavContainer(
       initialIndex: 1,
       body: SafeArea(
@@ -264,9 +262,8 @@ class _StockExitScreenState extends State<StockExitScreen> {
                     ? Center(child: CircularProgressIndicator())
                     : SingleChildScrollView(
                         // ✅ Scroll uniquement activé quand le clavier est ouvert
-                        physics: isKeyboardOpen
-                            ? const ClampingScrollPhysics()
-                            : const NeverScrollableScrollPhysics(),
+                        physics:  ClampingScrollPhysics(),
+                          
                         padding: EdgeInsets.symmetric(
                           horizontal: 5.w,
                           vertical: 2.h,

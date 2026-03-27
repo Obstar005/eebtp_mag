@@ -5,6 +5,7 @@ import 'package:eebtp_frontend/models/utilisateur.dart';
 import 'package:eebtp_frontend/providers/auth_provider.dart';
 import 'package:eebtp_frontend/services/auth.dart';
 import 'package:eebtp_frontend/services/demandeService.dart';
+import 'package:eebtp_frontend/services/notification_service.dart';
 import 'package:eebtp_frontend/services/stockservice.dart';
 import 'package:eebtp_frontend/widgets/nav.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +25,7 @@ class SupplyRequestScreen extends StatefulWidget {
 class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
   final _quantityController = TextEditingController();
   final _motifController = TextEditingController();
-
+bool _isNetworkError = false;
   StockItem? _selectedProduct;
   Utilisateur? _selectedResponsible;
   bool _isProductDropdownOpen = false;
@@ -56,9 +57,26 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
         _checkUserRole();
         _fetchProducts();
         _fetchUsers();
+        _fetchUnreadCount();
       }
     });
   }
+
+int _unreadNotifCount = 0;
+
+Future<void> _fetchUnreadCount() async {
+  final token = Provider.of<AuthProvider>(context, listen: false).token;
+  if (token == null) return;
+  try {
+    final data = await NotificationService(token: token).getNotificationsByUser();
+    if (!mounted) return;
+    setState(() {
+      _unreadNotifCount = data.where((n) => !n.isRead).length;
+    });
+  } catch (e) {
+    debugPrint('Erreur fetch unread count: $e');
+  }
+}
 
   Future<void> _checkUserRole() async {
     final token = Provider.of<AuthProvider>(context, listen: false).token;
@@ -396,7 +414,7 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
 
       final demandeService = DemandeService();
       await demandeService.emettreDemande(
-        quantite: quantite,
+        quantiteDem: quantite,
         raison: motif,
         stockItem: _selectedProduct!.id,
         magasin: storeId,
@@ -636,27 +654,26 @@ class _SupplyRequestScreenState extends State<SupplyRequestScreen> {
                   child: Icon(Icons.notifications_outlined,
                       size: 6.5.w, color: Color(0xFF007AFF)),
                 ),
-                Positioned(
-                  right: 2,
-                  top: 2,
-                  child: Container(
-                    padding: EdgeInsets.all(.7.w),
-                    decoration: const BoxDecoration(
-                        color: Colors.red, shape: BoxShape.circle),
-                    constraints: const BoxConstraints(minWidth: 19, minHeight: 19),
-                    child: Text(
-                      "3",
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 8.sp,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        height: 1,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+             if (_unreadNotifCount > 0)
+  Positioned(
+    right: 0,
+    top: 0,
+    child: Container(
+      padding: EdgeInsets.all(5),
+      decoration: const BoxDecoration(
+        color: Colors.red,
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        '$_unreadNotifCount',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 14.sp,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  ), ],
             ),
           ],
         ),

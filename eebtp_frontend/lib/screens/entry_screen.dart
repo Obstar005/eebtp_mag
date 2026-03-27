@@ -108,7 +108,7 @@ class _StockEntryScreenState extends State<StockEntryScreen> {
     }
     try {
       final demandesService = DemandeService();
-      final response = await demandesService.getDemandesValidees(token);
+      final response = await demandesService.getDemandesValideesMagasinier(token);
       if (response is List<Demande>) {
         setState(() {
           demandes = response;

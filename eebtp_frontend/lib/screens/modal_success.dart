@@ -38,52 +38,55 @@ class PasswordVerifiedModal extends StatelessWidget {
                 ),
               ),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween, // ✅ évite Spacer
                 children: [
-                  // Petit handle
-                  Container(
-                    width: 10.w,
-                    height: 0.7.h,
-                    margin: EdgeInsets.symmetric(vertical: 2.h),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[400],
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-
-                  SizedBox(height: 1.h),
-
-                  // Lottie success
-                  Lottie.asset("assets/success.json", height: 23.5.h),
-
-                  SizedBox(height: 2.h),
-
-                  Text(
-                    "Mot de passe modifié",
-                    style: GoogleFonts.poppins(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
-                  ),
-
-                  SizedBox(height: 1.h),
-
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w),
-                    child: Text(
-                      "Le mot de passe a été créé avec succès, vous pouvez vous connecter à nouveau avec le mot de passe créé.",
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14.sp,
-                        color: Colors.grey[600],
-                        height: 1.5,
+                  Column(
+                    children: [
+                      // Petit handle
+                      Container(
+                        width: 10.w,
+                        height: 0.7.h,
+                        margin: EdgeInsets.symmetric(vertical: 2.h),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[400],
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                       ),
-                    ),
+
+                      SizedBox(height: 1.h),
+
+                      // Lottie success
+                      Lottie.asset("assets/success.json", height: 23.5.h),
+
+                      SizedBox(height: 2.h),
+
+                      Text(
+                        "Mot de passe modifié",
+                        style: GoogleFonts.poppins(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+
+                      SizedBox(height: 1.h),
+
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8.w),
+                        child: Text(
+                          "Le mot de passe a été créé avec succès, vous pouvez vous connecter à nouveau avec le mot de passe créé.",
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(
+                            fontSize: 14.sp,
+                            color: Colors.grey[600],
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
 
-                  const Spacer(),
-
-                  // Bouton
+                  // Bouton en bas
                   Container(
                     margin: EdgeInsets.symmetric(
                       horizontal: 6.w,
@@ -96,11 +99,10 @@ class PasswordVerifiedModal extends StatelessWidget {
                       width: double.infinity,
                       height: 7.h,
                       onPressed: () {
-                        // Redirection vers la page de connexion avec le numéro de téléphone
                         Navigator.pushNamedAndRemoveUntil(
                           context,
                           '/password_login',
-                          (route) => false, // Supprime tout l'historique
+                          (route) => false,
                           arguments: phone,
                         );
                       },

@@ -1,4 +1,5 @@
 import 'package:eebtp_frontend/providers/auth_provider.dart';
+import 'package:eebtp_frontend/services/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,10 +22,26 @@ void initState() {
   WidgetsBinding.instance.addPostFrameCallback((_) {
     if (mounted) {
       Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
+   _fetchUnreadCount();
     }
   });
+  
 }
+int _unreadNotifCount = 0;
 
+Future<void> _fetchUnreadCount() async {
+  final token = Provider.of<AuthProvider>(context, listen: false).token;
+  if (token == null) return;
+  try {
+    final data = await NotificationService(token: token).getNotificationsByUser();
+    if (!mounted) return;
+    setState(() {
+      _unreadNotifCount = data.where((n) => !n.isRead).length;
+    });
+  } catch (e) {
+    debugPrint('Erreur fetch unread count: $e');
+  }
+}
   void _navigateToCreateRequest() {
     Navigator.pushNamed(context, '/demande_form');
   }
@@ -84,25 +101,26 @@ void initState() {
                   child: Icon(Icons.notifications_outlined,
                       size: 7.w, color: Color(0xFF007AFF)),
                 ),
-                Positioned(
-                  right: 2,
-                  top: 2,
-                  child: Container(
-                    padding: EdgeInsets.all(1.w),
-                    decoration: const BoxDecoration(
-                        color: Colors.red, shape: BoxShape.circle),
-                    child: Text(
-                      "3",
-                      style: GoogleFonts.poppins(
-                        fontSize: 8.sp,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        height: 1,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              if (_unreadNotifCount > 0)
+  Positioned(
+    right: 0,
+    top: 0,
+    child: Container(
+      padding: EdgeInsets.all(5),
+      decoration: const BoxDecoration(
+        color: Colors.red,
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        '$_unreadNotifCount',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 14.sp,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  ),],
             ),
           ],
         ),

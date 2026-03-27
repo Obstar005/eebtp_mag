@@ -4,6 +4,7 @@ import 'package:eebtp_frontend/providers/auth_provider.dart';
 import 'package:eebtp_frontend/screens/RequestDetail.dart';
 import 'package:eebtp_frontend/services/auth.dart';
 import 'package:eebtp_frontend/services/demandeService.dart';
+import 'package:eebtp_frontend/services/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -86,9 +87,25 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
       if (!mounted) return;
       Provider.of<AuthProvider>(context, listen: false).checkTokenExpiry(context);
       _checkUserRole();
+      _fetchUnreadCount();
     });
+    
   }
+int _unreadNotifCount = 0;
 
+Future<void> _fetchUnreadCount() async {
+  final token = Provider.of<AuthProvider>(context, listen: false).token;
+  if (token == null) return;
+  try {
+    final data = await NotificationService(token: token).getNotificationsByUser();
+    if (!mounted) return;
+    setState(() {
+      _unreadNotifCount = data.where((n) => !n.isRead).length;
+    });
+  } catch (e) {
+    debugPrint('Erreur fetch unread count: $e');
+  }
+}
   Future<void> _checkUserRole() async {
     if (!mounted) return;
     final token = Provider.of<AuthProvider>(context, listen: false).token;
@@ -122,7 +139,7 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
     final token = Provider.of<AuthProvider>(context, listen: false).token;
     if (token == null) { setState(() => _isLoading = false); return; }
     try {
-      final demandes = await DemandeService().getToutesDemandes(token);
+      final demandes = await DemandeService().getToutesDemandesMagasinier(token);
       if (!mounted) return;
       setState(() { _demandes = demandes; _isLoading = false; _hasPermissionError = false; });
     } catch (e) {
@@ -289,13 +306,26 @@ class _RequestsTrackingScreenState extends State<RequestsTrackingScreen> {
               decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
               child: Icon(Icons.notifications_outlined, size: 6.5.w, color: Color(0xFF007AFF)),
             ),
-            Positioned(right: 2, top: 2, child: Container(
-              padding: EdgeInsets.all(.7.w),
-              decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-              constraints: const BoxConstraints(minWidth: 19, minHeight: 19),
-              child: Text("3", textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(fontSize: 13.sp, color: Colors.white, fontWeight: FontWeight.bold, height: 1)),
-            )),
+            if (_unreadNotifCount > 0)
+  Positioned(
+    right: 0,
+    top: 0,
+    child: Container(
+      padding: EdgeInsets.all(5),
+      decoration: const BoxDecoration(
+        color: Colors.red,
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        '$_unreadNotifCount',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 14.sp,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  ),
           ]),
         ]),
       ),

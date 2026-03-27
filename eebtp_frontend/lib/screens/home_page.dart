@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:eebtp_frontend/services/notification_service.dart';
 import 'package:eebtp_frontend/services/statsService.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -45,7 +46,24 @@ class _HomePageState extends State<HomePage> {
   StockStats? _stocksStats;
   bool _loadingStats = true;
   bool _loadingStockStats = true;
+int _unreadNotifCount = 0;
 
+// Dans initState, après les autres appels :
+
+
+Future<void> _fetchUnreadCount() async {
+  final token = Provider.of<AuthProvider>(context, listen: false).token;
+  if (token == null) return;
+  try {
+    final data = await NotificationService(token: token).getNotificationsByUser();
+    if (!mounted) return;
+    setState(() {
+      _unreadNotifCount = data.where((n) => !n.isRead).length;
+    });
+  } catch (e) {
+    debugPrint('Erreur fetch unread count: $e');
+  }
+}
   @override
   void initState() {
     super.initState();
@@ -55,6 +73,7 @@ class _HomePageState extends State<HomePage> {
       _loadUserAndHistory();
       _loadStats();
       _loadStockStats();
+      _fetchUnreadCount();
     });
   }
 
@@ -420,26 +439,26 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      padding: EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        "3",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+               if (_unreadNotifCount > 0)
+  Positioned(
+    right: 0,
+    top: 0,
+    child: Container(
+      padding: EdgeInsets.all(5),
+      decoration: const BoxDecoration(
+        color: Colors.red,
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        '$_unreadNotifCount',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 14.sp,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  ), ],
               ),
             ),
           ],

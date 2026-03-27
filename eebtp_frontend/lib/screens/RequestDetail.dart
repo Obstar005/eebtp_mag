@@ -1,5 +1,6 @@
 import 'package:eebtp_frontend/models/demande.dart';
 import 'package:eebtp_frontend/services/demandeService.dart';
+import 'package:eebtp_frontend/services/notification_service.dart';
 import 'package:eebtp_frontend/widgets/nav.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -28,11 +29,26 @@ class RequestDetailScreen extends StatefulWidget {
 
 class _RequestDetailScreenState extends State<RequestDetailScreen> {
   late Demande _demande;
+int _unreadNotifCount = 0;
 
+Future<void> _fetchUnreadCount() async {
+  final token = Provider.of<AuthProvider>(context, listen: false).token;
+  if (token == null) return;
+  try {
+    final data = await NotificationService(token: token).getNotificationsByUser();
+    if (!mounted) return;
+    setState(() {
+      _unreadNotifCount = data.where((n) => !n.isRead).length;
+    });
+  } catch (e) {
+    debugPrint('Erreur fetch unread count: $e');
+  }
+}
   @override
   void initState() {
     super.initState();
     _demande = widget.demande;
+    _fetchUnreadCount();
   }
 
   // ─── Normalisation ────────────────────────────────────────────────────────────
@@ -225,32 +241,26 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                     color: _blue,
                   ),
                 ),
-                Positioned(
-                  right: 2,
-                  top: 2,
-                  child: Container(
-                    padding: EdgeInsets.all(.7.w),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 19,
-                      minHeight: 19,
-                    ),
-                    child: Text(
-                      "3",
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13.sp,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        height: 1,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+             if (_unreadNotifCount > 0)
+  Positioned(
+    right: 0,
+    top: 0,
+    child: Container(
+      padding: EdgeInsets.all(5),
+      decoration: const BoxDecoration(
+        color: Colors.red,
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        '$_unreadNotifCount',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 14.sp,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  ),],
             ),
           ],
         ),
