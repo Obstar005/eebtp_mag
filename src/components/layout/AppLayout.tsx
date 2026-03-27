@@ -60,14 +60,13 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-
       {/* Modal d'erreur de récupération des infos utilisateur */}
       <UserInfoErrorModal
         isOpen={!!userInfoError}
         onRetry={handleRetryUserInfo}
         onLogout={handleLogoutFromError}
         errorMessage={userInfoError || undefined}
-        />
+      />
 
       <div className="flex h-screen overflow-hidden">
         <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
@@ -78,7 +77,7 @@ export function AppLayout() {
           </main>
         </div>
       </div>
-      <ToastContainer position="top-right" />
+      <ToastContainer position="top-right" delay={4000} />
     </div>
   );
 }

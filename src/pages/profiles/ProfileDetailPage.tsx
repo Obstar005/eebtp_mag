@@ -13,13 +13,30 @@ import { AccessDenied } from "../../components/ui/AccessGuard";
 import type { ApiAccess } from "../../services/api/accessService";
 import { useState } from "react";
 
+// Normaliser le nom du module (pluriel → singulier)
+function normalizeModuleName(rawModule: string): string {
+  const pluralToSingular: Record<string, string> = {
+    demandes: "demande",
+    sorties: "sortie",
+    entrees: "entree",
+    stock_items: "stock_item",
+    articles: "article",
+    magasins: "magasin",
+    projets: "projet",
+    profils: "profil",
+    users: "user",
+  };
+  return pluralToSingular[rawModule] || rawModule;
+}
+
 // Grouper les accès par module (avant le point dans le code)
 function groupAccessesByModule(
   accesses: ApiAccess[],
 ): Record<string, ApiAccess[]> {
   return accesses.reduce(
     (groups, access) => {
-      const module = access.code.split(".")[0] || "autre";
+      const rawModule = access.code.split(".")[0] || "autre";
+      const module = normalizeModuleName(rawModule);
       if (!groups[module]) {
         groups[module] = [];
       }

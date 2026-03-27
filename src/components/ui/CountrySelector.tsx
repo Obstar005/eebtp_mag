@@ -155,7 +155,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
                   </div>
                   {popularCountries.map((country) => (
                     <button
-                      key={`popular-${country.code}`}
+                      key={`popular-${country.code}-${country.name}`}
                       type="button"
                       onClick={() => handleSelect(country)}
                       className="w-full px-3 py-2 text-left hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center"
@@ -179,7 +179,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
               {filteredCountries.length > 0 ? (
                 filteredCountries.map((country) => (
                   <button
-                    key={country.code}
+                    key={`country-${country.code}-${country.name}`}
                     type="button"
                     onClick={() => handleSelect(country)}
                     className="w-full px-3 py-2 text-left hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center"

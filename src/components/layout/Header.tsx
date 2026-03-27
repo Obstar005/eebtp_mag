@@ -1,6 +1,6 @@
 import { User, Search, Settings, Menu, LogOut } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { useState, useRef, useEffect } from "react";
 import { formatRole } from "../../utils/formatUtils";
@@ -12,6 +12,7 @@ interface HeaderProps {
 export function Header({ onToggleSidebar }: HeaderProps) {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -179,7 +180,17 @@ export function Header({ onToggleSidebar }: HeaderProps) {
                   </div>
 
                   {/* Actions */}
-                  <div className="px-2 py-2">
+                  <div className="px-2 py-2 space-y-1">
+                    <button
+                      onClick={() => {
+                        setShowProfileDropdown(false);
+                        navigate("/profile");
+                      }}
+                      className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      <User className="h-4 w-4" />
+                      <span>Voir mon profil</span>
+                    </button>
                     <button
                       onClick={async () => {
                         setShowProfileDropdown(false);

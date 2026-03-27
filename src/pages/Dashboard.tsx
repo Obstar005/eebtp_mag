@@ -313,7 +313,7 @@ export function Dashboard() {
                     onClick={() => setOpenTypeEntreeMenu(!openTypeEntreeMenu)}
                     className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-blue-900 rounded hover:bg-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-600"
                   >
-                    <span>Sélectionner un type</span>
+                    <span>{selectedTypeEntree || "Sélectionner un type"}</span>
                     <svg
                       className={`w-3 h-3 transition-transform ${
                         openTypeEntreeMenu ? "rotate-180" : ""
@@ -333,6 +333,7 @@ export function Dashboard() {
                   {openTypeEntreeMenu && (
                     <div className="absolute top-full right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
                       {[
+                        { value: "", label: "Sélectionner un type" },
                         { value: "Livraison", label: "Livraison" },
                         { value: "Retour", label: "Retour" },
                       ].map((type) => (

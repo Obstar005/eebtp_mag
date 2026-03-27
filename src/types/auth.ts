@@ -24,6 +24,7 @@ export const UserProfil = {
   CHEF_APPRO: "chef_appro", // Chef Approvisionnement
   ADMIN: "Admin",
   MAGASINIER: "magasinier",
+  SUPER_ADMIN: "superadmin",
 } as const;
 
 export type UserProfil = (typeof UserProfil)[keyof typeof UserProfil];

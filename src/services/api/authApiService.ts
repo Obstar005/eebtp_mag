@@ -345,7 +345,14 @@ export class UserApiService {
         // Ajouter toutes les données utilisateur
         Object.entries(apiData).forEach(([key, value]) => {
           if (value !== undefined) {
-            formData.append(key, value.toString());
+            // Gérer les tableaux (comme projets) correctement
+            if (Array.isArray(value)) {
+              value.forEach((item) => {
+                formData.append(key, item.toString());
+              });
+            } else {
+              formData.append(key, value.toString());
+            }
           }
         });
 

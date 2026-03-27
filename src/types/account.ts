@@ -19,6 +19,7 @@ export interface Account {
   derniere_connexion?: string; // ISO string
   profile_id: string;
   profile: Profile;
+  projet_ids?: string[]; // IDs des projets liés au compte
 }
 
 export interface Profile {
@@ -51,6 +52,7 @@ export interface CreateAccountData {
   telephone: string;
   photo_profil?: File;
   profile_id: string;
+  projet_ids?: string[]; // IDs des projets liés au compte (optionnel)
 }
 
 export interface UpdateAccountData extends Partial<

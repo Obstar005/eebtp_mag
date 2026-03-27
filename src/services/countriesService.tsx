@@ -36,16 +36,30 @@ export const countriesService = {
     if (apiDataLoaded) return; // Éviter les appels multiples
 
     try {
-      const response = await fetch(
+      const regions = ["africa", "europe", "asia", "americas", "oceania"];
+      const baseUrl =
         import.meta.env.VITE_API_BASE_URL ||
-          "https://restcountries.com/v3.1/region/africa"
+        "https://restcountries.com/v3.1/region";
+
+      // Fetch toutes les régions en parallèle
+      const responses = await Promise.all(
+        regions.map((region) => fetch(`${baseUrl}/${region}`)),
       );
 
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
+      // Vérifier que toutes les réponses sont OK
+      for (const response of responses) {
+        if (!response.ok) {
+          throw new Error(`Erreur HTTP: ${response.status}`);
+        }
       }
 
-      const apiCountries: RestCountryData[] = await response.json();
+      // Parser toutes les réponses JSON en parallèle
+      const allData = await Promise.all(
+        responses.map((response) => response.json()),
+      );
+
+      // Merger tous les pays en une seule liste
+      const apiCountries: RestCountryData[] = allData.flat();
 
       const formattedCountries: Country[] = apiCountries
         .map((country) => {
@@ -70,7 +84,7 @@ export const countriesService = {
     } catch (error) {
       console.error(
         "❌ Erreur lors du chargement des pays depuis l'API:",
-        error
+        error,
       );
       // En cas d'erreur, on garde les données par défaut
     }
@@ -96,14 +110,14 @@ export const countriesService = {
   getCountryByAbbreviation(abbreviation: string): Country | undefined {
     return countriesData.find(
       (country) =>
-        country.abbreviation.toLowerCase() === abbreviation.toLowerCase()
+        country.abbreviation.toLowerCase() === abbreviation.toLowerCase(),
     );
   },
 
   // Rechercher un pays par son nom complet
   getCountryByName(name: string): Country | undefined {
     return countriesData.find(
-      (country) => country.name.toLowerCase() === name.toLowerCase()
+      (country) => country.name.toLowerCase() === name.toLowerCase(),
     );
   },
 
@@ -111,7 +125,7 @@ export const countriesService = {
   searchCountriesByName(searchTerm: string): Country[] {
     const term = searchTerm.toLowerCase();
     return countriesData.filter((country) =>
-      country.name.toLowerCase().includes(term)
+      country.name.toLowerCase().includes(term),
     );
   },
 
@@ -119,7 +133,7 @@ export const countriesService = {
   getPopularCountries(): Country[] {
     const popularCodes = ["+228", "+225", "+233", "+234"];
     return countriesData.filter((country) =>
-      popularCodes.includes(country.code)
+      popularCodes.includes(country.code),
     );
   },
 
@@ -146,7 +160,7 @@ export const countriesService = {
     if (cleanNumber.length === 8) {
       return `${countryCode} ${cleanNumber.slice(0, 2)} ${cleanNumber.slice(
         2,
-        4
+        4,
       )} ${cleanNumber.slice(4, 6)} ${cleanNumber.slice(6, 8)}`;
     }
 
@@ -188,7 +202,7 @@ export const countriesService = {
 
       if (numberWithoutPrefix.startsWith(codeWithoutPlus)) {
         const localNumber = numberWithoutPrefix.substring(
-          codeWithoutPlus.length
+          codeWithoutPlus.length,
         );
 
         // Formater le numéro local en groupe de 2 chiffres si possible

@@ -10,6 +10,7 @@ export interface Declaration {
   date_voeux_livrer_string?: string;
   user_id: number;
   magasin_id: number;
+  source_objet?: string;
 
   // Relations
   stockItem?: {

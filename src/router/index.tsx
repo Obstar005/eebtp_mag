@@ -29,6 +29,8 @@ import { DeclarationSortieDetailPage } from "../pages/declarations/DeclarationSo
 import { DeclarationRetourDetailPage } from "../pages/declarations/DeclarationRetourDetailPage";
 // Page des notifications
 import { NotificationsPage } from "../pages/NotificationsPage";
+// Page Mon Profil
+import { MyProfilePage } from "../pages/MyProfilePage";
 // Page de test API (développement uniquement)
 import ApiTestPage from "../pages/ApiTestPage";
 
@@ -64,6 +66,11 @@ export const router = createBrowserRouter([
       {
         path: "notifications",
         element: <NotificationsPage />,
+      },
+      // Route Mon Profil
+      {
+        path: "profile",
+        element: <MyProfilePage />,
       },
       // Routes des comptes
       {
@@ -127,7 +134,7 @@ export const router = createBrowserRouter([
         element: <DeclarationsPage />,
       },
       {
-        path: "magasins/:magasinId/declarations/:declarationId/detail/entree",
+        path: "magasins/:magasinId/declarations/:declarationId/detail/livraison",
         element: <DeclarationEntreeDetailPage />,
       },
       {

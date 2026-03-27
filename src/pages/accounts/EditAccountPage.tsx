@@ -10,9 +10,11 @@ import {
 } from "lucide-react";
 import { toast } from "react-toast";
 import { useAccount, useUpdateAccount, useProfiles } from "../../hooks";
+import { useProjetsSelect } from "../../hooks/useProjetsSelect";
 import { useAccess } from "../../hooks/useAccessPermissions";
 import { AccessDenied } from "../../components/ui/AccessGuard";
 import { CountrySelector } from "../../components/ui/CountrySelector";
+import { MultiSelectDropdown } from "../../components/ui/MultiSelectDropdown";
 import { useCountries } from "../../hooks/useCountries";
 import { useAuth } from "../../contexts/AuthContext";
 import type { UpdateAccountData, AccountType } from "../../types/account";
@@ -37,6 +39,7 @@ export function EditAccountPage() {
 
   const { data: account, isLoading: accountLoading } = useAccount(id!);
   const { data: profiles } = useProfiles();
+  const { data: projets, isLoading: projetsLoading } = useProjetsSelect();
   const updateAccountMutation = useUpdateAccount();
   const { countries } = useCountries();
   const {
@@ -59,6 +62,7 @@ export function EditAccountPage() {
     telephone: "",
     profile_id: "",
     photo_profil: undefined,
+    projet_ids: [],
   });
 
   // Charger les données du compte à modifier
@@ -77,6 +81,7 @@ export function EditAccountPage() {
         telephone: account.telephone || "",
         profile_id: account.profile_id || "",
         photo_profil: undefined,
+        projet_ids: account.projet_ids || [],
       });
 
       // Définir l'image de prévisualisation si elle existe
@@ -383,6 +388,13 @@ export function EditAccountPage() {
                 <div className="relative">
                   <input
                     type="date"
+                    max={
+                      new Date(
+                        new Date().setFullYear(new Date().getFullYear() - 18),
+                      )
+                        .toISOString()
+                        .split("T")[0]
+                    }
                     required
                     value={formData.date_naissance}
                     onChange={(e) =>
@@ -573,6 +585,22 @@ export function EditAccountPage() {
               </div>
             </div>
 
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Projet(s)
+              </label>
+              <MultiSelectDropdown
+                options={projets || []}
+                value={formData.projet_ids || []}
+                onChange={(selectedIds) => setFormData(prev => ({ ...prev, projet_ids: selectedIds }))}
+                placeholder="Sélectionner un ou plusieurs projets"
+                isLoading={projetsLoading}
+                emptyMessage="Aucun projet disponible"
+              />
+            </div>
+          </div>
+
+          <div className="flex max-md:flex-col gap-4 mb-4">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Photo de profil

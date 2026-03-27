@@ -29,3 +29,4 @@ PHONE_FORMAT_SUMMARY.txt
 api-charts-responses.txt
 PERMISSIONS_WORKFLOW.md
 .env
+**/firebase-messaging-sw.js

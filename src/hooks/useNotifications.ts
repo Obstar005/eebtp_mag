@@ -3,10 +3,10 @@ import { notificationApiService } from "../services/api/notificationService";
 import type { Notification, NotificationFilters } from "../types/notification";
 
 // Hook pour récupérer les notifications de l'utilisateur
-export function useUserNotifications() {
+export function useUserNotifications(periode: string = "total") {
   return useQuery({
-    queryKey: ["notifications", "user"],
-    queryFn: () => notificationApiService.getUserNotifications(),
+    queryKey: ["notifications", "user", periode],
+    queryFn: () => notificationApiService.getUserNotifications(periode),
     staleTime: 30000, // 30 secondes
     refetchInterval: 60000, // Actualiser toutes les minutes
   });

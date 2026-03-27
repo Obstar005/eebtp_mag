@@ -28,6 +28,7 @@ export interface ApiEntree {
   is_active: boolean;
   make_by?: number; // ReadOnly - nullable
   demande_source?: number; // nullable - référence vers une demande
+  source_objet?: string;
 }
 
 export interface ApiCreateEntreeRequest {
@@ -45,6 +46,7 @@ export interface ApiCreateEntreeRequest {
   tel_livreur?: string;
   is_active?: boolean;
   demande_source?: number;
+  source_objet?: string;
 }
 
 // ==================== SORTIES DE STOCK ====================
@@ -65,6 +67,7 @@ export interface ApiSortie {
   fonction_receveur: string;
   is_active: boolean;
   make_by?: number; // ReadOnly - nullable
+  source_objet?: string;
 }
 
 export interface ApiCreateSortieRequest {
@@ -76,6 +79,7 @@ export interface ApiCreateSortieRequest {
   tel_receveur: string;
   fonction_receveur: string;
   is_active?: boolean;
+  source_objet?: string;
 }
 
 // ==================== RÉPONSES LISTES ====================

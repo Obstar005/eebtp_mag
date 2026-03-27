@@ -31,6 +31,7 @@ export function apiEntreeToDeclaration(apiEntree: ApiEntree): Declaration {
     date_modif: new Date(apiEntree.date_modif),
     user_id: apiEntree.make_by || 0,
     magasin_id: apiEntree.magasin,
+    source_objet: apiEntree.source_objet,
 
     // Relations extraites des données API
     stockItem: {
@@ -99,6 +100,7 @@ export function apiSortieToDeclaration(apiSortie: ApiSortie): Declaration {
     user_id: apiSortie.make_by || 0,
     magasin_id: apiSortie.magasin,
     motif: apiSortie.objet,
+    source_objet: apiSortie.source_objet,
 
     // Relations extraites des données API
     stockItem: {

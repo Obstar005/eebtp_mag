@@ -250,6 +250,10 @@ export function mapProfilLibelleToUserProfil(
     // Administrateur
     administrateur: UserProfil.ADMIN,
     admin: UserProfil.ADMIN,
+    // Super Administrateur
+    
+    "super administrateur": UserProfil.SUPER_ADMIN,
+    superadmin: UserProfil.SUPER_ADMIN,
 
     // Magasinier
     magasinier: UserProfil.MAGASINIER,

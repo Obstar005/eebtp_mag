@@ -10,9 +10,11 @@ import {
 } from "lucide-react";
 import { toast } from "react-toast";
 import { useCreateAccount, useProfiles } from "../../hooks";
+import { useProjetsSelect } from "../../hooks/useProjetsSelect";
 import { useAccess } from "../../hooks/useAccessPermissions";
 import { AccessDenied } from "../../components/ui/AccessGuard";
 import { CountrySelector } from "../../components/ui/CountrySelector";
+import { MultiSelectDropdown } from "../../components/ui/MultiSelectDropdown";
 import { useCountries } from "../../hooks/useCountries";
 import type { CreateAccountData, AccountType } from "../../types/account";
 import type { Country } from "../../services/countriesService";
@@ -56,6 +58,7 @@ export function AddAccountPage() {
   }>({ nom_utilisateur: false, mot_de_passe: false });
 
   const { data: profiles } = useProfiles();
+  const { data: projets, isLoading: projetsLoading } = useProjetsSelect();
   const createAccountMutation = useCreateAccount();
   const { countries } = useCountries();
   const {
@@ -77,6 +80,7 @@ export function AddAccountPage() {
     telephone: "",
     profile_id: "",
     photo_profil: undefined,
+    projet_ids: [], // Projets liés au compte (optionnel)
   });
 
   // Initialiser le pays par défaut
@@ -438,7 +442,7 @@ export function AddAccountPage() {
                     type="date"
                     max={
                       new Date(
-                        new Date().setFullYear(new Date().getFullYear() - 15),
+                        new Date().setFullYear(new Date().getFullYear() - 18),
                       )
                         .toISOString()
                         .split("T")[0]
@@ -652,6 +656,22 @@ export function AddAccountPage() {
               </div>
             </div>
 
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Projet(s)
+              </label>
+              <MultiSelectDropdown
+                options={projets || []}
+                value={formData.projet_ids || []}
+                onChange={(selectedIds) => setFormData(prev => ({ ...prev, projet_ids: selectedIds }))}
+                placeholder="Sélectionner un ou plusieurs projets"
+                isLoading={projetsLoading}
+                emptyMessage="Aucun projet disponible"
+              />
+            </div>
+          </div>
+
+          <div className="flex max-md:flex-col gap-4 mb-4">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Photo de profil

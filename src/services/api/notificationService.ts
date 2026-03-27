@@ -10,10 +10,10 @@ import { ACTION_TYPE_PRIORITIES } from "../../types/notification";
 
 export class NotificationApiService {
   // Récupérer l'historique des actions de l'utilisateur connecté
-  async getUserNotifications(): Promise<Notification[]> {
+  async getUserNotifications(periode: string = "total"): Promise<Notification[]> {
     try {
       const response = await apiClient.get<HistoriqueAction[]>(
-        "/App/historique-user"
+        `/App/historique-user/${periode}`
       );
       // Transformer en notifications avec métadonnées
       const notifications: Notification[] = response.data.map((action) => ({
@@ -65,13 +65,14 @@ export class NotificationApiService {
     filters?: NotificationFilters,
     page: number = 1,
     limit: number = 20,
-    allNotifications: boolean = false
+    allNotifications: boolean = false,
+    periode: string = "total"
   ): Promise<NotificationListResponse> {
     try {
       // Récupérer toutes les notifications ou seulement celles de l'utilisateur
       const allData = allNotifications
         ? await this.getAllNotifications()
-        : await this.getUserNotifications();
+        : await this.getUserNotifications(periode);
 
       // Appliquer les filtres
       let filteredData = [...allData];
@@ -144,12 +145,13 @@ export class NotificationApiService {
 
   // Récupérer les statistiques des notifications
   async getNotificationStats(
-    allNotifications: boolean = false
+    allNotifications: boolean = false,
+    periode: string = "total"
   ): Promise<NotificationStats> {
     try {
       const notifications = allNotifications
         ? await this.getAllNotifications()
-        : await this.getUserNotifications();
+        : await this.getUserNotifications(periode);
 
       const total = notifications.length;
       const unread = notifications.filter((n) => !n.isRead).length;

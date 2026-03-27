@@ -50,6 +50,10 @@ export interface ApiCreateProjetRequest {
   // Champs de coûts
   cout_total_estime?: number;
   cout_total_reel?: number;
+  // Rôles du projet
+  chef_projet?: number | null;
+  chef_chantier?: number | null;
+  magasinier?: number | null;
   // Champs pour la création automatique du magasin associé
   nom_magasin?: string;
   adresse_magasin?: string;
@@ -68,6 +72,10 @@ export interface ApiUpdateProjetRequest {
   // Champs de coûts
   cout_total_estime?: number;
   cout_total_reel?: number;
+  // Rôles du projet
+  chef_projet?: number | null;
+  chef_chantier?: number | null;
+  magasinier?: number | null;
   // Champs pour la mise à jour du magasin associé
   nom_magasin?: string;
   adresse_magasin?: string;

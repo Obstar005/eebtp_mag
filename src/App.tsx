@@ -37,6 +37,7 @@ import { DeclarationsPage } from "./pages/declarations/DeclarationsPage";
 import { DeclarationEntreeDetailPage } from "./pages/declarations/DeclarationEntreeDetailPage";
 import { DeclarationSortieDetailPage } from "./pages/declarations/DeclarationSortieDetailPage";
 import { DeclarationRetourDetailPage } from "./pages/declarations/DeclarationRetourDetailPage";
+import { MyProfilePage } from "./pages/MyProfilePage";
 
 // Créer une instance du client React Query
 const queryClient = new QueryClient({
@@ -124,7 +125,7 @@ function AppContent() {
           element={<DeclarationsPage />}
         />
         <Route
-          path="magasins/:magasinId/declarations/:declarationId/detail/entree"
+          path="magasins/:magasinId/declarations/:declarationId/detail/livraison"
           element={<DeclarationEntreeDetailPage />}
         />
         <Route
@@ -166,7 +167,7 @@ function AppContent() {
           path="settings"
           element={<div>Page Paramètres (à implémenter)</div>}
         />
-        <Route path="profile" element={<div>Mon Profil (à implémenter)</div>} />
+        <Route path="profile" element={<MyProfilePage />} />
       </Route>
 
       {/* Route de fallback */}

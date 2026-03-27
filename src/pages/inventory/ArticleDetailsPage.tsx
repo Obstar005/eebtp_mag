@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Save, Upload, X } from "lucide-react";
 import { toast } from "react-toast";
 import {
@@ -259,18 +259,13 @@ export default function ArticleDetailsPage() {
 
               {/* Bouton de sauvegarde */}
               <div className="pt-4">
-                <button
-                  type="submit"
-                  disabled={isLoading_}
-                  className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                <Link
+                  to={`/articles/${articleId}/edit`}
+                  className="w-max flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLoading_ ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
+                  <Save className="h-4 w-4" />
                   Modifier
-                </button>
+                </Link>
               </div>
             </div>
           </div>

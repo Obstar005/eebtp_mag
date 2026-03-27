@@ -58,6 +58,7 @@ export function formatUnit(unit: string | undefined): string {
       df: "Directeur Financier",
       chef_appro: "Chef Approvisionnement",
       Admin: "Administrateur",
+      superadmin: "Super Administrateur",
       magasinier: "Magasinier",
     };
 

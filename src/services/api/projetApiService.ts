@@ -339,7 +339,7 @@ export class ProjetApiService {
     description?: string,
   ): Promise<ApiProjetPhoto> {
     const formData = new FormData();
-    formData.append("photo", photo);
+    formData.append("image", photo); // L'API attend "image" et non "photo"
     formData.append("projet", projetId.toString());
     if (description) {
       formData.append("description", description);

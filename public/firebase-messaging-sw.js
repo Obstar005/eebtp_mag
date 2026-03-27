@@ -7,13 +7,13 @@ importScripts(
 );
 
 const firebaseConfig = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: "",
-  measurementId: "",
+  apiKey: "AIzaSyDLd3jqblbD1UI9h8lZqxXD3CWlmNjed2E",
+  authDomain: "eebtp-mag.firebaseapp.com",
+  projectId: "eebtp-mag",
+  storageBucket: "eebtp-mag.firebasestorage.app",
+  messagingSenderId: "913125998718",
+  appId: "1:913125998718:web:92482264d1e2ca619c982f",
+  measurementId: "G-YTCQPLKNHM",
 };
 
 // Initialize Firebase App in service worker
@@ -31,7 +31,7 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: "/vite.svg",
+    icon: "/logo_eebtp.png",
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);

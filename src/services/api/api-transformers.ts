@@ -113,6 +113,7 @@ export async function apiUserToAccount(
     // Fallback avec un profil par défaut
     const defaultProfile: Profile = {
       id: "0",
+      code: "PRF-000",
       nom: "Profil non défini",
       description: "Aucun profil assigné",
     };
@@ -136,6 +137,7 @@ export async function apiUserToAccount(
       derniere_connexion: apiUser.last_login,
       profile_id: "0",
       profile: defaultProfile,
+      projet_ids: apiUser.projets?.map(id => id.toString()),
     };
 
     return account;
@@ -157,6 +159,7 @@ export async function apiUserToAccount(
     // Transformer l'ApiProfil en Profile
     const profile: Profile = {
       id: apiProfil.id.toString(),
+      code: apiProfil.code,
       nom: apiProfil.libelle,
       description: apiProfil.description,
     };
@@ -180,6 +183,7 @@ export async function apiUserToAccount(
       derniere_connexion: apiUser.last_login,
       profile_id: apiUser.profil ? apiUser.profil.toString() : "0",
       profile: profile, // Inclure l'objet profile complet
+      projet_ids: apiUser.projets?.map(id => id.toString()),
     };
 
     return account;
@@ -201,6 +205,7 @@ export async function apiUserToAccount(
     // Fallback avec un profil par défaut
     const defaultProfile: Profile = {
       id: apiUser.profil ? apiUser.profil.toString() : "0",
+      code: `PRF-${apiUser.profil ? apiUser.profil.toString().padStart(3, "0") : "000"}`,
       nom: "Profil non trouvé",
       description: "Profil non disponible",
     };
@@ -224,6 +229,7 @@ export async function apiUserToAccount(
       derniere_connexion: apiUser.last_login,
       profile_id: apiUser.profil ? apiUser.profil.toString() : "0",
       profile: defaultProfile,
+      projet_ids: apiUser.projets?.map(id => id.toString()),
     };
 
     return account;
@@ -236,27 +242,7 @@ export async function apiUserToUser(
 ): Promise<User> {
   // Vérifier si le profil existe avant de faire la requête
   if (!apiUser.profil) {
-    // Fallback vers 'magasinier' si aucun profil n'est défini
-    const finalProfil = UserProfil.MAGASINIER;
-
-    return {
-      id: apiUser.id.toString(),
-      email: apiUser.email,
-      phone: apiUser.telephone,
-      firstName:
-        apiUser.first_name === "ADMIN" ? apiUser.surname : apiUser.first_name,
-      lastName:
-        apiUser.first_name === "ADMIN" ? apiUser.username : apiUser.last_name,
-      profil: finalProfil,
-      profileId: 0, // ID par défaut
-      isActive: apiUser.is_active || false,
-      isPhoneVerified: true, // Assumé vrai si l'utilisateur existe
-      isEmailVerified: false, // Par défaut
-      hasCompletedSetup:
-        isFirstLogin !== undefined ? !isFirstLogin : !!apiUser.last_login,
-      createdAt: apiUser.date_creation || new Date().toISOString(),
-      updatedAt: apiUser.date_modif || new Date().toISOString(),
-    };
+    throw new Error("Impossible de créer un utilisateur sans profil");
   }
 
   try {
@@ -399,6 +385,14 @@ export function createAccountDataToApiUser(
   // Convertir le code pays en nom complet pour l'API
   const countryName = convertCountryCodeToName(data.nationalite || "TG");
 
+  // Convertir les IDs de projets en nombres
+  let projetIds: number[] | undefined;
+  if (data.projet_ids && data.projet_ids.length > 0) {
+    projetIds = data.projet_ids
+      .map((id) => parseInt(id))
+      .filter((id) => !isNaN(id));
+  }
+
   const apiUser = {
     username: data.nom_utilisateur,
     first_name: data.prenoms,
@@ -413,6 +407,7 @@ export function createAccountDataToApiUser(
     poste: data.titre, // Utiliser titre comme poste
     password: data.mot_de_passe,
     profil: profileId, // L'API attend "profil" pas "id_profil"
+    projets: projetIds, // IDs des projets liés au compte
   };
 
   return apiUser;
@@ -423,6 +418,14 @@ export function updateAccountDataToApiUser(
 ): Partial<ApiUpdateUserRequest> {
   // Convertir le code pays en nom complet pour l'API
   const countryName = convertCountryCodeToName(data.nationalite || "TG");
+
+  // Convertir les IDs de projets en nombres
+  let projetIds: number[] | undefined;
+  if (data.projet_ids && data.projet_ids.length > 0) {
+    projetIds = data.projet_ids
+      .map((id) => parseInt(id))
+      .filter((id) => !isNaN(id));
+  }
 
   return {
     id: parseInt(data.id),
@@ -438,6 +441,7 @@ export function updateAccountDataToApiUser(
     titre: data.titre,
     poste: data.titre, // Utiliser titre comme poste
     profil: data.profile_id ? parseInt(data.profile_id) : undefined, // L'API attend "profil" pas "id_profil"
+    projets: projetIds, // IDs des projets liés au compte
   };
 }
 
@@ -621,6 +625,10 @@ export function createProjetDataToApiCreateProjet(
     // Champs de coûts
     cout_total_estime: data.cout_total_estime,
     cout_total_reel: data.cout_total_reel,
+    // Rôles du projet (attendus par l'API)
+    chef_projet: data.chef_projet || null,
+    chef_chantier: data.chef_chantier || null,
+    magasinier: data.magasinier || null,
   };
 
   // Ajouter les données du premier magasin pour création automatique
@@ -684,6 +692,10 @@ export function updateProjetDataToApiUpdateProjet(
     // Champs de coûts
     cout_total_estime: data.cout_total_estime,
     cout_total_reel: data.cout_total_reel,
+    // Rôles du projet (attendus par l'API)
+    chef_projet: data.chef_projet || null,
+    chef_chantier: data.chef_chantier || null,
+    magasinier: data.magasinier || null,
   };
 
   // Ajouter les données du premier magasin pour mise à jour

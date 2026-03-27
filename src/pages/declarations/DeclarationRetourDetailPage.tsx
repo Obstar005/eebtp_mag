@@ -102,6 +102,17 @@ export function DeclarationRetourDetailPage() {
                   {declaration.stockItem?.name}
                 </div>
               </div>
+              {/* Source Objet */}
+              {declaration.source_objet && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Objet source
+                  </label>
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    {declaration.source_objet}
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">

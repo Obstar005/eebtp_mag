@@ -24,6 +24,8 @@ export interface ApiCustomUser {
   date_creation: string; // ISO datetime
   date_modif: string; // ISO datetime
   profil?: number; // Peut être undefined
+  profil_name?: string; 
+  projets?: number[]; // IDs des projets liés au compte
   groups: number[];
   user_permissions: number[];
 }
@@ -103,6 +105,7 @@ export interface ApiCreateUserRequest {
   poste: string;
   telephone: string;
   profil?: number; // L'API attend "profil" pas "id_profil"
+  projets?: number[]; // IDs des projets liés au compte
 }
 
 export interface ApiUpdateUserRequest extends Partial<ApiCreateUserRequest> {
