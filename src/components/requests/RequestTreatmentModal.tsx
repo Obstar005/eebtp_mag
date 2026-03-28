@@ -1,9 +1,9 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Modal, ModalButton } from "../layout";
-import { useAuth } from "../../contexts/AuthContext";
 import { useAccess } from "../../hooks/useAccessPermissions";
-import { type AvailableAction } from "../../utils/permissions";
 import { formatUnit } from "../../utils/formatUtils";
+import { Check, X, AlertTriangle } from "lucide-react";
+import { REQUEST_STATUS } from "../../utils/permissions";
 
 interface RequestTreatmentModalProps {
   isOpen: boolean;
@@ -16,9 +16,9 @@ interface RequestTreatmentModalProps {
   }) => void;
   article: string;
   quantite: number;
-  unite?: string; // Unité du stock item
+  unite?: string;
   isLoading?: boolean;
-  requestStatus: string; // État actuel de la demande
+  requestStatus: string;
 }
 
 export default function RequestTreatmentModal({
@@ -31,41 +31,93 @@ export default function RequestTreatmentModal({
   isLoading = false,
   requestStatus,
 }: RequestTreatmentModalProps) {
-  const { user } = useAuth();
-  const { getDemandeActions, isLoading: isLoadingPermissions } = useAccess();
-  const [traitement, setTraitement] = useState("");
+  const { demande, isLoading: isLoadingPermissions } = useAccess();
   const [commentaire, setCommentaire] = useState("");
   const [quantiteAjustee, setQuantiteAjustee] = useState<number | "">(quantite);
   const [coutTotal, setCoutTotal] = useState<number | "">("");
+  const [selectedAction, setSelectedAction] = useState<
+    "positive" | "reject" | null
+  >(null);
 
-  // Réinitialiser la quantité lorsque la quantité de la demande change
+  // Réinitialiser quand le modal s'ouvre ou que la quantité change
   useEffect(() => {
     setQuantiteAjustee(quantite);
-  }, [quantite]);
+    setCommentaire("");
+    setCoutTotal("");
+    setSelectedAction(null);
+  }, [quantite, isOpen]);
 
-  // Déterminer les actions disponibles selon les ACCÈS API de l'utilisateur
-  // Utilise le nouveau système basé sur les codes d'accès (demande.confirm, demande.approuv, demande.valid)
-  const availableActions = useMemo(() => {
-    return getDemandeActions(requestStatus);
-  }, [getDemandeActions, requestStatus]);
+  // Déterminer l'action positive disponible selon le statut et les permissions
+  const getPositiveAction = (): {
+    value: string;
+    label: string;
+    buttonLabel: string;
+  } | null => {
+    if (requestStatus === REQUEST_STATUS.EMISE && demande.canConfirm) {
+      return {
+        value: "confirmer",
+        label: "Confirmer la demande",
+        buttonLabel: "Confirmer",
+      };
+    }
+    if (requestStatus === REQUEST_STATUS.CONFIRMEE && demande.canApprove) {
+      return {
+        value: "approuver",
+        label: "Approuver la demande",
+        buttonLabel: "Approuver",
+      };
+    }
+    if (requestStatus === REQUEST_STATUS.APPROUVEE && demande.canValidate) {
+      return {
+        value: "valider",
+        label: "Valider la demande",
+        buttonLabel: "Valider",
+      };
+    }
+    return null;
+  };
 
-  // Déterminer si on doit afficher le champ de quantité
+  // Vérifier si l'utilisateur peut rejeter à cette étape
+  const canReject = (): boolean => {
+    if (requestStatus === REQUEST_STATUS.EMISE && demande.canConfirm)
+      return true;
+    if (requestStatus === REQUEST_STATUS.CONFIRMEE && demande.canApprove)
+      return true;
+    if (requestStatus === REQUEST_STATUS.APPROUVEE && demande.canValidate)
+      return true;
+    return false;
+  };
+
+  const positiveAction = getPositiveAction();
+  const canRejectRequest = canReject();
+  const hasAnyAction = positiveAction !== null || canRejectRequest;
+
+  // Déterminer si on affiche le champ quantité (approbation et validation)
   const showQuantiteField =
-    traitement === "approuver" || traitement === "valider";
+    selectedAction === "positive" &&
+    (requestStatus === REQUEST_STATUS.CONFIRMEE ||
+      requestStatus === REQUEST_STATUS.APPROUVEE);
 
-  // Déterminer si on doit afficher le champ de coût total
-  const showCoutTotalField = traitement === "valider";
+  // Déterminer si on affiche le champ coût total (validation uniquement)
+  const showCoutTotalField =
+    selectedAction === "positive" && requestStatus === REQUEST_STATUS.APPROUVEE;
+
+  // Le commentaire est obligatoire uniquement pour le rejet
+  const isCommentaireRequired = selectedAction === "reject";
 
   const handleSubmit = () => {
-    if (!traitement) {
-      alert("Veuillez sélectionner une action de traitement");
+    if (!selectedAction) {
+      alert("Veuillez sélectionner une action");
       return;
     }
 
-    if (traitement === "rejeter" && !commentaire) {
+    if (selectedAction === "reject" && !commentaire.trim()) {
       alert("Le motif est obligatoire pour un rejet");
       return;
     }
+
+    const traitement =
+      selectedAction === "reject" ? "rejeter" : positiveAction?.value || "";
 
     onSubmit({
       traitement,
@@ -77,34 +129,25 @@ export default function RequestTreatmentModal({
       coutTotal: showCoutTotalField && coutTotal !== "" ? coutTotal : undefined,
     });
 
-    // Réinitialiser les champs après soumission
-    setTraitement("");
+    // Réinitialisation après soumission
     setCommentaire("");
     setQuantiteAjustee(quantite);
     setCoutTotal("");
+    setSelectedAction(null);
   };
 
-  // Labels dynamiques pour le commentaire selon l'action
-  const getCommentaireLabel = () => {
-    switch (traitement) {
-      case "confirmer":
-        return "Commentaire de confirmation";
-      case "approuver":
-        return "Commentaire d'approbation";
-      case "valider":
-        return "Commentaire de validation";
-      case "rejeter":
-        return "Motif de rejet";
-      default:
-        return "Commentaire";
-    }
+  const getActionTitle = () => {
+    if (requestStatus === REQUEST_STATUS.EMISE) return "Confirmation";
+    if (requestStatus === REQUEST_STATUS.CONFIRMEE) return "Approbation";
+    if (requestStatus === REQUEST_STATUS.APPROUVEE) return "Validation";
+    return "Traitement";
   };
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Traitement de la demande`}
+      title={`${getActionTitle()} de la demande`}
       size="md"
       footer={
         <div className="flex justify-end gap-2">
@@ -114,87 +157,127 @@ export default function RequestTreatmentModal({
           <ModalButton
             variant="primary"
             onClick={handleSubmit}
-            disabled={isLoading || availableActions.length === 0}
+            disabled={
+              isLoading ||
+              !selectedAction ||
+              (isCommentaireRequired && !commentaire.trim())
+            }
           >
-            {isLoading ? "Traitement..." : "Valider"}
+            {isLoading ? "Traitement..." : "Confirmer l'action"}
           </ModalButton>
         </div>
       }
     >
-      <div className="space-y-4">
-        <div className="relative w-full">
-          <label className="block text-xs text-gray-500 mb-1">Article</label>
-          <input
-            className="w-full rounded-lg px-3 py-2 bg-gray-100"
-            value={article}
-            readOnly
-          />
-          <span className="absolute top-1/2 right-2 -translate-y-1/2 origin-center inline-block mt-2 bg-red-600 text-white px-2 py-1 rounded text-xs">
-            {quantite} {formatUnit(unite)}
-          </span>
-        </div>
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">
-            Action de traitement
-          </label>
-          {isLoadingPermissions ? (
-            <div className="w-full rounded-lg px-3 py-2 bg-gray-50 border border-gray-200 text-gray-500 text-sm flex items-center gap-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-              Chargement des permissions...
+      <div className="space-y-5">
+        {/* Infos de l'article */}
+        <div className="bg-gray-50 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Article demandé</p>
+              <p className="font-medium text-gray-900">{article}</p>
             </div>
-          ) : availableActions.length > 0 ? (
-            <select
-              className="w-full rounded-lg px-3 py-2 bg-gray-100 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={traitement}
-              onChange={(e) => setTraitement(e.target.value)}
-            >
-              <option value="">-- Sélectionner une action --</option>
-              {availableActions.map((action: AvailableAction) => (
-                <option key={action.value} value={action.value}>
-                  {action.label}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <div className="w-full rounded-lg px-3 py-2 bg-red-50 border border-red-200 text-red-600 text-sm">
-              {!user
-                ? "Vous devez être connecté pour traiter cette demande"
-                : `Aucune action disponible pour vos accès à l'état "${requestStatus}"`}
-            </div>
-          )}
+            <span className="bg-blue-600 text-white px-3 py-1.5 rounded-full text-sm font-medium">
+              {quantite} {formatUnit(unite)}
+            </span>
+          </div>
         </div>
 
-        {/* Champ de quantité pour approbation et validation */}
+        {/* Sélection de l'action */}
+        {isLoadingPermissions ? (
+          <div className="flex items-center justify-center py-4 gap-2 text-gray-500">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+            Chargement des permissions...
+          </div>
+        ) : hasAnyAction ? (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Choisissez une action
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Bouton action positive */}
+              {positiveAction && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedAction("positive")}
+                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
+                    selectedAction === "positive"
+                      ? "border-green-500 bg-green-50 text-green-700"
+                      : "border-gray-200 hover:border-green-300 hover:bg-green-50/50 text-gray-700"
+                  }`}
+                >
+                  <Check className="h-5 w-5" />
+                  <span className="font-medium">
+                    {positiveAction.buttonLabel}
+                  </span>
+                </button>
+              )}
+
+              {/* Bouton rejeter */}
+              {canRejectRequest && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedAction("reject")}
+                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
+                    selectedAction === "reject"
+                      ? "border-red-500 bg-red-50 text-red-700"
+                      : "border-gray-200 hover:border-red-300 hover:bg-red-50/50 text-gray-700"
+                  }`}
+                >
+                  <X className="h-5 w-5" />
+                  <span className="font-medium">Rejeter</span>
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-amber-800 font-medium">
+                Aucune action disponible
+              </p>
+              <p className="text-amber-600 text-sm mt-1">
+                Vous n'avez pas les permissions nécessaires pour traiter cette
+                demande à son état actuel.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Champ de quantité (pour approbation et validation) */}
         {showQuantiteField && (
           <div>
-            <label className="block text-xs text-gray-500 mb-1">
-              Quantité {traitement === "approuver" ? "approuvée" : "validée"}
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Quantité{" "}
+              {requestStatus === REQUEST_STATUS.CONFIRMEE
+                ? "approuvée"
+                : "validée"}
             </label>
             <input
               type="number"
-              className="w-full rounded-lg px-3 py-2 bg-gray-100 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder={`Quantité (demandée: ${quantite})`}
+              className="w-full rounded-lg px-3 py-2.5 bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder={`Quantité demandée: ${quantite}`}
               value={quantiteAjustee}
               onChange={(e) =>
                 setQuantiteAjustee(e.target.value ? Number(e.target.value) : "")
               }
               min={0}
             />
-            <p className="text-xs text-gray-400 mt-1">
-              Laissez vide ou égal à {quantite} pour garder la quantité demandée
+            <p className="text-xs text-gray-500 mt-1.5">
+              Vous pouvez ajuster la quantité à la hausse ou à la baisse
             </p>
           </div>
         )}
 
-        {/* Champ de coût total pour validation */}
+        {/* Champ de coût total (validation uniquement) */}
         {showCoutTotalField && (
           <div>
-            <label className="block text-xs text-gray-500 mb-1">
-              Coût total approximatif
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Coût total approximatif (FCFA)
             </label>
             <input
               type="number"
-              className="w-full rounded-lg px-3 py-2 bg-gray-100 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg px-3 py-2.5 bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Montant en FCFA"
               value={coutTotal}
               onChange={(e) =>
@@ -205,25 +288,41 @@ export default function RequestTreatmentModal({
           </div>
         )}
 
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">
-            {getCommentaireLabel()}{" "}
-            {traitement === "rejeter" && (
-              <span className="text-red-500">*</span>
+        {/* Champ commentaire */}
+        {selectedAction && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {selectedAction === "reject" ? (
+                <>
+                  Motif du rejet <span className="text-red-500">*</span>
+                </>
+              ) : (
+                "Commentaire (optionnel)"
+              )}
+            </label>
+            <textarea
+              className={`w-full rounded-lg px-3 py-2.5 bg-white border focus:outline-none focus:ring-2 focus:border-transparent ${
+                selectedAction === "reject"
+                  ? "border-red-300 focus:ring-red-500"
+                  : "border-gray-300 focus:ring-blue-500"
+              }`}
+              placeholder={
+                selectedAction === "reject"
+                  ? "Expliquez la raison du rejet..."
+                  : "Ajoutez un commentaire si nécessaire..."
+              }
+              rows={3}
+              value={commentaire}
+              onChange={(e) => setCommentaire(e.target.value)}
+              required={selectedAction === "reject"}
+            />
+            {selectedAction === "reject" && (
+              <p className="text-xs text-red-600 mt-1.5">
+                Le motif est obligatoire pour rejeter une demande
+              </p>
             )}
-          </label>
-          <textarea
-            className="w-full rounded-lg px-3 py-2 bg-gray-100 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder={
-              traitement === "rejeter"
-                ? "Expliquez la raison du rejet (obligatoire)"
-                : `Ajoutez un commentaire pour cette ${traitement || "action"}`
-            }
-            rows={3}
-            value={commentaire}
-            onChange={(e) => setCommentaire(e.target.value)}
-          />
-        </div>
+          </div>
+        )}
       </div>
     </Modal>
   );

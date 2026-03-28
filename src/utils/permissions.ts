@@ -485,6 +485,11 @@ export function extractDemandePermissions(
  * Obtenir les actions de traitement disponibles basées sur les accès API
  * C'est la nouvelle version qui remplace getAvailableTreatmentActionsSync
  * 
+ * WORKFLOW:
+ * - Émise → Confirmer ou Rejeter (si permission demande.confirm)
+ * - Confirmée → Approuver ou Rejeter (si permission demande.approuv)
+ * - Approuvée → Valider ou Rejeter (si permission demande.valid)
+ * 
  * @param userPermissions - Les permissions de l'utilisateur depuis l'API
  * @param requestStatus - Le statut actuel de la demande
  * @returns Liste des actions disponibles
@@ -500,53 +505,57 @@ export function getAvailableTreatmentActionsWithAccess(
   const permissions = extractDemandePermissions(userPermissions);
   const actions: AvailableAction[] = [];
 
-  // ÉTAPE 1: Confirmation (UNIQUEMENT si statut = Émise)
-  // Autorisé si l'utilisateur a l'accès "demande.confirm"
-  if (permissions.canConfirm && requestStatus === REQUEST_STATUS.EMISE) {
-    actions.push({
-      value: TREATMENT_ACTIONS.CONFIRMER,
-      label: "Confirmer la demande",
-      requiredStatus: REQUEST_STATUS.EMISE,
-    });
-  }
-
-  // ÉTAPE 2: Approbation (UNIQUEMENT si statut = Confirmée)
-  // Autorisé si l'utilisateur a l'accès "demande.approuv"
-  if (permissions.canApprove && requestStatus === REQUEST_STATUS.CONFIRMEE) {
-    actions.push({
-      value: TREATMENT_ACTIONS.APPROUVER,
-      label: "Approuver la demande",
-      requiredStatus: REQUEST_STATUS.CONFIRMEE,
-    });
-  }
-
-  // ÉTAPE 3: Validation (UNIQUEMENT si statut = Approuvée)
-  // Autorisé si l'utilisateur a l'accès "demande.valid"
-  if (permissions.canValidate && requestStatus === REQUEST_STATUS.APPROUVEE) {
-    actions.push({
-      value: TREATMENT_ACTIONS.VALIDER,
-      label: "Valider la demande",
-      requiredStatus: REQUEST_STATUS.APPROUVEE,
-    });
-  }
-
-  // Rejet possible UNIQUEMENT aux étapes non finales
-  // Et UNIQUEMENT si l'utilisateur peut agir à cette étape (validation uniquement selon API)
+  // États finaux - aucune action possible
   const finalStatuses = [
     REQUEST_STATUS.VALIDEE,
     REQUEST_STATUS.REJETEE,
     REQUEST_STATUS.LIVREE,
   ];
 
-  if (!finalStatuses.some((status) => status === requestStatus)) {
-    // Le rejet est autorisé uniquement pour ceux qui peuvent valider (DGA, DF, DG)
-    // selon la documentation API
-    if (permissions.canValidate && requestStatus === REQUEST_STATUS.APPROUVEE) {
-      actions.push({
-        value: TREATMENT_ACTIONS.REJETER,
-        label: "Rejeter la demande",
-      });
-    }
+  if (finalStatuses.some((status) => status === requestStatus)) {
+    return [];
+  }
+
+  // ÉTAPE 1: Confirmation (si statut = Émise et permission demande.confirm)
+  if (permissions.canConfirm && requestStatus === REQUEST_STATUS.EMISE) {
+    actions.push({
+      value: TREATMENT_ACTIONS.CONFIRMER,
+      label: "Confirmer la demande",
+      requiredStatus: REQUEST_STATUS.EMISE,
+    });
+    // Le rejet est possible à cette étape aussi
+    actions.push({
+      value: TREATMENT_ACTIONS.REJETER,
+      label: "Rejeter la demande",
+    });
+  }
+
+  // ÉTAPE 2: Approbation (si statut = Confirmée et permission demande.approuv)
+  if (permissions.canApprove && requestStatus === REQUEST_STATUS.CONFIRMEE) {
+    actions.push({
+      value: TREATMENT_ACTIONS.APPROUVER,
+      label: "Approuver la demande",
+      requiredStatus: REQUEST_STATUS.CONFIRMEE,
+    });
+    // Le rejet est possible à cette étape aussi
+    actions.push({
+      value: TREATMENT_ACTIONS.REJETER,
+      label: "Rejeter la demande",
+    });
+  }
+
+  // ÉTAPE 3: Validation (si statut = Approuvée et permission demande.valid)
+  if (permissions.canValidate && requestStatus === REQUEST_STATUS.APPROUVEE) {
+    actions.push({
+      value: TREATMENT_ACTIONS.VALIDER,
+      label: "Valider la demande",
+      requiredStatus: REQUEST_STATUS.APPROUVEE,
+    });
+    // Le rejet est possible à cette étape aussi
+    actions.push({
+      value: TREATMENT_ACTIONS.REJETER,
+      label: "Rejeter la demande",
+    });
   }
 
   return actions;

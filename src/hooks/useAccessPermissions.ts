@@ -104,16 +104,20 @@ export function useAccess() {
 
   // Permissions spécifiques pour les demandes
   const demandePermissions = useMemo(
-    () => ({
-      canView: hasAccess(DEMANDE_ACCESS_CODES.VIEW),
-      canCreate: hasAccess(DEMANDE_ACCESS_CODES.CREATE),
-      canUpdate: hasAccess(DEMANDE_ACCESS_CODES.UPDATE),
-      canDelete: hasAccess(DEMANDE_ACCESS_CODES.DELETE),
-      canConfirm: hasAccess(DEMANDE_ACCESS_CODES.CONFIRM),
-      canApprove: hasAccess(DEMANDE_ACCESS_CODES.APPROVE),
-      canValidate: hasAccess(DEMANDE_ACCESS_CODES.VALIDATE),
-    }),
-    [hasAccess]
+    () => {
+      const result = {
+        canView: hasAccess(DEMANDE_ACCESS_CODES.VIEW),
+        canCreate: hasAccess(DEMANDE_ACCESS_CODES.CREATE),
+        canUpdate: hasAccess(DEMANDE_ACCESS_CODES.UPDATE),
+        canDelete: hasAccess(DEMANDE_ACCESS_CODES.DELETE),
+        canConfirm: hasAccess(DEMANDE_ACCESS_CODES.CONFIRM),
+        canApprove: hasAccess(DEMANDE_ACCESS_CODES.APPROVE),
+        canValidate: hasAccess(DEMANDE_ACCESS_CODES.VALIDATE),
+      };
+      
+      return result;
+    },
+    [hasAccess, permissions]
   );
 
   // Permissions pour les stocks

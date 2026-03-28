@@ -7,7 +7,10 @@ import RequestTreatmentModal from "../components/requests/RequestTreatmentModal"
 import { useDemande, useTraiterDemande } from "../hooks/useDemandes";
 import { useAccess } from "../hooks/useAccessPermissions";
 import { showErrorMessage, logError } from "../utils/errorHandling";
-import { mapApiStatusToPermissionStatus } from "../utils/permissions";
+import {
+  mapApiStatusToPermissionStatus,
+  REQUEST_STATUS,
+} from "../utils/permissions";
 import { getStatusBadge, getStatusIcon } from "../utils/statutUtils";
 import { RequestStatusLabels, type RequestTreatment } from "../types";
 import { formatUnit } from "../utils/formatUtils";
@@ -15,7 +18,7 @@ import { formatUnit } from "../utils/formatUtils";
 export default function RequestDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { canTreatDemande } = useAccess();
+  const { demande, isLoading: isLoadingPermissions, permissions } = useAccess();
   const [isTreatmentModalOpen, setIsTreatmentModalOpen] = useState(false);
   const [selectedTreatment, setSelectedTreatment] =
     useState<RequestTreatment | null>(null);
@@ -27,11 +30,22 @@ export default function RequestDetailPage() {
   const { mutate: traiterDemande, isPending: isTraitementLoading } =
     useTraiterDemande();
 
-  // Déterminer si l'utilisateur peut traiter cette demande (basé sur les accès API)
+  // Déterminer si l'utilisateur peut traiter cette demande (basé sur les permissions)
   const canTreatRequest = (() => {
-    const apiStatus = request?.status || "";
-    const mappedStatus = mapApiStatusToPermissionStatus(apiStatus);
-    return canTreatDemande(mappedStatus);
+    // Attendre que les permissions soient chargées
+    if (isLoadingPermissions) return false;
+
+    const mappedStatus = mapApiStatusToPermissionStatus(request?.status || "");
+
+    // Vérifier les permissions selon le statut actuel
+    if (mappedStatus === REQUEST_STATUS.EMISE && demande.canConfirm)
+      return true;
+    if (mappedStatus === REQUEST_STATUS.CONFIRMEE && demande.canApprove)
+      return true;
+    if (mappedStatus === REQUEST_STATUS.APPROUVEE && demande.canValidate)
+      return true;
+
+    return false;
   })();
 
   const handleOpenTreatmentModal = () => setIsTreatmentModalOpen(true);

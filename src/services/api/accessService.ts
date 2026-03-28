@@ -27,7 +27,7 @@ export const DEMANDE_ACCESS_CODES = {
   UPDATE: "demande.update",
   DELETE: "demande.delete",
   CONFIRM: "demande.confirm",
-  APPROVE: "demande.approuv",
+  APPROVE: "demande.approv",
   VALIDATE: "demande.valid",
 } as const;
 
