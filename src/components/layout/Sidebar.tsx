@@ -15,6 +15,7 @@ import {
   Plus,
   User,
   LogOut,
+  Clock,
 } from "lucide-react";
 import logoPng from "../../assets/logo_eebtp.png";
 import { useAuth } from "../../contexts/AuthContext";
@@ -70,7 +71,7 @@ const getNavigation = (): NavigationSection[] => [
         name: "Liste des profils",
         href: "/profiles",
         icon: List,
-        permissionKey: "profil.canView",
+        permissionKey: "profil.canViewList",
       },
     ],
   },
@@ -88,7 +89,7 @@ const getNavigation = (): NavigationSection[] => [
         name: "Liste des comptes",
         href: "/accounts",
         icon: List,
-        permissionKey: "userAccess.canView",
+        permissionKey: "userAccess.canViewList",
       },
     ],
   },
@@ -106,7 +107,7 @@ const getNavigation = (): NavigationSection[] => [
         name: "Liste des projets",
         href: "/projects",
         icon: List,
-        permissionKey: "projet.canView",
+        permissionKey: "projet.canViewList",
       },
     ],
   },
@@ -124,13 +125,13 @@ const getNavigation = (): NavigationSection[] => [
         name: "Liste des articles",
         href: "/articles",
         icon: List,
-        permissionKey: "article.canView",
+        permissionKey: "article.canViewList",
       },
       {
         name: "Liste des magasins",
         href: "/magasins",
         icon: Store,
-        permissionKey: "magasin.canView",
+        permissionKey: "magasin.canViewList",
       },
     ],
   },
@@ -142,7 +143,19 @@ const getNavigation = (): NavigationSection[] => [
         name: "Liste des demandes",
         href: "/requests",
         icon: MessageSquare,
-        permissionKey: "demande.canView",
+        permissionKey: "demande.canViewList",
+      },
+    ],
+  },
+  // Section Historique
+  {
+    title: "Historique",
+    items: [
+      {
+        name: "Historique des actions",
+        href: "/historique",
+        icon: Clock,
+        permissionKey: "historique.canView",
       },
     ],
   },

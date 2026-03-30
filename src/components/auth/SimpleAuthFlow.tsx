@@ -151,6 +151,7 @@ export function SimpleAuthFlow({ onAuthSuccess }: SimpleAuthFlowProps) {
         // Rediriger vers changement de mot de passe
         updateAuthState({
           currentStep: "change_password",
+          isPhoneVerified: true, // Préserver la vérification du téléphone
         });
       } else {
         // Connexion normale : utiliser directement les données de la réponse de login

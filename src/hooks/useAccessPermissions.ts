@@ -107,12 +107,14 @@ export function useAccess() {
     () => {
       const result = {
         canView: hasAccess(DEMANDE_ACCESS_CODES.VIEW),
+        canViewList: hasAccess(DEMANDE_ACCESS_CODES.VIEW_LIST),
         canCreate: hasAccess(DEMANDE_ACCESS_CODES.CREATE),
         canUpdate: hasAccess(DEMANDE_ACCESS_CODES.UPDATE),
         canDelete: hasAccess(DEMANDE_ACCESS_CODES.DELETE),
         canConfirm: hasAccess(DEMANDE_ACCESS_CODES.CONFIRM),
         canApprove: hasAccess(DEMANDE_ACCESS_CODES.APPROVE),
         canValidate: hasAccess(DEMANDE_ACCESS_CODES.VALIDATE),
+        canReject: hasAccess(DEMANDE_ACCESS_CODES.REJECT),
       };
       
       return result;
@@ -124,6 +126,7 @@ export function useAccess() {
   const stockPermissions = useMemo(
     () => ({
       canView: hasAccess(STOCK_ACCESS_CODES.VIEW),
+      canViewList: hasAccess(STOCK_ACCESS_CODES.VIEW_LIST),
       canCreate: hasAccess(STOCK_ACCESS_CODES.CREATE),
       canUpdate: hasAccess(STOCK_ACCESS_CODES.UPDATE),
       canDelete: hasAccess(STOCK_ACCESS_CODES.DELETE),
@@ -135,6 +138,7 @@ export function useAccess() {
   const articlePermissions = useMemo(
     () => ({
       canView: hasAccess(ARTICLE_ACCESS_CODES.VIEW),
+      canViewList: hasAccess(ARTICLE_ACCESS_CODES.VIEW_LIST),
       canCreate: hasAccess(ARTICLE_ACCESS_CODES.CREATE),
       canUpdate: hasAccess(ARTICLE_ACCESS_CODES.UPDATE),
       canDelete: hasAccess(ARTICLE_ACCESS_CODES.DELETE),
@@ -146,6 +150,7 @@ export function useAccess() {
   const magasinPermissions = useMemo(
     () => ({
       canView: hasAccess(MAGASIN_ACCESS_CODES.VIEW),
+      canViewList: hasAccess(MAGASIN_ACCESS_CODES.VIEW_LIST),
       canCreate: hasAccess(MAGASIN_ACCESS_CODES.CREATE),
       canUpdate: hasAccess(MAGASIN_ACCESS_CODES.UPDATE),
       canDelete: hasAccess(MAGASIN_ACCESS_CODES.DELETE),
@@ -157,6 +162,7 @@ export function useAccess() {
   const projetPermissions = useMemo(
     () => ({
       canView: hasAccess(PROJET_ACCESS_CODES.VIEW),
+      canViewList: hasAccess(PROJET_ACCESS_CODES.VIEW_LIST),
       canCreate: hasAccess(PROJET_ACCESS_CODES.CREATE),
       canUpdate: hasAccess(PROJET_ACCESS_CODES.UPDATE),
       canDelete: hasAccess(PROJET_ACCESS_CODES.DELETE),
@@ -168,6 +174,7 @@ export function useAccess() {
   const userPermissionsAccess = useMemo(
     () => ({
       canView: hasAccess(USER_ACCESS_CODES.VIEW),
+      canViewList: hasAccess(USER_ACCESS_CODES.VIEW_LIST),
       canCreate: hasAccess(USER_ACCESS_CODES.CREATE),
       canUpdate: hasAccess(USER_ACCESS_CODES.UPDATE),
       canDelete: hasAccess(USER_ACCESS_CODES.DELETE),
@@ -179,6 +186,7 @@ export function useAccess() {
   const profilPermissions = useMemo(
     () => ({
       canView: hasAccess(PROFIL_ACCESS_CODES.VIEW),
+      canViewList: hasAccess(PROFIL_ACCESS_CODES.VIEW_LIST),
       canCreate: hasAccess(PROFIL_ACCESS_CODES.CREATE),
       canUpdate: hasAccess(PROFIL_ACCESS_CODES.UPDATE),
       canDelete: hasAccess(PROFIL_ACCESS_CODES.DELETE),
@@ -191,12 +199,14 @@ export function useAccess() {
     () => ({
       entree: {
         canView: hasAccess(ENTREE_ACCESS_CODES.VIEW),
+        canViewList: hasAccess(ENTREE_ACCESS_CODES.VIEW_LIST),
         canCreate: hasAccess(ENTREE_ACCESS_CODES.CREATE),
         canUpdate: hasAccess(ENTREE_ACCESS_CODES.UPDATE),
         canDelete: hasAccess(ENTREE_ACCESS_CODES.DELETE),
       },
       sortie: {
         canView: hasAccess(SORTIE_ACCESS_CODES.VIEW),
+        canViewList: hasAccess(SORTIE_ACCESS_CODES.VIEW_LIST),
         canCreate: hasAccess(SORTIE_ACCESS_CODES.CREATE),
         canUpdate: hasAccess(SORTIE_ACCESS_CODES.UPDATE),
         canDelete: hasAccess(SORTIE_ACCESS_CODES.DELETE),

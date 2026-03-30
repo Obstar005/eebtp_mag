@@ -38,6 +38,7 @@ import { DeclarationEntreeDetailPage } from "./pages/declarations/DeclarationEnt
 import { DeclarationSortieDetailPage } from "./pages/declarations/DeclarationSortieDetailPage";
 import { DeclarationRetourDetailPage } from "./pages/declarations/DeclarationRetourDetailPage";
 import { MyProfilePage } from "./pages/MyProfilePage";
+import { HistoriquePage } from "./pages/HistoriquePage";
 
 // Créer une instance du client React Query
 const queryClient = new QueryClient({
@@ -102,6 +103,7 @@ function AppContent() {
       >
         {/* Redirection par défaut vers le dashboard */}
         <Route index element={<Navigate to={routePaths.dashboard} replace />} />
+        <Route path="historique" element={<HistoriquePage />} />
 
         {/* Pages principales */}
         <Route path="dashboard" element={<Dashboard />} />

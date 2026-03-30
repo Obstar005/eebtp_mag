@@ -31,6 +31,8 @@ import { DeclarationRetourDetailPage } from "../pages/declarations/DeclarationRe
 import { NotificationsPage } from "../pages/NotificationsPage";
 // Page Mon Profil
 import { MyProfilePage } from "../pages/MyProfilePage";
+// Page Historique
+import { HistoriquePage } from "../pages/HistoriquePage";
 // Page de test API (développement uniquement)
 import ApiTestPage from "../pages/ApiTestPage";
 
@@ -71,6 +73,11 @@ export const router = createBrowserRouter([
       {
         path: "profile",
         element: <MyProfilePage />,
+      },
+      // Route Historique
+      {
+        path: "historique",
+        element: <HistoriquePage />,
       },
       // Routes des comptes
       {

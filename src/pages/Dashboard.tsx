@@ -370,7 +370,7 @@ export function Dashboard() {
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 first-letter:capitalize">
-                état de stock de Matériaux
+                état de stock des Matériaux
               </h3>
             </div>
             <StockBarChartJS
@@ -428,7 +428,7 @@ export function Dashboard() {
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 first-letter:capitalize">
-                état de stock de Matériels
+                état de stock des Matériels
               </h3>
             </div>
             <StockBarChartJS

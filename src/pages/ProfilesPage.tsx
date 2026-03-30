@@ -52,7 +52,7 @@ export function ProfilesPage() {
   };
 
   // Vérification des permissions de vue
-  if (!permissionsLoading && !profilPerms.canView) {
+  if (!permissionsLoading && !profilPerms.canViewList) {
     return (
       <AccessDenied message="Vous n'avez pas la permission de consulter les profils." />
     );

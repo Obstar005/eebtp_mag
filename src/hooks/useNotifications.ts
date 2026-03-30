@@ -1,15 +1,59 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationApiService } from "../services/api/notificationService";
-import type { Notification, NotificationFilters } from "../types/notification";
+import type { Notification, NotificationFilters, ApiNotification } from "../types/notification";
 
-// Hook pour récupérer les notifications de l'utilisateur
-export function useUserNotifications(periode: string = "total") {
+// ==========================================
+// VRAIES NOTIFICATIONS (Barre de navigation)
+// ==========================================
+
+// Hook pour récupérer les vraies notifications de l'API (pour le dropdown)
+export function useRealNotifications() {
   return useQuery({
-    queryKey: ["notifications", "user", periode],
-    queryFn: () => notificationApiService.getUserNotifications(periode),
+    queryKey: ["real-notifications"],
+    queryFn: () => notificationApiService.getRealNotifications(),
     staleTime: 30000, // 30 secondes
     refetchInterval: 60000, // Actualiser toutes les minutes
   });
+}
+
+// Hook pour marquer une notification comme lue via l'API
+export function useMarkRealNotificationAsRead() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (notificationId: number) => {
+      return notificationApiService.markNotificationAsReadApi(notificationId);
+    },
+    onSuccess: () => {
+      // Invalider les requêtes de notifications pour les mettre à jour
+      queryClient.invalidateQueries({ queryKey: ["real-notifications"] });
+    },
+  });
+}
+
+// Hook pour obtenir le nombre de vraies notifications non lues
+export function useRealUnreadCount() {
+  const { data: notifications = [] } = useRealNotifications();
+  return notifications.filter((n: ApiNotification) => !n.is_read).length;
+}
+
+// ==========================================
+// HISTORIQUE DES ACTIONS (Page profil)
+// ==========================================
+
+// Hook pour récupérer l'historique de l'utilisateur (pour la page profil)
+export function useUserHistorique(periode: string = "total") {
+  return useQuery({
+    queryKey: ["historique", "user", periode],
+    queryFn: () => notificationApiService.getUserHistorique(periode),
+    staleTime: 30000, // 30 secondes
+    refetchInterval: 60000, // Actualiser toutes les minutes
+  });
+}
+
+// Hook pour récupérer les notifications de l'utilisateur (ancien nom, garde la compatibilité)
+export function useUserNotifications(periode: string = "total") {
+  return useUserHistorique(periode);
 }
 
 // Hook pour récupérer toutes les notifications (admin)

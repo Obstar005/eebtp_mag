@@ -80,11 +80,15 @@ export function ProfileDetailPage() {
   // Trouver le profil spécifique
   const profile = profiles?.find((p) => p.id.toString() === profileId);
 
-  // Grouper les accès par module
-  const groupedAccesses = useMemo(
-    () => groupAccessesByModule(allAccesses),
-    [allAccesses],
-  );
+  // Grouper les accès par module (avant le point dans le code) - seulement ceux du profil
+  const groupedAccesses = useMemo(() => {
+    // Filtrer uniquement les accès que le profil possède
+    const profileAccessIds = profile?.permissions || [];
+    const filteredAccesses = allAccesses.filter((access) =>
+      profileAccessIds.includes(access.id),
+    );
+    return groupAccessesByModule(filteredAccesses);
+  }, [allAccesses, profile?.permissions]);
 
   // Permissions du profil
   const profilePermissions = profile?.permissions || [];
@@ -208,34 +212,29 @@ export function ProfileDetailPage() {
             </p>
 
             <div className="border border-gray-200 rounded-lg divide-y divide-gray-200">
-              {Object.entries(groupedAccesses).map(([module, accesses]) => {
-                const moduleSelectedCount = accesses.filter((a) =>
-                  profilePermissions.includes(a.id),
-                ).length;
-                const hasAnySelected = moduleSelectedCount > 0;
-
-                return (
+              {Object.entries(groupedAccesses).length === 0 ? (
+                <div className="px-4 py-6 text-center text-gray-500">
+                  Aucune permission attribuée à ce profil.
+                </div>
+              ) : (
+                Object.entries(groupedAccesses).map(([module, accesses]) => (
                   <div key={module} className="overflow-hidden">
                     {/* En-tête du module */}
                     <div
-                      className={`flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-100 ${hasAnySelected ? "bg-blue-50" : "bg-gray-50"}`}
+                      className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-100 bg-blue-50"
                       onClick={() => toggleModule(module)}
                     >
                       <div className="flex items-center gap-3">
                         {expandedModules[module] ? (
-                          <ChevronDown className="h-4 w-4 text-gray-500" />
+                          <ChevronDown className="h-4 w-4 text-blue-600" />
                         ) : (
-                          <ChevronRight className="h-4 w-4 text-gray-500" />
+                          <ChevronRight className="h-4 w-4 text-blue-600" />
                         )}
-                        <span
-                          className={`font-medium ${hasAnySelected ? "text-blue-700" : "text-gray-700"}`}
-                        >
+                        <span className="font-medium text-blue-700">
                           {MODULE_LABELS[module] || module}
                         </span>
-                        <span
-                          className={`text-xs ${hasAnySelected ? "text-blue-600" : "text-gray-500"}`}
-                        >
-                          ({moduleSelectedCount}/{accesses.length})
+                        <span className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                          {accesses.length}
                         </span>
                       </div>
                     </div>
@@ -243,38 +242,27 @@ export function ProfileDetailPage() {
                     {/* Liste des accès du module */}
                     {expandedModules[module] && (
                       <div className="px-4 py-2 space-y-1 bg-white">
-                        {accesses.map((access) => {
-                          const isSelected = profilePermissions.includes(
-                            access.id,
-                          );
-                          return (
-                            <div
-                              key={access.id}
-                              className={`flex items-center gap-3 py-2 px-3 rounded ${isSelected ? "bg-green-50" : "bg-gray-50"}`}
-                            >
-                              {isSelected ? (
-                                <Check className="h-4 w-4 text-green-600 flex-shrink-0" />
-                              ) : (
-                                <div className="h-4 w-4 flex-shrink-0" />
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <span
-                                  className={`text-sm ${isSelected ? "text-green-700 font-medium" : "text-gray-500"}`}
-                                >
-                                  {access.libelle}
-                                </span>
-                                <span className="text-xs text-gray-400 ml-2">
-                                  ({access.code})
-                                </span>
-                              </div>
+                        {accesses.map((access) => (
+                          <div
+                            key={access.id}
+                            className="flex items-center gap-3 py-2 px-3 rounded bg-green-50"
+                          >
+                            <Check className="h-4 w-4 text-green-600 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <span className="text-sm text-green-700 font-medium">
+                                {access.libelle}
+                              </span>
+                              <span className="text-xs text-gray-400 ml-2">
+                                ({access.code})
+                              </span>
                             </div>
-                          );
-                        })}
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
-                );
-              })}
+                ))
+              )}
             </div>
 
             {/* Résumé des permissions */}

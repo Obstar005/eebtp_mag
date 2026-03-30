@@ -1,29 +1,32 @@
 import { useState, useRef, useEffect } from "react";
-import { Bell, Check, CheckCheck, X, Clock, User, Eye } from "lucide-react";
+import { Bell, X, Clock } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "react-toast";
 import {
-  useUserNotifications,
-  useUnreadNotificationsCount,
-  useMarkNotificationAsRead,
-  useMarkAllNotificationsAsRead,
+  useRealNotifications,
+  useRealUnreadCount,
+  useMarkRealNotificationAsRead,
 } from "../../hooks/useNotifications";
-import {
-  ACTION_TYPE_ICONS,
-  ACTION_TYPE_COLORS,
-  ACTION_TYPE_CATEGORIES,
-} from "../../types/notification";
+import type { ApiNotification } from "../../types/notification";
+
+// Mapping des types de notifications vers des couleurs
+const NOTIFICATION_TYPE_COLORS: Record<string, string> = {
+  info: "text-blue-600 bg-blue-50",
+  success: "text-green-600 bg-green-50",
+  warning: "text-yellow-600 bg-yellow-50",
+  error: "text-red-600 bg-red-50",
+  default: "text-gray-600 bg-gray-50",
+};
 
 export function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Hooks pour les données
-  const { data: notifications = [], isLoading, error } = useUserNotifications();
-  const unreadCount = useUnreadNotificationsCount();
-  const markAsReadMutation = useMarkNotificationAsRead();
-  const markAllAsReadMutation = useMarkAllNotificationsAsRead();
+  // Hooks pour les vraies notifications de l'API
+  const { data: notifications = [], isLoading, error } = useRealNotifications();
+  const unreadCount = useRealUnreadCount();
+  const markAsReadMutation = useMarkRealNotificationAsRead();
 
   // Fermer le dropdown quand on clique à l'extérieur
   useEffect(() => {
@@ -45,46 +48,32 @@ export function NotificationDropdown() {
       onSuccess: () => {
         toast.success("Notification marquée comme lue");
       },
-    });
-  };
-
-  const handleMarkAllAsRead = () => {
-    markAllAsReadMutation.mutate(notifications, {
-      onSuccess: () => {
-        toast.success("Toutes les notifications marquées comme lues");
+      onError: () => {
+        toast.error("Erreur lors du marquage de la notification");
       },
     });
   };
 
-  const getIconComponent = (actionType: string) => {
-    const iconName = ACTION_TYPE_ICONS[actionType] || "bell";
-
-    switch (iconName) {
-      case "user-check":
-        return <User className="h-4 w-4" />;
-      case "plus-circle":
-        return <span className="h-4 w-4 rounded-full bg-current"></span>;
-      case "edit":
-        return <span className="h-4 w-4 text-current">✏️</span>;
-      case "trash-2":
-        return <span className="h-4 w-4 text-current">🗑️</span>;
-      case "eye":
-        return <Eye className="h-4 w-4" />;
-      case "check-circle":
-        return <Check className="h-4 w-4" />;
-      case "thumbs-up":
-        return <span className="h-4 w-4 text-current">👍</span>;
-      case "thumbs-down":
-        return <span className="h-4 w-4 text-current">👎</span>;
-      case "check-square":
-        return <CheckCheck className="h-4 w-4" />;
-      default:
-        return <Bell className="h-4 w-4" />;
+  const handleMarkAllAsRead = async () => {
+    // Marquer toutes les notifications non lues comme lues
+    const unreadNotifications = notifications.filter(
+      (n: ApiNotification) => !n.is_read,
+    );
+    for (const notification of unreadNotifications) {
+      try {
+        await markAsReadMutation.mutateAsync(notification.id);
+      } catch (error) {
+        console.error("Erreur lors du marquage:", error);
+      }
     }
+    toast.success("Toutes les notifications marquées comme lues");
   };
 
-  const getActionTypeLabel = (actionType: string) => {
-    return ACTION_TYPE_CATEGORIES[actionType] || actionType;
+  const getNotificationColor = (type?: string) => {
+    return (
+      NOTIFICATION_TYPE_COLORS[type || "default"] ||
+      NOTIFICATION_TYPE_COLORS.default
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -131,7 +120,8 @@ export function NotificationDropdown() {
                   <button
                     onClick={handleMarkAllAsRead}
                     className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
-                    disabled={markAllAsReadMutation.isPending}
+                    disabled={markAsReadMutation.isPending}
+                    title="Marquer toutes les notifications comme lues"
                   >
                     Tout marquer comme lu
                   </button>
@@ -139,6 +129,7 @@ export function NotificationDropdown() {
                 <button
                   onClick={() => setIsOpen(false)}
                   className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                  title="Fermer"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -172,49 +163,41 @@ export function NotificationDropdown() {
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
-                {recentNotifications.map((notification) => (
+                {recentNotifications.map((notification: ApiNotification) => (
                   <div
                     key={notification.id}
                     onClick={() => handleNotificationClick(notification.id)}
                     className={`px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${
-                      !notification.isRead ? "bg-blue-50" : ""
+                      !notification.is_read ? "bg-blue-50" : ""
                     }`}
                   >
                     <div className="flex items-start space-x-3">
                       {/* Icône */}
                       <div
-                        className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                          ACTION_TYPE_COLORS[notification.action_type] ||
-                          "text-gray-600 bg-gray-50"
-                        }`}
+                        className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${getNotificationColor(
+                          notification.type,
+                        )}`}
                       >
-                        {getIconComponent(notification.action_type)}
+                        <Bell className="h-4 w-4" />
                       </div>
 
                       {/* Contenu */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-medium text-gray-900 truncate">
-                            {getActionTypeLabel(notification.action_type)}
+                            {notification.title}
                           </p>
-                          {!notification.isRead && (
+                          {!notification.is_read && (
                             <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
                           )}
                         </div>
                         <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                          {notification.description}
+                          {notification.message}
                         </p>
                         <div className="flex items-center mt-2 text-xs text-gray-500">
-                          <User className="h-3 w-3 mr-1" />
-                          <span className="mr-3">{notification.user}</span>
                           <Clock className="h-3 w-3 mr-1" />
-                          <span>{formatDate(notification.date_action)}</span>
+                          <span>{formatDate(notification.created_at)}</span>
                         </div>
-                        {notification.objet_concerne && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            {notification.objet_concerne}
-                          </p>
-                        )}
                       </div>
                     </div>
                   </div>

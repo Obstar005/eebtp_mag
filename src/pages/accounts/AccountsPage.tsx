@@ -164,7 +164,7 @@ export function AccountsPage() {
   }
 
   // Vérification des permissions de vue
-  if (!userPerms.canView) {
+  if (!userPerms.canViewList) {
     return (
       <AccessDenied message="Vous n'avez pas la permission de consulter les comptes utilisateurs." />
     );

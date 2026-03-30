@@ -113,7 +113,7 @@ export function AccountDetailsPage() {
               <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 p-1 relative">
                 {account.photo_profil ? (
                   <img
-                    src={account.photo_profil}
+                    src={`${import.meta.env.VITE_API_URL}${account.photo_profil}`}
                     alt="Photo de profil"
                     className="w-full h-full object-cover rounded-full border border-blue-500"
                   />

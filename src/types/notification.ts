@@ -9,11 +9,23 @@ export interface HistoriqueAction {
   objet_concerne: string;
 }
 
+// Type pour les notifications de l'historique (profil)
 export interface Notification extends HistoriqueAction {
   // Champs additionnels pour l'interface utilisateur
   isRead?: boolean;
   priority?: "low" | "medium" | "high";
   category?: string; // Type plus flexible pour s'adapter à tous les types d'actions de l'API
+}
+
+// Type pour les vraies notifications de l'API (barre de navigation)
+export interface ApiNotification {
+  id: number;
+  title: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+  type?: string;
+  user?: number;
 }
 
 export interface NotificationFilters {

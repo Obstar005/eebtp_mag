@@ -86,7 +86,7 @@ export function RequestsPage() {
   }
 
   // Vérification des permissions de vue
-  if (!demandePerms.canView) {
+  if (!demandePerms.canViewList) {
     return (
       <AccessDenied message="Vous n'avez pas la permission de consulter les demandes." />
     );

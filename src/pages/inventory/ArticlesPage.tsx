@@ -124,7 +124,7 @@ export function ArticlesPage() {
   }
 
   // Vérification des permissions de vue
-  if (!articlePerms.canView) {
+  if (!articlePerms.canViewList) {
     return (
       <AccessDenied message="Vous n'avez pas la permission de consulter les articles." />
     );

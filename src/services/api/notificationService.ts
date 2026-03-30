@@ -5,12 +5,63 @@ import type {
   NotificationFilters,
   NotificationListResponse,
   NotificationStats,
+  ApiNotification,
 } from "../../types/notification";
 import { ACTION_TYPE_PRIORITIES } from "../../types/notification";
 
 export class NotificationApiService {
+  // ==========================================
+  // VRAIES NOTIFICATIONS (Barre de navigation)
+  // ==========================================
+
+  // Récupérer les vraies notifications de l'utilisateur depuis l'API
+  async getRealNotifications(): Promise<ApiNotification[]> {
+    try {
+      const response = await apiClient.get<ApiNotification[]>(
+        "/Notifications/notifications-by-user"
+      );
+      return response.data || [];
+    } catch (error) {
+      // Si l'endpoint n'existe pas (404), retourner une liste vide
+      if (
+        error &&
+        typeof error === "object" &&
+        "status" in error &&
+        error.status === 404
+      ) {
+        return [];
+      }
+      console.error("Erreur lors de la récupération des notifications:", error);
+      return [];
+    }
+  }
+
+  // Marquer une notification comme lue via l'API
+  async markNotificationAsReadApi(notificationId: number): Promise<void> {
+    try {
+      await apiClient.post(`/Notifications/notification-mark-as-read/${notificationId}`);
+    } catch (error) {
+      console.error("Erreur lors du marquage de la notification:", error);
+      throw new Error("Impossible de marquer la notification comme lue");
+    }
+  }
+
+  // Récupérer le nombre de notifications non lues
+  async getUnreadCount(): Promise<number> {
+    try {
+      const notifications = await this.getRealNotifications();
+      return notifications.filter((n) => !n.is_read).length;
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  // ==========================================
+  // HISTORIQUE DES ACTIONS (Page profil)
+  // ==========================================
+
   // Récupérer l'historique des actions de l'utilisateur connecté
-  async getUserNotifications(periode: string = "total"): Promise<Notification[]> {
+  async getUserHistorique(periode: string = "total"): Promise<Notification[]> {
     try {
       const response = await apiClient.get<HistoriqueAction[]>(
         `/App/historique-user/${periode}`
@@ -34,17 +85,16 @@ export class NotificationApiService {
       ) {
         return [];
       }
-      throw new Error("Impossible de récupérer les notifications");
+      throw new Error("Impossible de récupérer l'historique");
     }
   }
 
-  // Récupérer toutes les notifications du système (pour les administrateurs)
-  async getAllNotifications(): Promise<Notification[]> {
+  // Récupérer tout l'historique du système (pour les administrateurs)
+  async getAllHistorique(): Promise<Notification[]> {
     try {
       const response = await apiClient.get<HistoriqueAction[]>(
         "/App/historique-toutes-actions"
       );
-
 
       // Transformer en notifications avec métadonnées
       const notifications: Notification[] = response.data.map((action) => ({
@@ -56,8 +106,22 @@ export class NotificationApiService {
 
       return notifications;
     } catch (error) {
-      throw new Error("Impossible de récupérer toutes les notifications");
+      throw new Error("Impossible de récupérer tout l'historique");
     }
+  }
+
+  // ==========================================
+  // MÉTHODES LEGACY (pour compatibilité)
+  // ==========================================
+
+  // Récupérer l'historique des actions de l'utilisateur connecté (ancien nom)
+  async getUserNotifications(periode: string = "total"): Promise<Notification[]> {
+    return this.getUserHistorique(periode);
+  }
+
+  // Récupérer toutes les notifications du système (ancien nom)
+  async getAllNotifications(): Promise<Notification[]> {
+    return this.getAllHistorique();
   }
 
   // Récupérer les notifications avec pagination et filtres

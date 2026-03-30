@@ -162,7 +162,7 @@ export function DeclarationsPage() {
   }
 
   // Vérification des permissions de consultation (entrée ou sortie)
-  if (!mouvement.entree.canView && !mouvement.sortie.canView) {
+  if (!mouvement.entree.canViewList && !mouvement.sortie.canViewList) {
     return (
       <AccessDenied message="Vous n'avez pas la permission de consulter les déclarations." />
     );

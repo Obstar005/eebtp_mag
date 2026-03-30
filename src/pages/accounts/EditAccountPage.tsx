@@ -9,7 +9,12 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { toast } from "react-toast";
-import { useAccount, useUpdateAccount, useProfiles } from "../../hooks";
+import {
+  useAccount,
+  useUpdateAccount,
+  useProfiles,
+  useToggleAccountStatus,
+} from "../../hooks";
 import { useProjetsSelect } from "../../hooks/useProjetsSelect";
 import { useAccess } from "../../hooks/useAccessPermissions";
 import { AccessDenied } from "../../components/ui/AccessGuard";
@@ -41,6 +46,7 @@ export function EditAccountPage() {
   const { data: profiles } = useProfiles();
   const { data: projets, isLoading: projetsLoading } = useProjetsSelect();
   const updateAccountMutation = useUpdateAccount();
+  const toggleStatusMutation = useToggleAccountStatus();
   const { countries } = useCountries();
   const {
     validatePhoneNumber,
@@ -86,7 +92,8 @@ export function EditAccountPage() {
 
       // Définir l'image de prévisualisation si elle existe
       if (account.photo_profil) {
-        setPreviewImage(account.photo_profil);
+        const photoUrl = `${import.meta.env.VITE_API_URL}${account.photo_profil}`;
+        setPreviewImage(photoUrl);
       }
     }
   }, [account]);
@@ -592,7 +599,9 @@ export function EditAccountPage() {
               <MultiSelectDropdown
                 options={projets || []}
                 value={formData.projet_ids || []}
-                onChange={(selectedIds) => setFormData(prev => ({ ...prev, projet_ids: selectedIds }))}
+                onChange={(selectedIds) =>
+                  setFormData((prev) => ({ ...prev, projet_ids: selectedIds }))
+                }
                 placeholder="Sélectionner un ou plusieurs projets"
                 isLoading={projetsLoading}
                 emptyMessage="Aucun projet disponible"
@@ -607,7 +616,7 @@ export function EditAccountPage() {
               </label>
 
               <div
-                className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 bg-gray-50"
+                className="w-44 h-44 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 bg-gray-50"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {previewImage ? (
@@ -638,8 +647,51 @@ export function EditAccountPage() {
             </div>
           </div>
 
+          {/* Toggle pour activer/désactiver le compte */}
+          {!isOwnProfile && (
+            <div className="flex items-center gap-3 pt-4">
+              <span className="text-sm text-gray-600">
+                {account.is_active ? "Compte actif" : "Compte désactivé"}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  toggleStatusMutation.mutate(id!, {
+                    onSuccess: () => {
+                      toast.success(
+                        account.is_active
+                          ? "Compte désactivé avec succès"
+                          : "Compte activé avec succès",
+                      );
+                    },
+                    onError: () => {
+                      toast.error("Erreur lors du changement de statut");
+                    },
+                  });
+                }}
+                disabled={toggleStatusMutation.isPending}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                  account.is_active ? "bg-green-500" : "bg-gray-300"
+                } ${toggleStatusMutation.isPending ? "opacity-50" : ""}`}
+                role="switch"
+                aria-checked={account.is_active}
+                title={
+                  account.is_active
+                    ? "Désactiver le compte"
+                    : "Activer le compte"
+                }
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    account.is_active ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+          )}
+
           {/* Actions */}
-          <div className="flex gap-4 pt-4">
+          <div className="flex gap-4">
             <button
               type="submit"
               disabled={isLoading}

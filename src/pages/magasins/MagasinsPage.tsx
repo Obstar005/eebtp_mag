@@ -74,7 +74,7 @@ export default function MagasinsPage() {
   }
 
   // Vérification des permissions de vue
-  if (!magasinPerms.canView) {
+  if (!magasinPerms.canViewList) {
     return (
       <AccessDenied message="Vous n'avez pas la permission de consulter les magasins." />
     );

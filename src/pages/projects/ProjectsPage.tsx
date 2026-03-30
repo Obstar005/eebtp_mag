@@ -119,7 +119,7 @@ export function ProjectsPage() {
   }
 
   // Vérification des permissions de vue
-  if (!projetPerms.canView) {
+  if (!projetPerms.canViewList) {
     return (
       <AccessDenied message="Vous n'avez pas la permission de consulter les projets." />
     );

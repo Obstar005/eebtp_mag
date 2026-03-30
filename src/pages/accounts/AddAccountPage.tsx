@@ -45,7 +45,6 @@ export function AddAccountPage() {
   const [selectedPhoneCountry, setSelectedPhoneCountry] = useState<
     Country | undefined
   >(undefined);
-  const [error, setError] = useState<string | null>(null);
 
   // États de validation
   const [validationErrors, setValidationErrors] = useState<{
@@ -146,13 +145,13 @@ export function AddAccountPage() {
     if (file) {
       // Vérifier le type et la taille du fichier
       if (!file.type.match("image.*")) {
-        setError("Le fichier doit être une image valide");
+        toast.error("Le fichier doit être une image valide");
         return;
       }
 
       if (file.size > 5 * 1024 * 1024) {
         // 5MB max
-        setError("L'image est trop volumineuse. Taille maximum: 5MB");
+        toast.error("L'image est trop volumineuse. Taille maximum: 5MB");
         return;
       }
 
@@ -181,21 +180,21 @@ export function AddAccountPage() {
 
     // Vérifier s'il y a des erreurs de validation
     if (validationErrors.nom_utilisateur || validationErrors.mot_de_passe) {
-      setError(
+      toast.error(
         "Veuillez corriger les erreurs de validation avant de soumettre le formulaire.",
       );
       return;
     }
 
     if (formData.mot_de_passe !== formData.confirm_mot_de_passe) {
-      setError("Les mots de passe ne correspondent pas");
+      toast.error("Les mots de passe ne correspondent pas");
       return;
     }
 
     // Vérification et formatage du numéro de téléphone
     if (selectedPhoneCountry && formData.telephone) {
       if (!validatePhoneNumber(formData.telephone, selectedPhoneCountry.code)) {
-        setError("Format de numéro de téléphone invalide");
+        toast.error("Format de numéro de téléphone invalide");
         return;
       } else {
         // Formater pour l'API (format 00228909090900)
@@ -206,7 +205,7 @@ export function AddAccountPage() {
         formData.telephone = apiPhoneNumber;
       }
     } else {
-      setError("Veuillez sélectionner un pays pour le téléphone");
+      toast.error("Veuillez sélectionner un pays pour le téléphone");
       return;
     }
 
@@ -229,7 +228,7 @@ export function AddAccountPage() {
         error instanceof Error &&
         error.message.includes("sans ID d'utilisateur")
       ) {
-        setError(
+        toast.warn(
           "Le compte a été créé mais l'ID est manquant. Redirection vers la liste des comptes...",
         );
         // Attendre un peu puis rediriger vers la liste
@@ -259,6 +258,9 @@ export function AddAccountPage() {
           profil: "Profil",
           titre: "Titre",
           poste: "Poste",
+          nationality: "Nationalité",
+          birth_date: "Date de naissance",
+          type: "Type",
         };
 
         // Mapping des messages d'erreur en anglais vers le français
@@ -288,19 +290,20 @@ export function AddAccountPage() {
           if (messages.length > 0 && typeof messages[0] === "string") {
             const fieldLabel = fieldLabels[field] || field;
             const translatedMsg = translateMessage(messages[0]);
-            errorMessages.push(`• ${fieldLabel}: ${translatedMsg}`);
+            errorMessages.push(`${fieldLabel}: ${translatedMsg}`);
           }
         });
 
         if (errorMessages.length > 0) {
-          setError(`Erreur de validation:\n${errorMessages.join("\n")}`);
+          // Afficher chaque erreur dans un toast séparé
+          errorMessages.forEach((msg) => toast.error(msg));
         } else {
-          setError(
+          toast.error(
             "Échec de la création du compte. Veuillez vérifier les informations et réessayer.",
           );
         }
       } else {
-        setError(
+        toast.error(
           "Échec de la création du compte. Veuillez vérifier les informations et réessayer.",
         );
       }
@@ -332,30 +335,6 @@ export function AddAccountPage() {
           Ajouter un nouveau compte
         </h1>
       </div>
-
-      {error && (
-        <div
-          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-          role="alert"
-        >
-          <strong className="font-bold">Erreur ! </strong>
-          <div className="block sm:inline whitespace-pre-line">{error}</div>
-          <span
-            className="absolute top-0 bottom-0 right-0 px-4 py-3"
-            onClick={() => setError(null)}
-          >
-            <svg
-              className="fill-current h-6 w-6 text-red-500"
-              role="button"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-            >
-              <title>Fermer</title>
-              <path d="M14.348 5.652a1 1 0 00-1.414 0L10 8.586 7.066 5.652a1 1 0 10-1.414 1.414L8.586 10l-2.934 2.934a1 1 0 101.414 1.414L10 11.414l2.934 2.934a1 1 0 001.414-1.414L11.414 10l2.934-2.934a1 1 0 000-1.414z" />
-            </svg>
-          </span>
-        </div>
-      )}
 
       <div className="bg-white rounded-lg shadow p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -663,7 +642,9 @@ export function AddAccountPage() {
               <MultiSelectDropdown
                 options={projets || []}
                 value={formData.projet_ids || []}
-                onChange={(selectedIds) => setFormData(prev => ({ ...prev, projet_ids: selectedIds }))}
+                onChange={(selectedIds) =>
+                  setFormData((prev) => ({ ...prev, projet_ids: selectedIds }))
+                }
                 placeholder="Sélectionner un ou plusieurs projets"
                 isLoading={projetsLoading}
                 emptyMessage="Aucun projet disponible"
@@ -678,7 +659,7 @@ export function AddAccountPage() {
               </label>
 
               <div
-                className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 bg-gray-50"
+                className="w-44 h-44 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 bg-gray-50"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {previewImage ? (
