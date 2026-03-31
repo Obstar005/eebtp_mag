@@ -7,6 +7,7 @@ import {
   Calendar,
   ChevronDown,
   ArrowLeft,
+  X,
 } from "lucide-react";
 import { toast } from "react-toast";
 import { useAccount, useUpdateAccount, useProfiles } from "../../hooks";
@@ -398,6 +399,13 @@ export function EditAccountPage() {
                         .toISOString()
                         .split("T")[0]
                     }
+                    min={
+                      new Date(
+                        new Date().setFullYear(new Date().getFullYear() - 100),
+                      )
+                        .toISOString()
+                        .split("T")[0]
+                    }
                     required
                     value={formData.date_naissance}
                     onChange={(e) =>
@@ -611,23 +619,46 @@ export function EditAccountPage() {
                 Photo de profil
               </label>
 
-              <div
-                className="w-44 h-44 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 bg-gray-50"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {previewImage ? (
-                  <img
-                    src={previewImage}
-                    alt="Aperçu"
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                ) : (
-                  <>
-                    <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                    <span className="text-sm text-gray-500 text-center">
-                      Glisser-déposer ou cliquer ici pour changer la photo
-                    </span>
-                  </>
+              <div className="relative w-44 h-44">
+                <div
+                  className="w-full h-full border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 bg-gray-50"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {previewImage ? (
+                    <img
+                      src={previewImage}
+                      alt="Aperçu"
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  ) : (
+                    <>
+                      <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                      <span className="text-sm text-gray-500 text-center">
+                        Glisser-déposer ou cliquer ici pour changer la photo
+                      </span>
+                    </>
+                  )}
+                </div>
+                {previewImage && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewImage(null);
+                      setFormData((prev) => ({
+                        ...prev,
+                        photo_profil: undefined,
+                      }));
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = "";
+                      }
+                    }}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 shadow-md"
+                    title="Retirer l'image"
+                    aria-label="Retirer l'image"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 )}
               </div>
 
