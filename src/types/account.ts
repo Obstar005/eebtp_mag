@@ -60,6 +60,7 @@ export interface UpdateAccountData extends Partial<
 > {
   mot_de_passe?: string;
   confirm_mot_de_passe?: string;
+  is_active?: boolean;
 }
 
 // Types pour les filtres et la recherche
