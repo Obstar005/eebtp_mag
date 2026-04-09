@@ -59,7 +59,6 @@ def create_sortie(request):
 @permission_classes([IsAuthenticated])
 def list_sorties(request):
     sorties = Sortie.objects.filter(is_active=True).order_by('-date_creation')
-    enregistrer_action(request.user, 'consultation', 'A consulté la liste des sorties de stock dans le système.', "Liste des sorties de stock")
     serializer = SortieSerializer(sorties, many=True)
     return Response(serializer.data)
 
@@ -84,7 +83,6 @@ def list_sorties_filtrer(request, periode):
         sorties = Sortie.objects.filter(is_active=True, date_creation__gte=start_date).order_by('-date_creation')
     else:
         sorties = Sortie.objects.filter(is_active=True).order_by('-date_creation')
-    enregistrer_action(request.user, 'consultation', 'A consulté la liste des sorties de stock dans le système.', "Liste des sorties de stock")
     serializer = SortieSerializer(sorties, many=True)
     return Response(serializer.data)
 
@@ -102,7 +100,6 @@ def list_sorties_magasin(request, magasin_id):
     except Magasin.DoesNotExist:
         return Response({'error': 'Magasin introuvable'}, status=status.HTTP_404_NOT_FOUND)
     sorties = Sortie.objects.filter(magasin=magasin, is_active=True).order_by('-date_creation')
-    enregistrer_action(request.user, 'consultation', 'A consulté la liste des sorties de stock dans un magasin.', f"Liste des sorties du magasin #{magasin.id}")
     
     serializer = SortieSerializer(sorties, many=True)
     return Response(serializer.data)
@@ -132,7 +129,6 @@ def list_sorties_magasin_filtrer(request, magasin_id, periode):
         sorties = Sortie.objects.filter(magasin=magasin, is_active=True, date_creation__gte=start_date).order_by('-date_creation')
     else:
         sorties = Sortie.objects.filter(magasin=magasin, is_active=True).order_by('-date_creation')
-    enregistrer_action(request.user, 'consultation', 'A consulté la liste des sorties de stock dans un magasin.', f"Liste des sorties du magasin #{magasin.id}")
     
     serializer = SortieSerializer(sorties, many=True)
     return Response(serializer.data)
@@ -247,7 +243,6 @@ def get_entree(request, pk):
 @permission_classes([IsAuthenticated])
 def list_entrees(request):
     entrees = Entree.objects.filter(is_active=True).order_by('-date_creation')
-    enregistrer_action(request.user, 'consultation', 'A consulté la liste des entrées de stock dans le système.', "Liste des entrées de stock")
     serializer = EntreeSerializer(entrees, many=True)
     return Response(serializer.data)
 
@@ -274,7 +269,6 @@ def list_entrees_filtrer(request, periode=None):
         entrees = Entree.objects.filter(is_active=True, date_creation__gte=start_date).order_by('-date_creation')
     else:
         entrees = Entree.objects.filter(is_active=True).order_by('-date_creation')
-    enregistrer_action(request.user, 'consultation', 'A consulté la liste des entrées de stock dans le système.', "Liste des entrées de stock")
     serializer = EntreeSerializer(entrees, many=True)
     return Response(serializer.data)
 
@@ -293,7 +287,6 @@ def list_entrees_magasin(request, magasin_id):
         return Response({'error': 'Magasin introuvable'}, status=status.HTTP_404_NOT_FOUND)
     
     entrees = Entree.objects.filter(magasin=magasin, is_active=True).order_by('-date_creation')
-    enregistrer_action(request.user, 'consultation', 'A consulté la liste des entrées de stock dans un magasin.', f"Liste des entrées du magasin #{magasin.id}")
     
     serializer = EntreeSerializer(entrees, many=True)
     return Response(serializer.data)
@@ -323,7 +316,6 @@ def list_entrees_magasin_filtrer(request, magasin_id, periode=None):
         entrees = Entree.objects.filter(magasin=magasin, is_active=True, date_creation__gte=start_date).order_by('-date_creation')
     else:
         entrees = Entree.objects.filter(magasin=magasin, is_active=True).order_by('-date_creation')
-    enregistrer_action(request.user, 'consultation', 'A consulté la liste des entrées de stock dans un magasin.', f"Liste des entrées du magasin #{magasin.id}")
     
     serializer = EntreeSerializer(entrees, many=True)
     return Response(serializer.data)

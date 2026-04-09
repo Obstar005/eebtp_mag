@@ -38,6 +38,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
     magasin = serializers.ReadOnlyField(source='magasin.nom')
     profil_name = serializers.ReadOnlyField(source='profil.libelle')
     permissions = serializers.SerializerMethodField()
+    is_active = serializers.BooleanField(default=True, required=False)
     class Meta:
         model = CustomUser
         # fields = '__all__'
@@ -47,10 +48,14 @@ class CustomUserSerializer(serializers.ModelSerializer):
         exclude = ['groups', 'user_permissions']
         
     def create(self, validated_data):
+        print("validated_data:", validated_data)
         # Pour gérer un mot de passe
         password = validated_data.pop("password", None)
         projets_data = validated_data.pop('projets', None)
         groups_data = validated_data.pop('groups', None)
+
+        validated_data['is_active'] = True  # Activer l'utilisateur par défaut au cas ou c'est envoyer en queryDict pas peut venir en String
+        validated_data['first_login'] = True  # Marquer comme True cad jamais connecté.
 
         user = CustomUser.objects.create(**validated_data)
         if password:

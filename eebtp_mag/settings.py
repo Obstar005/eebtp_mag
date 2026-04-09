@@ -21,7 +21,7 @@ ALLOWED_HOSTS = ['*']
 CORS_ALLOWED_ALL_ORIGINS = True
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:64038",
+    "http://localhost:5173",
 ]
 
 
@@ -65,6 +65,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "corsheaders.middleware.CorsMiddleware",
+    'core.middleware.UpdateLastActivityMiddleware',
 ]
 
 ROOT_URLCONF = 'eebtp_mag.urls'
@@ -103,7 +104,6 @@ DATABASES = {
     }
 } 
 
- 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -154,18 +154,18 @@ APPEND_SLASH=False
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # 'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(hours=5),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=2),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=3),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
     'BLACKLIST_AFTER_ROTATION': True,
     'ROTATE_REFRESH_TOKENS': False,
@@ -173,11 +173,8 @@ SIMPLE_JWT = {
 # Channels
 ASGI_APPLICATION = 'eebtp_mag.asgi.application'
 
-FIREBASE_CREDENTIALS = BASE_DIR / "firebase/eebtp-mag-firebase-adminsdk.json"
-
-# BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-# FIREBASE_CREDENTIALS = os.path.join(BASE_DIR, "firebase", "firebase-adminsdk.json")
+FIREBASE_CREDENTIALS = BASE_DIR / "firebase/eebtp-mag-firebase-adminsdk.json" #Serveur
+# FIREBASE_CREDENTIALS = BASE_DIR / "eebtp-mag-firebase-adminsdk.json" #En locale
 
 # CELERY_BROKER_URL = 'redis://localhost:6379/0'
 # CELERY_ACCEPT_CONTENT = ['json']

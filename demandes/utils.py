@@ -9,6 +9,7 @@ def calculer_cout_total(demande):
 def calculer_duree_traitement(demande):
     if demande.statut == 'Validée' or demande.statut == 'Rejetée':
         duree = demande.date_validation - demande.date_emission
+        #On doit convertir la durée en 
         return duree
     else:
         return None

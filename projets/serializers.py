@@ -9,6 +9,7 @@ User = get_user_model()
 class MagasinSerializer(serializers.ModelSerializer):
     creator = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     projet_nom = serializers.ReadOnlyField(source='projet.nom')
+    is_active = serializers.BooleanField(default=True, required=False)
     class Meta:
         model = Magasin
         fields = '__all__'
@@ -20,6 +21,7 @@ class ProjetSerializer(serializers.ModelSerializer):
     pays = CountryField(name_only=True)
     photos = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     magasin_associe = serializers.SerializerMethodField()
+    is_active = serializers.BooleanField(default=True, required=False)
     class Meta:
         model = Projet
         fields = "__all__"
@@ -34,6 +36,7 @@ class ProjetSerializer(serializers.ModelSerializer):
 
 class ProjetPhotoSerializer(serializers.ModelSerializer):
     projet = serializers.PrimaryKeyRelatedField(queryset=Projet.objects.all())
+    is_active = serializers.BooleanField(default=True, required=False)
 
     class Meta:
         model = ProjetPhoto
@@ -48,6 +51,7 @@ class StockItemSerializer(serializers.ModelSerializer):
     produit_name = serializers.ReadOnlyField(source='produit.designation')
     produit_unite = serializers.ReadOnlyField(source='produit.unite')
     produit_price = serializers.ReadOnlyField(source='produit.unit_price')
+    is_active = serializers.BooleanField(default=True, required=False)
 
     class Meta:
         model = StockItem

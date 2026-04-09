@@ -43,7 +43,7 @@ class CustomUser(AbstractUser):
     first_login = models.BooleanField(default=True)
     projets = models.ManyToManyField('projets.Projet', related_name='users', blank=True)
     is_connected = models.BooleanField(default=False)
-
+    last_activity = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.username

@@ -24,6 +24,7 @@ from notifications.utils import notifier_utilisateurs, send_notification
 # from celery import shared_task
 from django.utils import timezone
 from app.utils import has_permission
+from django.views.decorators.csrf import csrf_exempt
 
 #Fonction pour envoyer les notifications
 # def send_notification_user(user_id, message):
@@ -58,7 +59,6 @@ def get_countries(request):
 @permission_classes([IsAuthenticated])
 def list_acces(request):
     acces = PermissionCustom.objects.all().order_by('-date_creation')
-    # enregistrer_action(request.user, 'consultation', 'A consulté la liste des accès dans le système.', "Liste des accès")
     serializer = PermissionCustomSerializer(acces, many=True)
     return Response(serializer.data)
 
@@ -72,7 +72,6 @@ def list_acces(request):
 @permission_classes([IsAuthenticated])
 def list_profils(request):
     profils = Profil.objects.filter(is_active=True).order_by('-date_creation')
-    enregistrer_action(request.user, 'consultation', 'A consulté la liste des profils dans le système.', "Liste des profils")
     serializer = ProfilSerializer(profils, many=True)
     return Response(serializer.data)
 
@@ -218,6 +217,7 @@ def create_user(request):
     
     serializer = CustomUserSerializer(data=request.data)
     print(request.data)
+
     if serializer.is_valid():
         new_user = serializer.save()
         enregistrer_action(request.user, 'creation', 'A crée un utilisateur dans le système.', f"Utilisateur #{request.data.get('username')}")
@@ -279,6 +279,7 @@ def update_user(request, pk):
     enregistrer_action(request.user, 'modification', 'A modifié un utilisateur dans le système.', f"Utilisateur #{user.id}")
 
     serializer = CustomUserSerializer(user, data=request.data)
+    print(request.data)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)
@@ -402,7 +403,7 @@ def change_password(request):
         user.save()
 
     except ValidationError as e:
-        return Response({"error": str(e)}, status=400)
+        return Response({"error": e.messages}, status=400)
     enregistrer_action(user, 'modification', 'A modifié son mot de passe dans le système.', f"Utilisateur #{user.id}")
 
     return Response({"message": "Mot de passe modifié avec succès"}, status=status.HTTP_200_OK)
@@ -425,7 +426,7 @@ def change_password(request):
 @permission_classes([IsAuthenticated])
 def set_password(request):
     user= request.user
-    if not user.profil.libelle == "admin" and not user.profil.libelle == "superadmin":
+    if not user.profil.code == "admin" and not user.profil.code == "superadmin":
         return Response(
             {"error": "Modification refusée! Vous n'êtes pas autorisé à effectuer cette action."},status=status.HTTP_403_FORBIDDEN
         )
@@ -446,7 +447,7 @@ def set_password(request):
 
     user.password = make_password(password)
     user.save()
-    enregistrer_action(user, 'modification', 'A réinitialisé le mot de passe d\'un utilisateur dans le système.', f"Utilisateur #{user.id}")
+    enregistrer_action(user, 'modification', 'A réinitialisé le mot de passe d\'un utilisateur dans le système.', f"Utilisateur concerné: #{user.id}")
 
     return Response(
         {"message": "Mot de passe réinitialisé avec succès."}, status=status.HTTP_200_OK
@@ -466,6 +467,7 @@ def set_password(request):
     ),
     responses={200: openapi.Response(description='Connexion réussie'), 400: 'Bad Request', 401: 'Mot de passe incorrect', 404: 'Utilisateur introuvable', 403: 'Utilisateur désactivé ou accès refusé' }
 )
+@csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_by_phone_web(request):
@@ -696,7 +698,7 @@ def get_user_profile_stats(request):
     if not has_permission(user, 'statistique.view'):
         return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
     
-    total_users = CustomUser.objects.filter(is_active=True).count()
+    total_users = CustomUser.objects.all().count()
     connected_users = CustomUser.objects.filter(is_connected=True, is_active=True).count()
     total_profiles = Profil.objects.filter(is_active=True).count()
 

@@ -6,6 +6,7 @@ from notifications.models import Notification
 from .utils import notifier_utilisateurs, send_notification
 from .serializers import NotificationSerializer
 from drf_yasg.utils import swagger_auto_schema
+from app.utils import enregistrer_action
 
 # Create your views here.
 @api_view(['POST'])
@@ -48,6 +49,7 @@ def mark_notification_as_read(request, pk):
         notification = Notification.objects.get(pk=pk, user=user)
     except Notification.DoesNotExist:
         return Response({"error": "Notification non trouvée"}, status=404)
+    enregistrer_action(request.user, 'consultation', 'A consulté les détails d\'une notification et l\'a marquée comme lue.', f"Notification #{notification.id}")
 
     notification.is_read = True
     notification.save()

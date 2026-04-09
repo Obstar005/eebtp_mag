@@ -72,7 +72,7 @@ def emettre_demande(request):
             date_emission=timezone.now()
         )
         enregistrer_action(user, 'creation', 'A créé une nouvelle demande', f"Demande #{new_demande_number}")
-        #Envoyer une notif aux utilisateurs en charge des traitements sur les demandes de ce Demande
+        #Envoyer une notif aux utilisateurs en charge des traitements sur les demandes de cette demande
         new_demande = serializer.instance
         notifier_utilisateurs(new_demande, "emission")
 

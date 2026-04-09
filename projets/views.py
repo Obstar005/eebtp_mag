@@ -101,8 +101,19 @@ def list_projets(request):
         return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
     
     projets = Projet.objects.filter(is_active=True).order_by('-date_creation')
+    #Ici on va ecrire un code et checker si on a deja depassé la date de fin d'un projet parmi tous les projets actifs, s'il y'en a, on va envoyer une notification aux autilisateurs autorisés et ayant
+    #accès à ce projet pour les informer que le projet a dépassé sa date de fin prévue.
+    for projet in projets:
+        if projet.date_fin and projet.date_fin < timezone.now().date():
+            # Le projet a dépassé sa date de fin prévue
+            # On peut envoyer une notification aux utilisateurs associés à ce projet
+            comptes_associes = projet.comptes.all()
+            for user in comptes_associes:
+                if has_permission(user, 'projet.view'):
+                    # Envoyer une notification à l'utilisateur (par exemple, par email ou via un système de notifications interne)
+                    pass  # Code pour envoyer la notification
+                
     serializer = ProjetSerializer(projets, many=True)
-    enregistrer_action(request.user, 'consultation', 'A consulté la liste des projets du système.', "Liste des projets")
     return Response(serializer.data)
 
 #Vue pour la liste des projets archivées
@@ -123,7 +134,6 @@ def list_projets_archives(request):
     
     projets = Projet.objects.filter(is_active=False).order_by('-date_creation')
     serializer = ProjetSerializer(projets, many=True)
-    # enregistrer_action(request.user, 'consultation', 'A consulté la liste des projets archivés.', "Liste des projets archivés")
     return Response(serializer.data)
 
 #Vue pour la récupération d'un projet
@@ -149,7 +159,6 @@ def get_projet(request, pk):
         return Response({'error': 'Projet introuvable'}, status=status.HTTP_404_NOT_FOUND)
 
     serializer = ProjetSerializer(projet)
-    enregistrer_action(request.user, 'consultation', 'A consulté les détails d\'un projet.', f"Projet #{projet.id}")
     return Response(serializer.data)
 
 #Vue pour la mise à jour d'un projet
@@ -346,7 +355,6 @@ def list_magasins(request):
         return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
     
     magasins = Magasin.objects.filter(is_active=True).order_by('-date_creation')
-    # enregistrer_action(request.user, 'consultation', 'A consulté la liste des magasins du système.', "Liste des Magasins")
     serializer = MagasinSerializer(magasins, many=True)
     return Response(serializer.data)
 
@@ -367,7 +375,6 @@ def list_magasins_archives(request):
         return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
     
     magasins = Magasin.objects.filter(is_active=False).order_by('-date_creation')
-    # enregistrer_action(request.user, 'consultation', 'A consulté la liste des magasins archivés.', "Liste des Magasins Archivés")
     serializer = MagasinSerializer(magasins, many=True)
     return Response(serializer.data)
 
@@ -391,7 +398,6 @@ def get_magasin(request, pk):
         magasin = Magasin.objects.get(pk=pk)
     except Magasin.DoesNotExist:
         return Response({'error': 'Magasin introuvable'}, status=status.HTTP_404_NOT_FOUND)
-    enregistrer_action(request.user, 'consultation', 'A consulté les détails d\'un magasin.', f"Magasin #{magasin.id}")
 
     serializer = MagasinSerializer(magasin)
     return Response(serializer.data)
@@ -480,7 +486,6 @@ def list_magasins_by_projet(request, pk):
 
         # Récupérer uniquement les magasins lié à ce projet
         magasins = Magasin.objects.filter(projet=projet)
-        enregistrer_action(request.user, 'consultation', 'A consulté la liste des magasins d\'un projet.', f"Liste des magasins du projet #{projet.id}")
 
         # Sérialiser les données
         serializer = MagasinSerializer(magasins, many=True)
@@ -514,7 +519,6 @@ def list_user_projets_magasins(request):
 
     projets = Projet.objects.filter(comptes=user, is_active=True).order_by('-date_creation')
     serializer = ProjetSerializer(projets, many=True)
-    enregistrer_action(request.user, 'consultation', 'A consulté la liste de ses projets et magasins associés.', "Liste des projets et magasins de l'utilisateur")
     return Response(serializer.data)
 
 #Vue pour le graphe d'histogramme, il va renvoyer les quantités actuelles des stocks par projet dans chaque magasin

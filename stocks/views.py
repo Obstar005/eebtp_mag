@@ -50,7 +50,6 @@ def list_articles(request):
         return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
     
     articles = Produit.objects.filter(is_active=True).order_by('-date_creation')
-    enregistrer_action(request.user, 'consultation', 'A consulté la liste des articles dans le système.', "Liste des articles")
     serializer = ProduitSerializer(articles, many=True)
     return Response(serializer.data)
 
@@ -71,7 +70,6 @@ def get_article(request, pk):
         article = Produit.objects.get(pk=pk)
     except Produit.DoesNotExist:
         return Response({'error': 'Article introuvable'}, status=status.HTTP_404_NOT_FOUND)
-    # enregistrer_action(request.user, 'consultation', 'A consulté l.', "Liste des projets")
     
     #Verifier si le produit n'est pas désactivé
     if not article.is_active:
@@ -93,6 +91,7 @@ def update_article(request, pk):
     user = request.user
     if not has_permission(user, 'article.update'):
         return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
+    print("Données reçues pour la mise à jour de l'article:", request.data)  # Debug: Affiche les données reçues
     
     try:
         article = Produit.objects.get(pk=pk)
@@ -166,7 +165,6 @@ def list_stock_items(request, magasin_id):
         magasin = Magasin.objects.get(pk=magasin_id)
     except Magasin.DoesNotExist:
         return Response({'error': 'Magasin introuvable.'}, status=status.HTTP_404_NOT_FOUND)
-    enregistrer_action(request.user, 'consultation', 'A consulté la liste des articles dans un magasin.', f"Liste des articles du magasin #{magasin.id}")
 
     stock_items = StockItem.objects.filter(magasin=magasin, is_active=True).order_by('-date_ajout')
     serializer = StockItemSerializer(stock_items, many=True)

@@ -12,6 +12,7 @@ class SortieSerializer(serializers.ModelSerializer):
     stock_item_name = serializers.ReadOnlyField(source='stock_item.produit.designation')
     stock_item_type = serializers.ReadOnlyField(source='stock_item.produit.type')
     stock_item_unite = serializers.ReadOnlyField(source='stock_item.produit.unite')
+    is_active = serializers.BooleanField(default=True, required=False)
 
     class Meta:
         model = Sortie
@@ -27,6 +28,7 @@ class EntreeSerializer(serializers.ModelSerializer):
     stock_item_name = serializers.ReadOnlyField(source='stock_item.produit.designation')
     stock_item_type = serializers.ReadOnlyField(source='stock_item.produit.type')
     stock_item_unite = serializers.ReadOnlyField(source='stock_item.produit.unite')
+    is_active = serializers.BooleanField(default=True, required=False)
 
     class Meta:
         model = Entree
