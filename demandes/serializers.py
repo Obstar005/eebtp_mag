@@ -11,7 +11,7 @@ class DemandeSerializer(serializers.ModelSerializer):
     approve_par_name = serializers.ReadOnlyField(source='approve_par.username')
     valide_par_name = serializers.ReadOnlyField(source='valide_par.username')
     rejete_par_name = serializers.ReadOnlyField(source='rejete_par.username')
-    is_active = serializers.BooleanField(default=True, required=False)
+    # is_active = serializers.BooleanField(default=True, required=False)
 
     class Meta:
         model = Demande
