@@ -5,6 +5,7 @@ from firebase_admin import messaging
 from app.models import UserDevice
 from .firebase import *
 from users.models import CustomUser
+from firebase_admin._messaging_utils import UnregisteredError
 
 
 def send_notification(user, title, body, type, data=None):
@@ -30,8 +31,19 @@ def send_notification(user, title, body, type, data=None):
             data=data or {}
         )
 
-        response = messaging.send(message)
+        try:
+            messaging.send(message)
 
+        except UnregisteredError:
+            print(f"Token invalide supprimé: {token}")
+
+            # 👉 SUPPRIMER le token de la base
+            UserDevice.objects.filter(token=token).delete()
+
+        except Exception as e:
+            print(f"Erreur FCM: {e}")
+        
+        response = messaging.send(message)
         print("RESPONSE:", response)
 
     Notification.objects.create(
