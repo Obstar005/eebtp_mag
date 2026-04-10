@@ -11,8 +11,11 @@ import type {
   ApiApprouverDemandeRequest,
   ApiConfirmerDemandeRequest,
   ApiValiderDemandeRequest,
-  ApiRejeterDemandeRequest,
+  ApiRejeterConfirmationRequest,
+  ApiRejeterApprobationRequest,
+  ApiRejeterValidationRequest,
 } from "../../types/api-demandes";
+import { REQUEST_STATUS } from "../../utils/permissions";
 
 // Interface pour les filtres des demandes
 export interface DemandeFilter {
@@ -251,23 +254,37 @@ export class DemandeService {
   }
 
   /**
-   * Rejeter une demande
+   * Rejeter une demande selon l'étape en cours
    */
-  async rejeterDemande(id: string, motif: string): Promise<MaterialRequest> {
+  async rejeterDemande(
+    id: string,
+    motif: string,
+    requestStatus: string
+  ): Promise<MaterialRequest> {
     try {
+      const commentaire = motif.trim() || undefined;
+      let apiDemande;
 
-      const apiData: ApiRejeterDemandeRequest = {
-        rejected: true,
-        motif_rejet: motif,
-      };
+      if (requestStatus === REQUEST_STATUS.EMISE) {
+        const data: ApiRejeterConfirmationRequest = commentaire
+          ? { commentaire_confirmation: commentaire }
+          : {};
+        apiDemande = await demandeApiService.rejeterConfirmation(parseInt(id), data);
+      } else if (requestStatus === REQUEST_STATUS.CONFIRMEE) {
+        const data: ApiRejeterApprobationRequest = commentaire
+          ? { commentaire_approbation: commentaire }
+          : {};
+        apiDemande = await demandeApiService.rejeterApprobation(parseInt(id), data);
+      } else if (requestStatus === REQUEST_STATUS.APPROUVEE) {
+        const data: ApiRejeterValidationRequest = commentaire
+          ? { commentaire_validation: commentaire }
+          : {};
+        apiDemande = await demandeApiService.rejeterValidation(parseInt(id), data);
+      } else {
+        throw new Error(`Rejet non supporté pour le statut: ${requestStatus}`);
+      }
 
-      const apiDemande = await demandeApiService.rejeterDemande(
-        parseInt(id),
-        apiData
-      );
-      const demande = apiDemandeToMaterialRequest(apiDemande);
-
-      return demande;
+      return apiDemandeToMaterialRequest(apiDemande);
     } catch (error) {
       throw error;
     }
@@ -322,7 +339,7 @@ export class DemandeService {
   async traiterDemande(
     id: string,
     action: "confirmer" | "approuver" | "valider" | "rejeter",
-    data?: { commentaire?: string; quantite?: number }
+    data?: { commentaire?: string; quantite?: number; requestStatus?: string }
   ): Promise<MaterialRequest> {
     switch (action) {
       case "confirmer":
@@ -341,7 +358,7 @@ export class DemandeService {
         if (!data?.commentaire) {
           throw new Error("Le motif de rejet est requis");
         }
-        return this.rejeterDemande(id, data.commentaire);
+        return this.rejeterDemande(id, data.commentaire, data.requestStatus ?? "");
       default:
         throw new Error(`Action non supportée: ${action}`);
     }

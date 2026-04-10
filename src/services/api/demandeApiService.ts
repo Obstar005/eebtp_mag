@@ -10,7 +10,9 @@ import type {
   ApiApprouverDemandeRequest,
   ApiConfirmerDemandeRequest,
   ApiValiderDemandeRequest,
-  ApiRejeterDemandeRequest,
+  ApiRejeterConfirmationRequest,
+  ApiRejeterApprobationRequest,
+  ApiRejeterValidationRequest,
   ApiDemandeStats,
 } from "../../types/api-demandes";
 import { mockApiDemandes, mockDemandeStats } from "../../data/mockDemandes";
@@ -190,25 +192,65 @@ export class DemandeApiService {
   }
 
   /**
-   * Rejeter une demande (par DGA, DF ou DG)
-   * POST /Demandes/demande/rejeter/{id}
+   * Rejeter lors de l'étape de confirmation
+   * POST /Demandes/demande/rejeter-confirmation/{id}
    */
-  async rejeterDemande(
+  async rejeterConfirmation(
     id: number,
-    data: ApiRejeterDemandeRequest
+    data?: ApiRejeterConfirmationRequest
   ): Promise<ApiDemande> {
     try {
-
       const response = await apiClient.post<ApiDemande>(
-        `${this.basePath}/demande/rejeter/${id}`,
-        data
+        `${this.basePath}/demande/rejeter-confirmation/${id}`,
+        data || {}
       );
-
-      // Validation de la réponse
       if (!response.data || !response.data.id) {
         return await this.getDemandeById(id);
       }
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
 
+  /**
+   * Rejeter lors de l'étape d'approbation
+   * POST /Demandes/demande/rejeter-approbation/{id}
+   */
+  async rejeterApprobation(
+    id: number,
+    data?: ApiRejeterApprobationRequest
+  ): Promise<ApiDemande> {
+    try {
+      const response = await apiClient.post<ApiDemande>(
+        `${this.basePath}/demande/rejeter-approbation/${id}`,
+        data || {}
+      );
+      if (!response.data || !response.data.id) {
+        return await this.getDemandeById(id);
+      }
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Rejeter lors de l'étape de validation
+   * POST /Demandes/demande/rejeter-validation/{id}
+   */
+  async rejeterValidation(
+    id: number,
+    data?: ApiRejeterValidationRequest
+  ): Promise<ApiDemande> {
+    try {
+      const response = await apiClient.post<ApiDemande>(
+        `${this.basePath}/demande/rejeter-validation/${id}`,
+        data || {}
+      );
+      if (!response.data || !response.data.id) {
+        return await this.getDemandeById(id);
+      }
       return response.data;
     } catch (error) {
       throw error;

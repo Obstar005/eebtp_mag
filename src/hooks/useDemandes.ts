@@ -186,8 +186,8 @@ export function useRejeterDemande() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, motif }: { id: string; motif: string }) =>
-      demandeService.rejeterDemande(id, motif),
+    mutationFn: ({ id, motif, requestStatus }: { id: string; motif: string; requestStatus: string }) =>
+      demandeService.rejeterDemande(id, motif, requestStatus),
     onSuccess: (updatedDemande, variables) => {
       // Mettre à jour le cache de la demande spécifique
       queryClient.setQueryData(
@@ -217,12 +217,14 @@ export function useTraiterDemande() {
       action,
       commentaire,
       quantite,
+      requestStatus,
     }: {
       id: string;
       action: "confirmer" | "approuver" | "valider" | "rejeter";
       commentaire?: string;
       quantite?: number;
-    }) => demandeService.traiterDemande(id, action, { commentaire, quantite }),
+      requestStatus?: string;
+    }) => demandeService.traiterDemande(id, action, { commentaire, quantite, requestStatus }),
     onSuccess: (updatedDemande, variables) => {
       // Mettre à jour le cache de la demande spécifique
       queryClient.setQueryData(

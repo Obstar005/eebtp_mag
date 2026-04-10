@@ -108,10 +108,16 @@ export interface ApiValiderDemandeRequest {
   is_quantity_reduced_by_validation?: boolean;
 }
 
-export interface ApiRejeterDemandeRequest {
-  // Les données à envoyer pour rejeter une demande
-  rejected: boolean;
-  motif_rejet: string;
+export interface ApiRejeterConfirmationRequest {
+  commentaire_confirmation?: string;
+}
+
+export interface ApiRejeterApprobationRequest {
+  commentaire_approbation?: string;
+}
+
+export interface ApiRejeterValidationRequest {
+  commentaire_validation?: string;
 }
 
 // ==================== TYPES DE RÉPONSES ====================

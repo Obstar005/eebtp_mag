@@ -67,6 +67,7 @@ export default function RequestDetailPage() {
           | "rejeter",
         commentaire: data.commentaire,
         quantite: data.quantite,
+        requestStatus: mapApiStatusToPermissionStatus(request.status),
       },
       {
         onSuccess: () => {
