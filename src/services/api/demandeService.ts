@@ -174,9 +174,10 @@ export class DemandeService {
     data?: { commentaire?: string }
   ): Promise<MaterialRequest> {
     try {
+      const commentaire = data?.commentaire?.trim();
 
       const apiData: ApiConfirmerDemandeRequest = {
-        commentaire_confirmation: data?.commentaire,
+        ...(commentaire ? { commentaire_confirmation: commentaire } : {}),
       };
 
       const apiDemande = await demandeApiService.confirmerDemande(
@@ -199,10 +200,13 @@ export class DemandeService {
     data?: { commentaire?: string; quantite?: number }
   ): Promise<MaterialRequest> {
     try {
+      const commentaire = data?.commentaire?.trim();
 
       const apiData: ApiApprouverDemandeRequest = {
-        commentaire_approbation: data?.commentaire,
+        ...(commentaire ? { commentaire_approbation: commentaire } : {}),
         quantite_approuv: data?.quantite,
+        quantite_approv: data?.quantite,
+        is_quantity_reduced_by_approb: data?.quantite !== undefined,
       };
 
       const apiDemande = await demandeApiService.approuverDemande(
@@ -222,14 +226,16 @@ export class DemandeService {
    */
   async validerDemande(
     id: string,
-    data?: { commentaire?: string; quantite?: number; coutTotal?: number }
+    data?: { commentaire?: string; quantite?: number }
   ): Promise<MaterialRequest> {
     try {
+      const commentaire = data?.commentaire?.trim();
 
       const apiData: ApiValiderDemandeRequest = {
-        commentaire_validation: data?.commentaire,
+        ...(commentaire ? { commentaire_validation: commentaire } : {}),
         quantite_valid: data?.quantite,
-        cout_total_approx: data?.coutTotal,
+        quantity_valid: data?.quantite,
+        is_quantity_reduced_by_validation: data?.quantite !== undefined,
       };
 
       const apiDemande = await demandeApiService.validerDemande(
@@ -316,7 +322,7 @@ export class DemandeService {
   async traiterDemande(
     id: string,
     action: "confirmer" | "approuver" | "valider" | "rejeter",
-    data?: { commentaire?: string; quantite?: number; coutTotal?: number }
+    data?: { commentaire?: string; quantite?: number }
   ): Promise<MaterialRequest> {
     switch (action) {
       case "confirmer":
@@ -329,8 +335,7 @@ export class DemandeService {
       case "valider":
         return this.validerDemande(id, { 
           commentaire: data?.commentaire, 
-          quantite: data?.quantite,
-          coutTotal: data?.coutTotal 
+          quantite: data?.quantite
         });
       case "rejeter":
         if (!data?.commentaire) {

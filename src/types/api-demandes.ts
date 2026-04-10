@@ -40,7 +40,9 @@ export interface ApiDemande {
 
   // Quantités ajustées à chaque étape
   quantite_approuv?: number;
+  quantite_approv?: number;
   quantite_valid?: number;
+  quantity_valid?: number;
 
   // Autres champs
   cout_total_approx?: number;
@@ -89,6 +91,8 @@ export interface ApiApprouverDemandeRequest {
   // Les données à envoyer pour approuver une demande
   commentaire_approbation?: string;
   quantite_approuv?: number;
+  quantite_approv?: number;
+  is_quantity_reduced_by_approb?: boolean;
 }
 
 export interface ApiConfirmerDemandeRequest {
@@ -100,7 +104,8 @@ export interface ApiValiderDemandeRequest {
   // Les données à envoyer pour valider une demande
   commentaire_validation?: string;
   quantite_valid?: number;
-  cout_total_approx?: number;
+  quantity_valid?: number;
+  is_quantity_reduced_by_validation?: boolean;
 }
 
 export interface ApiRejeterDemandeRequest {

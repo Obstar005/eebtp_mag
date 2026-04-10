@@ -13,12 +13,12 @@ import {
 } from "../utils/permissions";
 import { getStatusBadge, getStatusIcon } from "../utils/statutUtils";
 import { RequestStatusLabels, type RequestTreatment } from "../types";
-import { formatUnit } from "../utils/formatUtils";
+import { formatProcessingDuration, formatUnit } from "../utils/formatUtils";
 
 export default function RequestDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { demande, isLoading: isLoadingPermissions, permissions } = useAccess();
+  const { demande, isLoading: isLoadingPermissions } = useAccess();
   const [isTreatmentModalOpen, setIsTreatmentModalOpen] = useState(false);
   const [selectedTreatment, setSelectedTreatment] =
     useState<RequestTreatment | null>(null);
@@ -54,7 +54,6 @@ export default function RequestDetailPage() {
     traitement: string;
     commentaire: string;
     quantite?: number;
-    coutTotal?: number;
   }) => {
     if (!request || !id) return;
 
@@ -68,7 +67,6 @@ export default function RequestDetailPage() {
           | "rejeter",
         commentaire: data.commentaire,
         quantite: data.quantite,
-        coutTotal: data.coutTotal,
       },
       {
         onSuccess: () => {
@@ -150,7 +148,7 @@ export default function RequestDetailPage() {
         onClose={handleCloseTreatmentModal}
         onSubmit={handleSubmitTreatment}
         article={request.demande}
-        quantite={request.quantiteDemandee}
+        quantite={request.quantiteApprouvee ?? request.quantiteDemandee}
         unite={request.unite}
         isLoading={isTraitementLoading}
         requestStatus={mapApiStatusToPermissionStatus(request.status)}
@@ -230,7 +228,7 @@ export default function RequestDetailPage() {
               </label>
               <input
                 className="w-full rounded-lg px-3 py-2 bg-gray-100"
-                value={request.dureeTraitement ?? "-"}
+                value={formatProcessingDuration(request.dureeTraitement)}
                 readOnly
               />
             </div>
@@ -378,6 +376,21 @@ export default function RequestDetailPage() {
                 <input
                   className="w-full rounded-lg px-3 py-2 bg-gray-100"
                   value={request.quantiteDemandee}
+                  readOnly
+                />
+                <span className="text-white bg-blue-700 px-2 py-1 rounded text-xs">
+                  {formatUnit(request.unite)}
+                </span>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">
+                Quantité approuvée
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  className="w-full rounded-lg px-3 py-2 bg-gray-100"
+                  value={request.quantiteApprouvee ?? "-"}
                   readOnly
                 />
                 <span className="text-white bg-blue-700 px-2 py-1 rounded text-xs">

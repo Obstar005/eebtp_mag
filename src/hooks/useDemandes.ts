@@ -160,8 +160,8 @@ export function useValiderDemande() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, commentaire, quantite, coutTotal }: { id: string; commentaire?: string; quantite?: number; coutTotal?: number }) =>
-      demandeService.validerDemande(id, { commentaire, quantite, coutTotal }),
+    mutationFn: ({ id, commentaire, quantite }: { id: string; commentaire?: string; quantite?: number }) =>
+      demandeService.validerDemande(id, { commentaire, quantite }),
     onSuccess: (updatedDemande, variables) => {
       // Mettre à jour le cache de la demande spécifique
       queryClient.setQueryData(
@@ -217,14 +217,12 @@ export function useTraiterDemande() {
       action,
       commentaire,
       quantite,
-      coutTotal,
     }: {
       id: string;
       action: "confirmer" | "approuver" | "valider" | "rejeter";
       commentaire?: string;
       quantite?: number;
-      coutTotal?: number;
-    }) => demandeService.traiterDemande(id, action, { commentaire, quantite, coutTotal }),
+    }) => demandeService.traiterDemande(id, action, { commentaire, quantite }),
     onSuccess: (updatedDemande, variables) => {
       // Mettre à jour le cache de la demande spécifique
       queryClient.setQueryData(
@@ -271,6 +269,7 @@ export function useDemandesByMagasin(
   magasinId: number,
   enabled: boolean = true
 ) {
+  void enabled;
   return useDemandes({
     magasin_id: magasinId,
   });

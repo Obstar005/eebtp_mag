@@ -85,3 +85,30 @@ export function formatApiDate(apiDate: string|Date, noHours: boolean = false): s
     return apiDate.toString();
   }
 }
+
+/**
+ * Formater une durée backend (HH:MM:SS ou HH:MM:SS.microseconds)
+ * en texte lisible (ex: 02:51:12.364177 -> 2 h 51 min 12 s)
+ */
+export function formatProcessingDuration(duration?: string): string {
+  if (!duration || !duration.trim()) return "-";
+
+  const normalized = duration.trim();
+  const regex = /^(\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))?$/;
+  const match = normalized.match(regex);
+
+  if (!match) {
+    return normalized;
+  }
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const seconds = Number(match[3]);
+
+  const parts: string[] = [];
+  if (hours > 0) parts.push(`${hours} h`);
+  if (minutes > 0) parts.push(`${minutes} min`);
+  if (seconds > 0 || parts.length === 0) parts.push(`${seconds} s`);
+
+  return parts.join(" ");
+}

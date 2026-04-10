@@ -842,6 +842,10 @@ export function apiDemandeToMaterialRequest(
   }
 
 
+  const quantiteApprouvee =
+    apiDemande.quantite_approuv ?? apiDemande.quantite_approv;
+  const quantiteValidee = apiDemande.quantite_valid ?? apiDemande.quantity_valid;
+
   return {
     id: apiDemande.id.toString(),
     demande: apiDemande.stock_item_name,
@@ -862,7 +866,7 @@ export function apiDemandeToMaterialRequest(
     nomProjet: "N/A", // À compléter si disponible dans l'API
     adresseMagasin: "N/A", // À compléter si disponible dans l'API
     donneurOrdre: apiDemande.emis_par_name,
-    quantiteValidee: apiDemande.quantite_valid,
+    quantiteValidee: quantiteValidee,
     motif: apiDemande.raison,
     observation: apiDemande.motif_rejet,
     traitements: generateTreatmentsFromApiDemande(apiDemande),
@@ -873,7 +877,7 @@ export function apiDemandeToMaterialRequest(
     commentaireValidation: apiDemande.commentaire_validation,
     
     // Quantités ajustées
-    quantiteApprouvee: apiDemande.quantite_approuv,
+    quantiteApprouvee: quantiteApprouvee,
     
     // Autres champs
     coutTotalApprox: apiDemande.cout_total_approx,
@@ -928,7 +932,7 @@ function generateTreatmentsFromApiDemande(
       action: "approuve",
       date: apiDemande.date_approbation,
       commentaire: apiDemande.commentaire_approbation,
-      quantite: apiDemande.quantite_approuv,
+      quantite: apiDemande.quantite_approuv ?? apiDemande.quantite_approv,
     });
   }
 
@@ -941,7 +945,7 @@ function generateTreatmentsFromApiDemande(
       action: "valide",
       date: apiDemande.date_validation,
       commentaire: apiDemande.commentaire_validation,
-      quantite: apiDemande.quantite_valid,
+      quantite: apiDemande.quantite_valid ?? apiDemande.quantity_valid,
     });
   }
 

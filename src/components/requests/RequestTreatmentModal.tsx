@@ -12,7 +12,6 @@ interface RequestTreatmentModalProps {
     traitement: string;
     commentaire: string;
     quantite?: number;
-    coutTotal?: number;
   }) => void;
   article: string;
   quantite: number;
@@ -34,7 +33,6 @@ export default function RequestTreatmentModal({
   const { demande, isLoading: isLoadingPermissions } = useAccess();
   const [commentaire, setCommentaire] = useState("");
   const [quantiteAjustee, setQuantiteAjustee] = useState<number | "">(quantite);
-  const [coutTotal, setCoutTotal] = useState<number | "">("");
   const [selectedAction, setSelectedAction] = useState<
     "positive" | "reject" | null
   >(null);
@@ -43,7 +41,6 @@ export default function RequestTreatmentModal({
   useEffect(() => {
     setQuantiteAjustee(quantite);
     setCommentaire("");
-    setCoutTotal("");
     setSelectedAction(null);
   }, [quantite, isOpen]);
 
@@ -98,10 +95,6 @@ export default function RequestTreatmentModal({
     (requestStatus === REQUEST_STATUS.CONFIRMEE ||
       requestStatus === REQUEST_STATUS.APPROUVEE);
 
-  // Déterminer si on affiche le champ coût total (validation uniquement)
-  const showCoutTotalField =
-    selectedAction === "positive" && requestStatus === REQUEST_STATUS.APPROUVEE;
-
   // Le commentaire est obligatoire uniquement pour le rejet
   const isCommentaireRequired = selectedAction === "reject";
 
@@ -126,13 +119,11 @@ export default function RequestTreatmentModal({
         showQuantiteField && quantiteAjustee !== ""
           ? quantiteAjustee
           : undefined,
-      coutTotal: showCoutTotalField && coutTotal !== "" ? coutTotal : undefined,
     });
 
     // Réinitialisation après soumission
     setCommentaire("");
     setQuantiteAjustee(quantite);
-    setCoutTotal("");
     setSelectedAction(null);
   };
 
@@ -266,25 +257,6 @@ export default function RequestTreatmentModal({
             <p className="text-xs text-gray-500 mt-1.5">
               Vous pouvez ajuster la quantité à la hausse ou à la baisse
             </p>
-          </div>
-        )}
-
-        {/* Champ de coût total (validation uniquement) */}
-        {showCoutTotalField && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Coût total approximatif (FCFA)
-            </label>
-            <input
-              type="number"
-              className="w-full rounded-lg px-3 py-2.5 bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Montant en FCFA"
-              value={coutTotal}
-              onChange={(e) =>
-                setCoutTotal(e.target.value ? Number(e.target.value) : "")
-              }
-              min={0}
-            />
           </div>
         )}
 
