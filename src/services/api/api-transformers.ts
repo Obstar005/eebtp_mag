@@ -427,7 +427,7 @@ export function updateAccountDataToApiUser(
       .filter((id) => !isNaN(id));
   }
 
-  return {
+  const result: Partial<ApiUpdateUserRequest> = {
     id: parseInt(data.id),
     username: data.nom_utilisateur,
     first_name: data.prenoms,
@@ -443,6 +443,13 @@ export function updateAccountDataToApiUser(
     profil: data.profile_id ? parseInt(data.profile_id) : undefined, // L'API attend "profil" pas "id_profil"
     projets: projetIds, // IDs des projets liés au compte
   };
+
+  // Ajouter le mot de passe uniquement s'il est fourni
+  if (data.mot_de_passe && data.mot_de_passe.trim() !== "") {
+    result.password = data.mot_de_passe;
+  }
+
+  return result;
 }
 
 export function profileToApiProfil(profile: Profile): ApiCreateProfilRequest {

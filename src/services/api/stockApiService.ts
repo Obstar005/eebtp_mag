@@ -5,6 +5,9 @@ import type {
   ApiUpdateProduitRequest,
   ApiProduitsListResponse,
   ApiProduitResponse,
+  ApiArticlesBelowThresholdResponse,
+  ApiStockStatsByUniteResponse,
+  ApiUniteType,
 } from "../../types/api-stocks";
 import type {
   Product,
@@ -138,6 +141,56 @@ export class StockApiService {
       productData
     );
     return response.data;
+  }
+
+  // ========================================
+  // Endpoints statistiques et alertes
+  // ========================================
+
+  /**
+   * Récupérer les articles en dessous du seuil de stock pour un projet
+   * GET /Stocks/articles-below-threshold/{projet_id}
+   */
+  async getArticlesBelowThreshold(
+    projetId: number
+  ): Promise<ApiArticlesBelowThresholdResponse> {
+    try {
+      const response = await apiClient.get<ApiArticlesBelowThresholdResponse>(
+        `${this.baseUrl}/articles-below-threshold/${projetId}`
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error(
+        `❌ [StockApiService] Erreur articles-below-threshold:`,
+        error
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Récupérer les statistiques de stock par unité pour un magasin
+   * GET /Stocks/stats/{magasin_id}/{unite}
+   * Valeurs pour unite: litre, kg, m3, unite, m, autre
+   */
+  async getStockStatsByUnite(
+    magasinId: number,
+    unite: ApiUniteType
+  ): Promise<ApiStockStatsByUniteResponse> {
+    try {
+      const response = await apiClient.get<ApiStockStatsByUniteResponse>(
+        `${this.baseUrl}/stats/${magasinId}/${unite}`
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error(
+        `❌ [StockApiService] Erreur stats/${magasinId}/${unite}:`,
+        error
+      );
+      throw error;
+    }
   }
 }
 

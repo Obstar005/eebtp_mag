@@ -42,13 +42,14 @@ export const accountService = {
   },
 
   // Créer un nouveau compte
-  async createAccount(data: CreateAccountData): Promise<Account> {
+  async createAccount(data: CreateAccountData): Promise<void> {
     if (import.meta.env.VITE_ENABLE_VERIFICATION === "false") {
-      return mockAccountService.createAccount(data);
+      await mockAccountService.createAccount(data);
+      return;
     }
 
     // Utiliser l'API Users pour créer un utilisateur
-    return await userApiService.createUser(data);
+    await userApiService.createUser(data);
   },
 
   // Mettre à jour un compte

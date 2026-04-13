@@ -52,3 +52,39 @@ export const TYPE_PRODUIT_OPTIONS = [
 
 export type ApiUniteType = ApiProduit["unite"];
 export type ApiTypeProduit = ApiProduit["type"];
+
+// ==================== Articles Below Threshold ====================
+
+/**
+ * Article en dessous du seuil de stock
+ * Endpoint: GET /Stocks/articles-below-threshold/{projet_id}
+ * Réponse: tableau d'articles (peut être vide)
+ */
+export interface ApiArticleBelowThreshold {
+  id: number;
+  produit: number;
+  produit_name: string;
+  produit_unite: string;
+  magasin: number;
+  magasin_name: string;
+  quantite: string; // decimal as string
+  quantite_seuil: string; // decimal as string
+  etat?: "neuf" | "usagé" | "endommagé";
+  is_active?: boolean;
+}
+
+export type ApiArticlesBelowThresholdResponse = ApiArticleBelowThreshold[];
+
+// ==================== Stock Stats by Unite ====================
+
+/**
+ * Statistiques de stock par unité
+ * Endpoint: GET /Stocks/stats/{magasin_id}/{unite}
+ * Valeurs pour unite: litre, kg, m3, unite, m, autre
+ * Réponse vérifiée: {total_articles: number}
+ */
+export interface ApiStockStatsByUnite {
+  total_articles: number;
+}
+
+export type ApiStockStatsByUniteResponse = ApiStockStatsByUnite;

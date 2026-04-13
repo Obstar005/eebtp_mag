@@ -9,10 +9,40 @@ export interface ApiError {
     data?: {
       message?: string;
       detail?: string;
+      error?: string | string[];
     };
   };
   status?: number;
   message?: string;
+  code?: string;
+}
+
+/**
+ * Extrait le message d'erreur personnalisé de l'API s'il existe
+ */
+function extractApiErrorMessage(apiError: ApiError): string | null {
+  const data = apiError?.response?.data;
+  if (!data) return null;
+
+  // Format: {"error": ["message1", "message2"]} ou {"error": "message"}
+  if (data.error) {
+    if (Array.isArray(data.error)) {
+      return data.error.join(" ");
+    }
+    return data.error;
+  }
+
+  // Format: {"message": "..."}
+  if (data.message) {
+    return data.message;
+  }
+
+  // Format: {"detail": "..."}
+  if (data.detail) {
+    return data.detail;
+  }
+
+  return null;
 }
 
 /**
@@ -30,6 +60,12 @@ export function getAuthErrorMessage(error: unknown): string {
   }
 
   const apiError = error as ApiError;
+
+  // PRIORITÉ: Vérifier d'abord si l'API a renvoyé un message d'erreur personnalisé
+  const apiMessage = extractApiErrorMessage(apiError);
+  if (apiMessage) {
+    return apiMessage;
+  }
 
   // Erreur 401 - Informations incorrectes
   if (apiError?.response?.status === 401 || apiError?.status === 401) {
@@ -62,15 +98,6 @@ export function getAuthErrorMessage(error: unknown): string {
     apiError?.message?.includes("Network Error")
   ) {
     return "Erreur de connexion. Veuillez vérifier votre connexion internet.";
-  }
-
-  // Message personnalisé de l'API
-  if (apiError?.response?.data?.message) {
-    return apiError.response.data.message;
-  }
-
-  if (apiError?.response?.data?.detail) {
-    return apiError.response.data.detail;
   }
 
   // Fallback

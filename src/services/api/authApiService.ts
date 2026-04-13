@@ -8,7 +8,6 @@ import {
   updateAccountDataToApiUser,
   apiLoginResponseToAuthResponse,
 } from "./api-transformers";
-import { debugApiResponse, validateApiUser } from "../../utils/debugUtils";
 import type {
   ApiCustomUser,
   ApiProfil,
@@ -334,7 +333,7 @@ export class UserApiService {
   }
 
   // Créer un utilisateur
-  async createUser(data: CreateAccountData): Promise<Account> {
+  async createUser(data: CreateAccountData): Promise<void> {
     try {
       const apiData = createAccountDataToApiUser(data);
 
@@ -359,7 +358,7 @@ export class UserApiService {
         // Ajouter l'image
         formData.append("photo_profil", data.photo_profil);
 
-        const response = await apiClient.post<ApiCustomUser>(
+        await apiClient.post<ApiCustomUser>(
           "/Users/user-create",
           formData,
           {
@@ -368,40 +367,14 @@ export class UserApiService {
             },
           },
         );
-
-        // Validation de la réponse API
-        const validation = validateApiUser(response.data);
-        if (!validation.isValid) {
-          console.error(
-            "❌ Validation de l'utilisateur créé (avec image) échouée:",
-            validation,
-          );
-        }
-
-        debugApiResponse(response.data, "Utilisateur créé (avec image)");
-
-        return await apiUserToAccount(response.data);
       } else {
         // Si pas d'image, utiliser JSON standard
-        const response = await apiClient.post<ApiCustomUser>(
+        await apiClient.post<ApiCustomUser>(
           "/Users/user-create",
           apiData,
         );
-
-        // Validation de la réponse API
-        const validation = validateApiUser(response.data);
-        if (!validation.isValid) {
-          console.error(
-            "❌ Validation de l'utilisateur créé échouée:",
-            validation,
-          );
-        } else {
-        }
-
-        debugApiResponse(response.data, "Utilisateur créé (sans image)");
-
-        return await apiUserToAccount(response.data);
       }
+      // Succès - pas besoin de retourner le compte créé
     } catch (error) {
       console.error("❌ Erreur lors de la création de l'utilisateur:", error);
 

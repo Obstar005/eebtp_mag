@@ -224,21 +224,6 @@ export function AddAccountPage() {
       toast.success("Compte créé avec succès !");
       navigate("/accounts");
     } catch (error) {
-      // Vérifier si l'erreur est liée à un ID manquant
-      if (
-        error instanceof Error &&
-        error.message.includes("sans ID d'utilisateur")
-      ) {
-        toast.warn(
-          "Le compte a été créé mais l'ID est manquant. Redirection vers la liste des comptes...",
-        );
-        // Attendre un peu puis rediriger vers la liste
-        setTimeout(() => {
-          navigate("/accounts");
-        }, 2000);
-        return;
-      }
-
       // Extraction des messages d'erreur spécifiques de l'API
       // Utiliser une approche sûre au niveau du typage
       const err = error as {

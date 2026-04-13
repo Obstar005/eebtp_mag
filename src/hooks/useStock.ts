@@ -1,11 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { stockService } from "../services/api";
+import { stockApiService } from "../services/api/stockApiService";
 import type {
   StockMovement,
   CreateStockMovementData,
   InventoryCheck,
   StockMovementFilter,
 } from "../types";
+import type { ApiUniteType } from "../types/api-stocks";
 
 // Clés de requête pour le stock
 export const stockKeys = {
@@ -93,5 +95,48 @@ export function useCompleteInventoryCheck() {
       queryClient.invalidateQueries({ queryKey: stockKeys.inventories() });
       queryClient.invalidateQueries({ queryKey: stockKeys.reports() });
     },
+  });
+}
+
+// ==================== Nouveaux endpoints ====================
+
+// Clés de requête pour les alertes et stats
+export const stockAlertKeys = {
+  belowThreshold: (projetId: number) =>
+    ["stock", "alerts", "below-threshold", projetId] as const,
+  statsByUnite: (magasinId: number, unite: ApiUniteType) =>
+    ["stock", "stats", "unite", magasinId, unite] as const,
+};
+
+/**
+ * Hook pour récupérer les articles en dessous du seuil de stock
+ * Endpoint: GET /Stocks/articles-below-threshold/{projet_id}
+ */
+export function useArticlesBelowThreshold(projetId: number | null) {
+  return useQuery({
+    queryKey: stockAlertKeys.belowThreshold(projetId ?? 0),
+    queryFn: () => {
+      return stockApiService.getArticlesBelowThreshold(projetId!);
+    },
+    enabled: !!projetId && projetId > 0,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+}
+
+/**
+ * Hook pour récupérer les statistiques de stock par unité
+ * Endpoint: GET /Stocks/stats/{magasin_id}/{unite}
+ */
+export function useStockStatsByUnite(
+  magasinId: number | null,
+  unite: ApiUniteType
+) {
+  return useQuery({
+    queryKey: stockAlertKeys.statsByUnite(magasinId ?? 0, unite),
+    queryFn: () => {
+      return stockApiService.getStockStatsByUnite(magasinId!, unite);
+    },
+    enabled: !!magasinId && magasinId > 0,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }

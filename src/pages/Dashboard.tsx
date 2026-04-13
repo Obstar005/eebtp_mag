@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, AlertTriangle, Package } from "lucide-react";
 import {
   useFluctuationEntrees,
   useFluctuationSorties,
@@ -12,6 +12,10 @@ import {
 import { useStockArticles } from "../hooks/useMagasins";
 import { useDashboardStats } from "../hooks/useDashboard";
 import { useAccess } from "../hooks/useAccessPermissions";
+import {
+  useArticlesBelowThreshold,
+  useStockStatsByUnite,
+} from "../hooks/useStock";
 import { FluctuationChartJS } from "../components/FluctuationChartJS";
 import { StockBarChartJS } from "../components/StockBarChartJS";
 import { SearchableSelect } from "../components/ui/SearchableSelect";
@@ -142,6 +146,17 @@ export function Dashboard() {
     const articles = statsArticlesQuery.data?.articles || [];
     return articles.filter((article) => article.type === "materiel");
   }, [statsArticlesQuery.data?.articles]);
+
+  // ==================== ALERTES STOCK ====================
+  // Articles en dessous du seuil de stock
+  const articlesBelowThresholdQuery =
+    useArticlesBelowThreshold(selectedProject);
+
+  // Statistiques de stock par unité
+  const stockStatsKgQuery = useStockStatsByUnite(firstMagasinId, "kg");
+  const stockStatsUniteQuery = useStockStatsByUnite(firstMagasinId, "unite");
+  const stockStatsLitreQuery = useStockStatsByUnite(firstMagasinId, "litre");
+  const stockStatsM3Query = useStockStatsByUnite(firstMagasinId, "m3");
 
   // Vérification des permissions (afficher loading si nécessaire)
   if (permissionsLoading) {
@@ -277,6 +292,124 @@ export function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Section Alertes Stock et Stats par Unité */}
+      {selectedProject && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Alertes: Articles en dessous du seuil */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              <h3 className="text-lg font-semibold text-gray-900">
+                Alertes Stock
+              </h3>
+            </div>
+            {articlesBelowThresholdQuery.isLoading ? (
+              <div className="flex items-center justify-center h-24">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500"></div>
+              </div>
+            ) : articlesBelowThresholdQuery.error ? (
+              <div className="text-red-500 text-sm">
+                Erreur lors du chargement des alertes
+              </div>
+            ) : articlesBelowThresholdQuery.data &&
+              articlesBelowThresholdQuery.data.length > 0 ? (
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {articlesBelowThresholdQuery.data.map((article) => (
+                  <div
+                    key={article.id}
+                    className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Package className="h-4 w-4 text-orange-600" />
+                      <span className="text-sm font-medium text-gray-900">
+                        {article.produit_name}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm text-orange-600 font-semibold">
+                        {article.quantite} / {article.quantite_seuil}
+                      </span>
+                      <span className="text-xs text-gray-500 ml-1">
+                        {article.produit_unite}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-24 text-gray-400">
+                <Package className="h-8 w-8 mb-2" />
+                <span className="text-sm">Aucun article en alerte</span>
+              </div>
+            )}
+          </div>
+
+          {/* Stats par Unité */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Répartition du Stock par Unité
+            </h3>
+            {!firstMagasinId ? (
+              <div className="flex flex-col items-center justify-center h-24 text-gray-400">
+                <Package className="h-8 w-8 mb-2" />
+                <span className="text-sm">Aucun magasin disponible</span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-900">
+                    {stockStatsKgQuery.isLoading ? (
+                      <span className="animate-pulse bg-blue-200 rounded w-8 h-6 inline-block" />
+                    ) : (
+                      (stockStatsKgQuery.data?.total_articles ?? 0)
+                    )}
+                  </div>
+                  <div className="text-xs text-blue-600 font-medium">
+                    Articles en Kg
+                  </div>
+                </div>
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-900">
+                    {stockStatsUniteQuery.isLoading ? (
+                      <span className="animate-pulse bg-green-200 rounded w-8 h-6 inline-block" />
+                    ) : (
+                      (stockStatsUniteQuery.data?.total_articles ?? 0)
+                    )}
+                  </div>
+                  <div className="text-xs text-green-600 font-medium">
+                    Articles à l'Unité
+                  </div>
+                </div>
+                <div className="p-4 bg-purple-50 rounded-lg">
+                  <div className="text-2xl font-bold text-purple-900">
+                    {stockStatsLitreQuery.isLoading ? (
+                      <span className="animate-pulse bg-purple-200 rounded w-8 h-6 inline-block" />
+                    ) : (
+                      (stockStatsLitreQuery.data?.total_articles ?? 0)
+                    )}
+                  </div>
+                  <div className="text-xs text-purple-600 font-medium">
+                    Articles en Litre
+                  </div>
+                </div>
+                <div className="p-4 bg-amber-50 rounded-lg">
+                  <div className="text-2xl font-bold text-amber-900">
+                    {stockStatsM3Query.isLoading ? (
+                      <span className="animate-pulse bg-amber-200 rounded w-8 h-6 inline-block" />
+                    ) : (
+                      (stockStatsM3Query.data?.total_articles ?? 0)
+                    )}
+                  </div>
+                  <div className="text-xs text-amber-600 font-medium">
+                    Articles en m³
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Graphiques de fluctuation - Layout responsive 3/5 + 2/5 */}
       <div className="space-y-6">

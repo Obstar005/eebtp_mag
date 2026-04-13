@@ -111,6 +111,8 @@ export function ChangePasswordPage({
               <li>• Au moins une lettre majuscule</li>
               <li>• Au moins une lettre minuscule</li>
               <li>• Au moins un chiffre</li>
+              <li>• Au moins un caractère spécial (ex: !@#$%^&*)</li>
+              <li>• Ne doit ressembler ni contenir vos informations personnelles</li>
             </ul>
           </div>
 

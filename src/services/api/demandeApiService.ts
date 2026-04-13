@@ -27,11 +27,6 @@ export class DemandeApiService {
    * GET /Demandes/demandes/toutes
    */
   async getAllDemandes(): Promise<ApiDemande[]> {
-    // Pour le développement, utiliser les données mockées
-    // TODO: Remplacer par l'API réelle une fois l'authentification configurée
-    // console.log("🔄 Utilisation des données mockées pour le développement");
-    // return mockApiDemandes;
-
     try {
 
       const response = await apiClient.get<ApiDemande[]>(
