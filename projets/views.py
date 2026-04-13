@@ -103,15 +103,15 @@ def list_projets(request):
     projets = Projet.objects.filter(is_active=True).order_by('-date_creation')
     #Ici on va ecrire un code et checker si on a deja depassé la date de fin d'un projet parmi tous les projets actifs, s'il y'en a, on va envoyer une notification aux autilisateurs autorisés et ayant
     #accès à ce projet pour les informer que le projet a dépassé sa date de fin prévue.
-    for projet in projets:
-        if projet.date_fin and projet.date_fin < timezone.now().date():
-            # Le projet a dépassé sa date de fin prévue
-            # On peut envoyer une notification aux utilisateurs associés à ce projet
-            comptes_associes = projet.comptes.all()
-            for user in comptes_associes:
-                if has_permission(user, 'projet.view'):
-                    # Envoyer une notification à l'utilisateur (par exemple, par email ou via un système de notifications interne)
-                    pass  # Code pour envoyer la notification
+    # for projet in projets:
+    #     if projet.date_fin and projet.date_fin < timezone.now().date():
+    #         # Le projet a dépassé sa date de fin prévue
+    #         # On peut envoyer une notification aux utilisateurs associés à ce projet
+    #         comptes_associes = projet.comptes.all()
+    #         for user in comptes_associes:
+    #             if has_permission(user, 'projet.view'):
+    #                 # Envoyer une notification à l'utilisateur (par exemple, par email ou via un système de notifications interne)
+    #                 pass  # Code pour envoyer la notification
                 
     serializer = ProjetSerializer(projets, many=True)
     return Response(serializer.data)
