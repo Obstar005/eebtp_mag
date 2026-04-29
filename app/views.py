@@ -82,6 +82,99 @@ def historique_toutes_actions(request):
     serializer = HistoriqueActionSerializer(historiques, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+#Vue pour les rapports de stocks par article dans un magasin donné, avec possibilité de filtrer par période et d'inclure les mouvements d'entrées et de sorties. 
+# on va les envoyer au frontend pour qu'il puisse affciher la reponse sur le frontend avant de telecharger
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generer_rapport_stocks(request, projet_id):
+    user = request.user
+    if user.profil.code not in ['dg', 'dga', 'chef_appro', 'dt', 'admin', 'superadmin']:
+        return Response({'error': "Vous n'avez pas le niveau d'habilitation nécessaire pour générer ce rapport."}, status=status.HTTP_403_FORBIDDEN)
+    try:
+        date_debut = request.data.get('date_debut')
+        date_fin = request.data.get('date_fin')
+        
+        # Convertir les dates
+        if date_debut:
+            date_debut_obj = datetime.strptime(date_debut, "%Y-%m-%d") 
+        else:
+            date_debut_obj = None
+        if date_fin:
+            date_fin_obj = datetime.strptime(date_fin, "%Y-%m-%d")
+        else:
+            date_fin_obj = None
+
+        try:
+            projet = Projet.objects.get(pk=projet_id)
+        except Projet.DoesNotExist:
+            return Response({'error': 'Projet introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+    
+        try:
+            magasin = Magasin.objects.get(projet=projet)
+        except Magasin.DoesNotExist:
+            return Response({'error': 'Magasin introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Récupérer tous les produits du magasin
+        stock_items = StockItem.objects.filter(magasin=magasin, is_active=True)
+        
+        rapport_data = []
+        
+        for stock_item in stock_items:
+            item_data = {
+                "article": stock_item.produit.designation,
+                "unite": stock_item.produit.unite,
+                "type": stock_item.produit.type,
+                "entrees": [],
+                "sorties": [],
+                "quantite_actuelle": float(stock_item.quantite)
+            }
+            
+            # Récupérer les entrées
+            entrees = Entree.objects.filter(
+                magasin=magasin, 
+                stock_item=stock_item,
+                is_active=True
+            ) 
+            if date_debut_obj:
+                entrees = entrees.filter(date_creation__gte=date_debut_obj)
+            if date_fin_obj:
+                entrees = entrees.filter(date_creation__lte=date_fin_obj)
+            
+            for entree in entrees:
+                if entree.demande_source:
+                    source = f"Demande N°{entree.demande_source.number}"
+                elif entree.source:
+                    source = f" Retour pour la sortie N°{entree.source.id}"
+                else:
+                    source = "Autre"
+                item_data["entrees"].append({
+                    "date": entree.date_creation,
+                    "source": source,
+                    "fait_par": entree.make_by.get_full_name() if entree.make_by else "N/A",
+                    "quantite": float(entree.quantite_m)
+                })
+            # Récupérer les sorties
+            sorties = Sortie.objects.filter(
+                magasin=magasin,
+                stock_item=stock_item,
+                is_active=True
+            )
+            if date_debut_obj:
+                sorties = sorties.filter(date_creation__gte=date_debut_obj)
+            if date_fin_obj:
+                sorties = sorties.filter(date_creation__lte=date_fin_obj)
+            for sortie in sorties:
+                item_data["sorties"].append({
+                    "date": sortie.date_creation,
+                    "objet": sortie.objet,
+                    "fait_par": sortie.make_by.get_full_name() if sortie.make_by else "N/A",
+                    "quantite": float(sortie.quantite_m)
+                })
+            rapport_data.append(item_data)
+        return Response(rapport_data, status=status.HTTP_200_OK)
+    except Magasin.DoesNotExist:
+        return Response({'error': 'Magasin introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
 #Ici pour la genereraton des rapoorts 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
