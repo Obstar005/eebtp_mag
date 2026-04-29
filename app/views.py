@@ -122,8 +122,8 @@ def generer_rapport_stocks(request, projet_id):
             "Du": date_debut_obj.strftime('%Y-%m-%d') if date_debut_obj else None,
             "Au": date_fin_obj.strftime('%Y-%m-%d') if date_fin_obj else None,
             "projet": projet.nom,
-            "magasinier": stock_item.magasin.projet.magasinier.get_full_name() if stock_item.magasin.projet.magasinier else "N/A",
-            "lieu_exec": stock_item.magasin.adresse if stock_item.magasin.adresse else "N/A",
+            "magasinier": magasin.projet.magasinier.get_full_name() if magasin.projet.magasinier else "N/A",
+            "lieu_exec": magasin.adresse if magasin.adresse else "N/A",
         })
         
         for stock_item in stock_items:
