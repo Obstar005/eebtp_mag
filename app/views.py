@@ -149,7 +149,7 @@ def generer_rapport_stocks(request, projet_id):
                 if entree.type == 'Livraison':
                     source = f"Demande N°{entree.demande_source.number}" if entree.demande_source else "N/A"
                 else:
-                    source = f"Retour pour la sortie N°{entree.source.id}"
+                    source = f"Retour pour la sortie N°{entree.source.id}" if entree.source else "N/A"
 
                 item_data["entrees"].append({
                     "date": entree.date_creation,
