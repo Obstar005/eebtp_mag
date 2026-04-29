@@ -121,6 +121,11 @@ def generer_rapport_stocks(request, projet_id):
         
         for stock_item in stock_items:
             item_data = {
+                "Du": {"date_debut": date_debut_obj.strftime('%Y-%m-%d') if date_debut_obj else None,},
+                "Au": {"date_fin": date_fin_obj.strftime('%Y-%m-%d') if date_fin_obj else None,},
+                "projet": projet.nom,
+                "magasinier": stock_item.magasin.projet.magasinier.get_full_name() if stock_item.magasin.projet.magasinier else "N/A",
+                "lieu_exec": stock_item.magasin.adresse if stock_item.magasin.adresse else "N/A",
                 "article": stock_item.produit.designation,
                 "unite": stock_item.produit.unite,
                 "type": stock_item.produit.type,
@@ -141,12 +146,11 @@ def generer_rapport_stocks(request, projet_id):
                 entrees = entrees.filter(date_creation__lte=date_fin_obj)
             
             for entree in entrees:
-                if entree.demande_source:
+                if entree.type == 'Livraison':
                     source = f"Demande N°{entree.demande_source.number}"
-                elif entree.source:
-                    source = f" Retour pour la sortie N°{entree.source.id}"
                 else:
-                    source = "Autre"
+                    source = f"Retour pour la sortie N°{entree.source.id}"
+
                 item_data["entrees"].append({
                     "date": entree.date_creation,
                     "source": source,
