@@ -153,6 +153,21 @@ export default function RequestDetailPage() {
         unite={request.unite}
         isLoading={isTraitementLoading}
         requestStatus={mapApiStatusToPermissionStatus(request.status)}
+        quantitePrecedente={
+          mapApiStatusToPermissionStatus(request.status) ===
+          REQUEST_STATUS.APPROUVEE
+            ? request.quantiteApprouvee
+            : request.quantiteDemandee
+        }
+        labelPrecedent={
+          mapApiStatusToPermissionStatus(request.status) ===
+          REQUEST_STATUS.APPROUVEE
+            ? "Quantité approuvée"
+            : mapApiStatusToPermissionStatus(request.status) ===
+                REQUEST_STATUS.CONFIRMEE
+              ? "Quantité confirmée"
+              : "Quantité émise"
+        }
       />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Colonne gauche : Détails basiques */}
@@ -179,26 +194,30 @@ export default function RequestDetailPage() {
                 readOnly
               />
             </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">
-                Nom du projet
-              </label>
-              <input
-                className="w-full rounded-lg px-3 py-2 bg-gray-50"
-                value={request.nomProjet}
-                readOnly
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">
-                Adresse du magasin
-              </label>
-              <input
-                className="w-full rounded-lg px-3 py-2 bg-gray-100"
-                value={request.adresseMagasin}
-                readOnly
-              />
-            </div>
+            {request.nomProjet && request.nomProjet !== "N/A" && (
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Nom du projet
+                </label>
+                <input
+                  className="w-full rounded-lg px-3 py-2 bg-gray-50"
+                  value={request.nomProjet}
+                  readOnly
+                />
+              </div>
+            )}
+            {request.adresseMagasin && request.adresseMagasin !== "N/A" && (
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Adresse du magasin
+                </label>
+                <input
+                  className="w-full rounded-lg px-3 py-2 bg-gray-100"
+                  value={request.adresseMagasin}
+                  readOnly
+                />
+              </div>
+            )}
             <div>
               <label className="block text-xs text-gray-500 mb-1">
                 Donneur d'ordre
@@ -209,30 +228,34 @@ export default function RequestDetailPage() {
                 readOnly
               />
             </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">
-                Coût total approx.
-              </label>
-              <input
-                className="w-full rounded-lg px-3 py-2 bg-gray-100"
-                value={
-                  request.coutTotalApprox !== undefined
-                    ? `${request.coutTotalApprox} XOF`
-                    : "-"
-                }
-                readOnly
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">
-                Durée de traitement
-              </label>
-              <input
-                className="w-full rounded-lg px-3 py-2 bg-gray-100"
-                value={formatProcessingDuration(request.dureeTraitement)}
-                readOnly
-              />
-            </div>
+            {request.coutTotalApprox && (
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Coût total approx.
+                </label>
+                <input
+                  className="w-full rounded-lg px-3 py-2 bg-gray-100"
+                  value={
+                    request.coutTotalApprox !== undefined
+                      ? `${request.coutTotalApprox} XOF`
+                      : "-"
+                  }
+                  readOnly
+                />
+              </div>
+            )}
+            {request.dureeTraitement && (
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Durée de traitement
+                </label>
+                <input
+                  className="w-full rounded-lg px-3 py-2 bg-gray-100"
+                  value={formatProcessingDuration(request.dureeTraitement)}
+                  readOnly
+                />
+              </div>
+            )}
           </div>
           {/* Traitements */}
           <div className="mt-8">
@@ -317,14 +340,96 @@ export default function RequestDetailPage() {
                       {selectedTreatment.commentaire || "Aucun commentaire"}
                     </p>
                   </div>
-                  <div>
-                    <span className="text-xs text-gray-500">Quantité</span>
-                    <p className="font-medium">
-                      {selectedTreatment.quantite !== undefined
-                        ? selectedTreatment.quantite
-                        : "-"}
-                    </p>
-                  </div>
+                  {/* Quantités selon l'ordre des traitements */}
+                  {selectedTreatment.action === "emis" && (
+                    <div>
+                      <span className="text-xs text-gray-500">
+                        Quantité émise
+                      </span>
+                      <p className="font-medium">
+                        {request.quantiteDemandee ?? "-"}{" "}
+                        <span className="text-xs text-gray-500">
+                          {formatUnit(request.unite)}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                  {selectedTreatment.action === "confirme" && (
+                    <div>
+                      <span className="text-xs text-gray-500">
+                        Quantité émise
+                      </span>
+                      <p className="font-medium">
+                        {request.quantiteDemandee ?? "-"}{" "}
+                        <span className="text-xs text-gray-500">
+                          {formatUnit(request.unite)}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                  {selectedTreatment.action === "approuve" && (
+                    <>
+                      <div>
+                        <span className="text-xs text-gray-500">
+                          Quantité émise
+                        </span>
+                        <p className="font-medium">
+                          {request.quantiteDemandee ?? "-"}{" "}
+                          <span className="text-xs text-gray-500">
+                            {formatUnit(request.unite)}
+                          </span>
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-gray-500">
+                          Quantité approuvée
+                        </span>
+                        <p className="font-medium">
+                          {selectedTreatment.quantite ?? "-"}{" "}
+                          <span className="text-xs text-gray-500">
+                            {formatUnit(request.unite)}
+                          </span>
+                        </p>
+                      </div>
+                    </>
+                  )}
+                  {selectedTreatment.action === "valide" && (
+                    <>
+                      <div>
+                        <span className="text-xs text-gray-500">
+                          Quantité émise
+                        </span>
+                        <p className="font-medium">
+                          {request.quantiteDemandee ?? "-"}{" "}
+                          <span className="text-xs text-gray-500">
+                            {formatUnit(request.unite)}
+                          </span>
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-gray-500">
+                          Quantité approuvée
+                        </span>
+                        <p className="font-medium">
+                          {request.quantiteApprouvee ?? "-"}{" "}
+                          <span className="text-xs text-gray-500">
+                            {formatUnit(request.unite)}
+                          </span>
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-gray-500">
+                          Quantité validée
+                        </span>
+                        <p className="font-medium">
+                          {selectedTreatment.quantite ?? "-"}{" "}
+                          <span className="text-xs text-gray-500">
+                            {formatUnit(request.unite)}
+                          </span>
+                        </p>
+                      </div>
+                    </>
+                  )}
                   {selectedTreatment.date && (
                     <div>
                       <span className="text-xs text-gray-500">Date</span>
@@ -369,51 +474,57 @@ export default function RequestDetailPage() {
                 readOnly
               />
             </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">
-                Quantité demandée
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  className="w-full rounded-lg px-3 py-2 bg-gray-100"
-                  value={request.quantiteDemandee}
-                  readOnly
-                />
-                <span className="text-white bg-blue-700 px-2 py-1 rounded text-xs">
-                  {formatUnit(request.unite)}
-                </span>
+            {request.quantiteDemandee && (
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Quantité demandée
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    className="w-full rounded-lg px-3 py-2 bg-gray-100"
+                    value={request.quantiteDemandee}
+                    readOnly
+                  />
+                  <span className="text-white bg-blue-700 px-2 py-1 rounded text-xs">
+                    {formatUnit(request.unite)}
+                  </span>
+                </div>
               </div>
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">
-                Quantité approuvée
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  className="w-full rounded-lg px-3 py-2 bg-gray-100"
-                  value={request.quantiteApprouvee ?? "-"}
-                  readOnly
-                />
-                <span className="text-white bg-blue-700 px-2 py-1 rounded text-xs">
-                  {formatUnit(request.unite)}
-                </span>
+            )}
+            {request.quantiteApprouvee && (
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Quantité approuvée
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    className="w-full rounded-lg px-3 py-2 bg-gray-100"
+                    value={request.quantiteApprouvee ?? "-"}
+                    readOnly
+                  />
+                  <span className="text-white bg-blue-700 px-2 py-1 rounded text-xs">
+                    {formatUnit(request.unite)}
+                  </span>
+                </div>
               </div>
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">
-                Quantité validée
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  className="w-full rounded-lg px-3 py-2 bg-gray-100"
-                  value={request.quantiteValidee ?? "-"}
-                  readOnly
-                />
-                <span className="text-white bg-blue-700 px-2 py-1 rounded text-xs">
-                  {formatUnit(request.unite)}
-                </span>
+            )}
+            {request.quantiteValidee && (
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Quantité validée
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    className="w-full rounded-lg px-3 py-2 bg-gray-100"
+                    value={request.quantiteValidee ?? "-"}
+                    readOnly
+                  />
+                  <span className="text-white bg-blue-700 px-2 py-1 rounded text-xs">
+                    {formatUnit(request.unite)}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
             <div>
               <label className="block text-xs text-gray-500 mb-1">Status</label>
               <input
@@ -425,6 +536,7 @@ export default function RequestDetailPage() {
             <div>
               <label className="block text-xs text-gray-500 mb-1">Motif</label>
               <textarea
+                rows={7}
                 className="w-full rounded-lg px-3 py-2 bg-gray-100 border-none"
                 value={request.motif}
                 readOnly

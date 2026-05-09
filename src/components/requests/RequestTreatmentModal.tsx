@@ -18,6 +18,8 @@ interface RequestTreatmentModalProps {
   unite?: string;
   isLoading?: boolean;
   requestStatus: string;
+  quantitePrecedente?: number;
+  labelPrecedent?: string;
 }
 
 export default function RequestTreatmentModal({
@@ -29,6 +31,8 @@ export default function RequestTreatmentModal({
   unite = "unité(s)",
   isLoading = false,
   requestStatus,
+  quantitePrecedente,
+  labelPrecedent,
 }: RequestTreatmentModalProps) {
   const { demande, isLoading: isLoadingPermissions } = useAccess();
   const [commentaire, setCommentaire] = useState("");
@@ -172,6 +176,27 @@ export default function RequestTreatmentModal({
             </span>
           </div>
         </div>
+
+        {/* Quantité de l'étape précédente */}
+        {quantitePrecedente !== undefined && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {labelPrecedent || "Quantité étape précédente"}
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                className="w-full rounded-lg px-3 py-2.5 bg-gray-100 border border-gray-200 text-gray-700"
+                value={quantitePrecedente}
+                title={labelPrecedent || "Quantité étape précédente"}
+                readOnly
+              />
+              <span className="text-white bg-gray-500 px-2 py-1 rounded text-xs whitespace-nowrap">
+                {formatUnit(unite)}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Sélection de l'action */}
         {isLoadingPermissions ? (

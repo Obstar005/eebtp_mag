@@ -15,6 +15,7 @@ interface ArticleForm {
   name: string;
   description: string;
   type_enum: ArticleType;
+  prix_unitaire: number;
 }
 
 // Types locaux
@@ -33,6 +34,7 @@ export default function ArticleDetailsPage() {
     name: "",
     description: "",
     type_enum: "matiere_premiere",
+    prix_unitaire: 0,
   });
 
   const [errors, setErrors] = useState<ArticleFormErrors>({});
@@ -51,6 +53,7 @@ export default function ArticleDetailsPage() {
         name: article.name || "",
         description: article.description || "",
         type_enum: article.type_enum || "matiere_premiere",
+        prix_unitaire: article.prix_unitaire || 0,
       });
     }
   }, [article]);
@@ -79,6 +82,7 @@ export default function ArticleDetailsPage() {
         name: form.name.trim(),
         description: form.description.trim(),
         type_enum: form.type_enum,
+        prix_unitaire: form.prix_unitaire || undefined,
       };
       await updateArticleMutation.mutateAsync(updateData);
       toast.success("Article modifié avec succès !");
@@ -221,6 +225,28 @@ export default function ArticleDetailsPage() {
                   <option value="equipement">Matériel</option>
                   <option value="consommable">Consommable</option>
                 </select>
+              </div>
+
+              {/* Prix unitaire */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Prix unitaire
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.prix_unitaire || ""}
+                  onChange={(e) =>
+                    handleChange(
+                      "prix_unitaire",
+                      parseFloat(e.target.value) || 0,
+                    )
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Prix unitaire"
+                  title="Prix unitaire de l'article"
+                />
               </div>
 
               {/* Dates */}

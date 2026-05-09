@@ -18,6 +18,7 @@ interface ArticleForm {
   type_enum: ArticleType;
   unite: ArticleUnite;
   magasin_id: number;
+  prix_unitaire: number;
 }
 
 // Types locaux
@@ -39,6 +40,7 @@ export function AddArticlePage() {
     type_enum: "matiere_premiere",
     unite: "unite",
     magasin_id: 1, // Valeur par défaut, à adapter selon le contexte
+    prix_unitaire: 0,
   });
 
   const [errors, setErrors] = useState<ArticleFormErrors>({});
@@ -73,6 +75,7 @@ export function AddArticlePage() {
         type_enum: form.type_enum,
         unite: form.unite,
         magasin_id: form.magasin_id,
+        prix_unitaire: form.prix_unitaire || undefined,
       };
       await createArticleMutation.mutateAsync(createData);
       toast.success("Article créé avec succès !");
@@ -253,6 +256,28 @@ export function AddArticlePage() {
                   <option value="tonnage">Tonnage</option>
                   <option value="autre">Autre</option>
                 </select>
+              </div>
+
+              {/* Prix unitaire */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Prix unitaire
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.prix_unitaire || ""}
+                  onChange={(e) =>
+                    handleChange(
+                      "prix_unitaire",
+                      parseFloat(e.target.value) || 0,
+                    )
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Prix unitaire"
+                  title="Prix unitaire de l'article"
+                />
               </div>
 
               {/* Bouton de sauvegarde */}

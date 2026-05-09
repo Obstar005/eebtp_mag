@@ -12,7 +12,7 @@ import { ConfirmationModal } from "../../components/layout/ConfirmationModal";
 import { AddEditArticleModal } from "../../components/magasins/AddEditArticleModal";
 import { EditMagasinModal } from "../../components/magasins/EditMagasinModal";
 import type { StockArticleFilter } from "../../types/magasin";
-import { formatApiDate } from "../../utils/formatUtils";
+import { formatApiDate, formatUnit } from "../../utils/formatUtils";
 
 export function MagasinDetailsPage() {
   const navigate = useNavigate();
@@ -117,6 +117,7 @@ export function MagasinDetailsPage() {
     );
   }
 
+  console.log(articles)
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       {/* En-tête */}
@@ -130,7 +131,7 @@ export function MagasinDetailsPage() {
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-2xl font-bold text-gray-900">
-            Détails de magasin N°{magasin.name}
+            Détails de magasin {magasin.name}
           </h1>
         </div>
         <button
@@ -237,7 +238,7 @@ export function MagasinDetailsPage() {
                           </div>
                         </td>
                         <td className="px-6 py-3 whitespace-nowrap">
-                          <div className="text-gray-900">{article.unite}</div>
+                          <div className="text-gray-900">{formatUnit(article.unite)}</div>
                         </td>
                         <td className="px-6 py-3 whitespace-nowrap text-right text-gray-900">
                           {article.prix_unitaire?.toLocaleString("fr-FR", {

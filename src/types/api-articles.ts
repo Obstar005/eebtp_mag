@@ -12,6 +12,7 @@ export interface ApiProduit {
   date_creation: string; // ISO date-time, lecture seule
   date_modif: string; // ISO date-time, lecture seule
   unite: "litre" | "kg" | "m3" | "unite" | "m" | "autre"; // Unité de mesure
+  unit_price?: string; // Prix unitaire (decimal)
   is_active: boolean; // Statut actif/inactif
 }
 
@@ -20,6 +21,7 @@ export interface ApiCreateProduitRequest {
   designation: string; // Requis
   type: "materiel" | "materiau"; // Requis
   unite: "litre" | "kg" | "m3" | "unite" | "m" | "autre"; // Requis
+  unit_price?: string; // Prix unitaire (decimal)
   is_active?: boolean; // Optionnel, défaut à true
 }
 
@@ -28,6 +30,7 @@ export interface ApiUpdateProduitRequest {
   designation?: string;
   type?: "materiel" | "materiau";
   unite?: "litre" | "kg" | "m3" | "unite" | "m" | "autre";
+  unit_price?: string; // Prix unitaire (decimal)
   is_active?: boolean;
 }
 

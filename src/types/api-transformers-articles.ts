@@ -42,7 +42,7 @@ export function apiProduitToStockArticle(apiProduit: ApiProduit): StockArticle {
     type_enum:
       TYPE_API_TO_FRONTEND_MAPPING[apiProduit.type] || "matiere_premiere",
     unite: apiProduit.unite, // Mapper l'unité depuis l'API
-    prix_unitaire: 0, // L'API Produit ne contient pas le prix
+    prix_unitaire: apiProduit.unit_price ? parseFloat(apiProduit.unit_price) : 0,
     date_creation: new Date(apiProduit.date_creation),
     date_modif: new Date(apiProduit.date_modif),
     user_id: 1, // Valeur par défaut, à définir selon le contexte
@@ -62,6 +62,7 @@ export function createArticleDataToApiRequest(
       TYPE_FRONTEND_TO_API_MAPPING[data.type_enum || "matiere_premiere"] ||
       "materiau",
     unite: data.unite || "unite",
+    unit_price: data.prix_unitaire !== undefined ? String(data.prix_unitaire) : undefined,
     is_active: true,
   };
 }
@@ -86,7 +87,11 @@ export function updateArticleDataToApiRequest(
     apiData.unite = data.unite;
   }
 
-  // Note: L'API Produit ne gère pas la quantité, état, prix, etc.
+  if (data.prix_unitaire !== undefined) {
+    apiData.unit_price = String(data.prix_unitaire);
+  }
+
+  // Note: L'API Produit ne gère pas la quantité, état, etc.
   // Ces données sont gérées par les StockItems
 
   return apiData;

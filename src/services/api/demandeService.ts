@@ -86,8 +86,8 @@ export class DemandeService {
         demandes = demandes.filter(
           (demande) =>
             demande.demande.toLowerCase().includes(searchLower) ||
-            demande.nomMagasinier.toLowerCase().includes(searchLower) ||
-            demande.nomMagasin?.toLowerCase().includes(searchLower)
+            (demande.nomMagasinier || "").toLowerCase().includes(searchLower) ||
+            (demande.nomMagasin || "").toLowerCase().includes(searchLower)
         );
       }
 

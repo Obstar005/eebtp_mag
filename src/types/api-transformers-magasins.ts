@@ -131,11 +131,12 @@ export const apiStockItemToStockArticle = (
     id: apiItem.id,
     article_id: apiItem.produit, // ID du produit catalogue
     name: apiItem.produit_name || `Article ${apiItem.id}`, // Utilise produit_name de l'API
+    unite: (apiItem.produit_unite as import("./magasin").ArticleUnite) || undefined,
     description: apiItem.description || "",
     quantite: apiItem.quantite,
     quantite_seuil: apiItem.quantite_seuil,
     type_enum: mapApiTypeToFrontend(apiItem.type_enum),
-    prix_unitaire: apiItem.prix_unitaire || 0,
+    prix_unitaire: apiItem.produit_price ? parseFloat(apiItem.produit_price) : (apiItem.prix_unitaire || 0),
     magasin_id: apiItem.magasin, // L'API utilise 'magasin' (ID)
     project_id: undefined, // Pas disponible dans cette API
     user_id: apiItem.add_by_user || 0,

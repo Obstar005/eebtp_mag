@@ -17,6 +17,7 @@ interface ArticleForm {
   description: string;
   type_enum: ArticleType;
   unite: ArticleUnite;
+  prix_unitaire: number;
 }
 
 interface ArticleFormErrors {
@@ -38,6 +39,7 @@ export default function EditArticlePage() {
     description: "",
     type_enum: "matiere_premiere",
     unite: "unite",
+    prix_unitaire: 0,
   });
   const [errors, setErrors] = useState<ArticleFormErrors>({});
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -56,6 +58,7 @@ export default function EditArticlePage() {
         description: article.description || "",
         type_enum: article.type_enum || "matiere_premiere",
         unite: article.unite || "unite",
+        prix_unitaire: article.prix_unitaire || 0,
       });
       // TODO: Charger les images existantes si besoin
     }
@@ -80,6 +83,7 @@ export default function EditArticlePage() {
         description: form.description.trim(),
         type_enum: form.type_enum,
         unite: form.unite,
+        prix_unitaire: form.prix_unitaire || undefined,
       };
       await updateArticleMutation.mutateAsync(updateData);
       toast.success("Article modifié avec succès !");
@@ -251,23 +255,27 @@ export default function EditArticlePage() {
                   <option value="autre">Autre</option>
                 </select>
               </div>
-              {/* État */}
-              {/* <div>
+              {/* Prix unitaire */}
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  État
+                  Prix unitaire
                 </label>
-                <select
-                  value={form.etat}
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.prix_unitaire || ""}
                   onChange={(e) =>
-                    handleChange("etat", e.target.value as ArticleEtat)
+                    handleChange(
+                      "prix_unitaire",
+                      parseFloat(e.target.value) || 0,
+                    )
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="neuf">Neuf</option>
-                  <option value="usagé">Usagé</option>
-                  <option value="endommagé">Endommagé</option>
-                </select>
-              </div> */}
+                  placeholder="Prix unitaire"
+                  title="Prix unitaire de l'article"
+                />
+              </div>
               {/* Quantité et seuil */}
               {/* <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -321,26 +329,6 @@ export default function EditArticlePage() {
                     </p>
                   )}
                 </div>
-              </div> */}
-              {/* Prix unitaire */}
-              {/* <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Prix unitaire
-                </label>
-                <input
-                  type="number"
-                  value={form.prix_unitaire}
-                  onChange={(e) =>
-                    handleChange(
-                      "prix_unitaire",
-                      parseFloat(e.target.value) || 0
-                    )
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                />
               </div> */}
               {/* Bouton de sauvegarde */}
               <div className="pt-4">

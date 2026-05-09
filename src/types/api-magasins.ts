@@ -54,6 +54,8 @@ export interface ApiStockItem {
   add_by_user: number; // ID de l'utilisateur qui a ajouté
   magasin_name: string; // Nom du magasin
   produit_name: string; // Nom du produit
+  produit_unite?: string; // Unité du produit
+  produit_price?: string; // Prix unitaire du produit (decimal string)
   quantite: number;
   quantite_seuil: number;
   etat: string; // "Neuf", "Usagé", "Abandonné"

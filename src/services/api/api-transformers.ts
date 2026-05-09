@@ -856,7 +856,7 @@ export function apiDemandeToMaterialRequest(
   return {
     id: apiDemande.id.toString(),
     demande: apiDemande.stock_item_name,
-    nomMagasinier: apiDemande.emis_par_name,
+    nomMagasinier: apiDemande.emis_par_name || "",
     quantiteDemandee: apiDemande.quantite_dem,
     unite: apiDemande.stock_item_unite,
     profil: "Magasinier", // À adapter selon les données disponibles
@@ -869,7 +869,7 @@ export function apiDemandeToMaterialRequest(
     updatedAt: apiDemande.date_creation, // À adapter si date de modification disponible
 
     // Champs additionnels pour le détail
-    nomMagasin: apiDemande.magasin_name,
+    nomMagasin: apiDemande.magasin_name || "",
     nomProjet: "N/A", // À compléter si disponible dans l'API
     adresseMagasin: "N/A", // À compléter si disponible dans l'API
     donneurOrdre: apiDemande.emis_par_name,

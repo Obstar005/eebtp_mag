@@ -257,6 +257,9 @@ export function ArticlesPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date d'ajout
                   </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Prix unitaire
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Action
                   </th>
@@ -291,6 +294,15 @@ export function ArticlesPage() {
                     </td>
                     <td className="px-6 py-3 whitespace-nowrap text-gray-900">
                       {formatApiDate(article.date_creation)}
+                    </td>
+                    <td className="px-6 py-3 whitespace-nowrap text-right text-gray-900">
+                      {article.prix_unitaire !== undefined &&
+                      article.prix_unitaire > 0
+                        ? article.prix_unitaire.toLocaleString("fr-FR", {
+                            style: "currency",
+                            currency: "XOF",
+                          })
+                        : "-"}
                     </td>
                     <td className="px-6 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-1">
