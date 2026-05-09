@@ -14,6 +14,7 @@ import {
   useProjets,
   useDeleteProjet,
   useProjetStats,
+  useProjetsArchives,
 } from "../../hooks/useProjets";
 import { useModal } from "../../hooks/useModal";
 import { useAccess } from "../../hooks/useAccessPermissions";
@@ -25,16 +26,24 @@ import { formatApiDate } from "../../utils/formatUtils";
 
 export function ProjectsPage() {
   const navigate = useNavigate();
+  const [showArchives, setShowArchives] = useState(false);
   const [filters, setFilters] = useState<ProjetFilters>({
     page: 1,
     limit: 10,
     search: "",
   });
+  const [archivesPage, setArchivesPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedProjetId, setSelectedProjetId] = useState<number | null>(null);
 
   const { data: projetsData, isLoading, error } = useProjets(filters);
   const { data: stats } = useProjetStats();
+  const { data: archivesData, isLoading: isLoadingArchives } =
+    useProjetsArchives({
+      search: filters.search,
+      page: archivesPage,
+      limit: 10,
+    });
   const deleteProjetMutation = useDeleteProjet();
   const confirmDeleteModal = useModal();
 
@@ -44,6 +53,7 @@ export function ProjectsPage() {
   // Gestion de la recherche
   const handleSearch = (searchTerm: string) => {
     setFilters((prev) => ({ ...prev, search: searchTerm, page: 1 }));
+    setArchivesPage(1);
   };
 
   // Gestion des filtres
@@ -51,6 +61,7 @@ export function ProjectsPage() {
     key: keyof ProjetFilters,
     value: string | number,
   ) => {
+    setShowArchives(false);
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
   };
 
@@ -67,12 +78,18 @@ export function ProjectsPage() {
       date_debut_to: undefined,
       chef_projet_id: undefined,
     });
+    setShowArchives(false);
+    setArchivesPage(1);
     setShowFilters(false);
   };
 
   // Gestion de la pagination
   const handlePageChange = (page: number) => {
     setFilters((prev) => ({ ...prev, page }));
+  };
+
+  const handleArchivesPageChange = (page: number) => {
+    setArchivesPage(page);
   };
 
   // Suppression d'un projet
@@ -140,17 +157,19 @@ export function ProjectsPage() {
 
   const projets = projetsData?.data || [];
   const totalPages = projetsData?.totalPages || 1;
+  const archiveProjets = archivesData?.data || [];
+  const archiveTotalPages = archivesData?.totalPages || 1;
 
   return (
     <div className="space-y-6 pt-4">
-      {/* En-tête avec filtres par statut */}
+      {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             Liste des projets
           </h1>
         </div>
-        {projetPerms.canCreate && (
+        {projetPerms.canCreate && !showArchives && (
           <button
             onClick={() => navigate("/projects/add")}
             className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -161,7 +180,7 @@ export function ProjectsPage() {
         )}
       </div>
 
-      {/* Filtres par statut sous forme d'onglets */}
+      {/* Filtres par statut */}
       <div className="flex lg:items-center lg:justify-between max-lg:flex-col-reverse gap-4 mt-4">
         <div className="flex items-center gap-4">
           <button
@@ -175,14 +194,14 @@ export function ProjectsPage() {
             Tous {stats ? `(${stats.total})` : ""}
           </button>
           <button
-            onClick={() => handleFilterChange("status", "termine")}
+            onClick={() => handleFilterChange("status", "planifie")}
             className={`px-4 py-2 text-sm rounded-lg transition-colors ${
-              filters.status === "termine"
-                ? "bg-green-100 text-green-800 font-medium"
+              filters.status === "planifie"
+                ? "bg-blue-100 text-blue-800 font-medium"
                 : "text-gray-600 hover:bg-gray-100"
             }`}
           >
-            Terminer {stats ? `(${stats.termines || 0})` : ""}
+            Planifié {stats ? `(${stats.planifies || 0})` : ""}
           </button>
           <button
             onClick={() => handleFilterChange("status", "en_cours")}
@@ -195,6 +214,16 @@ export function ProjectsPage() {
             En cours {stats ? `(${stats.en_cours || 0})` : ""}
           </button>
           <button
+            onClick={() => handleFilterChange("status", "termine")}
+            className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+              filters.status === "termine"
+                ? "bg-green-100 text-green-800 font-medium"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            Terminé {stats ? `(${stats.termines || 0})` : ""}
+          </button>
+          <button
             onClick={() => handleFilterChange("status", "annule")}
             className={`px-4 py-2 text-sm rounded-lg transition-colors ${
               filters.status === "annule"
@@ -202,7 +231,24 @@ export function ProjectsPage() {
                 : "text-gray-600 hover:bg-gray-100"
             }`}
           >
-            Annuler {stats ? `(${stats.annules || 0})` : ""}
+            Annulé {stats ? `(${stats.annules || 0})` : ""}
+          </button>
+          <button
+            onClick={() => {
+              setShowArchives(true);
+              setFilters((prev) => ({ ...prev, status: undefined, page: 1 }));
+              setShowFilters(false);
+            }}
+            className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+              showArchives
+                ? "bg-gray-200 text-gray-800 font-medium"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            Archivés{" "}
+            {archivesData
+              ? `(${archivesData.total || archiveProjets.length})`
+              : ""}
           </button>
         </div>
 
@@ -296,9 +342,15 @@ export function ProjectsPage() {
 
       {/* Liste des projets */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        {projets.length === 0 ? (
+        {(showArchives ? isLoadingArchives : false) ? (
+          <div className="flex items-center justify-center h-32">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        ) : (showArchives ? archiveProjets : projets).length === 0 ? (
           <div className="p-8 text-center text-gray-500">
-            Aucun projet trouvé
+            {showArchives
+              ? "Aucun projet archivé trouvé"
+              : "Aucun projet trouvé"}
           </div>
         ) : (
           <>
@@ -340,142 +392,161 @@ export function ProjectsPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {projets.map((projet, index) => (
-                    <tr
-                      key={projet.id}
-                      className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                    >
-                      <td className="px-4 sm:px-6 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">
-                        #{`PRJT${String(projet.id).padStart(3, "0")}`}
-                      </td>
-                      <td className="px-4 sm:px-6 py-3 text-sm font-medium text-gray-900">
-                        <div
-                          className="max-w-[200px] truncate"
-                          title={projet.name}
-                        >
-                          {projet.name}
-                        </div>
-                      </td>
-                      <td className="px-4 sm:px-6 py-3 text-sm text-gray-700 whitespace-nowrap">
-                        <div
-                          className="max-w-[120px] truncate"
-                          title={projet.directeurTravaux?.name || "Non assigné"}
-                        >
-                          {projet.directeurTravaux?.name || "Non assigné"}
-                        </div>
-                      </td>
-                      <td className="px-4 sm:px-6 py-3 text-sm text-gray-700 whitespace-nowrap">
-                        <div
-                          className="max-w-[120px] truncate"
-                          title={projet.chefProjet?.name || "Non assigné"}
-                        >
-                          {projet.chefProjet?.name || "Non assigné"}
-                        </div>
-                      </td>
-                      <td className="px-4 sm:px-6 py-3 text-sm text-gray-700 whitespace-nowrap">
-                        <div
-                          className="max-w-[120px] truncate"
-                          title={projet.chefChantier?.name || "Non assigné"}
-                        >
-                          {projet.chefChantier?.name || "Non assigné"}
-                        </div>
-                      </td>
-                      <td className="px-4 sm:px-6 py-3 text-sm text-gray-700 whitespace-nowrap">
-                        {formatApiDate(projet.date_debut, true)}
-                      </td>
-                      <td className="px-4 sm:px-6 py-3 text-sm text-gray-700 whitespace-nowrap text-right">
-                        {projet.cout_total_estime
-                          ? `${projet.cout_total_estime.toLocaleString("fr-FR")} FCFA`
-                          : "-"}
-                      </td>
-                      <td className="px-4 sm:px-6 py-3 text-sm text-gray-700 whitespace-nowrap text-right">
-                        {projet.cout_total_reel
-                          ? `${projet.cout_total_reel.toLocaleString("fr-FR")} FCFA`
-                          : "-"}
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            projet.status === "termine"
-                              ? "bg-green-100 text-green-800"
-                              : projet.status === "en_cours"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : projet.status === "annule"
-                                  ? "bg-red-100 text-red-800"
-                                  : "bg-blue-100 text-blue-800"
-                          }`}
-                        >
-                          <span
-                            className={`w-2 h-2 rounded-full mr-2 ${
-                              projet.status === "termine"
-                                ? "bg-green-500"
-                                : projet.status === "en_cours"
-                                  ? "bg-yellow-500"
-                                  : projet.status === "annule"
-                                    ? "bg-red-500"
-                                    : "bg-blue-500"
-                            }`}
-                          ></span>
-                          {getStatusLabel(projet.status)}
-                        </span>
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() =>
-                              navigate(`/projects/${projet.id}/details`)
-                            }
-                            className="p-0.5 px-2 text-gray-50 bg-green-600 rounded hover:bg-green-700 transition-colors"
-                            title="Voir le projet"
+                  {(showArchives ? archiveProjets : projets).map(
+                    (projet, index) => (
+                      <tr
+                        key={projet.id}
+                        className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                      >
+                        <td className="px-4 sm:px-6 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">
+                          #{`PRJT${String(projet.id).padStart(3, "0")}`}
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 text-sm font-medium text-gray-900">
+                          <div
+                            className="max-w-[200px] truncate"
+                            title={projet.name}
                           >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          {projetPerms.canUpdate && (
+                            {projet.name}
+                          </div>
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 text-sm text-gray-700 whitespace-nowrap">
+                          <div
+                            className="max-w-[120px] truncate"
+                            title={
+                              projet.directeurTravaux?.name || "Non assigné"
+                            }
+                          >
+                            {projet.directeurTravaux?.name || "Non assigné"}
+                          </div>
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 text-sm text-gray-700 whitespace-nowrap">
+                          <div
+                            className="max-w-[120px] truncate"
+                            title={projet.chefProjet?.name || "Non assigné"}
+                          >
+                            {projet.chefProjet?.name || "Non assigné"}
+                          </div>
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 text-sm text-gray-700 whitespace-nowrap">
+                          <div
+                            className="max-w-[120px] truncate"
+                            title={projet.chefChantier?.name || "Non assigné"}
+                          >
+                            {projet.chefChantier?.name || "Non assigné"}
+                          </div>
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 text-sm text-gray-700 whitespace-nowrap">
+                          {formatApiDate(projet.date_debut, true)}
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 text-sm text-gray-700 whitespace-nowrap text-right">
+                          {projet.cout_total_estime
+                            ? `${projet.cout_total_estime.toLocaleString("fr-FR")} FCFA`
+                            : "-"}
+                        </td>
+                        <td className="px-4 sm:px-6 py-3 text-sm text-gray-700 whitespace-nowrap text-right">
+                          {projet.cout_total_reel
+                            ? `${projet.cout_total_reel.toLocaleString("fr-FR")} FCFA`
+                            : "-"}
+                        </td>
+                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              projet.status === "termine"
+                                ? "bg-green-100 text-green-800"
+                                : projet.status === "en_cours"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : projet.status === "annule"
+                                    ? "bg-red-100 text-red-800"
+                                    : "bg-blue-100 text-blue-800"
+                            }`}
+                          >
+                            <span
+                              className={`w-2 h-2 rounded-full mr-2 ${
+                                projet.status === "termine"
+                                  ? "bg-green-500"
+                                  : projet.status === "en_cours"
+                                    ? "bg-yellow-500"
+                                    : projet.status === "annule"
+                                      ? "bg-red-500"
+                                      : "bg-blue-500"
+                              }`}
+                            ></span>
+                            {getStatusLabel(projet.status)}
+                          </span>
+                        </td>
+                        <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
                             <button
                               onClick={() =>
-                                navigate(`/projects/${projet.id}/edit`)
+                                navigate(`/projects/${projet.id}/details`)
                               }
-                              className="p-0.5 px-2 text-gray-50 bg-yellow-500 rounded hover:bg-yellow-600 transition-colors"
-                              title="Modifier le projet"
+                              className="p-0.5 px-2 text-gray-50 bg-green-600 rounded hover:bg-green-700 transition-colors"
+                              title="Voir le projet"
                             >
-                              <Edit className="h-4 w-4" />
+                              <Eye className="h-4 w-4" />
                             </button>
-                          )}
-                          {projetPerms.canDelete && (
-                            <button
-                              onClick={() => handleDeleteProjet(projet.id)}
-                              className="p-0.5 px-2 text-gray-50 bg-red-600 rounded hover:bg-red-700 transition-colors"
-                              title="Supprimer le projet"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            {!showArchives && projetPerms.canUpdate && (
+                              <button
+                                onClick={() =>
+                                  navigate(`/projects/${projet.id}/edit`)
+                                }
+                                className="p-0.5 px-2 text-gray-50 bg-yellow-500 rounded hover:bg-yellow-600 transition-colors"
+                                title="Modifier le projet"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+                            )}
+                            {!showArchives && projetPerms.canDelete && (
+                              <button
+                                onClick={() => handleDeleteProjet(projet.id)}
+                                className="p-0.5 px-2 text-gray-50 bg-red-600 rounded hover:bg-red-700 transition-colors"
+                                title="Supprimer le projet"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ),
+                  )}
                 </tbody>
               </table>
             </div>
 
             {/* Pagination */}
-            {totalPages > 1 && (
+            {(showArchives ? archiveTotalPages > 1 : totalPages > 1) && (
               <div className="px-6 py-3 bg-gray-50 border-t border-gray-200">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-700">
-                    Page {filters.page} sur {totalPages}
+                    Page {showArchives ? archivesPage : filters.page} sur{" "}
+                    {showArchives ? archiveTotalPages : totalPages}
                   </div>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => handlePageChange(filters.page! - 1)}
-                      disabled={filters.page === 1}
+                      onClick={() =>
+                        showArchives
+                          ? handleArchivesPageChange(archivesPage - 1)
+                          : handlePageChange(filters.page! - 1)
+                      }
+                      disabled={
+                        showArchives ? archivesPage === 1 : filters.page === 1
+                      }
                       className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                     >
                       Précédent
                     </button>
                     <button
-                      onClick={() => handlePageChange(filters.page! + 1)}
-                      disabled={filters.page === totalPages}
+                      onClick={() =>
+                        showArchives
+                          ? handleArchivesPageChange(archivesPage + 1)
+                          : handlePageChange(filters.page! + 1)
+                      }
+                      disabled={
+                        showArchives
+                          ? archivesPage === archiveTotalPages
+                          : filters.page === totalPages
+                      }
                       className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                     >
                       Suivant

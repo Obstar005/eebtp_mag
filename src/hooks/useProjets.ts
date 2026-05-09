@@ -13,6 +13,8 @@ export const projetKeys = {
   all: ["projets"] as const,
   lists: () => [...projetKeys.all, "list"] as const,
   list: (filters: ProjetFilters) => [...projetKeys.lists(), filters] as const,
+  archives: () => [...projetKeys.all, "archives"] as const,
+  archiveList: (filters: ProjetFilters) => [...projetKeys.archives(), filters] as const,
   details: () => [...projetKeys.all, "detail"] as const,
   detail: (id: number) => [...projetKeys.details(), id] as const,
   stats: () => [...projetKeys.all, "stats"] as const,
@@ -32,6 +34,16 @@ export function useProjets(filters: ProjetFilters = {}) {
     queryFn: () => projetService.getProjets(filters),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+}
+
+// Hook pour récupérer la liste des projets archivés
+export function useProjetsArchives(filters: ProjetFilters = {}) {
+  return useQuery({
+    queryKey: projetKeys.archiveList(filters),
+    queryFn: () => projetService.getProjetsArchives(filters),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 }
 

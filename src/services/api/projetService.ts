@@ -20,6 +20,10 @@ export const projetService = {
     return projetApiService.getProjets(filters);
   },
 
+  getProjetsArchives: (filters: ProjetFilters = {}): Promise<ProjetListResponse> => {
+    return projetApiService.getProjetsArchives(filters);
+  },
+
   getProjetById: (id: number): Promise<Projet> => {
     return projetApiService.getProjetById(id);
   },

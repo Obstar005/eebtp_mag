@@ -168,6 +168,36 @@ export class ProjetApiService {
     await client.delete(`${this.basePath}/projet-delete/${id}`);
   }
 
+  // Récupérer les projets archivés
+  async getProjetsArchives(filters: ProjetFilters = {}): Promise<ProjetListResponse> {
+    try {
+      const response = await client.get<ApiProjet[]>(
+        `${this.basePath}/liste-projets-archives`,
+      );
+
+      const usersResponse =
+        await client.get<ApiCustomUser[]>("/Users/liste-users");
+      const users = usersResponse.data;
+
+      let projets = response.data;
+
+      // Filtrage côté client si nécessaire
+      if (filters.search) {
+        const search = filters.search.toLowerCase();
+        projets = projets.filter((p) => p.name.toLowerCase().includes(search));
+      }
+
+      return apiProjetsArrayToProjetListResponse(
+        projets,
+        users,
+        filters.page || 1,
+        filters.limit || 10,
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
   // Récupérer les statistiques des projets
   async getProjetStats(): Promise<ProjetStats> {
     // L'API ne semble pas avoir d'endpoint de stats, on simule avec la liste

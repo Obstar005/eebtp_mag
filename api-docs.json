@@ -55,6 +55,23 @@
       },
       "parameters": []
     },
+    "/App/generer-rapport-stocks/{projet_id}": {
+      "post": {
+        "operationId": "App_generer-rapport-stocks_create",
+        "description": "",
+        "parameters": [],
+        "responses": { "201": { "description": "" } },
+        "tags": ["App"]
+      },
+      "parameters": [
+        {
+          "name": "projet_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
     "/App/historique-toutes-actions": {
       "get": {
         "operationId": "App_historique-toutes-actions_list",
@@ -92,6 +109,32 @@
       },
       "parameters": [
         { "name": "periode", "in": "path", "required": true, "type": "string" }
+      ]
+    },
+    "/Demandes/demande-update/{id}": {
+      "put": {
+        "operationId": "Demandes_demande-update_update",
+        "description": "Cette API permet de corriger une demande après rejet.",
+        "parameters": [
+          {
+            "name": "data",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Demande" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Demande modifiée avec succès",
+            "schema": { "$ref": "#/definitions/Demande" }
+          },
+          "404": { "description": "Demande non trouvée" },
+          "400": { "description": "Données invalides" }
+        },
+        "tags": ["Demandes"]
+      },
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "type": "string" }
       ]
     },
     "/Demandes/demande/approuver/{id}": {
@@ -405,6 +448,26 @@
       "parameters": [
         { "name": "id", "in": "path", "required": true, "type": "string" }
       ]
+    },
+    "/Demandes/demandes-magasinier/toutes": {
+      "get": {
+        "operationId": "Demandes_demandes-magasinier_toutes_list",
+        "description": "Récupérer la liste de toutes les demandes faites par un magasinier",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Demandes"]
+      },
+      "parameters": []
+    },
+    "/Demandes/demandes-validées-magasinier": {
+      "get": {
+        "operationId": "Demandes_demandes-validées-magasinier_list",
+        "description": "Récupérer la liste des demandes validées pour un magasinier précisement",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Demandes"]
+      },
+      "parameters": []
     },
     "/Demandes/demandes/approuvees": {
       "get": {
@@ -1296,16 +1359,17 @@
             "type": "integer"
           },
           {
+            "name": "is_active",
+            "in": "formData",
+            "required": false,
+            "type": "boolean",
+            "default": true
+          },
+          {
             "name": "image",
             "in": "formData",
             "description": "Image de la photo du projet",
             "type": "file"
-          },
-          {
-            "name": "is_active",
-            "in": "formData",
-            "required": false,
-            "type": "boolean"
           }
         ],
         "responses": {
@@ -1350,16 +1414,17 @@
             "type": "integer"
           },
           {
+            "name": "is_active",
+            "in": "formData",
+            "required": false,
+            "type": "boolean",
+            "default": true
+          },
+          {
             "name": "image",
             "in": "formData",
             "required": true,
             "type": "file"
-          },
-          {
-            "name": "is_active",
-            "in": "formData",
-            "required": false,
-            "type": "boolean"
           },
           {
             "name": "photo_profil",
@@ -2460,6 +2525,11 @@
         "magasin": { "title": "Magasin", "type": "integer" },
         "stock_item": { "title": "Stock item", "type": "integer" },
         "source": { "title": "Source", "type": "integer", "x-nullable": true },
+        "source_objet": {
+          "title": "Source objet",
+          "type": "string",
+          "readOnly": true
+        },
         "stock_item_name": {
           "title": "Stock item name",
           "type": "string",
@@ -2474,6 +2544,11 @@
           "title": "Stock item unite",
           "type": "string",
           "readOnly": true
+        },
+        "is_active": {
+          "title": "Is active",
+          "type": "boolean",
+          "default": true
         },
         "type": {
           "title": "Type",
@@ -2546,7 +2621,6 @@
           "x-nullable": true,
           "format": "uri"
         },
-        "is_active": { "title": "Is active", "type": "boolean" },
         "make_by": {
           "title": "Make by",
           "type": "integer",
@@ -2589,6 +2663,11 @@
           "type": "string",
           "readOnly": true
         },
+        "is_active": {
+          "title": "Is active",
+          "type": "boolean",
+          "default": true
+        },
         "quantite_m": {
           "title": "Quantite m",
           "type": "string",
@@ -2625,7 +2704,6 @@
           "maxLength": 100,
           "minLength": 1
         },
-        "is_active": { "title": "Is active", "type": "boolean" },
         "make_by": {
           "title": "Make by",
           "type": "integer",
@@ -2673,6 +2751,11 @@
           "type": "string",
           "readOnly": true
         },
+        "is_active": {
+          "title": "Is active",
+          "type": "boolean",
+          "default": true
+        },
         "nom": {
           "title": "Nom",
           "type": "string",
@@ -2697,7 +2780,6 @@
           "maxLength": 255,
           "x-nullable": true
         },
-        "is_active": { "title": "Is active", "type": "boolean" },
         "projet": { "title": "Projet", "type": "integer", "x-nullable": true }
       }
     },
@@ -2707,6 +2789,11 @@
       "properties": {
         "id": { "title": "ID", "type": "integer", "readOnly": true },
         "projet": { "title": "Projet", "type": "integer" },
+        "is_active": {
+          "title": "Is active",
+          "type": "boolean",
+          "default": true
+        },
         "image": {
           "title": "Image",
           "type": "string",
@@ -2718,8 +2805,7 @@
           "type": "string",
           "format": "date-time",
           "readOnly": true
-        },
-        "is_active": { "title": "Is active", "type": "boolean" }
+        }
       }
     },
     "Projet": {
@@ -2999,6 +3085,11 @@
           "type": "string",
           "readOnly": true
         },
+        "is_active": {
+          "title": "Is active",
+          "type": "boolean",
+          "default": true
+        },
         "nom": {
           "title": "Nom",
           "type": "string",
@@ -3033,7 +3124,6 @@
           "format": "date",
           "x-nullable": true
         },
-        "is_active": { "title": "Is active", "type": "boolean" },
         "cout_total_estime": {
           "title": "Cout total estime",
           "type": "string",
@@ -3071,6 +3161,11 @@
           "type": "string",
           "readOnly": true
         },
+        "is_active": {
+          "title": "Is active",
+          "type": "boolean",
+          "default": true
+        },
         "designation": {
           "title": "Designation",
           "type": "string",
@@ -3099,7 +3194,6 @@
           "type": "string",
           "enum": ["litre", "kg", "m3", "unite", "m", "autre", "t"]
         },
-        "is_active": { "title": "Is active", "type": "boolean" },
         "unit_price": {
           "title": "Unit price",
           "type": "string",
@@ -3139,6 +3233,11 @@
           "type": "string",
           "readOnly": true
         },
+        "is_active": {
+          "title": "Is active",
+          "type": "boolean",
+          "default": true
+        },
         "quantite": {
           "title": "Quantite",
           "type": "string",
@@ -3166,7 +3265,6 @@
           "format": "date-time",
           "readOnly": true
         },
-        "is_active": { "title": "Is active", "type": "boolean" },
         "add_by": { "title": "Add by", "type": "integer", "x-nullable": true },
         "updated_by": {
           "title": "Updated by",
@@ -3452,6 +3550,11 @@
           "type": "string",
           "readOnly": true
         },
+        "is_active": {
+          "title": "Is active",
+          "type": "boolean",
+          "default": true
+        },
         "last_login": {
           "title": "Last login",
           "type": "string",
@@ -3533,7 +3636,6 @@
           "maxLength": 20,
           "minLength": 1
         },
-        "is_active": { "title": "Is active", "type": "boolean" },
         "date_creation": {
           "title": "Date creation",
           "type": "string",
@@ -3548,6 +3650,12 @@
         },
         "first_login": { "title": "First login", "type": "boolean" },
         "is_connected": { "title": "Is connected", "type": "boolean" },
+        "last_activity": {
+          "title": "Last activity",
+          "type": "string",
+          "format": "date-time",
+          "x-nullable": true
+        },
         "profil": { "title": "Profil", "type": "integer", "x-nullable": true }
       }
     },

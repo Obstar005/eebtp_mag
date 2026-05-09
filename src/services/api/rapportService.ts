@@ -5,6 +5,19 @@ import { apiClient } from "./client";
  */
 const rapportService = {
   /**
+   * Générer les détails du rapport des stocks pour un projet (JSON)
+   * @param projetId - ID du projet
+   * @returns Données du rapport
+   */
+  async genererRapportStocksDetail(projetId: number): Promise<unknown> {
+    const response = await apiClient.post(
+      `/App/generer-rapport-stocks/${projetId}`
+    );
+
+    return response.data;
+  },
+
+  /**
    * Générer un rapport PDF des stocks pour un projet
    * @param projetId - ID du projet
    * @returns Blob du fichier PDF
