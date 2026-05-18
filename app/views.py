@@ -1,7 +1,7 @@
 # app/views.py
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
+from rest_framework.response import Response, responses
 from rest_framework import status
 from .models import HistoriqueAction, UserDevice
 from .serializers import HistoriqueActionSerializer, UserDeviceSerializer
@@ -84,6 +84,59 @@ def historique_toutes_actions(request):
 
 #Vue pour les rapports de stocks par article dans un magasin donné, avec possibilité de filtrer par période et d'inclure les mouvements d'entrées et de sorties. 
 # on va les envoyer au frontend pour qu'il puisse affciher la reponse sur le frontend avant de telecharger
+@swagger_auto_schema(
+    method='post',
+    operation_description="Générer un rapport détaillé des mouvements de stocks par article pour un projet donné, avec possibilité de filtrer par période (date_debut et date_fin). Seuls les utilisateurs avec les rôles dg, dga, chef_appro, dt, admin ou superadmin peuvent accéder à cette fonctionnalité.",
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'date_debut': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE, description='Date de début au format YYYY-MM-DD'),
+            'date_fin': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE, description='Date de fin au format YYYY-MM-DD'),
+        },
+        required=[]
+    ),
+    responses=
+    {
+        200: openapi.Response(
+            description="Rapport généré avec succès",
+            examples={
+                "application/json": [
+                    {
+                        "Du": "2024-01-01",
+                        "Au": "2024-01-31",
+                        "projet": "Projet Alpha",
+                        "magasinier": "Jean Dupont",
+                        "lieu_exec": "123 Rue du Chantier, Ville",
+                    },
+                    {
+                        "article": "Ciment Portland",
+                        "unite": "sac",
+                        "type": "Matériau de construction",
+                        "entrees": [
+                            {
+                                "date": "2024-01-05T10:30:00Z",
+                                "source": "Demande N°123",
+                                "fait_par": "Alice Martin",
+                                "quantite": 50
+                            }
+                        ],
+                        "sorties": [
+                            {
+                                "date": "2024-01-10T14:45:00Z",
+                                "objet": "Utilisation pour fondations du bâtiment A",
+                                "fait_par": "Bob Durand",
+                                "quantite": 20
+                            }
+                        ],
+                        "quantite_actuelle": 30
+                    }
+                ]
+            }
+        ),
+        403: 'Forbidden',
+        404: 'Not Found'
+    }
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def generer_rapport_stocks(request, projet_id):

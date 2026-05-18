@@ -127,7 +127,7 @@ def confirmer_demande(request, id):
     demande.date_confirmation = timezone.now()
     demande.save()
     #Enregistrer l'action de confirmation dans l'historique des actions de l'utilisateur
-    enregistrer_action(user, 'modification', 'A confirmé une demande', f"Demande #{demande.number}")
+    enregistrer_action(user, 'validation', 'A confirmé une demande', f"Demande #{demande.number}")
     #Envoyer une notif aux utilisateurs en charge des traitements sur les demandes de ce Demande
     notifier_utilisateurs(demande, "confirmation")
     #Envoyer une notif au magasinier qui a émis la demande pour lui notifier que sa demande a été confirmée
@@ -173,7 +173,7 @@ def rejeter_demande_confirmation(request, id):
     demande.commentaire_confirmation = commentaire_confirmation
     demande.date_confirmation = timezone.now()
     demande.save()
-    enregistrer_action(user, 'modification', 'A rejeté une demande de confirmation', f"Demande #{demande.number}")
+    enregistrer_action(user, 'validation', 'A rejeté une demande de confirmation', f"Demande #{demande.number}")
     #Envoyer une notif aux utilisateurs en charge des traitements sur les demandes de ce Demande
     notifier_utilisateurs(demande, "rejet_confirmation")
     #ENvoyer une notif au magasinier qui a émis la demande pour lui notifier que sa demande a été rejetée et lui donner la raison du rejet si le commentaire de rejet est fourni
@@ -264,8 +264,10 @@ def approuver_demande(request, id):
     demande.is_quantity_reduced_by_approb = is_quantity_reduced_by_approb  # Enregistrer si la quantité a été réduite lors de l'approbation
     demande.quantite_approuv = quantite_approv if quantite_approv is not None else demande.quantite_dem  # Si la quantité approuvée est fournie, l'utiliser, sinon garder la quantité initiale
     demande.date_approbation = timezone.now()
+    cout_total = calculer_cout_total(demande)
+    demande.cout_total_approx = cout_total
     demande.save()
-    enregistrer_action(user, 'modification', 'A approuvé une demande', f"Demande #{demande.number}")
+    enregistrer_action(user, 'validation', 'A approuvé une demande', f"Demande #{demande.number}")
     #Envoyer une notif aux confirmateurs
     notifier_utilisateurs(demande, "approbation")
     #Envoyer une notif au magasinier qui a émis la demande pour lui notifier que sa demande a été approuvée
@@ -310,7 +312,7 @@ def rejeter_demande_approbation(request, id):
     demande.commentaire_confirmation = commentaire_approbation
     demande.date_confirmation = timezone.now()
     demande.save()
-    enregistrer_action(user, 'modification', 'A rejeté une demande d\'approbation', f"Demande #{demande.number}")
+    enregistrer_action(user, 'validation', 'A rejeté une demande d\'approbation', f"Demande #{demande.number}")
     #ENvoyer une notif au magasinier qui a émis la demande pour lui notifier que sa demande a été rejetée et lui donner la raison du rejet si le commentaire de rejet est fourni
     notifier_magasinier(demande, "rejet_approbation")
     notifier_utilisateurs(demande, "rejet_approbation")
@@ -374,12 +376,10 @@ def valider_demande(request, id):
     demande.quantite_valid = quantity_valid if quantity_valid is not None else (demande.quantite_approuv if demande.is_quantity_reduced_by_approb else demande.quantite_dem)  # Si la quantité validée est fournie, l'utiliser, sinon utiliser la quantité approuvée si elle a été réduite, sinon garder la quantité initiale
     demande.commentaire_validation = commentaire_validation
     demande.date_validation = timezone.now()
-    cout_total = calculer_cout_total(demande)
-    demande.cout_total_approx = cout_total
     duree_total = calculer_duree_traitement(demande)
     demande.duree_traitement = duree_total
     demande.save()
-    enregistrer_action(user, 'modification', 'A validé une demande', f"Demande #{demande.number}")
+    enregistrer_action(user, 'validation', 'A validé une demande', f"Demande #{demande.number}")
     #Envoyer une notif aux confirmateurs et aux approuveurs
     notifier_utilisateurs(demande, "validation")
     #Envoyer une notif au magasinier qui a émis la demande pour lui notifier que sa demande a été validée
@@ -421,7 +421,7 @@ def rejeter_demande_validation(request, id):
     demande.commentaire_validation = commentaire_validation
     demande.date_validation = timezone.now()
     demande.save()
-    enregistrer_action(user, 'modification', 'A rejeté une demande de validation', f"Demande #{demande.number}")
+    enregistrer_action(user, 'validation', 'A rejeté une demande de validation', f"Demande #{demande.number}")
     #ENvoyer une notif au magasinier qui a émis la demande pour lui notifier que sa demande a été rejetée et lui donner la raison du rejet si le commentaire de rejet est fourni
     notifier_magasinier(demande, "rejet_validation")
     #Envoyer une notif aux confirmateurs et aux approuveurs pour les informer que la demande a été rejetée à l'étape de validation
