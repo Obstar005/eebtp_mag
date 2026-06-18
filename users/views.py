@@ -193,11 +193,10 @@ def supp_profil(request, pk):
 @permission_classes([IsAuthenticated])
 def list_users(request):
     user = request.user
-    if not has_permission(user, 'user.view'):
+    if not has_permission(user, 'users.view'):
         return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
     
     users = CustomUser.objects.order_by('-date_creation')
-    enregistrer_action(request.user, 'consultation', 'A consulté la liste des utilisateurs dans le système.', "Liste des utilisateurs")
     serializer = CustomUserSerializer(users, many=True)
     return Response(serializer.data)
 
@@ -699,6 +698,9 @@ def get_user_profile_stats(request):
         return Response({'error': 'Accès refusé, vous ne disposez pas des permissions nécessaires'}, status=status.HTTP_403_FORBIDDEN)
     
     total_users = CustomUser.objects.all().count()
+    stale_time = timezone.now() - timedelta(hours=5)
+    if CustomUser.objects.filter(is_connected=True, last_login__lt=stale_time).exists():
+        CustomUser.objects.filter(is_connected=True, last_login__lt=stale_time).update(is_connected=False)
     connected_users = CustomUser.objects.filter(is_connected=True, is_active=True).count()
     total_profiles = Profil.objects.filter(is_active=True).count()
 
